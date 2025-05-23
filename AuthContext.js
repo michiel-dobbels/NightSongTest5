@@ -102,7 +102,7 @@ export function AuthProvider({ children }) {
     });
 
     return () => {
-      listener?.subscription.unsubscribe();
+      listener?.unsubscribe();
     };
   }, []);
 
