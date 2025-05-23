@@ -27,11 +27,30 @@ export function AuthProvider({ children }) {
 
 
     // Create a new profile with the provided or derived username
-    const { error } = await supabase.from('profiles').insert({
-      id: authUser.id,
-      username: defaultUsername,
-      display_name: defaultDisplayName,
-    });
+    let { error } = await supabase
+      .from('profiles')
+      .upsert(
+        {
+          id: authUser.id,
+          username: defaultUsername,
+          display_name: defaultDisplayName,
+        },
+        { onConflict: 'id' }
+      );
+
+    if (error?.code === 'PGRST204') {
+      // Retry without the display_name column if the schema cache doesn't know it
+      const retry = await supabase
+        .from('profiles')
+        .upsert(
+          {
+            id: authUser.id,
+            username: defaultUsername,
+          },
+          { onConflict: 'id' }
+        );
+      error = retry.error;
+    }
 
     // Log any insertion error for easier debugging
     if (error) console.error('Failed to insert profile:', error);
@@ -122,11 +141,30 @@ export function AuthProvider({ children }) {
 
     const userId = newUser?.id;
     if (userId) {
-      const { error: insertError } = await supabase.from('profiles').insert({
-        id: userId,
-        username,
-        display_name: username,
-      });
+      let { error: insertError } = await supabase
+        .from('profiles')
+        .upsert(
+          {
+            id: userId,
+            username,
+            display_name: username,
+          },
+          { onConflict: 'id' }
+        );
+
+      if (insertError?.code === 'PGRST204') {
+        // Retry without the display_name column if it isn't in the schema cache
+        const retry = await supabase
+          .from('profiles')
+          .upsert(
+            {
+              id: userId,
+              username,
+            },
+            { onConflict: 'id' }
+          );
+        insertError = retry.error;
+      }
 
       if (insertError) {
         // The insert can fail if policies aren't set up yet
