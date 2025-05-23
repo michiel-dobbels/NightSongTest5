@@ -90,9 +90,8 @@ export default function HomeScreen() {
         ])
         .select()
         .single();
-
+      data = retry.data as any;
       error = retry.error;
-      data = retry.data;
 
     }
 
