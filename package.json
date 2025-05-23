@@ -16,6 +16,7 @@
     "@supabase/supabase-js": "^1.35.6",
     "buffer": "^6.0.3",
     "events": "^3.3.0",
+    "@react-native-async-storage/async-storage": "^1.22.0",
     "expo": "~53.0.7",
     "expo-dev-client": "~5.1.8",
     "expo-router": "^5.0.6",
