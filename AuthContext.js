@@ -34,7 +34,6 @@ export function AuthProvider({ children }) {
       display_name: defaultDisplayName,
     });
 
-
     if (error?.code === 'PGRST204') {
       // Retry without the display_name column if the schema cache doesn't know it
       const retry = await supabase.from('profiles').insert({
