@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
-import { supabase } from './supabase'; // imported for future use
+import { supabase } from '../../lib/supabase'; // imported for future use
 
 export default function App() {
   return (
