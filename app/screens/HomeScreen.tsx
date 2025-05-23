@@ -1,17 +1,14 @@
 import React, { useEffect, useState } from 'react';
 
-import {
-  View,
-  TextInput,
-  Button,
-  FlatList,
-  StyleSheet,
-  Alert,
-} from 'react-native';
-import { useNavigation } from '@react-navigation/native';
+import { View, TextInput, Button, FlatList, Text, StyleSheet, Alert } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../AuthContext';
-import PostItem, { Post } from '../components/PostItem';
+import { colors } from '../styles/colors';
+
+const STORAGE_KEY = 'cached_posts';
+
+
 
 
 
@@ -133,6 +130,10 @@ export default function HomeScreen() {
 
     loadCached();
   }, []);
+
+  useEffect(() => {
+    AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(posts));
+  }, [posts]);
 
   return (
     
