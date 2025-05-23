@@ -84,7 +84,6 @@ export default function PostDetailScreen() {
       .select()
       .single();
 
-
     if (error?.code === 'PGRST204') {
       const retry = await supabase
         .from('replies')
@@ -103,8 +102,6 @@ export default function PostDetailScreen() {
       fetchReplies();
     } else {
       setReplies(prev => prev.filter(r => r.id !== newReply.id));
-
-      if (error) console.error('Failed to reply:', error);
 
     }
   };
