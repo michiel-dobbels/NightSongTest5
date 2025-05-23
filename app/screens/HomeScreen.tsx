@@ -1,7 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import { View, TextInput, Button, FlatList, Text, StyleSheet, Alert } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../AuthContext';
+import { colors } from '../styles/colors';
 
 type Post = {
   id: string;
@@ -30,6 +32,32 @@ export default function HomeScreen() {
   const { user, profile } = useAuth();
   const [postText, setPostText] = useState('');
   const [posts, setPosts] = useState<Post[]>([]);
+
+  const STORAGE_KEY = 'cached_posts';
+
+  useEffect(() => {
+    const loadPosts = async () => {
+      try {
+        const raw = await AsyncStorage.getItem(STORAGE_KEY);
+        if (raw) {
+          setPosts(JSON.parse(raw));
+        }
+      } catch (err) {
+        console.error('Failed to load cached posts', err);
+      }
+
+      // Always refresh from Supabase to stay up to date
+      fetchPosts();
+    };
+
+    loadPosts();
+  }, []);
+
+  useEffect(() => {
+    AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(posts)).catch((err) =>
+      console.error('Failed to cache posts', err)
+    );
+  }, [posts]);
 
 
   
@@ -145,7 +173,7 @@ export default function HomeScreen() {
           return (
             <View style={styles.post}>
               <Text style={styles.username}>@{displayName}</Text>
-              <Text>{item.content}</Text>
+              <Text style={styles.postText}>{item.content}</Text>
               <Text style={styles.timestamp}>{timeAgo(item.created_at)}</Text>
             </View>
           );
@@ -156,7 +184,7 @@ export default function HomeScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, padding: 16, backgroundColor: '#061e45' },
+  container: { flex: 1, padding: 16, backgroundColor: colors.background },
   input: {
     backgroundColor: 'white',
     padding: 10,
@@ -169,6 +197,7 @@ const styles = StyleSheet.create({
     padding: 10,
     marginBottom: 10,
   },
-  username: { fontWeight: 'bold', color: 'white' },
+  postText: { color: colors.text },
+  username: { fontWeight: 'bold', color: colors.text },
   timestamp: { fontSize: 10, color: 'gray' },
 });
