@@ -72,7 +72,9 @@ export default function HomeScreen() {
 
     let { data, error } = await supabase
       .from('posts')
+
       .insert([insertPayload])
+
       .select()
       .single();
 
