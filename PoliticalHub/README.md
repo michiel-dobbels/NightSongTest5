@@ -16,7 +16,7 @@ Currently the app only displays a simple "Hello World" message. It is intended a
    ```
    Then scan the QR code with the Expo Go app on your iPhone.
 
-Remember to replace the Supabase credentials in `src/supabase.js` with your project credentials.
+Remember to replace the Supabase credentials in `../../lib/supabase.js` with your project credentials.
 
 ## Supabase SQL scripts
 
