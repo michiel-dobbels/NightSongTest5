@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import { View, TextInput, Button, FlatList, Text, StyleSheet, Alert } from 'react-native';
+import { View, TextInput, Button, FlatList, Text, StyleSheet, Alert, TouchableOpacity } from 'react-native';
+import { useNavigation } from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../AuthContext';
@@ -31,6 +32,7 @@ function timeAgo(dateString: string): string {
 }
 
 export default function HomeScreen() {
+  const navigation = useNavigation<any>();
   const { user, profile } = useAuth();
   const [postText, setPostText] = useState('');
   const [posts, setPosts] = useState<Post[]>([]);
@@ -169,11 +171,13 @@ export default function HomeScreen() {
             item.profiles?.username ||
             item.username;
           return (
-            <View style={styles.post}>
-              <Text style={styles.username}>@{displayName}</Text>
-              <Text style={styles.postContent}>{item.content}</Text>
-              <Text style={styles.timestamp}>{timeAgo(item.created_at)}</Text>
-            </View>
+            <TouchableOpacity onPress={() => navigation.navigate('PostDetail', { post: item })}>
+              <View style={styles.post}>
+                <Text style={styles.username}>@{displayName}</Text>
+                <Text style={styles.postContent}>{item.content}</Text>
+                <Text style={styles.timestamp}>{timeAgo(item.created_at)}</Text>
+              </View>
+            </TouchableOpacity>
           );
         }}
       />
