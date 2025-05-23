@@ -28,30 +28,12 @@ export function AuthProvider({ children }) {
 
     // Create a new profile with the provided or derived username
 
-    let { error } = await supabase
-      .from('profiles')
-      .upsert(
-        {
-          id: authUser.id,
-          username: defaultUsername,
-          display_name: defaultDisplayName,
-        },
-        { onConflict: 'id' }
-      );
+    let { error } = await supabase.from('profiles').insert({
+      id: authUser.id,
+      username: defaultUsername,
+      display_name: defaultDisplayName,
+    });
 
-    if (error?.code === 'PGRST204') {
-      // Retry without the display_name column if the schema cache doesn't know it
-      const retry = await supabase
-        .from('profiles')
-        .upsert(
-          {
-            id: authUser.id,
-            username: defaultUsername,
-          },
-          { onConflict: 'id' }
-        );
-      error = retry.error;
-    }
 
     if (error?.code === 'PGRST204') {
       // Retry without the display_name column if the schema cache doesn't know it
@@ -152,30 +134,11 @@ export function AuthProvider({ children }) {
     const userId = newUser?.id;
     if (userId) {
 
-      let { error: insertError } = await supabase
-        .from('profiles')
-        .upsert(
-          {
-            id: userId,
-            username,
-            display_name: username,
-          },
-          { onConflict: 'id' }
-        );
-
-      if (insertError?.code === 'PGRST204') {
-        // Retry without the display_name column if it isn't in the schema cache
-        const retry = await supabase
-          .from('profiles')
-          .upsert(
-            {
-              id: userId,
-              username,
-            },
-            { onConflict: 'id' }
-          );
-        insertError = retry.error;
-      }
+      let { error: insertError } = await supabase.from('profiles').insert({
+        id: userId,
+        username,
+        display_name: username,
+      });
 
 
       if (insertError?.code === 'PGRST204') {
