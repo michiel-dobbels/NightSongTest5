@@ -28,11 +28,28 @@ export function AuthProvider({ children }) {
 
     // Create a new profile with the provided or derived username
 
-    let { error } = await supabase.from('profiles').insert({
-      id: authUser.id,
-      username: defaultUsername,
-      display_name: defaultDisplayName,
-    });
+    let { error } = await supabase
+      .from('profiles')
+      .upsert(
+        {
+          id: authUser.id,
+          username: defaultUsername,
+          display_name: defaultDisplayName,
+        },
+        { onConflict: 'id' }
+      );
+
+    if (error?.code === 'PGRST204') {
+      // Retry without the display_name column if the schema cache doesn't know it
+      const retry = await supabase
+        .from('profiles')
+        .upsert(
+          { id: authUser.id, username: defaultUsername },
+          { onConflict: 'id' }
+        );
+      error = retry.error;
+    }
+
 
     if (error?.code === 'PGRST204') {
       // Retry without the display_name column if the schema cache doesn't know it
@@ -130,45 +147,12 @@ export function AuthProvider({ children }) {
       return { error };
     }
 
-    const userId = newUser?.id;
-    if (userId) {
 
-      let { error: insertError } = await supabase.from('profiles').insert({
-        id: userId,
-        username,
-        display_name: username,
-      });
+    // Signing in again ensures we have a session so RLS policies pass
+    const { error: signInErr } = await signIn(email, password);
 
 
-      if (insertError?.code === 'PGRST204') {
-        // Retry without the display_name column if it isn't in the schema cache
-        const retry = await supabase.from('profiles').insert({
-          id: userId,
-          username,
-        });
-        insertError = retry.error;
-      }
-
-      if (insertError) {
-        // The insert can fail if policies aren't set up yet
-        console.error('Failed to insert profile on sign up:', insertError);
-
-      }
-
-      // Immediately store the authenticated user and profile
-      setUser(newUser);
-      setProfile({
-        id: userId,
-        username,
-        display_name: username,
-        email: newUser.email,
-      });
-
-      return { error: null };
-    }
-
-    // No userId should rarely happen, but surface an error if it does
-    return { error: { message: 'User ID missing after sign up' } };
+    return { error: signInErr };
   };
 
 

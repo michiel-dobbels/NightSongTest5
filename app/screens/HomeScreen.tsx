@@ -83,14 +83,11 @@ export default function HomeScreen() {
       const retry = await supabase
         .from('posts')
         .insert([
-          {
-            content: postText,
-            user_id: user.id,
-          },
+          { content: postText, user_id: user.id },
         ])
         .select()
         .single();
-      data = retry.data as any;
+      data = retry.data;
       error = retry.error;
 
     }
