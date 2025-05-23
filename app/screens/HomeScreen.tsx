@@ -64,7 +64,9 @@ export default function HomeScreen() {
     setPosts((prev) => [newPost, ...prev]);
     setPostText('');
 
-    const insertPayload = {
+
+    const payload = {
+
       content: postText,
       user_id: user.id,
       username: profile.display_name || profile.username,
@@ -73,13 +75,13 @@ export default function HomeScreen() {
     let { data, error } = await supabase
       .from('posts')
 
-      .insert([insertPayload])
+      .insert([payload])
 
       .select()
       .single();
 
     if (error?.code === 'PGRST204') {
-      // Retry without the username column if the schema cache doesn't know it
+
       const retry = await supabase
         .from('posts')
         .insert([
@@ -90,6 +92,7 @@ export default function HomeScreen() {
         ])
         .select()
         .single();
+
       data = retry.data;
       error = retry.error;
     }
