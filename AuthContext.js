@@ -27,6 +27,7 @@ export function AuthProvider({ children }) {
 
 
     // Create a new profile with the provided or derived username
+
     let { error } = await supabase
       .from('profiles')
       .upsert(
@@ -49,6 +50,15 @@ export function AuthProvider({ children }) {
           },
           { onConflict: 'id' }
         );
+      error = retry.error;
+    }
+
+    if (error?.code === 'PGRST204') {
+      // Retry without the display_name column if the schema cache doesn't know it
+      const retry = await supabase.from('profiles').insert({
+        id: authUser.id,
+        username: defaultUsername,
+      });
       error = retry.error;
     }
 
@@ -141,6 +151,7 @@ export function AuthProvider({ children }) {
 
     const userId = newUser?.id;
     if (userId) {
+
       let { error: insertError } = await supabase
         .from('profiles')
         .upsert(
@@ -163,6 +174,16 @@ export function AuthProvider({ children }) {
             },
             { onConflict: 'id' }
           );
+        insertError = retry.error;
+      }
+
+
+      if (insertError?.code === 'PGRST204') {
+        // Retry without the display_name column if it isn't in the schema cache
+        const retry = await supabase.from('profiles').insert({
+          id: userId,
+          username,
+        });
         insertError = retry.error;
       }
 
