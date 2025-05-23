@@ -64,17 +64,35 @@ export default function HomeScreen() {
     setPosts((prev) => [newPost, ...prev]);
     setPostText('');
 
-    const { data, error } = await supabase
+    const insertPayload = {
+      content: postText,
+      user_id: user.id,
+      username: profile.display_name || profile.username,
+    };
+
+    let { data, error } = await supabase
       .from('posts')
-      .insert([
-        {
-          content: postText,
-          user_id: user.id,
-          username: profile.display_name || profile.username,
-        },
-      ])
+
+      .insert([insertPayload])
+
       .select()
       .single();
+
+    if (error?.code === 'PGRST204') {
+      // Retry without the username column if the schema cache doesn't know it
+      const retry = await supabase
+        .from('posts')
+        .insert([
+          {
+            content: postText,
+            user_id: user.id,
+          },
+        ])
+        .select()
+        .single();
+      data = retry.data;
+      error = retry.error;
+    }
 
     if (!error && data) {
       // Update the optimistic post with the real data from Supabase
