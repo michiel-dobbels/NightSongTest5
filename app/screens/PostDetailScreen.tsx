@@ -84,7 +84,9 @@ export default function PostDetailScreen() {
       .select()
       .single();
 
-    if (error?.code === 'PGRST204') {
+
+    if (error && (error as any).code === 'PGRST204') {
+
       const retry = await supabase
         .from('replies')
         .insert([{ post_id: post.id, user_id: user.id, content: replyText }])
@@ -97,7 +99,10 @@ export default function PostDetailScreen() {
 
     if (!error && data) {
       setReplies(prev =>
-        prev.map(r => (r.id === newReply.id ? { ...r, id: data.id, created_at: data.created_at } : r))
+        prev.map(r =>
+          r.id === newReply.id ? { ...r, id: data.id, created_at: data.created_at } : r
+        )
+
       );
       fetchReplies();
     } else {
