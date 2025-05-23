@@ -27,6 +27,7 @@ export function AuthProvider({ children }) {
 
 
     // Create a new profile with the provided or derived username
+
     let { error } = await supabase
       .from('profiles')
       .upsert(
@@ -46,6 +47,16 @@ export function AuthProvider({ children }) {
           { id: authUser.id, username: defaultUsername },
           { onConflict: 'id' }
         );
+      error = retry.error;
+    }
+
+
+    if (error?.code === 'PGRST204') {
+      // Retry without the display_name column if the schema cache doesn't know it
+      const retry = await supabase.from('profiles').insert({
+        id: authUser.id,
+        username: defaultUsername,
+      });
       error = retry.error;
     }
 
@@ -136,8 +147,10 @@ export function AuthProvider({ children }) {
       return { error };
     }
 
+
     // Signing in again ensures we have a session so RLS policies pass
     const { error: signInErr } = await signIn(email, password);
+
 
     return { error: signInErr };
   };
