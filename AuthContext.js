@@ -27,11 +27,20 @@ export function AuthProvider({ children }) {
 
 
     // Create a new profile with the provided or derived username
-    const { error } = await supabase.from('profiles').insert({
+    let { error } = await supabase.from('profiles').insert({
       id: authUser.id,
       username: defaultUsername,
       display_name: defaultDisplayName,
     });
+
+    if (error?.code === 'PGRST204') {
+      // Retry without the display_name column if the schema cache doesn't know it
+      const retry = await supabase.from('profiles').insert({
+        id: authUser.id,
+        username: defaultUsername,
+      });
+      error = retry.error;
+    }
 
     // Log any insertion error for easier debugging
     if (error) console.error('Failed to insert profile:', error);
@@ -122,11 +131,20 @@ export function AuthProvider({ children }) {
 
     const userId = newUser?.id;
     if (userId) {
-      const { error: insertError } = await supabase.from('profiles').insert({
+      let { error: insertError } = await supabase.from('profiles').insert({
         id: userId,
         username,
         display_name: username,
       });
+
+      if (insertError?.code === 'PGRST204') {
+        // Retry without the display_name column if it isn't in the schema cache
+        const retry = await supabase.from('profiles').insert({
+          id: userId,
+          username,
+        });
+        insertError = retry.error;
+      }
 
       if (insertError) {
         // The insert can fail if policies aren't set up yet
