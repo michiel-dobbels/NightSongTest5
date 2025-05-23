@@ -3,6 +3,7 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import AuthPage from './AuthPage';
 import TopTabsNavigator from './app/TopTabsNavigator';
 import { useAuth } from './AuthContext';
+import PostThreadScreen from './app/screens/PostThreadScreen';
 
 const Stack = createNativeStackNavigator();
 
@@ -14,7 +15,10 @@ export default function Navigator() {
   return (
     <Stack.Navigator screenOptions={{ headerShown: false }}>
       {user ? (
-        <Stack.Screen name="Tabs" component={TopTabsNavigator} />
+        <>
+          <Stack.Screen name="Tabs" component={TopTabsNavigator} />
+          <Stack.Screen name="PostThread" component={PostThreadScreen} />
+        </>
       ) : (
         <Stack.Screen name="Auth" component={AuthPage} />
       )}
