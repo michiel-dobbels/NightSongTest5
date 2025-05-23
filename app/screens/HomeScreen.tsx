@@ -64,16 +64,33 @@ export default function HomeScreen() {
     setPosts((prev) => [newPost, ...prev]);
     setPostText('');
 
-    const { data, error } = await supabase
+    const payload = {
+      content: postText,
+      user_id: user.id,
+      username: profile.display_name || profile.username,
+    };
+
+    let { data, error } = await supabase
       .from('posts')
-      .insert([
-        {
-          content: postText,
-          user_id: user.id,
-        },
-      ])
+      .insert([payload])
       .select()
       .single();
+
+    if (error?.code === 'PGRST204') {
+      const retry = await supabase
+        .from('posts')
+        .insert([
+          {
+            content: postText,
+            user_id: user.id,
+          },
+        ])
+        .select()
+        .single();
+
+      data = retry.data;
+      error = retry.error;
+    }
 
     if (!error && data) {
       // Update the optimistic post with the real data from Supabase
