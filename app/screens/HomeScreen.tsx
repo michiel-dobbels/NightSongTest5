@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { View, TextInput, Button, FlatList, Text, StyleSheet, Alert } from 'react-native';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../AuthContext';
+import { colors } from '../styles/colors';
 
 type Post = {
   id: string;
@@ -156,7 +157,7 @@ export default function HomeScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, padding: 16, backgroundColor: '#061e45' },
+  container: { flex: 1, padding: 16, backgroundColor: colors.background },
   input: {
     backgroundColor: 'white',
     padding: 10,
