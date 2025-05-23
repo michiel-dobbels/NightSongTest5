@@ -64,7 +64,9 @@ export default function HomeScreen() {
     setPosts((prev) => [newPost, ...prev]);
     setPostText('');
 
+
     const payload = {
+
       content: postText,
       user_id: user.id,
       username: profile.display_name || profile.username,
@@ -72,11 +74,14 @@ export default function HomeScreen() {
 
     let { data, error } = await supabase
       .from('posts')
+
       .insert([payload])
+
       .select()
       .single();
 
     if (error?.code === 'PGRST204') {
+
       const retry = await supabase
         .from('posts')
         .insert([
