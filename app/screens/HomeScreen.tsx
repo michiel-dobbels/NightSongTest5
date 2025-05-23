@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { View, TextInput, Button, FlatList, Text, StyleSheet } from 'react-native';
+import { View, TextInput, Button, FlatList, Text, StyleSheet, Alert } from 'react-native';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../AuthContext';
 
@@ -64,9 +64,7 @@ export default function HomeScreen() {
     setPosts((prev) => [newPost, ...prev]);
     setPostText('');
 
-    // Insert the post with a username so it persists in the database.
-    // Some setups might not have the column cached yet (error code PGRST204),
-    // so retry without it if necessary.
+
     let { data, error } = await supabase
       .from('posts')
       .insert([
@@ -76,10 +74,12 @@ export default function HomeScreen() {
           username: profile.display_name || profile.username,
         },
       ])
+
       .select()
       .single();
 
     if (error?.code === 'PGRST204') {
+
       const retry = await supabase
         .from('posts')
         .insert([
@@ -90,8 +90,10 @@ export default function HomeScreen() {
         ])
         .select()
         .single();
+
       error = retry.error;
       data = retry.data;
+
     }
 
     if (!error && data) {
@@ -111,8 +113,12 @@ export default function HomeScreen() {
       // Refresh from the server in the background to stay in sync
       fetchPosts();
     } else {
-      // Keep the optimistic post but log the failure
+      // Remove the optimistic post if it failed to persist
+      setPosts((prev) => prev.filter((p) => p.id !== newPost.id));
+
+      // Log the failure and surface it to the user
       console.error('Failed to post:', error);
+      Alert.alert('Post failed', error?.message ?? 'Unable to create post');
     }
   };
 
