@@ -1,37 +1,23 @@
 import React, { useEffect, useState } from 'react';
-import { View, TextInput, Button, FlatList, Text, StyleSheet, Alert } from 'react-native';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+
+import {
+  View,
+  TextInput,
+  Button,
+  FlatList,
+  StyleSheet,
+  Alert,
+} from 'react-native';
+import { useNavigation } from '@react-navigation/native';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../AuthContext';
-import { colors } from '../styles/colors';
+import PostItem, { Post } from '../components/PostItem';
 
-const STORAGE_KEY = 'cached_posts';
 
-type Post = {
-  id: string;
-  content: string;
-  username?: string;
-  user_id: string;
-  created_at: string;
-  profiles?: {
-    username: string | null;
-    display_name: string | null;
-  } | null;
-};
-
-function timeAgo(dateString: string): string {
-  const diff = Date.now() - new Date(dateString).getTime();
-  const minutes = Math.floor(diff / (1000 * 60));
-  if (minutes < 1) return 'just now';
-  if (minutes < 60) return `${minutes}m ago`;
-  const hours = Math.floor(minutes / 60);
-  if (hours < 24) return `${hours}h ago`;
-  const days = Math.floor(hours / 24);
-  return `${days}d ago`;
-}
 
 export default function HomeScreen() {
   const { user, profile } = useAuth();
+  const navigation = useNavigation();
   const [postText, setPostText] = useState('');
   const [posts, setPosts] = useState<Post[]>([]);
 
@@ -163,19 +149,14 @@ export default function HomeScreen() {
       <FlatList
         data={posts}
         keyExtractor={(item) => item.id}
-        renderItem={({ item }) => {
-          const displayName =
-            item.profiles?.display_name ||
-            item.profiles?.username ||
-            item.username;
-          return (
-            <View style={styles.post}>
-              <Text style={styles.username}>@{displayName}</Text>
-              <Text style={styles.postContent}>{item.content}</Text>
-              <Text style={styles.timestamp}>{timeAgo(item.created_at)}</Text>
-            </View>
-          );
-        }}
+
+        renderItem={({ item }) => (
+          <PostItem
+            post={item}
+            onPress={() => navigation.navigate('PostThread', { rootPost: item, parentPost: item })}
+          />
+        )}
+
       />
     </View>
   );
@@ -189,13 +170,6 @@ const styles = StyleSheet.create({
     borderRadius: 6,
     marginBottom: 10,
   },
-  post: {
-    backgroundColor: '#ffffff10',
-    borderRadius: 6,
-    padding: 10,
-    marginBottom: 10,
-  },
-  postContent: { color: 'white' },
-  username: { fontWeight: 'bold', color: 'white' },
-  timestamp: { fontSize: 10, color: 'gray' },
+  // Post item styles are defined in the shared component
+
 });
