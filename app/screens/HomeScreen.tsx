@@ -65,17 +65,15 @@ export default function HomeScreen() {
     setPostText('');
 
 
-    const payload = {
-
-      content: postText,
-      user_id: user.id,
-      username: profile.display_name || profile.username,
-    };
-
     let { data, error } = await supabase
       .from('posts')
-
-      .insert([payload])
+      .insert([
+        {
+          content: postText,
+          user_id: user.id,
+          username: profile.display_name || profile.username,
+        },
+      ])
 
       .select()
       .single();
