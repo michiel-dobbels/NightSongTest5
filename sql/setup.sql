@@ -22,6 +22,7 @@ create table if not exists public.posts (
     id uuid primary key default uuid_generate_v4(),
     user_id uuid not null references public.profiles(id) on delete cascade,
     username text not null,
+    parent_id uuid references public.posts(id) on delete cascade,
     content text not null,
     created_at timestamptz not null default now()
 );
@@ -39,6 +40,7 @@ create policy "Anyone can read posts" on public.posts
 
 -- Add the username column only if it doesn't exist (for older setups)
 alter table public.posts add column if not exists username text;
+alter table public.posts add column if not exists parent_id uuid references public.posts(id) on delete cascade;
 
 -- Example: insert a profile row so posting succeeds for a user
 -- Replace the UUID and username with your values
