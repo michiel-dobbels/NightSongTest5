@@ -27,6 +27,7 @@ export function AuthProvider({ children }) {
 
 
     // Create a new profile with the provided or derived username
+
     let { error } = await supabase.from('profiles').insert({
       id: authUser.id,
       username: defaultUsername,
@@ -131,11 +132,13 @@ export function AuthProvider({ children }) {
 
     const userId = newUser?.id;
     if (userId) {
+
       let { error: insertError } = await supabase.from('profiles').insert({
         id: userId,
         username,
         display_name: username,
       });
+
 
       if (insertError?.code === 'PGRST204') {
         // Retry without the display_name column if it isn't in the schema cache
