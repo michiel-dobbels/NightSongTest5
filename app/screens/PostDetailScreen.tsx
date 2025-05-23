@@ -72,12 +72,14 @@ export default function PostDetailScreen() {
     let { data, error } = await supabase
       .from('replies')
       .insert([
+
         {
           post_id: post.id,
           user_id: user.id,
           content: replyText,
           username: profile.display_name || profile.username,
         },
+
       ])
       .select()
       .single();
@@ -92,6 +94,7 @@ export default function PostDetailScreen() {
       error = retry.error;
     }
 
+
     if (!error && data) {
       setReplies(prev =>
         prev.map(r => (r.id === newReply.id ? { ...r, id: data.id, created_at: data.created_at } : r))
@@ -99,6 +102,7 @@ export default function PostDetailScreen() {
       fetchReplies();
     } else {
       setReplies(prev => prev.filter(r => r.id !== newReply.id));
+
     }
   };
 
