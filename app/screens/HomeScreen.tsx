@@ -70,6 +70,7 @@ export default function HomeScreen() {
         {
           content: postText,
           user_id: user.id,
+          username: profile.display_name || profile.username,
         },
       ])
       .select()
