@@ -1,7 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import { View, TextInput, Button, FlatList, Text, StyleSheet, Alert } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../AuthContext';
+
+const STORAGE_KEY = 'cached_posts';
 
 type Post = {
   id: string;
@@ -32,7 +35,7 @@ export default function HomeScreen() {
   const [posts, setPosts] = useState<Post[]>([]);
 
 
-  
+
 
   const fetchPosts = async () => {
     const { data, error } = await supabase
@@ -40,7 +43,10 @@ export default function HomeScreen() {
       .select('id, content, user_id, created_at, profiles(username, display_name)')
       .order('created_at', { ascending: false });
 
-    if (!error && data) setPosts(data as Post[]);
+    if (!error && data) {
+      setPosts(data as Post[]);
+      AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+    }
   };
 
   const handlePost = async () => {
@@ -61,7 +67,11 @@ export default function HomeScreen() {
     };
 
     // Show the post immediately
-    setPosts((prev) => [newPost, ...prev]);
+    setPosts((prev) => {
+      const updated = [newPost, ...prev];
+      AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
+      return updated;
+    });
     setPostText('');
 
 
@@ -94,23 +104,25 @@ export default function HomeScreen() {
 
     if (!error && data) {
       // Update the optimistic post with the real data from Supabase
-      setPosts((prev) =>
-        prev.map((p) =>
+      setPosts((prev) => {
+        const updated = prev.map((p) =>
           p.id === newPost.id
-            ? {
-                ...p,
-                id: data.id,
-                created_at: data.created_at,
-              }
+            ? { ...p, id: data.id, created_at: data.created_at }
             : p
-        )
-      );
+        );
+        AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
+        return updated;
+      });
 
       // Refresh from the server in the background to stay in sync
       fetchPosts();
     } else {
       // Remove the optimistic post if it failed to persist
-      setPosts((prev) => prev.filter((p) => p.id !== newPost.id));
+      setPosts((prev) => {
+        const updated = prev.filter((p) => p.id !== newPost.id);
+        AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
+        return updated;
+      });
 
       // Log the failure and surface it to the user
       console.error('Failed to post:', error);
@@ -119,7 +131,20 @@ export default function HomeScreen() {
   };
 
   useEffect(() => {
-    fetchPosts();
+    const loadCached = async () => {
+      const stored = await AsyncStorage.getItem(STORAGE_KEY);
+      if (stored) {
+        try {
+          setPosts(JSON.parse(stored));
+        } catch (e) {
+          console.error('Failed to parse cached posts', e);
+        }
+      }
+
+      fetchPosts();
+    };
+
+    loadCached();
   }, []);
 
   return (
