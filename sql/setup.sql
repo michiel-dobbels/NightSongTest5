@@ -26,6 +26,17 @@ create table if not exists public.posts (
     created_at timestamptz not null default now()
 );
 
+-- Enable Row Level Security and allow cross-user access
+alter table public.posts enable row level security;
+
+-- Any authenticated user can insert a post linked to their profile
+create policy "Users can insert posts" on public.posts
+  for insert with check (auth.uid() = user_id);
+
+-- All posts are publicly readable so the feed shows every user's posts
+create policy "Anyone can read posts" on public.posts
+  for select using (true);
+
 -- Add the username column only if it doesn't exist (for older setups)
 alter table public.posts add column if not exists username text;
 
