@@ -171,7 +171,7 @@ export default function HomeScreen() {
           return (
             <View style={styles.post}>
               <Text style={styles.username}>@{displayName}</Text>
-              <Text>{item.content}</Text>
+              <Text style={styles.postContent}>{item.content}</Text>
               <Text style={styles.timestamp}>{timeAgo(item.created_at)}</Text>
             </View>
           );
@@ -195,6 +195,7 @@ const styles = StyleSheet.create({
     padding: 10,
     marginBottom: 10,
   },
+  postContent: { color: 'white' },
   username: { fontWeight: 'bold', color: 'white' },
   timestamp: { fontSize: 10, color: 'gray' },
 });
