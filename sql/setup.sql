@@ -40,6 +40,21 @@ create policy "Anyone can read posts" on public.posts
 -- Add the username column only if it doesn't exist (for older setups)
 alter table public.posts add column if not exists username text;
 
+-- Create replies table referencing posts and profiles
+create table if not exists public.replies (
+    id uuid primary key default uuid_generate_v4(),
+    post_id uuid references public.posts(id) on delete cascade,
+    user_id uuid not null references public.profiles(id) on delete cascade,
+    username text not null,
+    content text not null,
+    created_at timestamptz not null default now()
+);
+alter table public.replies enable row level security;
+create policy "Users can insert replies" on public.replies
+  for insert with check (auth.uid() = user_id);
+create policy "Anyone can read replies" on public.replies
+  for select using (true);
+
 -- Example: insert a profile row so posting succeeds for a user
 -- Replace the UUID and username with your values
 insert into public.profiles (id, username, display_name)
