@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from 'react';
 
 import { View, TextInput, Button, FlatList, Text, StyleSheet, Alert } from 'react-native';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useNavigation } from '@react-navigation/native';
+
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../AuthContext';
 import { colors } from '../styles/colors';
