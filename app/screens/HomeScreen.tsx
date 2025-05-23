@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { View, TextInput, Button, FlatList, Text, StyleSheet, Alert } from 'react-native';
+import { useNavigation } from '@react-navigation/native';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../AuthContext';
 
@@ -28,6 +29,7 @@ function timeAgo(dateString: string): string {
 
 export default function HomeScreen() {
   const { user, profile } = useAuth();
+  const navigation = useNavigation();
   const [postText, setPostText] = useState('');
   const [posts, setPosts] = useState<Post[]>([]);
 
