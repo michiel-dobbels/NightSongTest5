@@ -1,7 +1,11 @@
 import React, { useEffect, useState } from 'react';
 import { View, TextInput, Button, FlatList, Text, StyleSheet, Alert } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../AuthContext';
+import { colors } from '../styles/colors';
+
+const STORAGE_KEY = 'cached_posts';
 
 type Post = {
   id: string;
@@ -119,8 +123,25 @@ export default function HomeScreen() {
   };
 
   useEffect(() => {
-    fetchPosts();
+    const loadCached = async () => {
+      const stored = await AsyncStorage.getItem(STORAGE_KEY);
+      if (stored) {
+        try {
+          setPosts(JSON.parse(stored));
+        } catch (e) {
+          console.error('Failed to parse cached posts', e);
+        }
+      }
+
+      fetchPosts();
+    };
+
+    loadCached();
   }, []);
+
+  useEffect(() => {
+    AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(posts));
+  }, [posts]);
 
   return (
     
@@ -156,7 +177,7 @@ export default function HomeScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, padding: 16, backgroundColor: '#061e45' },
+  container: { flex: 1, padding: 16, backgroundColor: colors.background },
   input: {
     backgroundColor: 'white',
     padding: 10,
