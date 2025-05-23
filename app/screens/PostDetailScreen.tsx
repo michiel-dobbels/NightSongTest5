@@ -98,9 +98,12 @@ export default function PostDetailScreen() {
 
     if (!error && data) {
       setReplies(prev =>
-        prev.map(r => (r.id === newReply.id ? { ...r, id: data.id, created_at: data.created_at } : r))
+        prev.map(r =>
+          r.id === newReply.id
+            ? { ...r, id: data.id, created_at: data.created_at }
+            : r
+        )
       );
-      fetchReplies();
     } else {
       setReplies(prev => prev.filter(r => r.id !== newReply.id));
 
