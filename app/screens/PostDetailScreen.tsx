@@ -39,6 +39,7 @@ export default function PostDetailScreen() {
 
   const [replyText, setReplyText] = useState('');
   const [replies, setReplies] = useState<Reply[]>([]);
+  const STORAGE_KEY = `cached_replies_${post.id}`;
 
   const fetchReplies = async () => {
     const { data, error } = await supabase
@@ -134,7 +135,8 @@ export default function PostDetailScreen() {
       // Whether or not data was returned, refresh from the server so the reply persists
       fetchReplies();
     } else {
-      console.error('Failed to reply:', error?.message);
+      console.error('Failed to reply:', error?.message || error?.details || error);
+
       setReplies(prev => {
         const updated = prev.filter(r => r.id !== newReply.id);
         AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
