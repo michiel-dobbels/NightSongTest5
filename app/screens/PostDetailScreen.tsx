@@ -52,10 +52,12 @@ export default function PostDetailScreen() {
       .order('created_at', { ascending: false });
     if (!error && data) {
       setReplies(prev => {
-        // Keep any replies currently in state that are missing from the server response
-        const missing = prev.filter(r => !(data as Reply[]).some(d => d.id === r.id));
-        const merged = [...missing, ...(data as Reply[])];
-        merged.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+        const fetched = data as Reply[];
+        const fetchedIds = new Set(fetched.map(r => r.id));
+        const missing = prev.filter(r => !fetchedIds.has(r.id));
+        const merged = [...missing, ...fetched].sort(
+          (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+        );
 
 
         AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(merged));
