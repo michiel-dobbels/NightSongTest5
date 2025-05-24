@@ -73,6 +73,7 @@ export default function PostDetailScreen() {
       .from('replies')
       .insert([
         { post_id: post.id, user_id: user.id, content: replyText, username: profile.display_name || profile.username },
+
       ])
       .select()
       .single();
@@ -83,6 +84,7 @@ export default function PostDetailScreen() {
         .insert([
           { post_id: post.id, user_id: user.id, content: replyText },
         ])
+
         .select()
         .single();
       data = retry.data;
@@ -97,6 +99,7 @@ export default function PostDetailScreen() {
     } else {
       console.error('Failed to reply:', error);
       setReplies(prev => prev.filter(r => r.id !== newReply.id));
+
     }
   };
 
