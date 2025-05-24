@@ -84,8 +84,21 @@ export default function PostDetailScreen() {
 
     // PGRST204 means the insert succeeded but no row was returned
     if (error?.code === 'PGRST204') {
-
-      error = null as any;
+      // Retry the insert once in case the schema cache was stale
+      const retry = await supabase
+        .from('replies')
+        .insert([
+          {
+            post_id: post.id,
+            user_id: user.id,
+            content: replyText,
+            username: profile.display_name || profile.username,
+          },
+        ])
+        .select()
+        .single();
+      data = retry.data;
+      error = retry.error;
     }
 
     if (!error) {

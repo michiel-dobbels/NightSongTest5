@@ -92,8 +92,20 @@ export default function HomeScreen() {
       .single();
 
     if (error?.code === 'PGRST204') {
-
-      error = null as any;
+      // Retry once in case the schema cache was stale
+      const retry = await supabase
+        .from('posts')
+        .insert([
+          {
+            content: postText,
+            user_id: user.id,
+            username: profile.display_name || profile.username,
+          },
+        ])
+        .select()
+        .single();
+      data = retry.data;
+      error = retry.error;
     }
 
     if (!error) {
