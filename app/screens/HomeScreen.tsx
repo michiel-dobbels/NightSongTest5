@@ -94,6 +94,7 @@ export default function HomeScreen() {
     if (error?.code === 'PGRST204') {
       // The row was inserted but not returned; treat as success
       error = null;
+
     }
 
     if (!error) {
@@ -109,8 +110,10 @@ export default function HomeScreen() {
           return updated;
         });
       }
+
       // Refresh from the server in the background to stay in sync
       fetchPosts();
+
     } else {
       // Remove the optimistic post if it failed to persist
       setPosts((prev) => {

@@ -1,9 +1,13 @@
 import React, { useEffect, useState } from 'react';
 import { View, Text, TextInput, Button, FlatList, StyleSheet } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useRoute } from '@react-navigation/native';
+
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../AuthContext';
 import { colors } from '../styles/colors';
+
+const REPLY_STORAGE_PREFIX = 'cached_replies_';
 
 interface Post {
   id: string;
@@ -35,8 +39,11 @@ export default function PostDetailScreen() {
   const { user, profile } = useAuth() as any;
   const post = route.params.post as Post;
 
+  const STORAGE_KEY = `${REPLY_STORAGE_PREFIX}${post.id}`;
+
   const [replyText, setReplyText] = useState('');
   const [replies, setReplies] = useState<Reply[]>([]);
+  const STORAGE_KEY = `cached_replies_${post.id}`;
 
   const fetchReplies = async () => {
     const { data, error } = await supabase
@@ -46,12 +53,27 @@ export default function PostDetailScreen() {
       .order('created_at', { ascending: false });
     if (!error && data) {
       setReplies(data as Reply[]);
+      AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(data));
     }
   };
 
   useEffect(() => {
-    fetchReplies();
+    const loadCached = async () => {
+      const stored = await AsyncStorage.getItem(STORAGE_KEY);
+      if (stored) {
+        try {
+          setReplies(JSON.parse(stored));
+        } catch (e) {
+          console.error('Failed to parse cached replies', e);
+        }
+      }
+
+      fetchReplies();
+    };
+
+    loadCached();
   }, []);
+
 
   const handleReply = async () => {
     if (!replyText.trim() || !user) return;
@@ -66,27 +88,31 @@ export default function PostDetailScreen() {
       profiles: { username: profile.username, display_name: profile.display_name },
     };
 
-    setReplies(prev => [newReply, ...prev]);
+    setReplies(prev => {
+      const updated = [newReply, ...prev];
+      AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
+      return updated;
+    });
     setReplyText('');
 
     let { data, error } = await supabase
       .from('replies')
       .insert([
-
         {
           post_id: post.id,
           user_id: user.id,
           content: replyText,
           username: profile.display_name || profile.username,
         },
-
       ])
       .select()
       .single();
 
+    // PGRST204 means the insert succeeded but no row was returned
     if (error?.code === 'PGRST204') {
       // Treat "no row returned" as success so the optimistic reply persists
       error = null;
+
     }
 
     if (!error) {
@@ -94,12 +120,14 @@ export default function PostDetailScreen() {
         setReplies(prev =>
           prev.map(r => (r.id === newReply.id ? { ...r, id: data.id, created_at: data.created_at } : r))
         );
+
       }
       // Whether or not data was returned, refresh from the server so the reply persists
       fetchReplies();
     } else {
       console.error('Failed to reply:', error?.message);
       setReplies(prev => prev.filter(r => r.id !== newReply.id));
+
 
     }
   };
