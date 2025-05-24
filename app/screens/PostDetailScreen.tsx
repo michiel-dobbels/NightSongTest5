@@ -72,12 +72,7 @@ export default function PostDetailScreen() {
     let { data, error } = await supabase
       .from('replies')
       .insert([
-        {
-          post_id: post.id,
-          user_id: user.id,
-          content: replyText,
-          username: profile.display_name || profile.username,
-        },
+        { post_id: post.id, user_id: user.id, content: replyText, username: profile.display_name || profile.username },
 
       ])
       .select()
