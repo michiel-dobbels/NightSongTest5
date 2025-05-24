@@ -52,8 +52,18 @@ export default function PostDetailScreen() {
       .order('created_at', { ascending: false });
     if (!error && data) {
       setReplies(prev => {
-        const optimistic = prev.filter(r => r.id.startsWith('temp-'));
-        const merged = [...optimistic, ...(data as Reply[])];
+        const serverMap = new Map((data as Reply[]).map(r => [r.id, r]));
+        // Include any previously cached replies that aren't in the latest
+        // server response (e.g., newly posted ones that haven't replicated yet)
+        prev.forEach(r => {
+          if (!serverMap.has(r.id)) {
+            serverMap.set(r.id, r);
+          }
+        });
+
+        const merged = Array.from(serverMap.values()).sort((a, b) =>
+          new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+        );
 
         AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(merged));
         return merged;
