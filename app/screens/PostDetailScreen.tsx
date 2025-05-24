@@ -84,6 +84,7 @@ export default function PostDetailScreen() {
 
     // PGRST204 means the insert succeeded but no row was returned
     if (error?.code === 'PGRST204') {
+
       error = null as any;
     }
 

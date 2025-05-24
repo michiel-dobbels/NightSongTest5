@@ -92,6 +92,7 @@ export default function HomeScreen() {
       .single();
 
     if (error?.code === 'PGRST204') {
+
       error = null as any;
     }
 
@@ -111,6 +112,7 @@ export default function HomeScreen() {
 
       // Refresh from the server in the background to stay in sync
       fetchPosts();
+
     } else {
       // Remove the optimistic post if it failed to persist
       setPosts((prev) => {
