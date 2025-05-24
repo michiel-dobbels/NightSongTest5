@@ -1,10 +1,13 @@
 import React, { useEffect, useState } from 'react';
 import { View, Text, TextInput, Button, FlatList, StyleSheet } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useRoute } from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../AuthContext';
 import { colors } from '../styles/colors';
+
+const REPLY_STORAGE_PREFIX = 'cached_replies_';
 
 interface Post {
   id: string;
@@ -35,6 +38,9 @@ export default function PostDetailScreen() {
   const route = useRoute<any>();
   const { user, profile } = useAuth() as any;
   const post = route.params.post as Post;
+  const STORAGE_KEY = `replies_${post.id}`;
+
+  const STORAGE_KEY = `${REPLY_STORAGE_PREFIX}${post.id}`;
 
   const [replyText, setReplyText] = useState('');
   const [replies, setReplies] = useState<Reply[]>([]);
@@ -68,6 +74,7 @@ export default function PostDetailScreen() {
 
     loadCached();
   }, []);
+
 
   const handleReply = async () => {
     if (!replyText.trim() || !user) return;
@@ -135,6 +142,7 @@ export default function PostDetailScreen() {
       fetchReplies();
     } else {
       console.error('Failed to reply:', error?.message);
+
       setReplies(prev => {
         const updated = prev.filter(r => r.id !== newReply.id);
         AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
