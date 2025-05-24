@@ -52,9 +52,11 @@ export default function PostDetailScreen() {
       .order('created_at', { ascending: false });
     if (!error && data) {
       setReplies(prev => {
-        // Keep any replies that haven't been synced yet (ids starting with "temp-")
-        const tempReplies = prev.filter(r => r.id.startsWith('temp-'));
-        const merged = [...tempReplies, ...(data as Reply[])].sort(
+        const serverIds = new Set((data as Reply[]).map(r => r.id));
+        // Keep any replies in state that aren't returned from the server yet
+        const missing = prev.filter(r => !serverIds.has(r.id));
+        const merged = [...missing, ...(data as Reply[])];
+        merged.sort(
           (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
 
         );
@@ -103,8 +105,11 @@ export default function PostDetailScreen() {
     });
     setReplyText('');
 
+    let data;
+    let error;
     try {
-      let { data, error } = await supabase
+      ({ data, error } = await supabase
+
         .from('replies')
         .insert([
           {
@@ -115,18 +120,20 @@ export default function PostDetailScreen() {
           },
         ])
         .select()
-        .single();
+        .single());
+    } catch (err: any) {
+      console.error('Failed to reply:', err.message);
+      Alert.alert('Reply failed', err.message);
+      return;
+    }
 
-      // PGRST204 means the insert succeeded but no row was returned
-      if (error?.code === 'PGRST204') {
-        // Treat as success and keep the optimistic reply. We rely on
-        // fetchReplies() to load the new row instead of retrying the insert.
-        error = null;
-      }
+    // PGRST204 means the insert succeeded but no row was returned
+    if (error?.code === 'PGRST204') {
+      // Treat as success and keep the optimistic reply. We rely on
+      // fetchReplies() to load the new row instead of retrying the insert.
+      error = null;
+    }
 
-      if (error) {
-        throw error;
-      }
 
     if (!error) {
 
