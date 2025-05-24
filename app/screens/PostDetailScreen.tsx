@@ -72,7 +72,13 @@ export default function PostDetailScreen() {
     let { data, error } = await supabase
       .from('replies')
       .insert([
-        { post_id: post.id, user_id: user.id, content: replyText, username: profile.display_name || profile.username },
+
+        {
+          post_id: post.id,
+          user_id: user.id,
+          content: replyText,
+          username: profile.display_name || profile.username,
+        },
 
       ])
       .select()
@@ -81,9 +87,8 @@ export default function PostDetailScreen() {
     if (error?.code === 'PGRST204') {
       const retry = await supabase
         .from('replies')
-        .insert([
-          { post_id: post.id, user_id: user.id, content: replyText },
-        ])
+
+        .insert([{ post_id: post.id, user_id: user.id, content: replyText }])
 
         .select()
         .single();
