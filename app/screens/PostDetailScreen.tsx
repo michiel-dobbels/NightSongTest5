@@ -35,6 +35,7 @@ export default function PostDetailScreen() {
   const route = useRoute<any>();
   const { user, profile } = useAuth() as any;
   const post = route.params.post as Post;
+  const STORAGE_KEY = `replies_${post.id}`;
 
   const [replyText, setReplyText] = useState('');
   const [replies, setReplies] = useState<Reply[]>([]);
@@ -135,6 +136,7 @@ export default function PostDetailScreen() {
       fetchReplies();
     } else {
       console.error('Failed to reply:', error?.message || error?.details || error);
+
       setReplies(prev => {
         const updated = prev.filter(r => r.id !== newReply.id);
         AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
