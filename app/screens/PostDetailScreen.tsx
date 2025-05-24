@@ -58,6 +58,7 @@ export default function PostDetailScreen() {
         merged.sort(
           (a, b) =>
             new Date(b.created_at).getTime() - new Date(a.created_at).getTime(),
+
         );
 
         AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(merged));
