@@ -85,24 +85,20 @@ export default function PostDetailScreen() {
       .single();
 
     if (error?.code === 'PGRST204') {
-      const retry = await supabase
-        .from('replies')
-
-        .insert([{ post_id: post.id, user_id: user.id, content: replyText }])
-
-        .select()
-        .single();
-      data = retry.data;
-      error = retry.error;
+      // Treat "no row returned" as success so the optimistic reply persists
+      error = null;
     }
 
-    if (!error && data) {
-      setReplies(prev =>
-        prev.map(r => (r.id === newReply.id ? { ...r, id: data.id, created_at: data.created_at } : r))
-      );
+    if (!error) {
+      if (data) {
+        setReplies(prev =>
+          prev.map(r => (r.id === newReply.id ? { ...r, id: data.id, created_at: data.created_at } : r))
+        );
+      }
+      // Whether or not data was returned, refresh from the server so the reply persists
       fetchReplies();
     } else {
-      console.error('Failed to reply:', error);
+      console.error('Failed to reply:', error?.message);
       setReplies(prev => prev.filter(r => r.id !== newReply.id));
 
     }

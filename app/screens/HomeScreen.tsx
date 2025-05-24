@@ -92,31 +92,23 @@ export default function HomeScreen() {
       .single();
 
     if (error?.code === 'PGRST204') {
-
-      const retry = await supabase
-        .from('posts')
-        .insert([
-          { content: postText, user_id: user.id },
-        ])
-        .select()
-        .single();
-      data = retry.data;
-      error = retry.error;
-
+      // The row was inserted but not returned; treat as success
+      error = null;
     }
 
-    if (!error && data) {
-      // Update the optimistic post with the real data from Supabase
-      setPosts((prev) => {
-        const updated = prev.map((p) =>
-          p.id === newPost.id
-            ? { ...p, id: data.id, created_at: data.created_at }
-            : p
-        );
-        AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
-        return updated;
-      });
-
+    if (!error) {
+      if (data) {
+        // Update the optimistic post with the real data from Supabase
+        setPosts((prev) => {
+          const updated = prev.map((p) =>
+            p.id === newPost.id
+              ? { ...p, id: data.id, created_at: data.created_at }
+              : p
+          );
+          AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
+          return updated;
+        });
+      }
       // Refresh from the server in the background to stay in sync
       fetchPosts();
     } else {
@@ -128,7 +120,7 @@ export default function HomeScreen() {
       });
 
       // Log the failure and surface it to the user
-      console.error('Failed to post:', error);
+      console.error('Failed to post:', error?.message);
       Alert.alert('Post failed', error?.message ?? 'Unable to create post');
     }
   };
