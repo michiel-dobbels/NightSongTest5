@@ -54,10 +54,8 @@ export default function PostDetailScreen() {
       setReplies(prev => {
         // Keep any replies that haven't been synced yet (ids starting with "temp-")
         const tempReplies = prev.filter(r => r.id.startsWith('temp-'));
-        const merged = [...tempReplies, ...(data as Reply[])];
-        merged.sort(
-          (a, b) =>
-            new Date(b.created_at).getTime() - new Date(a.created_at).getTime(),
+        const merged = [...tempReplies, ...(data as Reply[])].sort(
+          (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
 
         );
 
@@ -130,15 +128,7 @@ export default function PostDetailScreen() {
         throw error;
       }
 
-      if (data) {
-        setReplies(prev =>
-          prev.map(r =>
-            r.id === newReply.id
-              ? { ...r, id: data.id, created_at: data.created_at }
-              : r,
-          ),
-        );
-      }
+    if (!error) {
 
       // Whether or not data was returned, refresh from the server so the reply persists
       await fetchReplies();
