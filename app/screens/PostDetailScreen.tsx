@@ -56,6 +56,7 @@ export default function PostDetailScreen() {
         const tempReplies = prev.filter(r => r.id.startsWith('temp-'));
         const merged = [...tempReplies, ...(data as Reply[])].sort(
           (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+
         );
 
         AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(merged));
@@ -102,32 +103,38 @@ export default function PostDetailScreen() {
     });
     setReplyText('');
 
-    let { data, error } = await supabase
-      .from('replies')
-      .insert([
-        {
-          post_id: post.id,
-          user_id: user.id,
-          content: replyText,
-          username: profile.display_name || profile.username,
-        },
-      ])
-      .select()
-      .single();
+    try {
+      let { data, error } = await supabase
+        .from('replies')
+        .insert([
+          {
+            post_id: post.id,
+            user_id: user.id,
+            content: replyText,
+            username: profile.display_name || profile.username,
+          },
+        ])
+        .select()
+        .single();
 
-    // PGRST204 means the insert succeeded but no row was returned
-    if (error?.code === 'PGRST204') {
-      // Treat as success and keep the optimistic reply. We rely on
-      // fetchReplies() to load the new row instead of retrying the insert.
-      error = null;
-    }
+      // PGRST204 means the insert succeeded but no row was returned
+      if (error?.code === 'PGRST204') {
+        // Treat as success and keep the optimistic reply. We rely on
+        // fetchReplies() to load the new row instead of retrying the insert.
+        error = null;
+      }
+
+      if (error) {
+        throw error;
+      }
 
     if (!error) {
+
       // Whether or not data was returned, refresh from the server so the reply persists
-      fetchReplies();
-    } else {
-      console.error('Failed to reply:', error?.message);
-      Alert.alert('Reply failed', error?.message ?? 'Unable to create reply');
+      await fetchReplies();
+    } catch (err: any) {
+      console.error('Failed to reply:', err?.message ?? err);
+      Alert.alert('Reply failed', err?.message ?? 'Unable to create reply');
 
       // Keep the optimistic reply so the user doesn't lose their input
     }
