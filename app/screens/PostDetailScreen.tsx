@@ -60,6 +60,7 @@ export default function PostDetailScreen() {
           (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
         );
 
+
         AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(merged));
         return merged;
       });
@@ -104,18 +105,30 @@ export default function PostDetailScreen() {
     });
     setReplyText('');
 
-    let { data, error } = await supabase
-      .from('replies')
-      .insert([
-        {
-          post_id: post.id,
-          user_id: user.id,
-          content: replyText,
-          username: profile.display_name || profile.username,
-        },
-      ])
-      .select()
-      .single();
+    let data: any;
+    let error: any;
+    try {
+      const response = await supabase
+
+        .from('replies')
+        .insert([
+          {
+            post_id: post.id,
+            user_id: user.id,
+            content: replyText,
+            username: profile.display_name || profile.username,
+          },
+        ])
+        .select()
+        .single();
+      data = response.data;
+      error = response.error;
+    } catch (err: any) {
+      console.error('Failed to reply:', err?.message);
+      Alert.alert('Reply failed', err?.message ?? 'Unable to create reply');
+      return; // keep optimistic reply
+
+    }
 
     // PGRST204 means the insert succeeded but no row was returned
     if (error?.code === 'PGRST204') {
@@ -123,6 +136,7 @@ export default function PostDetailScreen() {
       // fetchReplies() to load the new row instead of retrying the insert.
       error = null;
     }
+
 
     if (!error) {
       if (data) {
@@ -143,6 +157,7 @@ export default function PostDetailScreen() {
     } else {
       console.error('Failed to reply:', error);
       Alert.alert('Reply failed', error?.message ?? 'Unable to create reply');
+
 
       // Keep the optimistic reply so the user doesn't lose their input
     }
