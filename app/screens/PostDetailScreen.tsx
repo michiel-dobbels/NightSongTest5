@@ -52,8 +52,16 @@ export default function PostDetailScreen() {
       .order('created_at', { ascending: false });
     if (!error && data) {
       setReplies(prev => {
-        const optimistic = prev.filter(r => r.id.startsWith('temp-'));
-        const merged = [...optimistic, ...(data as Reply[])];
+        // Preserve any replies already in state that aren't returned yet
+        const serverReplies = data as Reply[];
+        const missing = prev.filter(
+          r => !serverReplies.some(s => s.id === r.id)
+        );
+        const merged = [...missing, ...serverReplies].sort(
+          (a, b) =>
+            new Date(b.created_at).getTime() -
+            new Date(a.created_at).getTime()
+        );
 
         AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(merged));
         return merged;
