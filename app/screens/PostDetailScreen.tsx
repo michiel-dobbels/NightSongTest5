@@ -96,10 +96,13 @@ export default function PostDetailScreen() {
       error = retry.error;
     }
 
-    if (!error && data) {
-      setReplies(prev =>
-        prev.map(r => (r.id === newReply.id ? { ...r, id: data.id, created_at: data.created_at } : r))
-      );
+    if (!error) {
+      if (data) {
+        setReplies(prev =>
+          prev.map(r => (r.id === newReply.id ? { ...r, id: data.id, created_at: data.created_at } : r))
+        );
+      }
+      // Whether or not data was returned, refresh from the server so the reply persists
       fetchReplies();
     } else {
       console.error('Failed to reply:', error);
