@@ -45,6 +45,7 @@ export default function PostDetailScreen() {
   const [replies, setReplies] = useState<Reply[]>([]);
 
   const fetchReplies = async () => {
+
     try {
       const { data, error } = await supabase
         .from('replies')
@@ -68,6 +69,7 @@ export default function PostDetailScreen() {
       }
     } catch (err) {
       console.error('Failed to fetch replies', err);
+
     }
   };
 
@@ -111,6 +113,7 @@ export default function PostDetailScreen() {
 
     try {
       const { data, error } = await supabase
+
         .from('replies')
         .insert([
           {
@@ -145,6 +148,7 @@ export default function PostDetailScreen() {
     } catch (err: any) {
       console.error('Failed to reply:', err);
       Alert.alert('Reply failed', err?.message ?? 'Unable to create reply');
+
       // Keep the optimistic reply so the user doesn't lose their input
     }
   };
