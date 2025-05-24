@@ -146,10 +146,10 @@ export default function PostDetailScreen() {
         throw safeError;
       }
     } catch (err: any) {
+      // Log the error but keep the optimistic reply without showing an alert
       console.error('Failed to reply:', err);
-      Alert.alert('Reply failed', err?.message ?? 'Unable to create reply');
 
-      // Keep the optimistic reply so the user doesn't lose their input
+      // The optimistic reply remains so the user doesn't lose their input
     }
   };
 
