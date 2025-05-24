@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, TextInput, Button, FlatList, StyleSheet } from 'react-native';
+import { View, Text, TextInput, Button, FlatList, StyleSheet, Alert } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useRoute } from '@react-navigation/native';
 
@@ -47,12 +47,18 @@ export default function PostDetailScreen() {
   const fetchReplies = async () => {
     const { data, error } = await supabase
       .from('replies')
-      .select('id, post_id, user_id, content, created_at, profiles(username, display_name)')
+      .select(
+        'id, post_id, user_id, content, created_at, profiles(username, display_name)'
+      )
       .eq('post_id', post.id)
       .order('created_at', { ascending: false });
     if (!error && data) {
-      setReplies(data as Reply[]);
-      AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+      setReplies(prev => {
+        const optimistic = prev.filter(r => r.id.startsWith('temp-'));
+        const combined = [...optimistic, ...(data as Reply[])];
+        AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(combined));
+        return combined;
+      });
     }
   };
 
@@ -125,9 +131,9 @@ export default function PostDetailScreen() {
       fetchReplies();
     } else {
       console.error('Failed to reply:', error?.message);
-      setReplies(prev => prev.filter(r => r.id !== newReply.id));
+      Alert.alert('Reply failed', error?.message ?? 'Unable to create reply');
 
-
+      // Keep the optimistic reply so the user doesn't lose their input
     }
   };
 
