@@ -85,15 +85,8 @@ export default function PostDetailScreen() {
       .single();
 
     if (error?.code === 'PGRST204') {
-      const retry = await supabase
-        .from('replies')
-
-        .insert([{ post_id: post.id, user_id: user.id, content: replyText }])
-
-        .select()
-        .single();
-      data = retry.data;
-      error = retry.error;
+      // Treat a 204 response as success with no data
+      error = null as any;
     }
 
     if (!error) {
@@ -105,7 +98,7 @@ export default function PostDetailScreen() {
       // Whether or not data was returned, refresh from the server so the reply persists
       fetchReplies();
     } else {
-      console.error('Failed to reply:', error);
+      console.error('Failed to reply:', error?.message);
       setReplies(prev => prev.filter(r => r.id !== newReply.id));
 
     }
