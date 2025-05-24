@@ -73,7 +73,7 @@ export default function PostDetailScreen() {
     };
 
     loadCached();
-  }, [STORAGE_KEY]);
+  }, []);
 
 
   const handleReply = async () => {
