@@ -59,6 +59,7 @@ export default function PostDetailScreen() {
           (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
         );
 
+
         AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(merged));
         return merged;
       });
@@ -103,18 +104,30 @@ export default function PostDetailScreen() {
     });
     setReplyText('');
 
-    let { data, error } = await supabase
-      .from('replies')
-      .insert([
-        {
-          post_id: post.id,
-          user_id: user.id,
-          content: replyText,
-          username: profile.display_name || profile.username,
-        },
-      ])
-      .select()
-      .single();
+    let data: any;
+    let error: any;
+    try {
+      const response = await supabase
+
+        .from('replies')
+        .insert([
+          {
+            post_id: post.id,
+            user_id: user.id,
+            content: replyText,
+            username: profile.display_name || profile.username,
+          },
+        ])
+        .select()
+        .single();
+      data = response.data;
+      error = response.error;
+    } catch (err: any) {
+      console.error('Failed to reply:', err?.message);
+      Alert.alert('Reply failed', err?.message ?? 'Unable to create reply');
+      return; // keep optimistic reply
+
+    }
 
     // PGRST204 means the insert succeeded but no row was returned
     if (error?.code === 'PGRST204') {
@@ -123,18 +136,14 @@ export default function PostDetailScreen() {
       error = null;
     }
 
-    if (!error) {
-      if (data) {
-        setReplies(prev =>
-          prev.map(r => (r.id === newReply.id ? { ...r, id: data.id, created_at: data.created_at } : r))
-        );
 
-      }
+    if (!error) {
+
       // Whether or not data was returned, refresh from the server so the reply persists
-      fetchReplies();
-    } else {
-      console.error('Failed to reply:', error?.message);
-      Alert.alert('Reply failed', error?.message ?? 'Unable to create reply');
+      await fetchReplies();
+    } catch (err: any) {
+      console.error('Failed to reply:', err?.message ?? err);
+      Alert.alert('Reply failed', err?.message ?? 'Unable to create reply');
 
       // Keep the optimistic reply so the user doesn't lose their input
     }
