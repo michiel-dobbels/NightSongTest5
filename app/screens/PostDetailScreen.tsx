@@ -52,8 +52,13 @@ export default function PostDetailScreen() {
       .order('created_at', { ascending: false });
     if (!error && data) {
       setReplies(prev => {
-        const optimistic = prev.filter(r => r.id.startsWith('temp-'));
-        const merged = [...optimistic, ...(data as Reply[])];
+        const serverIds = new Set((data as Reply[]).map(r => r.id));
+        // Keep any replies in state that aren't returned from the server yet
+        const missing = prev.filter(r => !serverIds.has(r.id));
+        const merged = [...missing, ...(data as Reply[])];
+        merged.sort(
+          (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+        );
 
         AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(merged));
         return merged;
@@ -99,18 +104,26 @@ export default function PostDetailScreen() {
     });
     setReplyText('');
 
-    let { data, error } = await supabase
-      .from('replies')
-      .insert([
-        {
-          post_id: post.id,
-          user_id: user.id,
-          content: replyText,
-          username: profile.display_name || profile.username,
-        },
-      ])
-      .select()
-      .single();
+    let data;
+    let error;
+    try {
+      ({ data, error } = await supabase
+        .from('replies')
+        .insert([
+          {
+            post_id: post.id,
+            user_id: user.id,
+            content: replyText,
+            username: profile.display_name || profile.username,
+          },
+        ])
+        .select()
+        .single());
+    } catch (err: any) {
+      console.error('Failed to reply:', err.message);
+      Alert.alert('Reply failed', err.message);
+      return;
+    }
 
     // PGRST204 means the insert succeeded but no row was returned
     if (error?.code === 'PGRST204') {
