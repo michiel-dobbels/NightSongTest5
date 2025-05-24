@@ -72,20 +72,19 @@ export default function PostDetailScreen() {
     let { data, error } = await supabase
       .from('replies')
       .insert([
-
         {
           post_id: post.id,
           user_id: user.id,
           content: replyText,
           username: profile.display_name || profile.username,
         },
-
       ])
       .select()
       .single();
 
+    // PGRST204 means the insert succeeded but no row was returned
     if (error?.code === 'PGRST204') {
-      // Treat a 204 response as success with no data
+
       error = null as any;
     }
 

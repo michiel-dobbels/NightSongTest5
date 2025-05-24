@@ -92,7 +92,7 @@ export default function HomeScreen() {
       .single();
 
     if (error?.code === 'PGRST204') {
-      // Treat a 204 response as success with no data
+
       error = null as any;
     }
 
@@ -108,13 +108,11 @@ export default function HomeScreen() {
           AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
           return updated;
         });
-
-        // Refresh from the server in the background to stay in sync
-        fetchPosts();
-      } else {
-        // No data returned, just refresh to ensure persistence
-        fetchPosts();
       }
+
+      // Refresh from the server in the background to stay in sync
+      fetchPosts();
+
     } else {
       // Remove the optimistic post if it failed to persist
       setPosts((prev) => {
