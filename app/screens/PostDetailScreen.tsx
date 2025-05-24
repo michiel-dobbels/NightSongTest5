@@ -54,6 +54,7 @@ export default function PostDetailScreen() {
       setReplies(prev => {
         const optimistic = prev.filter(r => r.id.startsWith('temp-'));
         const merged = [...optimistic, ...(data as Reply[])];
+
         AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(merged));
         return merged;
       });
