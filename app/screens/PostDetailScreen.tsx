@@ -84,10 +84,12 @@ export default function PostDetailScreen() {
       .single();
 
     if (error?.code === 'PGRST204') {
-
       const retry = await supabase
         .from('replies')
-        .insert([{ post_id: post.id, user_id: user.id, content: replyText }])
+        .insert([
+          { post_id: post.id, user_id: user.id, content: replyText },
+        ])
+
         .select()
         .single();
       data = retry.data;
@@ -96,14 +98,12 @@ export default function PostDetailScreen() {
 
     if (!error && data) {
       setReplies(prev =>
-        prev.map(r =>
-          r.id === newReply.id ? { ...r, id: data.id, created_at: data.created_at } : r
-        )
+        prev.map(r => (r.id === newReply.id ? { ...r, id: data.id, created_at: data.created_at } : r))
       );
       fetchReplies();
     } else {
-      setReplies(prev => prev.filter(r => r.id !== newReply.id));
       console.error('Failed to reply:', error);
+      setReplies(prev => prev.filter(r => r.id !== newReply.id));
 
     }
   };
