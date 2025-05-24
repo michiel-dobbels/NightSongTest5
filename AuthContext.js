@@ -50,16 +50,6 @@ export function AuthProvider({ children }) {
       error = retry.error;
     }
 
-
-    if (error?.code === 'PGRST204') {
-      // Retry without the display_name column if the schema cache doesn't know it
-      const retry = await supabase.from('profiles').insert({
-        id: authUser.id,
-        username: defaultUsername,
-      });
-      error = retry.error;
-    }
-
     // Log any insertion error for easier debugging
     if (error) console.error('Failed to insert profile:', error);
 
