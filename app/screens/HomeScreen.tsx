@@ -92,9 +92,9 @@ export default function HomeScreen() {
       .single();
 
     if (error?.code === 'PGRST204') {
-      // The row was inserted but not returned; treat as success
+      // Insert succeeded but no row was returned. Don't retry; rely on the
+      // subsequent fetch to load the new post from the server.
       error = null;
-
     }
 
     if (!error) {

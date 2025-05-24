@@ -43,7 +43,6 @@ export default function PostDetailScreen() {
 
   const [replyText, setReplyText] = useState('');
   const [replies, setReplies] = useState<Reply[]>([]);
-  const STORAGE_KEY = `cached_replies_${post.id}`;
 
   const fetchReplies = async () => {
     const { data, error } = await supabase
@@ -110,9 +109,9 @@ export default function PostDetailScreen() {
 
     // PGRST204 means the insert succeeded but no row was returned
     if (error?.code === 'PGRST204') {
-      // Treat "no row returned" as success so the optimistic reply persists
+      // Treat as success and keep the optimistic reply. We rely on
+      // fetchReplies() to load the new row instead of retrying the insert.
       error = null;
-
     }
 
     if (!error) {
