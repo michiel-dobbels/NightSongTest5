@@ -78,11 +78,13 @@ export default function PostDetailScreen() {
           content: replyText,
           username: profile.display_name || profile.username,
         },
+
       ])
       .select()
       .single();
 
     if (error?.code === 'PGRST204') {
+
       const retry = await supabase
         .from('replies')
         .insert([{ post_id: post.id, user_id: user.id, content: replyText }])
@@ -102,6 +104,7 @@ export default function PostDetailScreen() {
     } else {
       setReplies(prev => prev.filter(r => r.id !== newReply.id));
       console.error('Failed to reply:', error);
+
     }
   };
 
