@@ -52,8 +52,11 @@ export default function PostDetailScreen() {
       .order('created_at', { ascending: false });
     if (!error && data) {
       setReplies(prev => {
-        const optimistic = prev.filter(r => r.id.startsWith('temp-'));
-        const merged = [...optimistic, ...(data as Reply[])];
+        // Keep any replies that haven't been synced yet (ids starting with "temp-")
+        const tempReplies = prev.filter(r => r.id.startsWith('temp-'));
+        const merged = [...tempReplies, ...(data as Reply[])].sort(
+          (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+        );
 
         AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(merged));
         return merged;
@@ -120,12 +123,6 @@ export default function PostDetailScreen() {
     }
 
     if (!error) {
-      if (data) {
-        setReplies(prev =>
-          prev.map(r => (r.id === newReply.id ? { ...r, id: data.id, created_at: data.created_at } : r))
-        );
-
-      }
       // Whether or not data was returned, refresh from the server so the reply persists
       fetchReplies();
     } else {
