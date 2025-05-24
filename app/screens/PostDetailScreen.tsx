@@ -42,6 +42,8 @@ export default function PostDetailScreen() {
 
   const STORAGE_KEY = `${REPLY_STORAGE_PREFIX}${post.id}`;
 
+  const STORAGE_KEY = `${REPLY_STORAGE_PREFIX}${post.id}`;
+
   const [replyText, setReplyText] = useState('');
   const [replies, setReplies] = useState<Reply[]>([]);
   const STORAGE_KEY = `cached_replies_${post.id}`;
