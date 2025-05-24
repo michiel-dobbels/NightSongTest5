@@ -52,17 +52,12 @@ export default function PostDetailScreen() {
       .order('created_at', { ascending: false });
     if (!error && data) {
       setReplies(prev => {
-        const serverMap = new Map((data as Reply[]).map(r => [r.id, r]));
-        // Include any previously cached replies that aren't in the latest
-        // server response (e.g., newly posted ones that haven't replicated yet)
-        prev.forEach(r => {
-          if (!serverMap.has(r.id)) {
-            serverMap.set(r.id, r);
-          }
-        });
-
-        const merged = Array.from(serverMap.values()).sort((a, b) =>
-          new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+        // Keep any replies that haven't been synced yet (ids starting with "temp-")
+        const tempReplies = prev.filter(r => r.id.startsWith('temp-'));
+        const merged = [...tempReplies, ...(data as Reply[])];
+        merged.sort(
+          (a, b) =>
+            new Date(b.created_at).getTime() - new Date(a.created_at).getTime(),
 
         );
 
@@ -110,38 +105,46 @@ export default function PostDetailScreen() {
     });
     setReplyText('');
 
-    let { data, error } = await supabase
-      .from('replies')
-      .insert([
-        {
-          post_id: post.id,
-          user_id: user.id,
-          content: replyText,
-          username: profile.display_name || profile.username,
-        },
-      ])
-      .select()
-      .single();
+    try {
+      let { data, error } = await supabase
+        .from('replies')
+        .insert([
+          {
+            post_id: post.id,
+            user_id: user.id,
+            content: replyText,
+            username: profile.display_name || profile.username,
+          },
+        ])
+        .select()
+        .single();
 
-    // PGRST204 means the insert succeeded but no row was returned
-    if (error?.code === 'PGRST204') {
-      // Treat as success and keep the optimistic reply. We rely on
-      // fetchReplies() to load the new row instead of retrying the insert.
-      error = null;
-    }
+      // PGRST204 means the insert succeeded but no row was returned
+      if (error?.code === 'PGRST204') {
+        // Treat as success and keep the optimistic reply. We rely on
+        // fetchReplies() to load the new row instead of retrying the insert.
+        error = null;
+      }
 
-    if (!error) {
+      if (error) {
+        throw error;
+      }
+
       if (data) {
         setReplies(prev =>
-          prev.map(r => (r.id === newReply.id ? { ...r, id: data.id, created_at: data.created_at } : r))
+          prev.map(r =>
+            r.id === newReply.id
+              ? { ...r, id: data.id, created_at: data.created_at }
+              : r,
+          ),
         );
-
       }
+
       // Whether or not data was returned, refresh from the server so the reply persists
-      fetchReplies();
-    } else {
-      console.error('Failed to reply:', error?.message);
-      Alert.alert('Reply failed', error?.message ?? 'Unable to create reply');
+      await fetchReplies();
+    } catch (err: any) {
+      console.error('Failed to reply:', err?.message ?? err);
+      Alert.alert('Reply failed', err?.message ?? 'Unable to create reply');
 
       // Keep the optimistic reply so the user doesn't lose their input
     }
