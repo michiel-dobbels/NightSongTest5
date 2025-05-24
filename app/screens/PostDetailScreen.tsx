@@ -140,7 +140,7 @@ export default function PostDetailScreen() {
       // Whether or not data was returned, refresh from the server so the reply persists
       fetchReplies();
     } else {
-      console.error('Failed to reply:', error?.message);
+      console.error('Failed to reply:', error?.message ?? error);
 
       setReplies(prev => {
         const updated = prev.filter(r => r.id !== newReply.id);
