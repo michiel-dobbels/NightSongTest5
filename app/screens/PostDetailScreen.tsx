@@ -52,8 +52,12 @@ export default function PostDetailScreen() {
       .order('created_at', { ascending: false });
     if (!error && data) {
       setReplies(prev => {
-        const optimistic = prev.filter(r => r.id.startsWith('temp-'));
-        const merged = [...optimistic, ...(data as Reply[])];
+        const fetched = data as Reply[];
+        const fetchedIds = new Set(fetched.map(r => r.id));
+        const missing = prev.filter(r => !fetchedIds.has(r.id));
+        const merged = [...missing, ...fetched].sort(
+          (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+        );
 
         AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(merged));
         return merged;
