@@ -110,43 +110,24 @@ export default function PostDetailScreen() {
 
     // PGRST204 means the insert succeeded but no row was returned
     if (error?.code === 'PGRST204') {
-      // Retry the insert once in case the schema cache was stale
-      const retry = await supabase
-        .from('replies')
-        .insert([
-          {
-            post_id: post.id,
-            user_id: user.id,
-            content: replyText,
-            username: profile.display_name || profile.username,
-          },
-        ])
-        .select()
-        .single();
-      data = retry.data;
-      error = retry.error;
+      // Treat "no row returned" as success so the optimistic reply persists
+      error = null;
+
     }
 
     if (!error) {
       if (data) {
-        setReplies(prev => {
-          const updated = prev.map(r =>
-            r.id === newReply.id ? { ...r, id: data.id, created_at: data.created_at } : r
-          );
-          AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
-          return updated;
-        });
+        setReplies(prev =>
+          prev.map(r => (r.id === newReply.id ? { ...r, id: data.id, created_at: data.created_at } : r))
+        );
+
       }
       // Whether or not data was returned, refresh from the server so the reply persists
       fetchReplies();
     } else {
-      console.error('Failed to reply:', error?.message ?? error);
+      console.error('Failed to reply:', error?.message);
+      setReplies(prev => prev.filter(r => r.id !== newReply.id));
 
-      setReplies(prev => {
-        const updated = prev.filter(r => r.id !== newReply.id);
-        AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
-        return updated;
-      });
 
     }
   };

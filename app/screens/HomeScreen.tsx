@@ -92,20 +92,9 @@ export default function HomeScreen() {
       .single();
 
     if (error?.code === 'PGRST204') {
-      // Retry once in case the schema cache was stale
-      const retry = await supabase
-        .from('posts')
-        .insert([
-          {
-            content: postText,
-            user_id: user.id,
-            username: profile.display_name || profile.username,
-          },
-        ])
-        .select()
-        .single();
-      data = retry.data;
-      error = retry.error;
+      // The row was inserted but not returned; treat as success
+      error = null;
+
     }
 
     if (!error) {
