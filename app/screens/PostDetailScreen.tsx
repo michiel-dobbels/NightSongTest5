@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { View, Text, TextInput, Button, FlatList, StyleSheet } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useRoute } from '@react-navigation/native';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../AuthContext';
@@ -34,6 +35,7 @@ export default function PostDetailScreen() {
   const route = useRoute<any>();
   const { user, profile } = useAuth() as any;
   const post = route.params.post as Post;
+  const STORAGE_KEY = `replies_${post.id}`;
 
   const [replyText, setReplyText] = useState('');
   const [replies, setReplies] = useState<Reply[]>([]);
@@ -46,11 +48,25 @@ export default function PostDetailScreen() {
       .order('created_at', { ascending: false });
     if (!error && data) {
       setReplies(data as Reply[]);
+      AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(data));
     }
   };
 
   useEffect(() => {
-    fetchReplies();
+    const loadCached = async () => {
+      const stored = await AsyncStorage.getItem(STORAGE_KEY);
+      if (stored) {
+        try {
+          setReplies(JSON.parse(stored));
+        } catch (e) {
+          console.error('Failed to parse cached replies', e);
+        }
+      }
+
+      fetchReplies();
+    };
+
+    loadCached();
   }, []);
 
   const handleReply = async () => {
@@ -66,7 +82,11 @@ export default function PostDetailScreen() {
       profiles: { username: profile.username, display_name: profile.display_name },
     };
 
-    setReplies(prev => [newReply, ...prev]);
+    setReplies(prev => {
+      const updated = [newReply, ...prev];
+      AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
+      return updated;
+    });
     setReplyText('');
 
     let { data, error } = await supabase
@@ -84,21 +104,42 @@ export default function PostDetailScreen() {
 
     // PGRST204 means the insert succeeded but no row was returned
     if (error?.code === 'PGRST204') {
-
-      error = null as any;
+      // Retry the insert once in case the schema cache was stale
+      const retry = await supabase
+        .from('replies')
+        .insert([
+          {
+            post_id: post.id,
+            user_id: user.id,
+            content: replyText,
+            username: profile.display_name || profile.username,
+          },
+        ])
+        .select()
+        .single();
+      data = retry.data;
+      error = retry.error;
     }
 
     if (!error) {
       if (data) {
-        setReplies(prev =>
-          prev.map(r => (r.id === newReply.id ? { ...r, id: data.id, created_at: data.created_at } : r))
-        );
+        setReplies(prev => {
+          const updated = prev.map(r =>
+            r.id === newReply.id ? { ...r, id: data.id, created_at: data.created_at } : r
+          );
+          AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
+          return updated;
+        });
       }
       // Whether or not data was returned, refresh from the server so the reply persists
       fetchReplies();
     } else {
       console.error('Failed to reply:', error?.message);
-      setReplies(prev => prev.filter(r => r.id !== newReply.id));
+      setReplies(prev => {
+        const updated = prev.filter(r => r.id !== newReply.id);
+        AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
+        return updated;
+      });
 
     }
   };
