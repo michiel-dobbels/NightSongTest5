@@ -63,6 +63,7 @@ export default function PostDetailScreen() {
         AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(merged));
         return merged;
       });
+
     }
   };
 
@@ -104,32 +105,39 @@ export default function PostDetailScreen() {
     });
     setReplyText('');
 
-    let { data, error } = await supabase
-      .from('replies')
-      .insert([
-        {
-          post_id: post.id,
-          user_id: user.id,
-          content: replyText,
-          username: profile.display_name || profile.username,
-        },
-      ])
-      .select()
-      .single();
+    try {
+      const { data, error } = await supabase
 
-    // PGRST204 means the insert succeeded but no row was returned
-    if (error?.code === 'PGRST204') {
-      // Treat as success and keep the optimistic reply. We rely on
-      // fetchReplies() to load the new row instead of retrying the insert.
-      error = null;
-    }
+        .from('replies')
+        .insert([
+          {
+            post_id: post.id,
+            user_id: user.id,
+            content: replyText,
+            username: profile.display_name || profile.username,
+          },
+        ])
+        .select()
+        .single();
 
-    if (!error) {
-      if (data) {
-        setReplies(prev =>
-          prev.map(r => (r.id === newReply.id ? { ...r, id: data.id, created_at: data.created_at } : r))
-        );
+      // PGRST204 means the insert succeeded but no row was returned
+      let safeError = error;
+      if (safeError?.code === 'PGRST204') {
+        // Treat as success and keep the optimistic reply. We'll fetch the row later.
+        safeError = null;
+      }
 
+      if (!safeError) {
+        if (data) {
+          setReplies(prev =>
+            prev.map(r => (r.id === newReply.id ? { ...r, id: data.id, created_at: data.created_at } : r))
+          );
+        } else {
+          // Fetch the new row from the server if it wasn't returned
+          fetchReplies();
+        }
+      } else {
+        throw safeError;
       }
       // Whether or not data was returned, refresh from the server so the reply persists
       fetchReplies();
@@ -137,7 +145,8 @@ export default function PostDetailScreen() {
       console.error('Failed to reply:', error);
       Alert.alert('Reply failed', error?.message ?? 'Unable to create reply');
 
-      // Keep the optimistic reply so the user doesn't lose their input
+
+      // The optimistic reply remains so the user doesn't lose their input
     }
   };
 
