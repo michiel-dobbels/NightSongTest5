@@ -44,6 +44,23 @@ export default function ReplyDetailScreen() {
 
   const [replyText, setReplyText] = useState('');
   const [replies, setReplies] = useState<Reply[]>([]);
+  const [ancestors, setAncestors] = useState<Reply[]>([]);
+
+  const fetchAncestors = async () => {
+    let currentId = parent.parent_id;
+    const chain: Reply[] = [];
+    while (currentId) {
+      const { data, error } = await supabase
+        .from('replies')
+        .select('id, post_id, parent_id, user_id, content, created_at, username')
+        .eq('id', currentId)
+        .single();
+      if (error || !data) break;
+      chain.unshift(data as Reply);
+      currentId = data.parent_id;
+    }
+    setAncestors(chain);
+  };
 
   const fetchReplies = async () => {
     const { data, error } = await supabase
@@ -74,6 +91,7 @@ export default function ReplyDetailScreen() {
       fetchReplies();
     };
     loadCached();
+    fetchAncestors();
   }, []);
 
   const handleReply = async () => {
@@ -128,6 +146,18 @@ export default function ReplyDetailScreen() {
 
   return (
     <View style={styles.container}>
+      <View style={styles.backButton}>
+        <Button title="Return" onPress={() => navigation.goBack()} />
+      </View>
+      {ancestors.map(a => {
+        const ancestorName = a.profiles?.display_name || a.profiles?.username || a.username;
+        return (
+          <View style={styles.post} key={a.id}>
+            <Text style={styles.username}>@{ancestorName}</Text>
+            <Text style={styles.postContent}>{a.content}</Text>
+          </View>
+        );
+      })}
       <View style={styles.post}>
         <Text style={styles.username}>@{name}</Text>
         <Text style={styles.postContent}>{parent.content}</Text>
@@ -189,6 +219,10 @@ const styles = StyleSheet.create({
     backgroundColor: 'white',
     padding: 10,
     borderRadius: 6,
+    marginBottom: 10,
+  },
+  backButton: {
+    alignSelf: 'flex-start',
     marginBottom: 10,
   },
 });
