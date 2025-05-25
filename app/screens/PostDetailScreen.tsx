@@ -47,7 +47,8 @@ export default function PostDetailScreen() {
   const fetchReplies = async () => {
     const { data, error } = await supabase
       .from('replies')
-      .select('id, post_id, user_id, content, created_at, profiles(username, display_name)')
+      // fetch only reply fields to avoid missing relationship errors
+      .select('id, post_id, user_id, content, created_at, username')
       .eq('post_id', post.id)
       .order('created_at', { ascending: false });
     if (!error && data) {
@@ -58,11 +59,13 @@ export default function PostDetailScreen() {
 
         merged.sort(
           (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime(),
+
         );
 
         AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(merged));
         return merged;
       });
+
     }
   };
 
@@ -106,6 +109,7 @@ export default function PostDetailScreen() {
 
     try {
       const { data, error } = await supabase
+
         .from('replies')
         .insert([
           {
@@ -152,6 +156,7 @@ export default function PostDetailScreen() {
       console.error('Failed to reply:', err);
       Alert.alert('Reply failed', err?.message ?? 'Unable to create reply');
       // Keep the optimistic reply so the user doesn't lose their input
+
     }
   };
 
