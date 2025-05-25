@@ -1,5 +1,13 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, TextInput, Button, FlatList, StyleSheet, TouchableOpacity } from 'react-native';
+import {
+  View,
+  Text,
+  TextInput,
+  Button,
+  FlatList,
+  StyleSheet,
+  TouchableOpacity,
+} from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useRoute, useNavigation } from '@react-navigation/native';
 
@@ -20,6 +28,18 @@ function timeAgo(dateString: string): string {
   return `${days}d ago`;
 }
 
+interface Post {
+  id: string;
+  content: string;
+  user_id: string;
+  created_at: string;
+  username?: string;
+  profiles?: {
+    username: string | null;
+    display_name: string | null;
+  } | null;
+}
+
 interface Reply {
   id: string;
   post_id: string;
@@ -38,6 +58,7 @@ interface Post {
   id: string;
   user_id: string;
   content: string;
+
   created_at: string;
   username?: string;
   profiles?: {
@@ -59,6 +80,7 @@ export default function ReplyDetailScreen() {
   const [ancestors, setAncestors] = useState<Reply[]>([]);
   const [rootPost, setRootPost] = useState<Post | null>(null);
 
+
   const fetchReplies = async () => {
     const { data, error } = await supabase
       .from('replies')
@@ -77,6 +99,7 @@ export default function ReplyDetailScreen() {
 
   const loadAncestors = async () => {
     const chain: Reply[] = [];
+
     let parentId = parent.parent_id;
     while (parentId) {
       const { data, error } = await supabase
@@ -84,6 +107,7 @@ export default function ReplyDetailScreen() {
         .select(
           'id, post_id, parent_id, user_id, content, created_at, username, profiles(username, display_name)'
         )
+
         .eq('id', parentId)
         .single();
       if (error || !data) break;
@@ -103,6 +127,7 @@ export default function ReplyDetailScreen() {
     if (postData) setRootPost(postData as Post);
   };
 
+
   useEffect(() => {
     const loadCached = async () => {
       const stored = await AsyncStorage.getItem(STORAGE_KEY);
@@ -113,10 +138,15 @@ export default function ReplyDetailScreen() {
           console.error('Failed to parse cached replies', e);
         }
       }
+
       fetchReplies();
       loadAncestors();
     };
+
     loadCached();
+    loadAncestors();
+    fetchRootPost();
+
   }, []);
 
   const handleReply = async () => {
@@ -167,7 +197,8 @@ export default function ReplyDetailScreen() {
     }
   };
 
-  const name = parent.profiles?.display_name || parent.profiles?.username || parent.username;
+  const name =
+    parent.profiles?.display_name || parent.profiles?.username || parent.username;
 
   return (
     <View style={styles.container}>
@@ -181,6 +212,7 @@ export default function ReplyDetailScreen() {
             @{rootPost.profiles?.display_name ||
               rootPost.profiles?.username ||
               rootPost.username}
+
           </Text>
           <Text style={styles.postContent}>{rootPost.content}</Text>
         </View>
@@ -191,6 +223,7 @@ export default function ReplyDetailScreen() {
         return (
           <View key={a.id} style={styles.post}>
             <Text style={styles.username}>@{ancestorName}</Text>
+
             <Text style={styles.postContent}>{a.content}</Text>
           </View>
         );
@@ -213,21 +246,51 @@ export default function ReplyDetailScreen() {
       <FlatList
         data={replies}
         keyExtractor={item => item.id}
-        renderItem={({ item }) => {
+        renderItem={({ item }: { item: Reply }) => {
           const childName = item.profiles?.display_name || item.profiles?.username || item.username;
           return (
             <TouchableOpacity onPress={() => navigation.push('ReplyDetail', { reply: item })}>
 
               <View style={styles.reply}>
                 <Text style={styles.username}>@{childName}</Text>
+
                 <Text style={styles.postContent}>{item.content}</Text>
                 <Text style={styles.timestamp}>{timeAgo(item.created_at)}</Text>
+
               </View>
-            </TouchableOpacity>
-          );
-        }}
-      />
-    </View>
+            );
+          })}
+
+          <View style={styles.post}>
+            <Text style={styles.username}>@{name}</Text>
+            <Text style={styles.postContent}>{parent.content}</Text>
+            <Text style={styles.timestamp}>{timeAgo(parent.created_at)}</Text>
+          </View>
+
+          <TextInput
+            placeholder="Write a reply"
+            value={replyText}
+            onChangeText={setReplyText}
+            style={styles.input}
+            multiline
+          />
+          <Button title="Post" onPress={handleReply} />
+        </View>
+      }
+      renderItem={({ item }) => {
+        const childName = item.profiles?.display_name || item.profiles?.username || item.username;
+        return (
+          <TouchableOpacity onPress={() => navigation.push('ReplyDetail', { reply: item })}>
+
+            <View style={styles.reply}>
+              <Text style={styles.username}>@{childName}</Text>
+              <Text style={styles.postContent}>{item.content}</Text>
+              <Text style={styles.timestamp}>{timeAgo(item.created_at)}</Text>
+            </View>
+          </TouchableOpacity>
+        );
+      }}
+    />
   );
 }
 
@@ -238,7 +301,16 @@ const styles = StyleSheet.create({
     paddingTop: 100,
     backgroundColor: colors.background,
   },
+  listContent: {
+    paddingBottom: 16,
+  },
   post: {
+    backgroundColor: '#ffffff10',
+    borderRadius: 6,
+    padding: 10,
+    marginBottom: 10,
+  },
+  ancestor: {
     backgroundColor: '#ffffff10',
     borderRadius: 6,
     padding: 10,
