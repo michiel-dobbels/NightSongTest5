@@ -9,6 +9,17 @@ import { colors } from '../styles/colors';
 
 const REPLY_STORAGE_PREFIX = 'cached_replies_';
 
+function timeAgo(dateString: string): string {
+  const diff = Date.now() - new Date(dateString).getTime();
+  const minutes = Math.floor(diff / (1000 * 60));
+  if (minutes < 1) return 'just now';
+  if (minutes < 60) return `${minutes}m ago`;
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) return `${hours}h ago`;
+  const days = Math.floor(hours / 24);
+  return `${days}d ago`;
+}
+
 interface Post {
   id: string;
   content: string;
@@ -103,8 +114,7 @@ export default function PostDetailScreen() {
     });
     setReplyText('');
 
-    try {
-      const { data, error } = await supabase
+    let { data, error } = await supabase
 
         .from('replies')
         .insert([
@@ -117,27 +127,24 @@ export default function PostDetailScreen() {
         ])
         .select()
         .single();
+    // PGRST204 means the insert succeeded but no row was returned
+    if (error?.code === 'PGRST204') {
+      error = null;
+    }
 
-      // PGRST204 means the insert succeeded but no row was returned
-      if (error?.code === 'PGRST204') {
-        // Treat as success and keep the optimistic reply. We rely on
-        // fetchReplies() to load the new row instead of retrying the insert.
-        if (data) {
-          setReplies(prev =>
-            prev.map(r =>
-              r.id === newReply.id ? { ...r, id: data.id, created_at: data.created_at } : r,
-            ),
-          );
-        }
-        fetchReplies();
-        return;
+    if (!error) {
+      if (data) {
+        setReplies(prev =>
+          prev.map(r =>
+            r.id === newReply.id ? { ...r, id: data.id, created_at: data.created_at } : r,
+          ),
+        );
       }
+
       // Whether or not data was returned, refresh from the server so the reply persists
       fetchReplies();
     } else {
-
       // Keep the optimistic reply so the user doesn't lose their input
-
     }
   };
 
@@ -168,6 +175,7 @@ export default function PostDetailScreen() {
             <View style={styles.reply}>
               <Text style={styles.username}>@{name}</Text>
               <Text style={styles.postContent}>{item.content}</Text>
+              <Text style={styles.timestamp}>{timeAgo(item.created_at)}</Text>
             </View>
           );
         }}
@@ -197,6 +205,7 @@ const styles = StyleSheet.create({
   },
   postContent: { color: 'white' },
   username: { fontWeight: 'bold', color: 'white' },
+  timestamp: { fontSize: 10, color: 'gray' },
   input: {
     backgroundColor: 'white',
     padding: 10,
