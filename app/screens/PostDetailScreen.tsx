@@ -45,30 +45,24 @@ export default function PostDetailScreen() {
   const [replies, setReplies] = useState<Reply[]>([]);
 
   const fetchReplies = async () => {
+    const { data, error } = await supabase
+      .from('replies')
+      // fetch only reply fields to avoid missing relationship errors
+      .select('id, post_id, user_id, content, created_at, username')
+      .eq('post_id', post.id)
+      .order('created_at', { ascending: false });
+    if (!error && data) {
+      setReplies(prev => {
+        // Keep any replies that haven't been synced yet (ids starting with "temp-")
+        const tempReplies = prev.filter(r => r.id.startsWith('temp-'));
+        const merged = [...tempReplies, ...(data as Reply[])];
+        merged.sort(
+          (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+        );
 
-    try {
-      const { data, error } = await supabase
-        .from('replies')
-        .select('id, post_id, user_id, content, created_at, profiles(username, display_name)')
-        .eq('post_id', post.id)
-        .order('created_at', { ascending: false });
-
-      if (!error && data) {
-        setReplies(prev => {
-          // Keep any replies that haven't been synced yet (ids starting with "temp-")
-          const tempReplies = prev.filter(r => r.id.startsWith('temp-'));
-          const merged = [...tempReplies, ...(data as Reply[])];
-
-          merged.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
-
-          AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(merged));
-          return merged;
-        });
-      } else if (error) {
-        throw error;
-      }
-    } catch (err) {
-      console.error('Failed to fetch replies', err);
+        AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(merged));
+        return merged;
+      });
 
     }
   };
@@ -145,9 +139,12 @@ export default function PostDetailScreen() {
       } else {
         throw safeError;
       }
-    } catch (err: any) {
-      // Log the error but keep the optimistic reply without showing an alert
-      console.error('Failed to reply:', err);
+      // Whether or not data was returned, refresh from the server so the reply persists
+      fetchReplies();
+    } else {
+      console.error('Failed to reply:', error);
+      Alert.alert('Reply failed', error?.message ?? 'Unable to create reply');
+
 
       // The optimistic reply remains so the user doesn't lose their input
     }
