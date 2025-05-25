@@ -181,7 +181,13 @@ export default function HomeScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, padding: 16, backgroundColor: colors.background },
+  container: {
+    flex: 1,
+    paddingHorizontal: 16,
+    paddingBottom: 16,
+    paddingTop: '15%',
+    backgroundColor: colors.background,
+  },
   input: {
     backgroundColor: 'white',
     padding: 10,
