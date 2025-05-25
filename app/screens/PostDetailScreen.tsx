@@ -177,7 +177,12 @@ export default function PostDetailScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, padding: 16, backgroundColor: colors.background },
+  container: {
+    flex: 1,
+    padding: 16,
+    paddingTop: 100,
+    backgroundColor: colors.background,
+  },
   post: {
     backgroundColor: '#ffffff10',
     borderRadius: 6,
