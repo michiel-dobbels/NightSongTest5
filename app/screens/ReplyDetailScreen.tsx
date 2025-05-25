@@ -84,9 +84,9 @@ export default function ReplyDetailScreen() {
     }
   };
 
-  const loadAncestors = async () => {
+  const loadAncestors = async (replyId: string | null) => {
     const chain: Reply[] = [];
-    let currentParentId = parent.parent_id;
+    let currentParentId: string | null = replyId;
 
     while (currentParentId) {
       const { data, error } = await supabase
@@ -128,7 +128,7 @@ export default function ReplyDetailScreen() {
     };
 
     loadCached();
-    loadAncestors();
+    loadAncestors(parent.parent_id);
   }, []);
 
   const handleReply = async () => {
