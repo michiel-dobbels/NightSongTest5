@@ -54,6 +54,7 @@ export default function ReplyDetailScreen() {
   const [replies, setReplies] = useState<Reply[]>([]);
   const [ancestors, setAncestors] = useState<Reply[]>([]);
 
+
   const fetchReplies = async () => {
     const { data, error } = await supabase
       .from('replies')
@@ -102,6 +103,7 @@ export default function ReplyDetailScreen() {
       fetchAncestors();
     };
     loadCached();
+    fetchAncestors();
   }, []);
 
   const handleReply = async () => {
@@ -164,11 +166,13 @@ export default function ReplyDetailScreen() {
           a.profiles?.display_name || a.profiles?.username || a.username;
         return (
           <View key={a.id} style={styles.post}>
+
             <Text style={styles.username}>@{ancestorName}</Text>
             <Text style={styles.postContent}>{a.content}</Text>
           </View>
         );
       })}
+
       <View style={styles.post}>
         <Text style={styles.username}>@{name}</Text>
         <Text style={styles.postContent}>{parent.content}</Text>
