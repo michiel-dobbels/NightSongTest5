@@ -54,6 +54,18 @@ interface Reply {
   } | null;
 }
 
+interface Post {
+  id: string;
+  content: string;
+  user_id: string;
+  created_at: string;
+  username?: string;
+  profiles?: {
+    username: string | null;
+    display_name: string | null;
+  } | null;
+}
+
 export default function ReplyDetailScreen() {
   const route = useRoute<any>();
   const navigation = useNavigation<any>();
@@ -66,6 +78,42 @@ export default function ReplyDetailScreen() {
   const [replies, setReplies] = useState<Reply[]>([]);
   const [ancestors, setAncestors] = useState<Reply[]>([]);
   const [rootPost, setRootPost] = useState<Post | null>(null);
+
+  const loadAncestors = async () => {
+    let currentParentId = parent.parent_id;
+    const chain: Reply[] = [];
+
+    while (currentParentId) {
+      const { data, error } = await supabase
+        .from('replies')
+        .select(
+          'id, post_id, parent_id, user_id, content, created_at, username, profiles(username, display_name)',
+        )
+        .eq('id', currentParentId)
+        .single();
+
+      if (error || !data) break;
+
+      chain.unshift(data as Reply);
+      currentParentId = data.parent_id;
+    }
+
+    if (chain.length) {
+      setAncestors(chain);
+    }
+
+    const { data: postData, error: postErr } = await supabase
+      .from('posts')
+      .select(
+        'id, user_id, content, created_at, username, profiles(username, display_name)',
+      )
+      .eq('id', parent.post_id)
+      .single();
+
+    if (!postErr && postData) {
+      setRootPost(postData as Post);
+    }
+  };
 
 
   const fetchReplies = async () => {
@@ -124,6 +172,7 @@ export default function ReplyDetailScreen() {
       }
 
       fetchReplies();
+      loadAncestors();
     };
 
     loadCached();
@@ -197,15 +246,15 @@ export default function ReplyDetailScreen() {
           <Text style={styles.postContent}>{rootPost.content}</Text>
         </View>
       )}
-
-      {ancestors.map(a => (
-        <View key={a.id} style={styles.post}>
-          <Text style={styles.username}>
-            @{a.profiles?.display_name || a.profiles?.username || a.username}
-          </Text>
-          <Text style={styles.postContent}>{a.content}</Text>
-        </View>
-      ))}
+      {ancestors.map((a: Reply) => {
+        const aName = a.profiles?.display_name || a.profiles?.username || a.username;
+        return (
+          <View key={a.id} style={styles.post}>
+            <Text style={styles.username}>@{aName}</Text>
+            <Text style={styles.postContent}>{a.content}</Text>
+          </View>
+        );
+      })}
 
       <View style={styles.post}>
         <Text style={styles.username}>@{name}</Text>
@@ -224,7 +273,7 @@ export default function ReplyDetailScreen() {
       <FlatList
         data={replies}
         keyExtractor={item => item.id}
-        renderItem={({ item }) => {
+        renderItem={({ item }: { item: Reply }) => {
           const childName = item.profiles?.display_name || item.profiles?.username || item.username;
           return (
             <TouchableOpacity onPress={() => navigation.push('ReplyDetail', { reply: item })}>
