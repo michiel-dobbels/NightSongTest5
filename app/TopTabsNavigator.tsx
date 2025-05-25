@@ -45,7 +45,7 @@ export default function TopTabsNavigator() {
         screenOptions={{
           tabBarStyle: {
             backgroundColor: '#1d152b',
-            marginTop: 65,
+            marginTop: 20,
           },
           tabBarLabelStyle: {
             color: 'white',
