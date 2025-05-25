@@ -1,5 +1,13 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, TextInput, Button, FlatList, StyleSheet, TouchableOpacity } from 'react-native';
+import {
+  View,
+  Text,
+  TextInput,
+  Button,
+  FlatList,
+  StyleSheet,
+  TouchableOpacity,
+} from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useRoute, useNavigation } from '@react-navigation/native';
 
@@ -44,6 +52,7 @@ export default function ReplyDetailScreen() {
 
   const [replyText, setReplyText] = useState('');
   const [replies, setReplies] = useState<Reply[]>([]);
+  const [ancestors, setAncestors] = useState<Reply[]>([]);
 
   const fetchReplies = async () => {
     const { data, error } = await supabase
@@ -61,6 +70,24 @@ export default function ReplyDetailScreen() {
     }
   };
 
+  const fetchAncestors = async () => {
+    const chain: Reply[] = [];
+    let currentId = parent.parent_id;
+    while (currentId) {
+      const { data, error } = await supabase
+        .from('replies')
+        .select('id, post_id, parent_id, user_id, content, created_at, username, profiles(username, display_name)')
+        .eq('id', currentId)
+        .single();
+      if (error || !data) {
+        break;
+      }
+      chain.unshift(data as Reply);
+      currentId = data.parent_id;
+    }
+    setAncestors(chain);
+  };
+
   useEffect(() => {
     const loadCached = async () => {
       const stored = await AsyncStorage.getItem(STORAGE_KEY);
@@ -72,6 +99,7 @@ export default function ReplyDetailScreen() {
         }
       }
       fetchReplies();
+      fetchAncestors();
     };
     loadCached();
   }, []);
@@ -128,6 +156,19 @@ export default function ReplyDetailScreen() {
 
   return (
     <View style={styles.container}>
+      <View style={styles.backButton}>
+        <Button title="Return" onPress={() => navigation.goBack()} />
+      </View>
+      {ancestors.map(a => {
+        const ancestorName =
+          a.profiles?.display_name || a.profiles?.username || a.username;
+        return (
+          <View key={a.id} style={styles.post}>
+            <Text style={styles.username}>@{ancestorName}</Text>
+            <Text style={styles.postContent}>{a.content}</Text>
+          </View>
+        );
+      })}
       <View style={styles.post}>
         <Text style={styles.username}>@{name}</Text>
         <Text style={styles.postContent}>{parent.content}</Text>
@@ -189,6 +230,10 @@ const styles = StyleSheet.create({
     backgroundColor: 'white',
     padding: 10,
     borderRadius: 6,
+    marginBottom: 10,
+  },
+  backButton: {
+    alignSelf: 'flex-start',
     marginBottom: 10,
   },
 });
