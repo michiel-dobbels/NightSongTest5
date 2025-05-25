@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, TextInput, Button, FlatList, StyleSheet, Alert } from 'react-native';
+import { View, Text, TextInput, Button, FlatList, StyleSheet } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useRoute } from '@react-navigation/native';
 
@@ -52,8 +52,9 @@ export default function PostDetailScreen() {
       .order('created_at', { ascending: false });
     if (!error && data) {
       setReplies(prev => {
-        const optimistic = prev.filter(r => r.id.startsWith('temp-'));
-        const merged = [...optimistic, ...(data as Reply[])];
+        // Keep any replies that haven't been synced yet (ids starting with "temp-")
+        const tempReplies = prev.filter(r => r.id.startsWith('temp-'));
+        const merged = [...tempReplies, ...(data as Reply[])];
 
         AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(merged));
         return merged;
@@ -129,9 +130,6 @@ export default function PostDetailScreen() {
       // Whether or not data was returned, refresh from the server so the reply persists
       fetchReplies();
     } else {
-      console.error('Failed to reply:', error?.message);
-      Alert.alert('Reply failed', error?.message ?? 'Unable to create reply');
-
       // Keep the optimistic reply so the user doesn't lose their input
     }
   };
