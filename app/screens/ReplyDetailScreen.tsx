@@ -28,6 +28,18 @@ function timeAgo(dateString: string): string {
   return `${days}d ago`;
 }
 
+interface Post {
+  id: string;
+  content: string;
+  user_id: string;
+  created_at: string;
+  username?: string;
+  profiles?: {
+    username: string | null;
+    display_name: string | null;
+  } | null;
+}
+
 interface Reply {
   id: string;
   post_id: string;
@@ -103,6 +115,7 @@ export default function ReplyDetailScreen() {
     }
   };
 
+
   const fetchReplies = async () => {
     const { data, error } = await supabase
       .from('replies')
@@ -119,6 +132,34 @@ export default function ReplyDetailScreen() {
     }
   };
 
+  const loadAncestors = async () => {
+    let chain: Reply[] = [];
+    let parentId = parent.parent_id;
+    while (parentId) {
+      const { data, error } = await supabase
+        .from('replies')
+        .select('id, post_id, parent_id, user_id, content, created_at, username')
+        .eq('id', parentId)
+        .single();
+      if (error || !data) break;
+      chain.unshift(data as Reply);
+      parentId = (data as Reply).parent_id;
+    }
+    setAncestors(chain);
+  };
+
+  const fetchRootPost = async () => {
+    const { data, error } = await supabase
+      .from('posts')
+      .select('id, content, user_id, created_at, username, profiles(username, display_name)')
+      .eq('id', parent.post_id)
+      .single();
+    if (!error && data) {
+      setRootPost(data as Post);
+    }
+  };
+
+
   useEffect(() => {
     const loadCached = async () => {
       const stored = await AsyncStorage.getItem(STORAGE_KEY);
@@ -129,10 +170,15 @@ export default function ReplyDetailScreen() {
           console.error('Failed to parse cached replies', e);
         }
       }
+
       fetchReplies();
       loadAncestors();
     };
+
     loadCached();
+    loadAncestors();
+    fetchRootPost();
+
   }, []);
 
   const handleReply = async () => {
@@ -183,13 +229,15 @@ export default function ReplyDetailScreen() {
     }
   };
 
-  const name = parent.profiles?.display_name || parent.profiles?.username || parent.username;
+  const name =
+    parent.profiles?.display_name || parent.profiles?.username || parent.username;
 
   return (
     <View style={styles.container}>
       <View style={styles.backButton}>
         <Button title="Return" onPress={() => navigation.goBack()} />
       </View>
+
       {rootPost && (
         <View style={styles.post}>
           <Text style={styles.username}>
@@ -207,6 +255,7 @@ export default function ReplyDetailScreen() {
           </View>
         );
       })}
+
       <View style={styles.post}>
         <Text style={styles.username}>@{name}</Text>
         <Text style={styles.postContent}>{parent.content}</Text>
@@ -231,14 +280,44 @@ export default function ReplyDetailScreen() {
 
               <View style={styles.reply}>
                 <Text style={styles.username}>@{childName}</Text>
+
                 <Text style={styles.postContent}>{item.content}</Text>
                 <Text style={styles.timestamp}>{timeAgo(item.created_at)}</Text>
+
               </View>
-            </TouchableOpacity>
-          );
-        }}
-      />
-    </View>
+            );
+          })}
+
+          <View style={styles.post}>
+            <Text style={styles.username}>@{name}</Text>
+            <Text style={styles.postContent}>{parent.content}</Text>
+            <Text style={styles.timestamp}>{timeAgo(parent.created_at)}</Text>
+          </View>
+
+          <TextInput
+            placeholder="Write a reply"
+            value={replyText}
+            onChangeText={setReplyText}
+            style={styles.input}
+            multiline
+          />
+          <Button title="Post" onPress={handleReply} />
+        </View>
+      }
+      renderItem={({ item }) => {
+        const childName = item.profiles?.display_name || item.profiles?.username || item.username;
+        return (
+          <TouchableOpacity onPress={() => navigation.push('ReplyDetail', { reply: item })}>
+
+            <View style={styles.reply}>
+              <Text style={styles.username}>@{childName}</Text>
+              <Text style={styles.postContent}>{item.content}</Text>
+              <Text style={styles.timestamp}>{timeAgo(item.created_at)}</Text>
+            </View>
+          </TouchableOpacity>
+        );
+      }}
+    />
   );
 }
 
@@ -249,7 +328,16 @@ const styles = StyleSheet.create({
     paddingTop: 100,
     backgroundColor: colors.background,
   },
+  listContent: {
+    paddingBottom: 16,
+  },
   post: {
+    backgroundColor: '#ffffff10',
+    borderRadius: 6,
+    padding: 10,
+    marginBottom: 10,
+  },
+  ancestor: {
     backgroundColor: '#ffffff10',
     borderRadius: 6,
     padding: 10,
