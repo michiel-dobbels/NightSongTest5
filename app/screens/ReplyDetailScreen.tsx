@@ -158,6 +158,7 @@ export default function ReplyDetailScreen() {
           </View>
         );
       })}
+
       <View style={styles.post}>
         <Text style={styles.username}>@{name}</Text>
         <Text style={styles.postContent}>{parent.content}</Text>
