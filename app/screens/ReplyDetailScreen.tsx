@@ -34,6 +34,18 @@ interface Reply {
   } | null;
 }
 
+interface Post {
+  id: string;
+  user_id: string;
+  content: string;
+  created_at: string;
+  username?: string;
+  profiles?: {
+    username: string | null;
+    display_name: string | null;
+  } | null;
+}
+
 export default function ReplyDetailScreen() {
   const route = useRoute<any>();
   const navigation = useNavigation<any>();
@@ -44,6 +56,8 @@ export default function ReplyDetailScreen() {
 
   const [replyText, setReplyText] = useState('');
   const [replies, setReplies] = useState<Reply[]>([]);
+  const [ancestors, setAncestors] = useState<Reply[]>([]);
+  const [rootPost, setRootPost] = useState<Post | null>(null);
 
   const fetchReplies = async () => {
     const { data, error } = await supabase
@@ -61,6 +75,34 @@ export default function ReplyDetailScreen() {
     }
   };
 
+  const loadAncestors = async () => {
+    const chain: Reply[] = [];
+    let parentId = parent.parent_id;
+    while (parentId) {
+      const { data, error } = await supabase
+        .from('replies')
+        .select(
+          'id, post_id, parent_id, user_id, content, created_at, username, profiles(username, display_name)'
+        )
+        .eq('id', parentId)
+        .single();
+      if (error || !data) break;
+      chain.unshift(data as Reply);
+      parentId = data.parent_id;
+    }
+
+    setAncestors(chain);
+
+    const { data: postData } = await supabase
+      .from('posts')
+      .select(
+        'id, user_id, content, created_at, username, profiles(username, display_name)'
+      )
+      .eq('id', parent.post_id)
+      .single();
+    if (postData) setRootPost(postData as Post);
+  };
+
   useEffect(() => {
     const loadCached = async () => {
       const stored = await AsyncStorage.getItem(STORAGE_KEY);
@@ -72,6 +114,7 @@ export default function ReplyDetailScreen() {
         }
       }
       fetchReplies();
+      loadAncestors();
     };
     loadCached();
   }, []);
@@ -128,6 +171,31 @@ export default function ReplyDetailScreen() {
 
   return (
     <View style={styles.container}>
+      <View style={styles.backButton}>
+        <Button title="Return" onPress={() => navigation.goBack()} />
+      </View>
+
+      {rootPost && (
+        <View style={styles.post}>
+          <Text style={styles.username}>
+            @{rootPost.profiles?.display_name ||
+              rootPost.profiles?.username ||
+              rootPost.username}
+          </Text>
+          <Text style={styles.postContent}>{rootPost.content}</Text>
+        </View>
+      )}
+
+      {ancestors.map(a => {
+        const ancestorName = a.profiles?.display_name || a.profiles?.username || a.username;
+        return (
+          <View key={a.id} style={styles.post}>
+            <Text style={styles.username}>@{ancestorName}</Text>
+            <Text style={styles.postContent}>{a.content}</Text>
+          </View>
+        );
+      })}
+
       <View style={styles.post}>
         <Text style={styles.username}>@{name}</Text>
         <Text style={styles.postContent}>{parent.content}</Text>
@@ -189,6 +257,10 @@ const styles = StyleSheet.create({
     backgroundColor: 'white',
     padding: 10,
     borderRadius: 6,
+    marginBottom: 10,
+  },
+  backButton: {
+    alignSelf: 'flex-start',
     marginBottom: 10,
   },
 });
