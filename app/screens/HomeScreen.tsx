@@ -185,7 +185,8 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingHorizontal: 16,
     paddingBottom: 16,
-    paddingTop: 100, // space for future return button
+    paddingTop: '15%',
+
     backgroundColor: colors.background,
   },
   input: {
