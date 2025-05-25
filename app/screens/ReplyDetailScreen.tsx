@@ -84,34 +84,33 @@ export default function ReplyDetailScreen() {
     }
   };
 
-  const loadAncestors = async (replyId: string | null) => {
-    const chain: Reply[] = [];
-    let currentParentId: string | null = replyId;
-
-    while (currentParentId) {
+  const loadAncestors = async () => {
+    let chain: Reply[] = [];
+    let parentId = parent.parent_id;
+    while (parentId) {
       const { data, error } = await supabase
-          .from('replies')
-          .select(
-            'id, post_id, parent_id, user_id, content, created_at, username, profiles(username, display_name)'
-          )
-          .eq('id', currentParentId)
-          .single();
-        if (error || !data) break;
-        chain.unshift(data as Reply);
-        currentParentId = data.parent_id;
-      }
-
-      const { data: postData } = await supabase
-        .from('posts')
-        .select(
-          'id, content, user_id, created_at, username, profiles(username, display_name)'
-        )
-        .eq('id', parent.post_id)
+        .from('replies')
+        .select('id, post_id, parent_id, user_id, content, created_at, username')
+        .eq('id', parentId)
         .single();
+      if (error || !data) break;
+      chain.unshift(data as Reply);
+      parentId = (data as Reply).parent_id;
+    }
+    setAncestors(chain);
+  };
 
-      if (postData) setRootPost(postData as Post);
-      setAncestors(chain);
-    };
+  const fetchRootPost = async () => {
+    const { data, error } = await supabase
+      .from('posts')
+      .select('id, content, user_id, created_at, username, profiles(username, display_name)')
+      .eq('id', parent.post_id)
+      .single();
+    if (!error && data) {
+      setRootPost(data as Post);
+    }
+  };
+
 
   useEffect(() => {
     const loadCached = async () => {
@@ -128,7 +127,9 @@ export default function ReplyDetailScreen() {
     };
 
     loadCached();
-    loadAncestors(parent.parent_id);
+    loadAncestors();
+    fetchRootPost();
+
   }, []);
 
   const handleReply = async () => {
@@ -183,35 +184,54 @@ export default function ReplyDetailScreen() {
     parent.profiles?.display_name || parent.profiles?.username || parent.username;
 
   return (
-    <FlatList
-      style={styles.container}
-      contentContainerStyle={styles.listContent}
-      data={replies}
-      keyExtractor={item => item.id}
-      ListHeaderComponent={
-        <View>
-          <View style={styles.backButton}>
-            <Button title="Return" onPress={() => navigation.goBack()} />
-          </View>
+    <View style={styles.container}>
+      <View style={styles.backButton}>
+        <Button title="Return" onPress={() => navigation.goBack()} />
+      </View>
 
-          {rootPost && (
-            <View style={styles.post}>
-              <Text style={styles.username}>
-                @{rootPost.profiles?.display_name ||
-                  rootPost.profiles?.username ||
-                  rootPost.username}
-              </Text>
-              <Text style={styles.postContent}>{rootPost.content}</Text>
-              <Text style={styles.timestamp}>{timeAgo(rootPost.created_at)}</Text>
-            </View>
-          )}
+      {rootPost && (
+        <View style={styles.post}>
+          <Text style={styles.username}>
+            @{rootPost.profiles?.display_name || rootPost.profiles?.username || rootPost.username}
+          </Text>
+          <Text style={styles.postContent}>{rootPost.content}</Text>
+        </View>
+      )}
 
-          {ancestors.map(item => {
-            const ancestorName =
-              item.profiles?.display_name || item.profiles?.username || item.username;
-            return (
-              <View key={item.id} style={styles.ancestor}>
-                <Text style={styles.username}>@{ancestorName}</Text>
+      {ancestors.map(a => (
+        <View key={a.id} style={styles.post}>
+          <Text style={styles.username}>
+            @{a.profiles?.display_name || a.profiles?.username || a.username}
+          </Text>
+          <Text style={styles.postContent}>{a.content}</Text>
+        </View>
+      ))}
+
+      <View style={styles.post}>
+        <Text style={styles.username}>@{name}</Text>
+        <Text style={styles.postContent}>{parent.content}</Text>
+      </View>
+
+      <TextInput
+        placeholder="Write a reply"
+        value={replyText}
+        onChangeText={setReplyText}
+        style={styles.input}
+        multiline
+      />
+      <Button title="Post" onPress={handleReply} />
+
+      <FlatList
+        data={replies}
+        keyExtractor={item => item.id}
+        renderItem={({ item }) => {
+          const childName = item.profiles?.display_name || item.profiles?.username || item.username;
+          return (
+            <TouchableOpacity onPress={() => navigation.push('ReplyDetail', { reply: item })}>
+
+              <View style={styles.reply}>
+                <Text style={styles.username}>@{childName}</Text>
+
                 <Text style={styles.postContent}>{item.content}</Text>
                 <Text style={styles.timestamp}>{timeAgo(item.created_at)}</Text>
 
