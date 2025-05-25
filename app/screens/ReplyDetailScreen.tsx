@@ -1,5 +1,13 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, TextInput, Button, FlatList, StyleSheet, TouchableOpacity } from 'react-native';
+import {
+  View,
+  Text,
+  TextInput,
+  Button,
+  FlatList,
+  StyleSheet,
+  TouchableOpacity,
+} from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useRoute, useNavigation } from '@react-navigation/native';
 
@@ -18,6 +26,18 @@ function timeAgo(dateString: string): string {
   if (hours < 24) return `${hours}h ago`;
   const days = Math.floor(hours / 24);
   return `${days}d ago`;
+}
+
+interface Post {
+  id: string;
+  content: string;
+  user_id: string;
+  created_at: string;
+  username?: string;
+  profiles?: {
+    username: string | null;
+    display_name: string | null;
+  } | null;
 }
 
 interface Reply {
@@ -44,6 +64,8 @@ export default function ReplyDetailScreen() {
 
   const [replyText, setReplyText] = useState('');
   const [replies, setReplies] = useState<Reply[]>([]);
+  const [ancestors, setAncestors] = useState<Reply[]>([]);
+  const [rootPost, setRootPost] = useState<Post | null>(null);
 
   const fetchReplies = async () => {
     const { data, error } = await supabase
@@ -74,6 +96,39 @@ export default function ReplyDetailScreen() {
       fetchReplies();
     };
     loadCached();
+  }, []);
+
+  useEffect(() => {
+    const loadAncestors = async () => {
+      const chain: Reply[] = [];
+      let currentParentId = parent.parent_id;
+
+      while (currentParentId) {
+        const { data, error } = await supabase
+          .from('replies')
+          .select(
+            'id, post_id, parent_id, user_id, content, created_at, username, profiles(username, display_name)'
+          )
+          .eq('id', currentParentId)
+          .single();
+        if (error || !data) break;
+        chain.unshift(data as Reply);
+        currentParentId = data.parent_id;
+      }
+
+      const { data: postData } = await supabase
+        .from('posts')
+        .select(
+          'id, content, user_id, created_at, username, profiles(username, display_name)'
+        )
+        .eq('id', parent.post_id)
+        .single();
+
+      if (postData) setRootPost(postData as Post);
+      setAncestors(chain);
+    };
+
+    loadAncestors();
   }, []);
 
   const handleReply = async () => {
@@ -124,13 +179,43 @@ export default function ReplyDetailScreen() {
     }
   };
 
-  const name = parent.profiles?.display_name || parent.profiles?.username || parent.username;
+  const name =
+    parent.profiles?.display_name || parent.profiles?.username || parent.username;
 
   return (
     <View style={styles.container}>
+      <View style={styles.backButton}>
+        <Button title="Return" onPress={() => navigation.goBack()} />
+      </View>
+
+      {rootPost && (
+        <View style={styles.post}>
+          <Text style={styles.username}>
+            @{rootPost.profiles?.display_name ||
+              rootPost.profiles?.username ||
+              rootPost.username}
+          </Text>
+          <Text style={styles.postContent}>{rootPost.content}</Text>
+          <Text style={styles.timestamp}>{timeAgo(rootPost.created_at)}</Text>
+        </View>
+      )}
+
+      {ancestors.map(item => {
+        const ancestorName =
+          item.profiles?.display_name || item.profiles?.username || item.username;
+        return (
+          <View key={item.id} style={styles.reply}>
+            <Text style={styles.username}>@{ancestorName}</Text>
+            <Text style={styles.postContent}>{item.content}</Text>
+            <Text style={styles.timestamp}>{timeAgo(item.created_at)}</Text>
+          </View>
+        );
+      })}
+
       <View style={styles.post}>
         <Text style={styles.username}>@{name}</Text>
         <Text style={styles.postContent}>{parent.content}</Text>
+        <Text style={styles.timestamp}>{timeAgo(parent.created_at)}</Text>
       </View>
 
       <TextInput
@@ -189,6 +274,10 @@ const styles = StyleSheet.create({
     backgroundColor: 'white',
     padding: 10,
     borderRadius: 6,
+    marginBottom: 10,
+  },
+  backButton: {
+    alignSelf: 'flex-start',
     marginBottom: 10,
   },
 });
