@@ -67,6 +67,7 @@ export default function ReplyDetailScreen() {
   const [ancestors, setAncestors] = useState<Reply[]>([]);
   const [rootPost, setRootPost] = useState<Post | null>(null);
 
+
   const fetchReplies = async () => {
     const { data, error } = await supabase
       .from('replies')
@@ -110,6 +111,7 @@ export default function ReplyDetailScreen() {
     }
   };
 
+
   useEffect(() => {
     const loadCached = async () => {
       const stored = await AsyncStorage.getItem(STORAGE_KEY);
@@ -120,11 +122,14 @@ export default function ReplyDetailScreen() {
           console.error('Failed to parse cached replies', e);
         }
       }
+
       fetchReplies();
     };
+
     loadCached();
     loadAncestors();
     fetchRootPost();
+
   }, []);
 
   const handleReply = async () => {
@@ -175,7 +180,8 @@ export default function ReplyDetailScreen() {
     }
   };
 
-  const name = parent.profiles?.display_name || parent.profiles?.username || parent.username;
+  const name =
+    parent.profiles?.display_name || parent.profiles?.username || parent.username;
 
   return (
     <View style={styles.container}>
@@ -225,14 +231,44 @@ export default function ReplyDetailScreen() {
 
               <View style={styles.reply}>
                 <Text style={styles.username}>@{childName}</Text>
+
                 <Text style={styles.postContent}>{item.content}</Text>
                 <Text style={styles.timestamp}>{timeAgo(item.created_at)}</Text>
+
               </View>
-            </TouchableOpacity>
-          );
-        }}
-      />
-    </View>
+            );
+          })}
+
+          <View style={styles.post}>
+            <Text style={styles.username}>@{name}</Text>
+            <Text style={styles.postContent}>{parent.content}</Text>
+            <Text style={styles.timestamp}>{timeAgo(parent.created_at)}</Text>
+          </View>
+
+          <TextInput
+            placeholder="Write a reply"
+            value={replyText}
+            onChangeText={setReplyText}
+            style={styles.input}
+            multiline
+          />
+          <Button title="Post" onPress={handleReply} />
+        </View>
+      }
+      renderItem={({ item }) => {
+        const childName = item.profiles?.display_name || item.profiles?.username || item.username;
+        return (
+          <TouchableOpacity onPress={() => navigation.push('ReplyDetail', { reply: item })}>
+
+            <View style={styles.reply}>
+              <Text style={styles.username}>@{childName}</Text>
+              <Text style={styles.postContent}>{item.content}</Text>
+              <Text style={styles.timestamp}>{timeAgo(item.created_at)}</Text>
+            </View>
+          </TouchableOpacity>
+        );
+      }}
+    />
   );
 }
 
@@ -243,7 +279,16 @@ const styles = StyleSheet.create({
     paddingTop: 100,
     backgroundColor: colors.background,
   },
+  listContent: {
+    paddingBottom: 16,
+  },
   post: {
+    backgroundColor: '#ffffff10',
+    borderRadius: 6,
+    padding: 10,
+    marginBottom: 10,
+  },
+  ancestor: {
     backgroundColor: '#ffffff10',
     borderRadius: 6,
     padding: 10,
