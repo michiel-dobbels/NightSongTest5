@@ -1,5 +1,13 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, TextInput, Button, FlatList, StyleSheet, TouchableOpacity } from 'react-native';
+import {
+  View,
+  Text,
+  TextInput,
+  Button,
+  FlatList,
+  StyleSheet,
+  TouchableOpacity,
+} from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useRoute, useNavigation } from '@react-navigation/native';
 
@@ -18,6 +26,18 @@ function timeAgo(dateString: string): string {
   if (hours < 24) return `${hours}h ago`;
   const days = Math.floor(hours / 24);
   return `${days}d ago`;
+}
+
+interface Post {
+  id: string;
+  content: string;
+  user_id: string;
+  created_at: string;
+  username?: string;
+  profiles?: {
+    username: string | null;
+    display_name: string | null;
+  } | null;
 }
 
 interface Reply {
@@ -44,6 +64,8 @@ export default function ReplyDetailScreen() {
 
   const [replyText, setReplyText] = useState('');
   const [replies, setReplies] = useState<Reply[]>([]);
+  const [ancestors, setAncestors] = useState<Reply[]>([]);
+  const [rootPost, setRootPost] = useState<Post | null>(null);
 
   const fetchReplies = async () => {
     const { data, error } = await supabase
@@ -61,6 +83,33 @@ export default function ReplyDetailScreen() {
     }
   };
 
+  const loadAncestors = async () => {
+    let chain: Reply[] = [];
+    let parentId = parent.parent_id;
+    while (parentId) {
+      const { data, error } = await supabase
+        .from('replies')
+        .select('id, post_id, parent_id, user_id, content, created_at, username')
+        .eq('id', parentId)
+        .single();
+      if (error || !data) break;
+      chain.unshift(data as Reply);
+      parentId = (data as Reply).parent_id;
+    }
+    setAncestors(chain);
+  };
+
+  const fetchRootPost = async () => {
+    const { data, error } = await supabase
+      .from('posts')
+      .select('id, content, user_id, created_at, username, profiles(username, display_name)')
+      .eq('id', parent.post_id)
+      .single();
+    if (!error && data) {
+      setRootPost(data as Post);
+    }
+  };
+
   useEffect(() => {
     const loadCached = async () => {
       const stored = await AsyncStorage.getItem(STORAGE_KEY);
@@ -74,6 +123,8 @@ export default function ReplyDetailScreen() {
       fetchReplies();
     };
     loadCached();
+    loadAncestors();
+    fetchRootPost();
   }, []);
 
   const handleReply = async () => {
@@ -128,6 +179,28 @@ export default function ReplyDetailScreen() {
 
   return (
     <View style={styles.container}>
+      <View style={styles.backButton}>
+        <Button title="Return" onPress={() => navigation.goBack()} />
+      </View>
+
+      {rootPost && (
+        <View style={styles.post}>
+          <Text style={styles.username}>
+            @{rootPost.profiles?.display_name || rootPost.profiles?.username || rootPost.username}
+          </Text>
+          <Text style={styles.postContent}>{rootPost.content}</Text>
+        </View>
+      )}
+
+      {ancestors.map(a => (
+        <View key={a.id} style={styles.post}>
+          <Text style={styles.username}>
+            @{a.profiles?.display_name || a.profiles?.username || a.username}
+          </Text>
+          <Text style={styles.postContent}>{a.content}</Text>
+        </View>
+      ))}
+
       <View style={styles.post}>
         <Text style={styles.username}>@{name}</Text>
         <Text style={styles.postContent}>{parent.content}</Text>
@@ -189,6 +262,10 @@ const styles = StyleSheet.create({
     backgroundColor: 'white',
     padding: 10,
     borderRadius: 6,
+    marginBottom: 10,
+  },
+  backButton: {
+    alignSelf: 'flex-start',
     marginBottom: 10,
   },
 });
