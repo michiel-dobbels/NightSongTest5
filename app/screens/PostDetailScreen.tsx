@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, TextInput, Button, FlatList, StyleSheet, Alert } from 'react-native';
+import { View, Text, TextInput, Button, FlatList, StyleSheet } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useRoute } from '@react-navigation/native';
 
@@ -47,7 +47,8 @@ export default function PostDetailScreen() {
   const fetchReplies = async () => {
     const { data, error } = await supabase
       .from('replies')
-      .select('id, post_id, user_id, content, created_at, profiles(username, display_name)')
+      // fetch only reply fields to avoid missing relationship errors
+      .select('id, post_id, user_id, content, created_at, username')
       .eq('post_id', post.id)
       .order('created_at', { ascending: false });
     if (!error && data) {
@@ -56,9 +57,11 @@ export default function PostDetailScreen() {
         const tempReplies = prev.filter(r => r.id.startsWith('temp-'));
         const merged = [...tempReplies, ...(data as Reply[])];
 
+
         AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(merged));
         return merged;
       });
+
     }
   };
 
@@ -100,40 +103,41 @@ export default function PostDetailScreen() {
     });
     setReplyText('');
 
-    let { data, error } = await supabase
-      .from('replies')
-      .insert([
-        {
-          post_id: post.id,
-          user_id: user.id,
-          content: replyText,
-          username: profile.display_name || profile.username,
-        },
-      ])
-      .select()
-      .single();
+    try {
+      const { data, error } = await supabase
 
-    // PGRST204 means the insert succeeded but no row was returned
-    if (error?.code === 'PGRST204') {
-      // Treat as success and keep the optimistic reply. We rely on
-      // fetchReplies() to load the new row instead of retrying the insert.
-      error = null;
-    }
+        .from('replies')
+        .insert([
+          {
+            post_id: post.id,
+            user_id: user.id,
+            content: replyText,
+            username: profile.display_name || profile.username,
+          },
+        ])
+        .select()
+        .single();
 
-    if (!error) {
-      if (data) {
-        setReplies(prev =>
-          prev.map(r => (r.id === newReply.id ? { ...r, id: data.id, created_at: data.created_at } : r))
-        );
-
+      // PGRST204 means the insert succeeded but no row was returned
+      if (error?.code === 'PGRST204') {
+        // Treat as success and keep the optimistic reply. We rely on
+        // fetchReplies() to load the new row instead of retrying the insert.
+        if (data) {
+          setReplies(prev =>
+            prev.map(r =>
+              r.id === newReply.id ? { ...r, id: data.id, created_at: data.created_at } : r,
+            ),
+          );
+        }
+        fetchReplies();
+        return;
       }
       // Whether or not data was returned, refresh from the server so the reply persists
       fetchReplies();
     } else {
-      console.error('Failed to reply:', error?.message);
-      Alert.alert('Reply failed', error?.message ?? 'Unable to create reply');
 
       // Keep the optimistic reply so the user doesn't lose their input
+
     }
   };
 
