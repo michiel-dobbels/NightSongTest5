@@ -67,6 +67,7 @@ export default function ReplyDetailScreen() {
   const [ancestors, setAncestors] = useState<Reply[]>([]);
   const [rootPost, setRootPost] = useState<Post | null>(null);
 
+
   const fetchReplies = async () => {
     const { data, error } = await supabase
       .from('replies')
@@ -83,6 +84,24 @@ export default function ReplyDetailScreen() {
     }
   };
 
+  const fetchAncestors = async () => {
+    const chain: Reply[] = [];
+    let currentId = parent.parent_id;
+    while (currentId) {
+      const { data, error } = await supabase
+        .from('replies')
+        .select('id, post_id, parent_id, user_id, content, created_at, username, profiles(username, display_name)')
+        .eq('id', currentId)
+        .single();
+      if (error || !data) {
+        break;
+      }
+      chain.unshift(data as Reply);
+      currentId = data.parent_id;
+    }
+    setAncestors(chain);
+  };
+
   useEffect(() => {
     const loadCached = async () => {
       const stored = await AsyncStorage.getItem(STORAGE_KEY);
@@ -94,8 +113,10 @@ export default function ReplyDetailScreen() {
         }
       }
       fetchReplies();
+      fetchAncestors();
     };
     loadCached();
+    fetchAncestors();
   }, []);
 
   useEffect(() => {
@@ -208,6 +229,7 @@ export default function ReplyDetailScreen() {
             <Text style={styles.username}>@{ancestorName}</Text>
             <Text style={styles.postContent}>{item.content}</Text>
             <Text style={styles.timestamp}>{timeAgo(item.created_at)}</Text>
+
           </View>
         );
       })}
