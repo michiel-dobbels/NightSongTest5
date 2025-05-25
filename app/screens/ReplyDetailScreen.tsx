@@ -149,6 +149,7 @@ export default function ReplyDetailScreen() {
           const childName = item.profiles?.display_name || item.profiles?.username || item.username;
           return (
             <TouchableOpacity onPress={() => navigation.push('ReplyDetail', { reply: item })}>
+
               <View style={styles.reply}>
                 <Text style={styles.username}>@{childName}</Text>
                 <Text style={styles.postContent}>{item.content}</Text>
