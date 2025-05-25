@@ -44,6 +44,7 @@ alter table public.posts add column if not exists username text;
 create table if not exists public.replies (
     id uuid primary key default uuid_generate_v4(),
     post_id uuid references public.posts(id) on delete cascade,
+    parent_id uuid references public.replies(id) on delete cascade,
     user_id uuid not null references public.profiles(id) on delete cascade,
     username text not null,
     content text not null,
