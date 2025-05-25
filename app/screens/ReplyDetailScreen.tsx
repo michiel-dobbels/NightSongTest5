@@ -7,7 +7,7 @@ import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../AuthContext';
 import { colors } from '../styles/colors';
 
-const REPLY_STORAGE_PREFIX = 'cached_replies_';
+const CHILD_PREFIX = 'cached_child_replies_';
 
 function timeAgo(dateString: string): string {
   const diff = Date.now() - new Date(dateString).getTime();
@@ -18,18 +18,6 @@ function timeAgo(dateString: string): string {
   if (hours < 24) return `${hours}h ago`;
   const days = Math.floor(hours / 24);
   return `${days}d ago`;
-}
-
-interface Post {
-  id: string;
-  content: string;
-  user_id: string;
-  created_at: string;
-  username?: string;
-  profiles?: {
-    username: string | null;
-    display_name: string | null;
-  } | null;
 }
 
 interface Reply {
@@ -46,13 +34,13 @@ interface Reply {
   } | null;
 }
 
-export default function PostDetailScreen() {
+export default function ReplyDetailScreen() {
   const route = useRoute<any>();
   const navigation = useNavigation<any>();
   const { user, profile } = useAuth() as any;
-  const post = route.params.post as Post;
+  const parent = route.params.reply as Reply;
 
-  const STORAGE_KEY = `${REPLY_STORAGE_PREFIX}${post.id}`;
+  const STORAGE_KEY = `${CHILD_PREFIX}${parent.id}`;
 
   const [replyText, setReplyText] = useState('');
   const [replies, setReplies] = useState<Reply[]>([]);
@@ -60,22 +48,16 @@ export default function PostDetailScreen() {
   const fetchReplies = async () => {
     const { data, error } = await supabase
       .from('replies')
-      // fetch only reply fields to avoid missing relationship errors
       .select('id, post_id, parent_id, user_id, content, created_at, username')
-      .eq('post_id', post.id)
-      .is('parent_id', null)
+      .eq('parent_id', parent.id)
       .order('created_at', { ascending: false });
     if (!error && data) {
       setReplies(prev => {
-        // Keep any replies that haven't been synced yet (ids starting with "temp-")
-        const tempReplies = prev.filter(r => r.id.startsWith('temp-'));
-        const merged = [...tempReplies, ...(data as Reply[])];
-
-
+        const temp = prev.filter(r => r.id.startsWith('temp-'));
+        const merged = [...temp, ...(data as Reply[])];
         AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(merged));
         return merged;
       });
-
     }
   };
 
@@ -89,21 +71,18 @@ export default function PostDetailScreen() {
           console.error('Failed to parse cached replies', e);
         }
       }
-
       fetchReplies();
     };
-
     loadCached();
   }, []);
-
 
   const handleReply = async () => {
     if (!replyText.trim() || !user) return;
 
     const newReply: Reply = {
       id: `temp-${Date.now()}`,
-      post_id: post.id,
-      parent_id: null,
+      post_id: parent.post_id,
+      parent_id: parent.id,
       user_id: user.id,
       content: replyText,
       created_at: new Date().toISOString(),
@@ -119,20 +98,18 @@ export default function PostDetailScreen() {
     setReplyText('');
 
     let { data, error } = await supabase
-
-        .from('replies')
-        .insert([
-          {
-            post_id: post.id,
-            parent_id: null,
-            user_id: user.id,
-            content: replyText,
-            username: profile.display_name || profile.username,
-          },
-        ])
-        .select()
-        .single();
-    // PGRST204 means the insert succeeded but no row was returned
+      .from('replies')
+      .insert([
+        {
+          post_id: parent.post_id,
+          parent_id: parent.id,
+          user_id: user.id,
+          content: replyText,
+          username: profile.display_name || profile.username,
+        },
+      ])
+      .select()
+      .single();
     if (error?.code === 'PGRST204') {
       error = null;
     }
@@ -140,26 +117,20 @@ export default function PostDetailScreen() {
     if (!error) {
       if (data) {
         setReplies(prev =>
-          prev.map(r =>
-            r.id === newReply.id ? { ...r, id: data.id, created_at: data.created_at } : r,
-          ),
+          prev.map(r => (r.id === newReply.id ? { ...r, id: data.id, created_at: data.created_at } : r)),
         );
       }
-
-      // Whether or not data was returned, refresh from the server so the reply persists
       fetchReplies();
-    } else {
-      // Keep the optimistic reply so the user doesn't lose their input
     }
   };
 
-  const displayName = post.profiles?.display_name || post.profiles?.username || post.username;
+  const name = parent.profiles?.display_name || parent.profiles?.username || parent.username;
 
   return (
     <View style={styles.container}>
       <View style={styles.post}>
-        <Text style={styles.username}>@{displayName}</Text>
-        <Text style={styles.postContent}>{post.content}</Text>
+        <Text style={styles.username}>@{name}</Text>
+        <Text style={styles.postContent}>{parent.content}</Text>
       </View>
 
       <TextInput
@@ -175,11 +146,11 @@ export default function PostDetailScreen() {
         data={replies}
         keyExtractor={item => item.id}
         renderItem={({ item }) => {
-          const name = item.profiles?.display_name || item.profiles?.username || item.username;
+          const childName = item.profiles?.display_name || item.profiles?.username || item.username;
           return (
             <TouchableOpacity onPress={() => navigation.navigate('ReplyDetail', { reply: item })}>
               <View style={styles.reply}>
-                <Text style={styles.username}>@{name}</Text>
+                <Text style={styles.username}>@{childName}</Text>
                 <Text style={styles.postContent}>{item.content}</Text>
                 <Text style={styles.timestamp}>{timeAgo(item.created_at)}</Text>
               </View>
