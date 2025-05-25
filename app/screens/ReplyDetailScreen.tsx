@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { View, Text, TextInput, Button, FlatList, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
+
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useRoute, useNavigation } from '@react-navigation/native';
 
@@ -46,6 +47,7 @@ export default function ReplyDetailScreen() {
   const [replies, setReplies] = useState<Reply[]>([]);
   const [parentChain, setParentChain] = useState<Reply[]>([]);
 
+
   const fetchReplies = async () => {
     const { data, error } = await supabase
       .from('replies')
@@ -80,6 +82,7 @@ export default function ReplyDetailScreen() {
     setParentChain(chain);
   };
 
+
   useEffect(() => {
     const loadCached = async () => {
       const stored = await AsyncStorage.getItem(STORAGE_KEY);
@@ -92,6 +95,7 @@ export default function ReplyDetailScreen() {
       }
       fetchReplies();
       fetchParentChain();
+
     };
     loadCached();
   }, []);
@@ -164,6 +168,7 @@ export default function ReplyDetailScreen() {
         </View>
       </ScrollView>
 
+
       <TextInput
         placeholder="Write a reply"
         value={replyText}
@@ -180,6 +185,7 @@ export default function ReplyDetailScreen() {
           const childName = item.profiles?.display_name || item.profiles?.username || item.username;
           return (
             <TouchableOpacity onPress={() => navigation.navigate('ReplyDetail', { reply: item })}>
+
               <View style={styles.reply}>
                 <Text style={styles.username}>@{childName}</Text>
                 <Text style={styles.postContent}>{item.content}</Text>
@@ -221,6 +227,7 @@ const styles = StyleSheet.create({
     padding: 10,
     marginBottom: 5,
   },
+
   postContent: { color: 'white' },
   username: { fontWeight: 'bold', color: 'white' },
   timestamp: { fontSize: 10, color: 'gray' },

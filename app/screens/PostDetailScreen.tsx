@@ -178,6 +178,7 @@ export default function PostDetailScreen() {
           const name = item.profiles?.display_name || item.profiles?.username || item.username;
           return (
             <TouchableOpacity onPress={() => navigation.navigate('ReplyDetail', { reply: item })}>
+
               <View style={styles.reply}>
                 <Text style={styles.username}>@{name}</Text>
                 <Text style={styles.postContent}>{item.content}</Text>
