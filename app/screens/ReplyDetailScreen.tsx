@@ -1,5 +1,13 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, TextInput, Button, FlatList, StyleSheet, TouchableOpacity } from 'react-native';
+import {
+  View,
+  Text,
+  TextInput,
+  Button,
+  FlatList,
+  StyleSheet,
+  TouchableOpacity,
+} from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useRoute, useNavigation } from '@react-navigation/native';
 
@@ -46,21 +54,6 @@ export default function ReplyDetailScreen() {
   const [replies, setReplies] = useState<Reply[]>([]);
   const [ancestors, setAncestors] = useState<Reply[]>([]);
 
-  const fetchAncestors = async () => {
-    let currentId = parent.parent_id;
-    const chain: Reply[] = [];
-    while (currentId) {
-      const { data, error } = await supabase
-        .from('replies')
-        .select('id, post_id, parent_id, user_id, content, created_at, username')
-        .eq('id', currentId)
-        .single();
-      if (error || !data) break;
-      chain.unshift(data as Reply);
-      currentId = data.parent_id;
-    }
-    setAncestors(chain);
-  };
 
   const fetchReplies = async () => {
     const { data, error } = await supabase
@@ -78,6 +71,24 @@ export default function ReplyDetailScreen() {
     }
   };
 
+  const fetchAncestors = async () => {
+    const chain: Reply[] = [];
+    let currentId = parent.parent_id;
+    while (currentId) {
+      const { data, error } = await supabase
+        .from('replies')
+        .select('id, post_id, parent_id, user_id, content, created_at, username, profiles(username, display_name)')
+        .eq('id', currentId)
+        .single();
+      if (error || !data) {
+        break;
+      }
+      chain.unshift(data as Reply);
+      currentId = data.parent_id;
+    }
+    setAncestors(chain);
+  };
+
   useEffect(() => {
     const loadCached = async () => {
       const stored = await AsyncStorage.getItem(STORAGE_KEY);
@@ -89,6 +100,7 @@ export default function ReplyDetailScreen() {
         }
       }
       fetchReplies();
+      fetchAncestors();
     };
     loadCached();
     fetchAncestors();
@@ -150,9 +162,11 @@ export default function ReplyDetailScreen() {
         <Button title="Return" onPress={() => navigation.goBack()} />
       </View>
       {ancestors.map(a => {
-        const ancestorName = a.profiles?.display_name || a.profiles?.username || a.username;
+        const ancestorName =
+          a.profiles?.display_name || a.profiles?.username || a.username;
         return (
-          <View style={styles.post} key={a.id}>
+          <View key={a.id} style={styles.post}>
+
             <Text style={styles.username}>@{ancestorName}</Text>
             <Text style={styles.postContent}>{a.content}</Text>
           </View>
