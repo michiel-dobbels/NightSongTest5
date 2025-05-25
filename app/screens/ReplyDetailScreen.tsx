@@ -28,6 +28,18 @@ function timeAgo(dateString: string): string {
   return `${days}d ago`;
 }
 
+interface Post {
+  id: string;
+  content: string;
+  user_id: string;
+  created_at: string;
+  username?: string;
+  profiles?: {
+    username: string | null;
+    display_name: string | null;
+  } | null;
+}
+
 interface Reply {
   id: string;
   post_id: string;
@@ -53,6 +65,7 @@ export default function ReplyDetailScreen() {
   const [replyText, setReplyText] = useState('');
   const [replies, setReplies] = useState<Reply[]>([]);
   const [ancestors, setAncestors] = useState<Reply[]>([]);
+  const [rootPost, setRootPost] = useState<Post | null>(null);
 
 
   const fetchReplies = async () => {
@@ -106,6 +119,39 @@ export default function ReplyDetailScreen() {
     fetchAncestors();
   }, []);
 
+  useEffect(() => {
+    const loadAncestors = async () => {
+      const chain: Reply[] = [];
+      let currentParentId = parent.parent_id;
+
+      while (currentParentId) {
+        const { data, error } = await supabase
+          .from('replies')
+          .select(
+            'id, post_id, parent_id, user_id, content, created_at, username, profiles(username, display_name)'
+          )
+          .eq('id', currentParentId)
+          .single();
+        if (error || !data) break;
+        chain.unshift(data as Reply);
+        currentParentId = data.parent_id;
+      }
+
+      const { data: postData } = await supabase
+        .from('posts')
+        .select(
+          'id, content, user_id, created_at, username, profiles(username, display_name)'
+        )
+        .eq('id', parent.post_id)
+        .single();
+
+      if (postData) setRootPost(postData as Post);
+      setAncestors(chain);
+    };
+
+    loadAncestors();
+  }, []);
+
   const handleReply = async () => {
     if (!replyText.trim() || !user) return;
 
@@ -154,21 +200,36 @@ export default function ReplyDetailScreen() {
     }
   };
 
-  const name = parent.profiles?.display_name || parent.profiles?.username || parent.username;
+  const name =
+    parent.profiles?.display_name || parent.profiles?.username || parent.username;
 
   return (
     <View style={styles.container}>
       <View style={styles.backButton}>
         <Button title="Return" onPress={() => navigation.goBack()} />
       </View>
-      {ancestors.map(a => {
-        const ancestorName =
-          a.profiles?.display_name || a.profiles?.username || a.username;
-        return (
-          <View key={a.id} style={styles.post}>
 
+      {rootPost && (
+        <View style={styles.post}>
+          <Text style={styles.username}>
+            @{rootPost.profiles?.display_name ||
+              rootPost.profiles?.username ||
+              rootPost.username}
+          </Text>
+          <Text style={styles.postContent}>{rootPost.content}</Text>
+          <Text style={styles.timestamp}>{timeAgo(rootPost.created_at)}</Text>
+        </View>
+      )}
+
+      {ancestors.map(item => {
+        const ancestorName =
+          item.profiles?.display_name || item.profiles?.username || item.username;
+        return (
+          <View key={item.id} style={styles.reply}>
             <Text style={styles.username}>@{ancestorName}</Text>
-            <Text style={styles.postContent}>{a.content}</Text>
+            <Text style={styles.postContent}>{item.content}</Text>
+            <Text style={styles.timestamp}>{timeAgo(item.created_at)}</Text>
+
           </View>
         );
       })}
@@ -176,6 +237,7 @@ export default function ReplyDetailScreen() {
       <View style={styles.post}>
         <Text style={styles.username}>@{name}</Text>
         <Text style={styles.postContent}>{parent.content}</Text>
+        <Text style={styles.timestamp}>{timeAgo(parent.created_at)}</Text>
       </View>
 
       <TextInput
