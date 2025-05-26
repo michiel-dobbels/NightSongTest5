@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, forwardRef, useImperativeHandle } from 'react';
 import { View, TextInput, Button, FlatList, Text, StyleSheet, Alert, TouchableOpacity } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -31,11 +31,20 @@ function timeAgo(dateString: string): string {
   return `${days}d ago`;
 }
 
-export default function HomeScreen() {
-  const navigation = useNavigation<any>();
-  const { user, profile } = useAuth();
-  const [postText, setPostText] = useState('');
-  const [posts, setPosts] = useState<Post[]>([]);
+export interface HomeScreenRef {
+  createPost: (text: string) => Promise<void>;
+}
+
+interface HomeScreenProps {
+  hideInput?: boolean;
+}
+
+const HomeScreen = forwardRef<HomeScreenRef, HomeScreenProps>(
+  ({ hideInput }, ref) => {
+    const navigation = useNavigation<any>();
+    const { user, profile } = useAuth();
+    const [postText, setPostText] = useState('');
+    const [posts, setPosts] = useState<Post[]>([]);
 
 
 
@@ -52,14 +61,14 @@ export default function HomeScreen() {
     }
   };
 
-  const handlePost = async () => {
-    if (!postText.trim()) return;
+  const createPost = async (text: string) => {
+    if (!text.trim()) return;
 
     if (!user) return;
 
     const newPost: Post = {
       id: `temp-${Date.now()}`,
-      content: postText,
+      content: text,
       username: profile.display_name || profile.username,
       user_id: user.id,
       created_at: new Date().toISOString(),
@@ -75,14 +84,16 @@ export default function HomeScreen() {
       AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
       return updated;
     });
-    setPostText('');
+    if (!hideInput) {
+      setPostText('');
+    }
 
 
     let { data, error } = await supabase
       .from('posts')
       .insert([
         {
-          content: postText,
+          content: text,
           user_id: user.id,
           username: profile.display_name || profile.username,
         },
@@ -128,6 +139,12 @@ export default function HomeScreen() {
     }
   };
 
+  const handlePost = () => createPost(postText);
+
+  useImperativeHandle(ref, () => ({
+    createPost,
+  }));
+
   useEffect(() => {
     const loadCached = async () => {
       const stored = await AsyncStorage.getItem(STORAGE_KEY);
@@ -148,14 +165,18 @@ export default function HomeScreen() {
   return (
     
     <View style={styles.container}>
-      <TextInput
-        placeholder="What's happening?"
-        value={postText}
-        onChangeText={setPostText}
-        style={styles.input}
-        multiline
-      />
-      <Button title="Post" onPress={handlePost} />
+      {!hideInput && (
+        <>
+          <TextInput
+            placeholder="What's happening?"
+            value={postText}
+            onChangeText={setPostText}
+            style={styles.input}
+            multiline
+          />
+          <Button title="Post" onPress={handlePost} />
+        </>
+      )}
       
       <FlatList
         data={posts}
@@ -178,7 +199,7 @@ export default function HomeScreen() {
       />
     </View>
   );
-}
+});
 
 const styles = StyleSheet.create({
   container: {
@@ -205,3 +226,5 @@ const styles = StyleSheet.create({
   username: { fontWeight: 'bold', color: 'white' },
   timestamp: { fontSize: 10, color: 'gray' },
 });
+
+export default HomeScreen;
