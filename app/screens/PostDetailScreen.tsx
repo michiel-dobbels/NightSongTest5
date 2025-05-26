@@ -169,6 +169,7 @@ export default function PostDetailScreen() {
         placeholder="Write a reply"
         buttonLabel="Reply"
         title="Reply"
+
       />
 
       <FlatList
