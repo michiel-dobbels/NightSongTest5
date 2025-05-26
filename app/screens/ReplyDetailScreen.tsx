@@ -140,6 +140,7 @@ export default function ReplyDetailScreen() {
         placeholder="Write a reply"
         buttonLabel="Reply"
         title="Reply"
+
       />
 
       <FlatList
