@@ -11,6 +11,7 @@ import {
   SafeAreaView,
   StatusBar,
 } from 'react-native';
+
 import { useAuth } from '../AuthContext';
 import HomeScreen from './screens/HomeScreen';
 import { supabase } from '../lib/supabase';
@@ -54,6 +55,7 @@ const Tab = createMaterialTopTabNavigator();
 export default function TopTabsNavigator() {
 
   const { profile, user, signOut } = useAuth() as any;
+  const [modalVisible, setModalVisible] = useState(false);
 
   const [modalVisible, setModalVisible] = useState(false);
   const [postText, setPostText] = useState('');
@@ -124,12 +126,14 @@ export default function TopTabsNavigator() {
               multiline
             />
             <Button title="Post" onPress={handlePost} />
+
             <Button title="Cancel" onPress={() => setModalVisible(false)} />
           </View>
         </View>
       </Modal>
       <TouchableOpacity
         onPress={() => setModalVisible(true)}
+
         style={{
           position: 'absolute',
           bottom: 20,
