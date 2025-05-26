@@ -1,6 +1,6 @@
 import React, { useState, useRef } from 'react';
 import { createMaterialTopTabNavigator } from '@react-navigation/material-top-tabs';
-import { View, Text, Button, TouchableOpacity } from 'react-native';
+import { View, Text, Button, TouchableOpacity, StyleSheet } from 'react-native';
 
 import { SafeAreaView, StatusBar } from 'react-native';
 import { useAuth } from '../AuthContext';
@@ -111,21 +111,26 @@ export default function TopTabsNavigator() {
       </Tab.Navigator>
       <TouchableOpacity
         onPress={() => console.log('Hello World!')}
+        style={styles.fab}
 
-        style={{
-          position: 'absolute',
-          bottom: 20,
-          right: 20,
-          backgroundColor: '#7814db',
-          width: 56,
-          height: 56,
-          borderRadius: 28,
-          justifyContent: 'center',
-          alignItems: 'center',
-        }}
       >
         <Text style={{ color: 'white', fontSize: 24 }}>+</Text>
       </TouchableOpacity>
     </SafeAreaView>
   );
 }
+
+const styles = StyleSheet.create({
+  fab: {
+    position: 'absolute',
+    bottom: 20,
+    right: 20,
+    backgroundColor: '#7814db',
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 100,
+  },
+});
