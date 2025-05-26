@@ -49,6 +49,7 @@ function BlurredTabBar({ topOffset, ...props }: MaterialTopTabBarProps & { topOf
 export default function TopTabsNavigator() {
   const { profile, user, signOut } = useAuth() as any;
   const insets = useSafeAreaInsets();
+  const HEADER_TOP_PADDING = 10;
   const [headerHeight, setHeaderHeight] = useState(0);
 
   const [modalVisible, setModalVisible] = useState(false);
@@ -92,7 +93,7 @@ export default function TopTabsNavigator() {
       <BlurView
         intensity={50}
         tint="dark"
-        style={[styles.headerBlur, { paddingTop: insets.top + 10 }]}
+        style={[styles.headerBlur, { paddingTop: insets.top + HEADER_TOP_PADDING }]}
         onLayout={(e) => setHeaderHeight(e.nativeEvent.layout.height)}
       >
 
