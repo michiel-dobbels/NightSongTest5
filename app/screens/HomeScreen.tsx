@@ -1,10 +1,11 @@
 import React, { useEffect, useState } from 'react';
-import { View, TextInput, Button, FlatList, Text, StyleSheet, Alert, TouchableOpacity } from 'react-native';
+import { View, FlatList, Text, StyleSheet, Alert, TouchableOpacity } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../AuthContext';
 import { colors } from '../styles/colors';
+import FloatingTextInput from '../components/FloatingTextInput';
 
 const STORAGE_KEY = 'cached_posts';
 
@@ -34,7 +35,6 @@ function timeAgo(dateString: string): string {
 export default function HomeScreen() {
   const navigation = useNavigation<any>();
   const { user, profile } = useAuth();
-  const [postText, setPostText] = useState('');
   const [posts, setPosts] = useState<Post[]>([]);
 
 
@@ -52,14 +52,14 @@ export default function HomeScreen() {
     }
   };
 
-  const handlePost = async () => {
-    if (!postText.trim()) return;
+  const handlePost = async (text: string) => {
+    if (!text.trim()) return;
 
     if (!user) return;
 
     const newPost: Post = {
       id: `temp-${Date.now()}`,
-      content: postText,
+      content: text,
       username: profile.display_name || profile.username,
       user_id: user.id,
       created_at: new Date().toISOString(),
@@ -75,14 +75,13 @@ export default function HomeScreen() {
       AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
       return updated;
     });
-    setPostText('');
 
 
     let { data, error } = await supabase
       .from('posts')
       .insert([
         {
-          content: postText,
+          content: text,
           user_id: user.id,
           username: profile.display_name || profile.username,
         },
@@ -148,14 +147,11 @@ export default function HomeScreen() {
   return (
     
     <View style={styles.container}>
-      <TextInput
+      <FloatingTextInput
+        onSubmit={handlePost}
         placeholder="What's happening?"
-        value={postText}
-        onChangeText={setPostText}
-        style={styles.input}
-        multiline
+        title="Create Post"
       />
-      <Button title="Post" onPress={handlePost} />
       
       <FlatList
         data={posts}
@@ -188,12 +184,6 @@ const styles = StyleSheet.create({
     paddingTop: '15%',
 
     backgroundColor: colors.background,
-  },
-  input: {
-    backgroundColor: 'white',
-    padding: 10,
-    borderRadius: 6,
-    marginBottom: 10,
   },
   post: {
     backgroundColor: '#ffffff10',

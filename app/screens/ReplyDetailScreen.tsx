@@ -1,11 +1,12 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, TextInput, Button, FlatList, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, Text, Button, FlatList, StyleSheet, TouchableOpacity } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useRoute, useNavigation } from '@react-navigation/native';
 
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../AuthContext';
 import { colors } from '../styles/colors';
+import FloatingTextInput from '../components/FloatingTextInput';
 
 const CHILD_PREFIX = 'cached_child_replies_';
 
@@ -42,7 +43,6 @@ export default function ReplyDetailScreen() {
 
   const STORAGE_KEY = `${CHILD_PREFIX}${parent.id}`;
 
-  const [replyText, setReplyText] = useState('');
   const [replies, setReplies] = useState<Reply[]>([]);
 
   const fetchReplies = async () => {
@@ -76,15 +76,15 @@ export default function ReplyDetailScreen() {
     loadCached();
   }, []);
 
-  const handleReply = async () => {
-    if (!replyText.trim() || !user) return;
+  const handleReply = async (text: string) => {
+    if (!text.trim() || !user) return;
 
     const newReply: Reply = {
       id: `temp-${Date.now()}`,
       post_id: parent.post_id,
       parent_id: parent.id,
       user_id: user.id,
-      content: replyText,
+      content: text,
       created_at: new Date().toISOString(),
       username: profile.display_name || profile.username,
       profiles: { username: profile.username, display_name: profile.display_name },
@@ -95,7 +95,6 @@ export default function ReplyDetailScreen() {
       AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
       return updated;
     });
-    setReplyText('');
 
     let { data, error } = await supabase
       .from('replies')
@@ -104,7 +103,7 @@ export default function ReplyDetailScreen() {
           post_id: parent.post_id,
           parent_id: parent.id,
           user_id: user.id,
-          content: replyText,
+          content: text,
           username: profile.display_name || profile.username,
         },
       ])
@@ -136,14 +135,12 @@ export default function ReplyDetailScreen() {
         <Text style={styles.postContent}>{parent.content}</Text>
       </View>
 
-      <TextInput
+      <FloatingTextInput
+        onSubmit={handleReply}
         placeholder="Write a reply"
-        value={replyText}
-        onChangeText={setReplyText}
-        style={styles.input}
-        multiline
+        buttonLabel="Reply"
+        title="Reply"
       />
-      <Button title="Post" onPress={handleReply} />
 
       <FlatList
         data={replies}
@@ -188,12 +185,6 @@ const styles = StyleSheet.create({
   postContent: { color: 'white' },
   username: { fontWeight: 'bold', color: 'white' },
   timestamp: { fontSize: 10, color: 'gray' },
-  input: {
-    backgroundColor: 'white',
-    padding: 10,
-    borderRadius: 6,
-    marginBottom: 10,
-  },
   backButton: {
     alignSelf: 'flex-start',
     marginBottom: 10,
