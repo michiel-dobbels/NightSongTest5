@@ -1,6 +1,7 @@
 import React, { useState, useRef } from 'react';
 import { createMaterialTopTabNavigator, MaterialTopTabBar, MaterialTopTabBarProps } from '@react-navigation/material-top-tabs';
 import { BlurView } from 'expo-blur';
+import Constants from 'expo-constants';
 import {
   View,
   Text,
@@ -28,6 +29,7 @@ function FollowingScreen() {
 
 const Tab = createMaterialTopTabNavigator();
 const TAB_BAR_HEIGHT = 48;
+const STATUS_BAR_HEIGHT = Constants.statusBarHeight;
 
 function BlurredTabBar(props: MaterialTopTabBarProps) {
   return (
@@ -75,12 +77,21 @@ export default function TopTabsNavigator() {
     ? `Welcome ${user.email}`
     : 'Welcome';
 
+  const [headerHeight, setHeaderHeight] = useState(0);
+  const onHeaderLayout = (e: any) => setHeaderHeight(e.nativeEvent.layout.height);
+
   const ForYouScreen = () => <HomeScreen ref={homeScreenRef} hideInput />;
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: colors.background }}>
       <StatusBar barStyle="light-content" backgroundColor={colors.background} />
-      <BlurView intensity={50} tint="dark" style={styles.headerBlur}>
+      <BlurView intensity={50} tint="dark" style={styles.statusBarBlur} />
+      <BlurView
+        intensity={50}
+        tint="dark"
+        style={styles.headerBlur}
+        onLayout={onHeaderLayout}
+      >
         <Text style={{ color: 'white', textAlign: 'center' }}>{welcomeText}</Text>
         <View style={{ alignItems: 'center', marginTop: 10 }}>
           <Button title="Logout" onPress={signOut} />
@@ -89,7 +100,7 @@ export default function TopTabsNavigator() {
 
       <Tab.Navigator
         tabBar={(props) => <BlurredTabBar {...props} />}
-        sceneContainerStyle={{ paddingTop: TAB_BAR_HEIGHT }}
+        sceneContainerStyle={{ paddingTop: TAB_BAR_HEIGHT + headerHeight + STATUS_BAR_HEIGHT }}
         screenOptions={{
           tabBarStyle: {
             backgroundColor: 'transparent',
@@ -165,9 +176,24 @@ const styles = StyleSheet.create({
     zIndex: 100,
   },
   headerBlur: {
+    position: 'absolute',
+    top: STATUS_BAR_HEIGHT,
+    left: 0,
+    right: 0,
     paddingTop: 10,
     paddingBottom: 10,
     backgroundColor: 'rgba(29,21,43,0.6)',
+    zIndex: 11,
+  },
+
+  statusBarBlur: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    height: STATUS_BAR_HEIGHT,
+    backgroundColor: 'rgba(29,21,43,0.6)',
+    zIndex: 12,
   },
 
   blurredWrapper: {
