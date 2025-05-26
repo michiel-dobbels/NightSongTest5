@@ -15,6 +15,8 @@ import {
 import { useAuth } from '../AuthContext';
 import HomeScreen, { HomeScreenRef } from './screens/HomeScreen';
 import { supabase } from '../lib/supabase';
+import { colors } from './styles/colors';
+
 
 function FollowingScreen() {
   return (
@@ -76,12 +78,14 @@ export default function TopTabsNavigator() {
   const ForYouScreen = () => <HomeScreen ref={homeScreenRef} hideInput />;
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: '#1d152b' }}>
-      <StatusBar barStyle="light-content" backgroundColor="#1d152b" />
-      <Text style={{ color: 'white', textAlign: 'center', marginTop: 10 }}>{welcomeText}</Text>
-      <View style={{ alignItems: 'center', marginTop: 10 }}>
-        <Button title="Logout" onPress={signOut} />
-      </View>
+    <SafeAreaView style={{ flex: 1, backgroundColor: colors.background }}>
+      <StatusBar barStyle="light-content" backgroundColor={colors.background} />
+      <BlurView intensity={50} tint="dark" style={styles.headerBlur}>
+        <Text style={{ color: 'white', textAlign: 'center' }}>{welcomeText}</Text>
+        <View style={{ alignItems: 'center', marginTop: 10 }}>
+          <Button title="Logout" onPress={signOut} />
+        </View>
+      </BlurView>
 
       <Tab.Navigator
         tabBar={(props) => <BlurredTabBar {...props} />}
@@ -160,6 +164,12 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     zIndex: 100,
   },
+  headerBlur: {
+    paddingTop: 10,
+    paddingBottom: 10,
+    backgroundColor: 'rgba(29,21,43,0.6)',
+  },
+
   blurredWrapper: {
     position: 'absolute',
     top: 0,
@@ -167,7 +177,8 @@ const styles = StyleSheet.create({
     right: 0,
     height: TAB_BAR_HEIGHT,
     overflow: 'hidden',
-    backgroundColor: 'rgba(120,20,219,0.5)',
+    backgroundColor: 'rgba(29,21,43,0.6)',
+
     zIndex: 10,
   },
   blurredBar: {
