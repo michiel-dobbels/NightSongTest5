@@ -1,5 +1,10 @@
 import React, { useState, useRef } from 'react';
-import { createMaterialTopTabNavigator, MaterialTopTabBar, MaterialTopTabBarProps } from '@react-navigation/material-top-tabs';
+import {
+  createMaterialTopTabNavigator,
+  MaterialTopTabBar,
+  MaterialTopTabBarProps,
+} from '@react-navigation/material-top-tabs';
+
 import { BlurView } from 'expo-blur';
 import {
   View,
@@ -15,7 +20,6 @@ import {
 import { useAuth } from '../AuthContext';
 import HomeScreen, { HomeScreenRef } from './screens/HomeScreen';
 import { supabase } from '../lib/supabase';
-import { colors } from './styles/colors';
 
 
 function FollowingScreen() {
@@ -28,16 +32,28 @@ function FollowingScreen() {
 
 const Tab = createMaterialTopTabNavigator();
 const TAB_BAR_HEIGHT = 48;
+const HEADER_HEIGHT = TAB_BAR_HEIGHT + 80;
 
-function BlurredTabBar(props: MaterialTopTabBarProps) {
-  return (
-    <BlurView intensity={50} tint="dark" style={styles.blurredWrapper}>
-      <MaterialTopTabBar
-        {...props}
-        style={[props.style, styles.blurredBar]}
-      />
-    </BlurView>
-  );
+function HeaderTabBar(
+  welcomeText: string,
+  signOut: () => void,
+): (props: MaterialTopTabBarProps) => JSX.Element {
+  return function TabBar(props: MaterialTopTabBarProps) {
+    return (
+      <BlurView intensity={50} tint="dark" style={styles.headerWrapper}>
+        <StatusBar barStyle="light-content" backgroundColor="transparent" />
+        <Text style={styles.welcome}>{welcomeText}</Text>
+        <View style={styles.logoutContainer}>
+          <Button title="Logout" onPress={signOut} />
+        </View>
+        <MaterialTopTabBar
+          {...props}
+          style={[props.style, styles.blurredBar]}
+        />
+      </BlurView>
+    );
+  };
+
 }
 
 export default function TopTabsNavigator() {
@@ -77,19 +93,14 @@ export default function TopTabsNavigator() {
 
   const ForYouScreen = () => <HomeScreen ref={homeScreenRef} hideInput />;
 
-  return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: colors.background }}>
-      <StatusBar barStyle="light-content" backgroundColor={colors.background} />
-      <BlurView intensity={50} tint="dark" style={styles.headerBlur}>
-        <Text style={{ color: 'white', textAlign: 'center' }}>{welcomeText}</Text>
-        <View style={{ alignItems: 'center', marginTop: 10 }}>
-          <Button title="Logout" onPress={signOut} />
-        </View>
-      </BlurView>
+  const renderTabBar = HeaderTabBar(welcomeText, signOut);
 
+  return (
+    <SafeAreaView style={{ flex: 1, backgroundColor: '#1d152b' }}>
       <Tab.Navigator
-        tabBar={(props) => <BlurredTabBar {...props} />}
-        sceneContainerStyle={{ paddingTop: TAB_BAR_HEIGHT }}
+        tabBar={renderTabBar}
+        sceneContainerStyle={{ paddingTop: HEADER_HEIGHT }}
+
         screenOptions={{
           tabBarStyle: {
             backgroundColor: 'transparent',
@@ -164,23 +175,29 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     zIndex: 100,
   },
-  headerBlur: {
-    paddingTop: 10,
-    paddingBottom: 10,
-    backgroundColor: 'rgba(29,21,43,0.6)',
-  },
+  headerWrapper: {
 
-  blurredWrapper: {
     position: 'absolute',
     top: 0,
     left: 0,
     right: 0,
-    height: TAB_BAR_HEIGHT,
+    paddingTop: 10,
+    paddingBottom: 10,
+    height: HEADER_HEIGHT,
     overflow: 'hidden',
-    backgroundColor: 'rgba(29,21,43,0.6)',
-
+    backgroundColor: 'rgba(120,20,219,0.5)',
     zIndex: 10,
   },
+  welcome: {
+    color: 'white',
+    textAlign: 'center',
+    marginTop: 10,
+  },
+  logoutContainer: {
+    alignItems: 'center',
+    marginTop: 10,
+  },
+
   blurredBar: {
     backgroundColor: 'transparent',
   },
