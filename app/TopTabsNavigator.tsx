@@ -1,6 +1,7 @@
 import React, { useState, useRef } from 'react';
 import { createMaterialTopTabNavigator } from '@react-navigation/material-top-tabs';
-import { View, Text, Button, TouchableOpacity, Modal, TextInput, StyleSheet } from 'react-native';
+import { View, Text, Button, TouchableOpacity } from 'react-native';
+
 import { SafeAreaView, StatusBar } from 'react-native';
 import { useAuth } from '../AuthContext';
 import HomeScreen, { HomeScreenRef } from './screens/HomeScreen';
@@ -108,33 +109,8 @@ export default function TopTabsNavigator() {
         <Tab.Screen name="For you" component={ForYouScreen} />
         <Tab.Screen name="Following" component={FollowingScreen} />
       </Tab.Navigator>
-      <Modal transparent visible={modalVisible} animationType="fade">
-
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
-            <TextInput
-              placeholder="What's happening?"
-              value={modalText}
-              onChangeText={setModalText}
-              style={styles.input}
-              multiline
-            />
-            <View style={{ flexDirection: 'row', justifyContent: 'flex-end' }}>
-              <Button
-                title="Cancel"
-                onPress={() => {
-                  setModalVisible(false);
-                  setModalText('');
-                }}
-              />
-              <Button title="Post" onPress={handleModalPost} />
-            </View>
-
-          </View>
-        </View>
-      </Modal>
       <TouchableOpacity
-        onPress={() => setModalVisible(true)}
+        onPress={() => console.log('Hello World!')}
 
         style={{
           position: 'absolute',

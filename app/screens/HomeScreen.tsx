@@ -206,7 +206,7 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingHorizontal: 16,
     paddingBottom: 16,
-    paddingTop: '15%',
+    paddingTop: 0,
 
     backgroundColor: colors.background,
   },
