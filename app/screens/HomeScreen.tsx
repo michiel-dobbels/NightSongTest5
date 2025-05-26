@@ -153,7 +153,6 @@ export default function HomeScreen() {
         title="Create Post"
       />
 
-      
       <FlatList
         data={posts}
         keyExtractor={(item) => item.id}

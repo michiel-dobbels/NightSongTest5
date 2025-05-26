@@ -32,7 +32,7 @@ export default function FloatingTextInput({ onSubmit, placeholder, buttonLabel =
         onRequestClose={() => setVisible(false)}
       >
         <View style={styles.modalContainer}>
-          {title ? <Text style={styles.title}>{title}</Text> : null}
+          {title && <Text style={styles.title}>{title}</Text>}
 
           <TextInput
             placeholder={placeholder}
@@ -72,8 +72,8 @@ const styles = StyleSheet.create({
   title: {
     color: 'white',
     fontSize: 18,
-    fontWeight: 'bold',
-    marginBottom: 10,
+    marginBottom: 12,
+    textAlign: 'center',
   },
 
   input: {
