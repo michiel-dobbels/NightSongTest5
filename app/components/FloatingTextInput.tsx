@@ -9,6 +9,7 @@ interface Props {
 }
 
 export default function FloatingTextInput({ onSubmit, placeholder, buttonLabel = 'Post' }: Props) {
+
   const [visible, setVisible] = useState(false);
   const [text, setText] = useState('');
 
@@ -28,6 +29,7 @@ export default function FloatingTextInput({ onSubmit, placeholder, buttonLabel =
           setVisible(true);
         }}
       >
+
         <Text style={styles.fabText}>+</Text>
       </TouchableOpacity>
       <Modal
@@ -36,6 +38,7 @@ export default function FloatingTextInput({ onSubmit, placeholder, buttonLabel =
         onRequestClose={() => setVisible(false)}
       >
         <View style={styles.modalContainer}>
+
           <TextInput
             placeholder={placeholder}
             value={text}
@@ -71,6 +74,7 @@ const styles = StyleSheet.create({
     paddingTop: 100,
     backgroundColor: colors.background,
   },
+
   input: {
     backgroundColor: 'white',
     padding: 10,

@@ -149,6 +149,7 @@ export default function HomeScreen() {
     <View style={styles.container}>
       <FloatingTextInput onSubmit={handlePost} placeholder="What's happening?" />
       
+
       <FlatList
         data={posts}
         keyExtractor={(item) => item.id}

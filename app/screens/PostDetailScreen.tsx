@@ -168,6 +168,7 @@ export default function PostDetailScreen() {
         onSubmit={handleReply}
         placeholder="Write a reply"
         buttonLabel="Reply"
+
       />
 
       <FlatList
