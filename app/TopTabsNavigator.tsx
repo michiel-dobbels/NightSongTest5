@@ -1,5 +1,6 @@
 import React, { useState, useRef } from 'react';
 import { createMaterialTopTabNavigator, MaterialTopTabBar, MaterialTopTabBarProps } from '@react-navigation/material-top-tabs';
+
 import { BlurView } from 'expo-blur';
 import {
   View,
@@ -15,6 +16,7 @@ import {
 import { useAuth } from '../AuthContext';
 import HomeScreen, { HomeScreenRef } from './screens/HomeScreen';
 import { supabase } from '../lib/supabase';
+
 
 function FollowingScreen() {
   return (
@@ -37,6 +39,7 @@ function BlurredTabBar(props: MaterialTopTabBarProps) {
       />
     </BlurView>
   );
+
 }
 
 export default function TopTabsNavigator() {
@@ -76,17 +79,14 @@ export default function TopTabsNavigator() {
 
   const ForYouScreen = () => <HomeScreen ref={homeScreenRef} hideInput />;
 
+  const renderTabBar = HeaderTabBar(welcomeText, signOut);
+
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: '#1d152b' }}>
-      <StatusBar barStyle="light-content" backgroundColor="#1d152b" />
-      <Text style={{ color: 'white', textAlign: 'center', marginTop: 10 }}>{welcomeText}</Text>
-      <View style={{ alignItems: 'center', marginTop: 10 }}>
-        <Button title="Logout" onPress={signOut} />
-      </View>
-
       <Tab.Navigator
         tabBar={(props) => <BlurredTabBar {...props} />}
         sceneContainerStyle={{ paddingTop: TAB_BAR_HEIGHT }}
+
         screenOptions={{
           tabBarStyle: {
             backgroundColor: 'transparent',
@@ -162,15 +162,18 @@ const styles = StyleSheet.create({
     zIndex: 100,
   },
   blurredWrapper: {
+
     position: 'absolute',
     top: 0,
     left: 0,
     right: 0,
     height: TAB_BAR_HEIGHT,
+
     overflow: 'hidden',
     backgroundColor: 'rgba(120,20,219,0.5)',
     zIndex: 10,
   },
+
   blurredBar: {
     backgroundColor: 'transparent',
   },
