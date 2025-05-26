@@ -33,6 +33,7 @@ function FollowingScreen() {
 
 const Tab = createMaterialTopTabNavigator();
 const TAB_BAR_HEIGHT = 48;
+const HEADER_BOTTOM_PADDING = 10;
 
 function BlurredTabBar({ topOffset, ...props }: MaterialTopTabBarProps & { topOffset: number }) {
   return (
@@ -51,6 +52,7 @@ export default function TopTabsNavigator() {
   const HEADER_TOP_PADDING = 10;
   const HEADER_BOTTOM_PADDING = 0;
   const [headerHeight, setHeaderHeight] = useState(0);
+
   const [modalVisible, setModalVisible] = useState(false);
   const [postText, setPostText] = useState('');
   const [modalText, setModalText] = useState('');
@@ -101,6 +103,7 @@ export default function TopTabsNavigator() {
           },
         ]}
       >
+
         <Text style={{ color: 'white', textAlign: 'center' }}>{welcomeText}</Text>
         <View style={{ alignItems: 'center', marginTop: 10 }}>
           <Button title="Logout" onPress={signOut} />
@@ -110,6 +113,7 @@ export default function TopTabsNavigator() {
       <Tab.Navigator
         tabBar={(props) => <BlurredTabBar {...props} topOffset={headerHeight} />}
         sceneContainerStyle={{ paddingTop: headerHeight + TAB_BAR_HEIGHT }}
+
         screenOptions={{
           tabBarStyle: {
             backgroundColor: 'transparent',
@@ -189,6 +193,7 @@ const styles = StyleSheet.create({
     top: 0,
     left: 0,
     right: 0,
+
     backgroundColor: 'rgba(29,21,43,0.6)',
     zIndex: 20,
   },
