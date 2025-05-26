@@ -1,6 +1,7 @@
 import { createMaterialTopTabNavigator } from '@react-navigation/material-top-tabs';
 import React, { useState } from 'react';
 import { View, Text, Button, TouchableOpacity, Modal } from 'react-native';
+
 import { SafeAreaView, StatusBar } from 'react-native';
 import { useAuth } from '../AuthContext';
 import HomeScreen from './screens/HomeScreen';
@@ -90,6 +91,7 @@ export default function TopTabsNavigator() {
       </Modal>
       <TouchableOpacity
         onPress={() => setModalVisible(true)}
+
         style={{
           position: 'absolute',
           bottom: 20,
