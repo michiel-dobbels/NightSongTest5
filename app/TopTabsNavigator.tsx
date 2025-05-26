@@ -1,5 +1,5 @@
 import { createMaterialTopTabNavigator } from '@react-navigation/material-top-tabs';
-import { View, Text, Button } from 'react-native';
+import { View, Text, Button, TouchableOpacity } from 'react-native';
 import { SafeAreaView, StatusBar } from 'react-native';
 import { useAuth } from '../AuthContext';
 import HomeScreen from './screens/HomeScreen';
@@ -59,6 +59,22 @@ export default function TopTabsNavigator() {
         <Tab.Screen name="For you" component={ForYouScreen} />
         <Tab.Screen name="Following" component={FollowingScreen} />
       </Tab.Navigator>
+      <TouchableOpacity
+        onPress={() => console.log('Hello World!')}
+        style={{
+          position: 'absolute',
+          bottom: 20,
+          right: 20,
+          backgroundColor: '#7814db',
+          width: 56,
+          height: 56,
+          borderRadius: 28,
+          justifyContent: 'center',
+          alignItems: 'center',
+        }}
+      >
+        <Text style={{ color: 'white', fontSize: 24 }}>+</Text>
+      </TouchableOpacity>
     </SafeAreaView>
   );
 }
