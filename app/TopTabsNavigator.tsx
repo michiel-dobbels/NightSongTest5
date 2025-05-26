@@ -1,10 +1,21 @@
 import { createMaterialTopTabNavigator } from '@react-navigation/material-top-tabs';
 import React, { useState } from 'react';
-import { View, Text, Button, TouchableOpacity, Modal } from 'react-native';
+import {
+  View,
+  Text,
+  Button,
+  TouchableOpacity,
+  Modal,
+  TextInput,
+  StyleSheet,
+  SafeAreaView,
+  StatusBar,
+} from 'react-native';
 
-import { SafeAreaView, StatusBar } from 'react-native';
 import { useAuth } from '../AuthContext';
 import HomeScreen from './screens/HomeScreen';
+import { supabase } from '../lib/supabase';
+import { colors } from './styles/colors';
 
 function ForYouScreen() {
   return <HomeScreen />;
@@ -18,12 +29,49 @@ function FollowingScreen() {
   );
 }
 
+const styles = StyleSheet.create({
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalContent: {
+    backgroundColor: colors.background,
+    padding: 20,
+    borderRadius: 8,
+    width: '90%',
+  },
+  input: {
+    backgroundColor: 'white',
+    padding: 10,
+    borderRadius: 6,
+    marginBottom: 10,
+  },
+});
+
 const Tab = createMaterialTopTabNavigator();
 
 export default function TopTabsNavigator() {
 
   const { profile, user, signOut } = useAuth() as any;
   const [modalVisible, setModalVisible] = useState(false);
+
+  const [modalVisible, setModalVisible] = useState(false);
+  const [postText, setPostText] = useState('');
+
+  const handlePost = async () => {
+    if (!postText.trim() || !user) return;
+    await supabase.from('posts').insert([
+      {
+        content: postText,
+        user_id: user.id,
+        username: profile.display_name || profile.username,
+      },
+    ]);
+    setPostText('');
+    setModalVisible(false);
+  };
 
   const displayName = profile?.display_name || profile?.username;
 
@@ -65,26 +113,20 @@ export default function TopTabsNavigator() {
       <Modal
         transparent
         visible={modalVisible}
-        animationType="fade"
+        animationType="slide"
         onRequestClose={() => setModalVisible(false)}
       >
-        <View
-          style={{
-            flex: 1,
-            justifyContent: 'center',
-            alignItems: 'center',
-            backgroundColor: 'rgba(0,0,0,0.5)',
-          }}
-        >
-          <View
-            style={{
-              backgroundColor: '#1d152b',
-              padding: 20,
-              borderRadius: 10,
-              width: '80%',
-              alignItems: 'center',
-            }}
-          >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <TextInput
+              placeholder="What's happening?"
+              value={postText}
+              onChangeText={setPostText}
+              style={styles.input}
+              multiline
+            />
+            <Button title="Post" onPress={handlePost} />
+
             <Button title="Cancel" onPress={() => setModalVisible(false)} />
           </View>
         </View>
