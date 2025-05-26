@@ -1,12 +1,12 @@
+import React, { useState, useRef } from 'react';
 import { createMaterialTopTabNavigator } from '@react-navigation/material-top-tabs';
 import { View, Text, Button, TouchableOpacity, StyleSheet } from 'react-native';
+
 import { SafeAreaView, StatusBar } from 'react-native';
 import { useAuth } from '../AuthContext';
-import HomeScreen from './screens/HomeScreen';
+import HomeScreen, { HomeScreenRef } from './screens/HomeScreen';
 
-function ForYouScreen() {
-  return <HomeScreen />;
-}
+
 
 function FollowingScreen() {
   return (
@@ -16,13 +16,61 @@ function FollowingScreen() {
   );
 }
 
+const styles = StyleSheet.create({
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalContent: {
+    backgroundColor: '#1d152b',
+    padding: 20,
+    borderRadius: 8,
+    width: '80%',
+
+  },
+  input: {
+    backgroundColor: 'white',
+    padding: 10,
+    borderRadius: 6,
+    marginBottom: 10,
+  },
+});
+
 const Tab = createMaterialTopTabNavigator();
 
 export default function TopTabsNavigator() {
-
   const { profile, user, signOut } = useAuth() as any;
+  const [modalVisible, setModalVisible] = useState(false);
+
+  const [modalVisible, setModalVisible] = useState(false);
+  const [postText, setPostText] = useState('');
+
+  const handlePost = async () => {
+    if (!postText.trim() || !user) return;
+    await supabase.from('posts').insert([
+      {
+        content: postText,
+        user_id: user.id,
+        username: profile.display_name || profile.username,
+      },
+    ]);
+    setPostText('');
+    setModalVisible(false);
+  };
 
   const displayName = profile?.display_name || profile?.username;
+
+  const [modalVisible, setModalVisible] = useState(false);
+  const [modalText, setModalText] = useState('');
+  const homeScreenRef = useRef<HomeScreenRef>(null);
+
+  const handleModalPost = async () => {
+    await homeScreenRef.current?.createPost(modalText);
+    setModalText('');
+    setModalVisible(false);
+  };
 
   // Determine if we're still loading the profile or user
   const welcomeText = displayName
@@ -31,6 +79,8 @@ export default function TopTabsNavigator() {
     ? `Welcome ${user.email}`
     : 'Welcome';
 
+
+  const ForYouScreen = () => <HomeScreen ref={homeScreenRef} hideInput />;
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: '#1d152b' }}>
@@ -62,6 +112,7 @@ export default function TopTabsNavigator() {
       <TouchableOpacity
         onPress={() => console.log('Hello World!')}
         style={styles.fab}
+
       >
         <Text style={{ color: 'white', fontSize: 24 }}>+</Text>
       </TouchableOpacity>
