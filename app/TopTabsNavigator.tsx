@@ -1,8 +1,20 @@
 import { createMaterialTopTabNavigator } from '@react-navigation/material-top-tabs';
-import { View, Text, Button } from 'react-native';
-import { SafeAreaView, StatusBar } from 'react-native';
+import React, { useState } from 'react';
+import {
+  View,
+  Text,
+  Button,
+  TouchableOpacity,
+  Modal,
+  TextInput,
+  StyleSheet,
+  SafeAreaView,
+  StatusBar,
+} from 'react-native';
 import { useAuth } from '../AuthContext';
 import HomeScreen from './screens/HomeScreen';
+import { supabase } from '../lib/supabase';
+import { colors } from './styles/colors';
 
 function ForYouScreen() {
   return <HomeScreen />;
@@ -16,11 +28,48 @@ function FollowingScreen() {
   );
 }
 
+const styles = StyleSheet.create({
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalContent: {
+    backgroundColor: colors.background,
+    padding: 20,
+    borderRadius: 8,
+    width: '90%',
+  },
+  input: {
+    backgroundColor: 'white',
+    padding: 10,
+    borderRadius: 6,
+    marginBottom: 10,
+  },
+});
+
 const Tab = createMaterialTopTabNavigator();
 
 export default function TopTabsNavigator() {
 
   const { profile, user, signOut } = useAuth() as any;
+
+  const [modalVisible, setModalVisible] = useState(false);
+  const [postText, setPostText] = useState('');
+
+  const handlePost = async () => {
+    if (!postText.trim() || !user) return;
+    await supabase.from('posts').insert([
+      {
+        content: postText,
+        user_id: user.id,
+        username: profile.display_name || profile.username,
+      },
+    ]);
+    setPostText('');
+    setModalVisible(false);
+  };
 
   const displayName = profile?.display_name || profile?.username;
 
@@ -59,6 +108,42 @@ export default function TopTabsNavigator() {
         <Tab.Screen name="For you" component={ForYouScreen} />
         <Tab.Screen name="Following" component={FollowingScreen} />
       </Tab.Navigator>
+      <Modal
+        transparent
+        visible={modalVisible}
+        animationType="slide"
+        onRequestClose={() => setModalVisible(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <TextInput
+              placeholder="What's happening?"
+              value={postText}
+              onChangeText={setPostText}
+              style={styles.input}
+              multiline
+            />
+            <Button title="Post" onPress={handlePost} />
+            <Button title="Cancel" onPress={() => setModalVisible(false)} />
+          </View>
+        </View>
+      </Modal>
+      <TouchableOpacity
+        onPress={() => setModalVisible(true)}
+        style={{
+          position: 'absolute',
+          bottom: 20,
+          right: 20,
+          backgroundColor: '#7814db',
+          width: 56,
+          height: 56,
+          borderRadius: 28,
+          justifyContent: 'center',
+          alignItems: 'center',
+        }}
+      >
+        <Text style={{ color: 'white', fontSize: 24 }}>+</Text>
+      </TouchableOpacity>
     </SafeAreaView>
   );
 }
