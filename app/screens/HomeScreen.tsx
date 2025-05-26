@@ -152,7 +152,7 @@ export default function HomeScreen() {
         placeholder="What's happening?"
         title="Create Post"
       />
-      
+
       <FlatList
         data={posts}
         keyExtractor={(item) => item.id}

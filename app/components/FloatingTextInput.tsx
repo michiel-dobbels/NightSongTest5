@@ -10,6 +10,7 @@ interface Props {
 }
 
 export default function FloatingTextInput({ onSubmit, placeholder, buttonLabel = 'Post', title }: Props) {
+
   const [visible, setVisible] = useState(false);
   const [text, setText] = useState('');
 
@@ -32,6 +33,7 @@ export default function FloatingTextInput({ onSubmit, placeholder, buttonLabel =
       >
         <View style={styles.modalContainer}>
           {title && <Text style={styles.title}>{title}</Text>}
+
           <TextInput
             placeholder={placeholder}
             value={text}
@@ -73,6 +75,7 @@ const styles = StyleSheet.create({
     marginBottom: 12,
     textAlign: 'center',
   },
+
   input: {
     backgroundColor: 'white',
     padding: 10,
