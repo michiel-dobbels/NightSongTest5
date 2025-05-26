@@ -46,6 +46,7 @@ export default function TopTabsNavigator() {
   const { profile, user, signOut } = useAuth() as any;
   const insets = useSafeAreaInsets();
   const [headerHeight, setHeaderHeight] = useState(0);
+
   const [modalVisible, setModalVisible] = useState(false);
   const [postText, setPostText] = useState('');
   const [modalText, setModalText] = useState('');
@@ -90,6 +91,7 @@ export default function TopTabsNavigator() {
         onLayout={(e) => setHeaderHeight(e.nativeEvent.layout.height)}
         style={[styles.headerBlur, { paddingTop: insets.top + 10 }]}
       >
+
         <Text style={{ color: 'white', textAlign: 'center' }}>{welcomeText}</Text>
         <View style={{ alignItems: 'center', marginTop: 10 }}>
           <Button title="Logout" onPress={signOut} />
@@ -107,6 +109,7 @@ export default function TopTabsNavigator() {
           paddingTop: Math.max(0, headerHeight - HEADER_BOTTOM_PADDING) +
             TAB_BAR_HEIGHT,
         }}
+
         screenOptions={{
           tabBarStyle: {
             backgroundColor: 'transparent',
@@ -187,6 +190,7 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     paddingBottom: HEADER_BOTTOM_PADDING,
+
     backgroundColor: 'rgba(29,21,43,0.6)',
     zIndex: 20,
   },
