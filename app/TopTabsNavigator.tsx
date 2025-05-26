@@ -1,5 +1,9 @@
 import React, { useState, useRef } from 'react';
-import { createMaterialTopTabNavigator, MaterialTopTabBar, MaterialTopTabBarProps } from '@react-navigation/material-top-tabs';
+import {
+  createMaterialTopTabNavigator,
+  MaterialTopTabBar,
+  MaterialTopTabBarProps,
+} from '@react-navigation/material-top-tabs';
 import { BlurView } from 'expo-blur';
 import {
   View,
@@ -45,6 +49,8 @@ function BlurredTabBar({ topOffset, ...props }: MaterialTopTabBarProps & { topOf
 export default function TopTabsNavigator() {
   const { profile, user, signOut } = useAuth() as any;
   const insets = useSafeAreaInsets();
+  const HEADER_TOP_PADDING = 10;
+  const HEADER_BOTTOM_PADDING = 0;
   const [headerHeight, setHeaderHeight] = useState(0);
 
   const [modalVisible, setModalVisible] = useState(false);
@@ -89,7 +95,13 @@ export default function TopTabsNavigator() {
         intensity={50}
         tint="dark"
         onLayout={(e) => setHeaderHeight(e.nativeEvent.layout.height)}
-        style={[styles.headerBlur, { paddingTop: insets.top + 10 }]}
+        style={[
+          styles.headerBlur,
+          {
+            paddingTop: insets.top + HEADER_TOP_PADDING,
+            paddingBottom: HEADER_BOTTOM_PADDING,
+          },
+        ]}
       >
 
         <Text style={{ color: 'white', textAlign: 'center' }}>{welcomeText}</Text>
@@ -99,16 +111,8 @@ export default function TopTabsNavigator() {
       </BlurView>
 
       <Tab.Navigator
-        tabBar={(props) => (
-          <BlurredTabBar
-            {...props}
-            topOffset={Math.max(0, headerHeight - HEADER_BOTTOM_PADDING)}
-          />
-        )}
-        sceneContainerStyle={{
-          paddingTop: Math.max(0, headerHeight - HEADER_BOTTOM_PADDING) +
-            TAB_BAR_HEIGHT,
-        }}
+        tabBar={(props) => <BlurredTabBar {...props} topOffset={headerHeight} />}
+        sceneContainerStyle={{ paddingTop: headerHeight + TAB_BAR_HEIGHT }}
 
         screenOptions={{
           tabBarStyle: {
@@ -189,7 +193,6 @@ const styles = StyleSheet.create({
     top: 0,
     left: 0,
     right: 0,
-    paddingBottom: HEADER_BOTTOM_PADDING,
 
     backgroundColor: 'rgba(29,21,43,0.6)',
     zIndex: 20,
