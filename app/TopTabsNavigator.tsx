@@ -4,6 +4,7 @@ import {
   MaterialTopTabBar,
   MaterialTopTabBarProps,
 } from '@react-navigation/material-top-tabs';
+
 import { BlurView } from 'expo-blur';
 import {
   View,
@@ -19,6 +20,7 @@ import {
 import { useAuth } from '../AuthContext';
 import HomeScreen, { HomeScreenRef } from './screens/HomeScreen';
 import { supabase } from '../lib/supabase';
+
 
 function FollowingScreen() {
   return (
@@ -51,6 +53,7 @@ function HeaderTabBar(
       </BlurView>
     );
   };
+
 }
 
 export default function TopTabsNavigator() {
@@ -97,6 +100,7 @@ export default function TopTabsNavigator() {
       <Tab.Navigator
         tabBar={renderTabBar}
         sceneContainerStyle={{ paddingTop: HEADER_HEIGHT }}
+
         screenOptions={{
           tabBarStyle: {
             backgroundColor: 'transparent',
@@ -172,6 +176,7 @@ const styles = StyleSheet.create({
     zIndex: 100,
   },
   headerWrapper: {
+
     position: 'absolute',
     top: 0,
     left: 0,
@@ -192,6 +197,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginTop: 10,
   },
+
   blurredBar: {
     backgroundColor: 'transparent',
   },
