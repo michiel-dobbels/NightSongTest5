@@ -1,12 +1,10 @@
+import React, { useState, useRef } from 'react';
 import { createMaterialTopTabNavigator } from '@react-navigation/material-top-tabs';
-import { View, Text, Button } from 'react-native';
+import { View, Text, Button, TouchableOpacity, Modal, TextInput, StyleSheet } from 'react-native';
 import { SafeAreaView, StatusBar } from 'react-native';
 import { useAuth } from '../AuthContext';
-import HomeScreen from './screens/HomeScreen';
+import HomeScreen, { HomeScreenRef } from './screens/HomeScreen';
 
-function ForYouScreen() {
-  return <HomeScreen />;
-}
 
 function FollowingScreen() {
   return (
@@ -16,13 +14,43 @@ function FollowingScreen() {
   );
 }
 
+const styles = StyleSheet.create({
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalContent: {
+    backgroundColor: '#1d152b',
+    padding: 20,
+    borderRadius: 8,
+    width: '80%',
+  },
+  input: {
+    backgroundColor: 'white',
+    padding: 10,
+    borderRadius: 6,
+    marginBottom: 10,
+  },
+});
+
 const Tab = createMaterialTopTabNavigator();
 
 export default function TopTabsNavigator() {
-
   const { profile, user, signOut } = useAuth() as any;
 
   const displayName = profile?.display_name || profile?.username;
+
+  const [modalVisible, setModalVisible] = useState(false);
+  const [modalText, setModalText] = useState('');
+  const homeScreenRef = useRef<HomeScreenRef>(null);
+
+  const handleModalPost = async () => {
+    await homeScreenRef.current?.createPost(modalText);
+    setModalText('');
+    setModalVisible(false);
+  };
 
   // Determine if we're still loading the profile or user
   const welcomeText = displayName
@@ -31,6 +59,8 @@ export default function TopTabsNavigator() {
     ? `Welcome ${user.email}`
     : 'Welcome';
 
+
+  const ForYouScreen = () => <HomeScreen ref={homeScreenRef} hideInput />;
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: '#1d152b' }}>
@@ -59,6 +89,45 @@ export default function TopTabsNavigator() {
         <Tab.Screen name="For you" component={ForYouScreen} />
         <Tab.Screen name="Following" component={FollowingScreen} />
       </Tab.Navigator>
+      <Modal transparent visible={modalVisible} animationType="fade">
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <TextInput
+              placeholder="What's happening?"
+              value={modalText}
+              onChangeText={setModalText}
+              style={styles.input}
+              multiline
+            />
+            <View style={{ flexDirection: 'row', justifyContent: 'flex-end' }}>
+              <Button
+                title="Cancel"
+                onPress={() => {
+                  setModalVisible(false);
+                  setModalText('');
+                }}
+              />
+              <Button title="Post" onPress={handleModalPost} />
+            </View>
+          </View>
+        </View>
+      </Modal>
+      <TouchableOpacity
+        onPress={() => setModalVisible(true)}
+        style={{
+          position: 'absolute',
+          bottom: 20,
+          right: 20,
+          backgroundColor: '#7814db',
+          width: 56,
+          height: 56,
+          borderRadius: 28,
+          justifyContent: 'center',
+          alignItems: 'center',
+        }}
+      >
+        <Text style={{ color: 'white', fontSize: 24 }}>+</Text>
+      </TouchableOpacity>
     </SafeAreaView>
   );
 }
