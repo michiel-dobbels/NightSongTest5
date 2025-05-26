@@ -49,8 +49,9 @@ function BlurredTabBar({ topOffset, ...props }: MaterialTopTabBarProps & { topOf
 export default function TopTabsNavigator() {
   const { profile, user, signOut } = useAuth() as any;
   const insets = useSafeAreaInsets();
-  const HEADER_TOP_PADDING = 10;
-  const [headerHeight, setHeaderHeight] = useState(0);
+  const HEADER_CONTENT_HEIGHT = 70;
+  const headerHeight = insets.top + HEADER_CONTENT_HEIGHT;
+  const tabTopOffset = headerHeight - TAB_BAR_HEIGHT;
 
   const [modalVisible, setModalVisible] = useState(false);
   const [postText, setPostText] = useState('');
@@ -90,12 +91,7 @@ export default function TopTabsNavigator() {
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: colors.background }}>
       <StatusBar barStyle="light-content" translucent backgroundColor="transparent" />
-      <BlurView
-        intensity={50}
-        tint="dark"
-        style={[styles.headerBlur, { paddingTop: insets.top + HEADER_TOP_PADDING }]}
-        onLayout={(e) => setHeaderHeight(e.nativeEvent.layout.height)}
-      >
+      <BlurView intensity={50} tint="dark" style={[styles.headerBlur, { paddingTop: insets.top + 10 }]}>
 
         <Text style={{ color: 'white', textAlign: 'center' }}>{welcomeText}</Text>
         <View style={{ alignItems: 'center', marginTop: 10 }}>
@@ -104,8 +100,8 @@ export default function TopTabsNavigator() {
       </BlurView>
 
       <Tab.Navigator
-        tabBar={(props) => <BlurredTabBar {...props} topOffset={headerHeight} />}
-        sceneContainerStyle={{ paddingTop: headerHeight + TAB_BAR_HEIGHT }}
+        tabBar={(props) => <BlurredTabBar {...props} topOffset={tabTopOffset} />}
+        sceneContainerStyle={{ paddingTop: tabTopOffset + TAB_BAR_HEIGHT }}
 
         screenOptions={{
           tabBarStyle: {
