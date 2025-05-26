@@ -17,6 +17,7 @@ import HomeScreen, { HomeScreenRef } from './screens/HomeScreen';
 import { supabase } from '../lib/supabase';
 import { colors } from './styles/colors';
 
+
 function FollowingScreen() {
   return (
     <View style={{ flex: 1, backgroundColor: '#1d152b', justifyContent: 'center', alignItems: 'center' }}>
@@ -168,6 +169,7 @@ const styles = StyleSheet.create({
     paddingBottom: 10,
     backgroundColor: 'rgba(29,21,43,0.6)',
   },
+
   blurredWrapper: {
     position: 'absolute',
     top: 0,
@@ -176,6 +178,7 @@ const styles = StyleSheet.create({
     height: TAB_BAR_HEIGHT,
     overflow: 'hidden',
     backgroundColor: 'rgba(29,21,43,0.6)',
+
     zIndex: 10,
   },
   blurredBar: {
