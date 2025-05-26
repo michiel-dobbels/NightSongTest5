@@ -139,6 +139,8 @@ export default function ReplyDetailScreen() {
         onSubmit={handleReply}
         placeholder="Write a reply"
         buttonLabel="Reply"
+        title="Reply"
+
       />
 
       <FlatList

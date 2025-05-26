@@ -147,7 +147,12 @@ export default function HomeScreen() {
   return (
     
     <View style={styles.container}>
-      <FloatingTextInput onSubmit={handlePost} placeholder="What's happening?" />
+      <FloatingTextInput
+        onSubmit={handlePost}
+        placeholder="What's happening?"
+        title="Create Post"
+      />
+
       
       <FlatList
         data={posts}

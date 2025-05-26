@@ -6,9 +6,11 @@ interface Props {
   onSubmit: (text: string) => void;
   placeholder: string;
   buttonLabel?: string;
+  title?: string;
 }
 
-export default function FloatingTextInput({ onSubmit, placeholder, buttonLabel = 'Post' }: Props) {
+export default function FloatingTextInput({ onSubmit, placeholder, buttonLabel = 'Post', title = 'Create Post' }: Props) {
+
   const [visible, setVisible] = useState(false);
   const [text, setText] = useState('');
 
@@ -30,6 +32,10 @@ export default function FloatingTextInput({ onSubmit, placeholder, buttonLabel =
         onRequestClose={() => setVisible(false)}
       >
         <View style={styles.modalContainer}>
+          <View style={styles.header}>
+            <Text style={styles.headerTitle}>{title}</Text>
+          </View>
+
           <TextInput
             placeholder={placeholder}
             value={text}
@@ -65,6 +71,16 @@ const styles = StyleSheet.create({
     paddingTop: 100,
     backgroundColor: colors.background,
   },
+  header: {
+    paddingBottom: 16,
+  },
+  headerTitle: {
+    color: 'white',
+    fontSize: 20,
+    textAlign: 'center',
+    fontWeight: 'bold',
+  },
+
   input: {
     backgroundColor: 'white',
     padding: 10,
