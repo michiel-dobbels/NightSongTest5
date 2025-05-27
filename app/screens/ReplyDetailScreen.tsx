@@ -61,6 +61,7 @@ type FeedItem =
   | ({ __type: 'post' } & Post)
   | Reply;
 
+
 export default function ReplyDetailScreen() {
   const route = useRoute<any>();
   const navigation = useNavigation<any>();
@@ -73,6 +74,7 @@ export default function ReplyDetailScreen() {
   const [replies, setReplies] = useState<Reply[]>([]);
   const [post, setPost] = useState<Post | null>(null);
   const [ancestors, setAncestors] = useState<Reply[]>([]);
+
   const [keyboardOffset, setKeyboardOffset] = useState(0);
 
   const fetchReplies = async () => {
@@ -134,12 +136,14 @@ export default function ReplyDetailScreen() {
           .select(
             'id, post_id, parent_id, user_id, content, created_at, username, profiles(username, display_name)'
           )
+
           .eq('id', currentId)
           .single();
         if (error || !data) break;
         chain.unshift(data as Reply);
         currentId = (data as Reply).parent_id;
       }
+
       setAncestors(chain);
     };
 
@@ -147,6 +151,7 @@ export default function ReplyDetailScreen() {
   }, []);
 
   useEffect(() => {
+
     const show = Keyboard.addListener(
       Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow',
       e => setKeyboardOffset(e.endCoordinates.height),
@@ -231,6 +236,39 @@ export default function ReplyDetailScreen() {
         <Button title="Return" onPress={() => navigation.goBack()} />
       </View>
       <FlatList
+        ListHeaderComponent={() => (
+          <>
+            {post && (
+              <TouchableOpacity onPress={() => navigation.navigate('PostDetail', { post })}>
+                <View style={[styles.post, styles.highlightPost]}>
+                  <Text style={styles.username}>
+                    @{post.profiles?.display_name || post.profiles?.username || post.username}
+                  </Text>
+                  <Text style={styles.postContent}>{post.content}</Text>
+                  <Text style={styles.timestamp}>{timeAgo(post.created_at)}</Text>
+                </View>
+              </TouchableOpacity>
+            )}
+            {ancestors.map(a => {
+              const aName = a.profiles?.display_name || a.profiles?.username || a.username;
+              return (
+                <TouchableOpacity key={a.id} onPress={() => navigation.push('ReplyDetail', { reply: a })}>
+                  <View style={styles.post}>
+                    <Text style={styles.username}>@{aName}</Text>
+                    <Text style={styles.postContent}>{a.content}</Text>
+                    <Text style={styles.timestamp}>{timeAgo(a.created_at)}</Text>
+                  </View>
+                </TouchableOpacity>
+              );
+            })}
+
+            <View style={styles.post}>
+              <Text style={styles.username}>@{name}</Text>
+              <Text style={styles.postContent}>{parent.content}</Text>
+              <Text style={styles.timestamp}>{timeAgo(parent.created_at)}</Text>
+            </View>
+          </>
+        )}
         contentContainerStyle={{ paddingBottom: 100 }}
         data={feedData}
         keyExtractor={(item, index) => ('__type' in item ? `post-${item.id}` : item.id || String(index))}
