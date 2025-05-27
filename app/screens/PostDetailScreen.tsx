@@ -1,5 +1,16 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, TextInput, Button, FlatList, StyleSheet, TouchableOpacity } from 'react-native';
+import {
+  View,
+  Text,
+  TextInput,
+  Button,
+  FlatList,
+  StyleSheet,
+  TouchableOpacity,
+  KeyboardAvoidingView,
+  Platform,
+  Keyboard,
+} from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useRoute, useNavigation } from '@react-navigation/native';
 
@@ -56,6 +67,22 @@ export default function PostDetailScreen() {
 
   const [replyText, setReplyText] = useState('');
   const [replies, setReplies] = useState<Reply[]>([]);
+  const [keyboardOffset, setKeyboardOffset] = useState(0);
+
+  useEffect(() => {
+    const show = Keyboard.addListener(
+      Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow',
+      e => setKeyboardOffset(e.endCoordinates.height),
+    );
+    const hide = Keyboard.addListener(
+      Platform.OS === 'ios' ? 'keyboardWillHide' : 'keyboardDidHide',
+      () => setKeyboardOffset(0),
+    );
+    return () => {
+      show.remove();
+      hide.remove();
+    };
+  }, []);
 
   const fetchReplies = async () => {
     const { data, error } = await supabase
@@ -156,7 +183,11 @@ export default function PostDetailScreen() {
   const displayName = post.profiles?.display_name || post.profiles?.username || post.username;
 
   return (
-    <View style={styles.container}>
+    <KeyboardAvoidingView
+      style={styles.container}
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      keyboardVerticalOffset={80}
+    >
       <View style={styles.backButton}>
         <Button title="Return" onPress={() => navigation.goBack()} />
       </View>
@@ -184,7 +215,7 @@ export default function PostDetailScreen() {
         }}
       />
 
-      <View style={styles.inputContainer}>
+      <View style={[styles.inputContainer, { bottom: keyboardOffset }]}> 
         <TextInput
           placeholder="Write a reply"
           value={replyText}
@@ -194,7 +225,7 @@ export default function PostDetailScreen() {
         />
         <Button title="Post" onPress={handleReply} />
       </View>
-    </View>
+    </KeyboardAvoidingView>
   );
 }
 
