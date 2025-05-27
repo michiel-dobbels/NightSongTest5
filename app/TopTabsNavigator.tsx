@@ -33,7 +33,7 @@ function FollowingScreen() {
 
 const Tab = createMaterialTopTabNavigator();
 const TAB_BAR_HEIGHT = 48;
-const HEADER_BOTTOM_PADDING = 10;
+const HEADER_BOTTOM_PADDING = 0;
 const BLUR_BACKGROUND_COLOR = 'rgba(29,21,43,0.6)';
 
 
@@ -51,6 +51,7 @@ function HeaderTabBar(
       tint="dark"
       style={[styles.headerBlur, { paddingTop: insetsTop + 10 }]}
     >
+      <StatusBar barStyle="light-content" translucent backgroundColor="transparent" />
       <Text style={{ color: 'white', textAlign: 'center' }}>{welcomeText}</Text>
       <View style={{ alignItems: 'center', marginTop: 10 }}>
         <Button title="Logout" onPress={signOut} />
@@ -110,7 +111,6 @@ export default function TopTabsNavigator() {
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: colors.background }}>
-      <StatusBar barStyle="light-content" translucent backgroundColor="transparent" />
       <Tab.Navigator
         tabBar={(props) => (
           <HeaderTabBar
