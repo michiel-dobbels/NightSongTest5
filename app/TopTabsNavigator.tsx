@@ -51,8 +51,8 @@ export default function TopTabsNavigator() {
   const insets = useSafeAreaInsets();
   const HEADER_CONTENT_HEIGHT = 70;
   const headerHeight = insets.top + HEADER_CONTENT_HEIGHT;
-  // Align the tab bar with the bottom of the header
-  const tabTopOffset = headerHeight - TAB_BAR_HEIGHT;
+  // Align the tab bar with the bottom of the header including padding
+  const tabTopOffset = headerHeight + HEADER_BOTTOM_PADDING;
 
 
   const [modalVisible, setModalVisible] = useState(false);
@@ -92,8 +92,8 @@ export default function TopTabsNavigator() {
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: colors.background }}>
-      <StatusBar barStyle="light-content" translucent backgroundColor="transparent" />
       <BlurView intensity={50} tint="dark" style={[styles.headerBlur, { paddingTop: insets.top + 10 }]}>
+        <StatusBar barStyle="light-content" translucent backgroundColor="transparent" />
 
         <Text style={{ color: 'white', textAlign: 'center' }}>{welcomeText}</Text>
         <View style={{ alignItems: 'center', marginTop: 10 }}>
