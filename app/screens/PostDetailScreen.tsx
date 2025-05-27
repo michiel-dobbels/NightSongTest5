@@ -198,6 +198,12 @@ export default function PostDetailScreen() {
       </View>
 
       <FlatList
+        ListHeaderComponent={() => (
+          <View style={[styles.post, styles.highlightPost]}>
+            <Text style={styles.username}>@{displayName}</Text>
+            <Text style={styles.postContent}>{post.content}</Text>
+          </View>
+        )}
         contentContainerStyle={{ paddingBottom: 100 }}
         data={replies}
         keyExtractor={item => item.id}
@@ -248,6 +254,9 @@ const styles = StyleSheet.create({
     borderRadius: 6,
     padding: 10,
     marginTop: 10,
+  },
+  highlightPost: {
+    backgroundColor: colors.highlight,
   },
   postContent: { color: 'white' },
   username: { fontWeight: 'bold', color: 'white' },
