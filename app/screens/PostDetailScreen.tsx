@@ -248,6 +248,7 @@ const styles = StyleSheet.create({
   highlightPost: {
     borderColor: '#c8102e',
     borderWidth: 2,
+
   },
   reply: {
     backgroundColor: '#ffffff10',
