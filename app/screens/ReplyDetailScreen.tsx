@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, TextInput, Button, FlatList, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, Text, TextInput, Button, FlatList, StyleSheet, TouchableOpacity, KeyboardAvoidingView, Platform } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useRoute, useNavigation } from '@react-navigation/native';
 
@@ -136,18 +136,10 @@ export default function ReplyDetailScreen() {
         <Text style={styles.postContent}>{parent.content}</Text>
       </View>
 
-      <TextInput
-        placeholder="Write a reply"
-        value={replyText}
-        onChangeText={setReplyText}
-        style={styles.input}
-        multiline
-      />
-      <Button title="Post" onPress={handleReply} />
-
       <FlatList
         data={replies}
         keyExtractor={item => item.id}
+        contentContainerStyle={{ paddingBottom: 80 }}
         renderItem={({ item }) => {
           const childName = item.profiles?.display_name || item.profiles?.username || item.username;
           return (
@@ -162,6 +154,22 @@ export default function ReplyDetailScreen() {
           );
         }}
       />
+
+      <KeyboardAvoidingView
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        keyboardVerticalOffset={80}
+      >
+        <View style={styles.inputContainer}>
+          <TextInput
+            placeholder="Write a reply"
+            value={replyText}
+            onChangeText={setReplyText}
+            style={styles.input}
+            multiline
+          />
+          <Button title="Post" onPress={handleReply} />
+        </View>
+      </KeyboardAvoidingView>
     </View>
   );
 }
@@ -192,7 +200,17 @@ const styles = StyleSheet.create({
     backgroundColor: 'white',
     padding: 10,
     borderRadius: 6,
-    marginBottom: 10,
+    flex: 1,
+  },
+  inputContainer: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 10,
+    backgroundColor: '#3b205c',
   },
   backButton: {
     alignSelf: 'flex-start',
