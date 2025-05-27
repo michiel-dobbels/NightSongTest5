@@ -13,10 +13,13 @@ import {
   TextInput,
   Modal,
   StyleSheet,
-  SafeAreaView,
   StatusBar,
 } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import {
+  SafeAreaView,
+  useSafeAreaInsets,
+} from 'react-native-safe-area-context';
+
 import { useAuth } from '../AuthContext';
 import HomeScreen, { HomeScreenRef } from './screens/HomeScreen';
 import { supabase } from '../lib/supabase';
@@ -33,7 +36,7 @@ function FollowingScreen() {
 
 const Tab = createMaterialTopTabNavigator();
 const TAB_BAR_HEIGHT = 48;
-const HEADER_BOTTOM_PADDING = 10;
+const HEADER_BOTTOM_PADDING = 0;
 const BLUR_BACKGROUND_COLOR = 'rgba(29,21,43,0.6)';
 
 
@@ -111,6 +114,7 @@ export default function TopTabsNavigator() {
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: colors.background }}>
+
       <Tab.Navigator
         tabBar={(props) => (
           <HeaderTabBar
