@@ -67,9 +67,9 @@ export default function ReplyDetailScreen() {
 
   const [replyText, setReplyText] = useState('');
   const [replies, setReplies] = useState<Reply[]>([]);
+  const [post, setPost] = useState<Post | null>(null);
   const [ancestors, setAncestors] = useState<Reply[]>([]);
 
-  const [post, setPost] = useState<Post | null>(null);
   const [keyboardOffset, setKeyboardOffset] = useState(0);
 
   const fetchReplies = async () => {
@@ -121,7 +121,8 @@ export default function ReplyDetailScreen() {
   }, []);
 
   useEffect(() => {
-    const fetchAncestors = async () => {
+    const loadAncestors = async () => {
+
       let currentId = parent.parent_id;
       const chain: Reply[] = [];
       while (currentId) {
@@ -132,16 +133,15 @@ export default function ReplyDetailScreen() {
           )
           .eq('id', currentId)
           .single();
-        if (error || !data) {
-          break;
-        }
-        chain.push(data as Reply);
-        currentId = data.parent_id;
+        if (error || !data) break;
+        const ancestor = data as Reply;
+        chain.unshift(ancestor);
+        currentId = ancestor.parent_id;
       }
-      setAncestors(chain.reverse());
+      setAncestors(chain);
     };
 
-    fetchAncestors();
+    loadAncestors();
   }, []);
 
   useEffect(() => {
