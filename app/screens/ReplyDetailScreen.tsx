@@ -69,6 +69,7 @@ export default function ReplyDetailScreen() {
   const [replies, setReplies] = useState<Reply[]>([]);
   const [post, setPost] = useState<Post | null>(null);
   const [ancestors, setAncestors] = useState<Reply[]>([]);
+
   const [keyboardOffset, setKeyboardOffset] = useState(0);
 
   const fetchReplies = async () => {
@@ -124,6 +125,7 @@ export default function ReplyDetailScreen() {
       let parentId = parent.parent_id;
       const chain: Reply[] = [];
       while (parentId) {
+
         const { data, error } = await supabase
           .from('replies')
           .select(
@@ -134,6 +136,7 @@ export default function ReplyDetailScreen() {
         if (error || !data) break;
         chain.unshift(data as Reply);
         parentId = (data as Reply).parent_id;
+
       }
       setAncestors(chain);
     };
@@ -142,6 +145,7 @@ export default function ReplyDetailScreen() {
   }, []);
 
   useEffect(() => {
+
     const show = Keyboard.addListener(
       Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow',
       e => setKeyboardOffset(e.endCoordinates.height),
@@ -241,10 +245,12 @@ export default function ReplyDetailScreen() {
                     <Text style={styles.username}>@{ancestorName}</Text>
                     <Text style={styles.postContent}>{ancestor.content}</Text>
                     <Text style={styles.timestamp}>{timeAgo(ancestor.created_at)}</Text>
+
                   </View>
                 </TouchableOpacity>
               );
             })}
+
             <View style={styles.post}>
               <Text style={styles.username}>@{name}</Text>
               <Text style={styles.postContent}>{parent.content}</Text>
