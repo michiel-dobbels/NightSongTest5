@@ -1,5 +1,15 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, TextInput, Button, FlatList, StyleSheet, TouchableOpacity } from 'react-native';
+import {
+  View,
+  Text,
+  TextInput,
+  Button,
+  FlatList,
+  StyleSheet,
+  TouchableOpacity,
+  KeyboardAvoidingView,
+  Platform,
+} from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useRoute, useNavigation } from '@react-navigation/native';
 
@@ -155,18 +165,25 @@ export default function ReplyDetailScreen() {
             </TouchableOpacity>
           );
         }}
+        contentContainerStyle={{ paddingBottom: 100 }}
       />
 
-      <View style={styles.inputContainer}>
-        <TextInput
-          placeholder="Write a reply"
-          value={replyText}
-          onChangeText={setReplyText}
-          style={styles.input}
-          multiline
-        />
-        <Button title="Post" onPress={handleReply} />
-      </View>
+      <KeyboardAvoidingView
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        keyboardVerticalOffset={80}
+      >
+        <View style={styles.inputContainer}>
+          <TextInput
+            placeholder="Write a reply"
+            value={replyText}
+            onChangeText={setReplyText}
+            style={styles.input}
+            multiline
+          />
+          <Button title="Post" onPress={handleReply} />
+        </View>
+      </KeyboardAvoidingView>
+
     </View>
   );
 }
@@ -206,11 +223,11 @@ const styles = StyleSheet.create({
   },
   inputContainer: {
     position: 'absolute',
-    left: 16,
-    right: 16,
+    left: 0,
+    right: 0,
     bottom: 0,
+    padding: 16,
     backgroundColor: colors.background,
-    paddingBottom: 16,
 
   },
 });
