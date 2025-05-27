@@ -122,27 +122,18 @@ export default function ReplyDetailScreen() {
 
   useEffect(() => {
     const loadAncestors = async () => {
-      let parentId = parent.parent_id;
       const chain: Reply[] = [];
-
-      while (parentId) {
-
+      let currentId = parent.parent_id;
+      while (currentId) {
         const { data, error } = await supabase
           .from('replies')
-          .select(
-            'id, post_id, parent_id, user_id, content, created_at, username, profiles(username, display_name)'
-          )
-          .eq('id', parentId)
+          .select('id, post_id, parent_id, user_id, content, created_at, username, profiles(username, display_name)')
+          .eq('id', currentId)
           .single();
-
-        if (error || !data) {
-          break;
-        }
-
+        if (error || !data) break;
         chain.unshift(data as Reply);
-        parentId = (data as Reply).parent_id;
+        currentId = (data as Reply).parent_id;
       }
-
 
       setAncestors(chain);
     };
@@ -240,13 +231,15 @@ export default function ReplyDetailScreen() {
               </TouchableOpacity>
             )}
             {ancestors.map(a => {
-              const ancestorName = a.profiles?.display_name || a.profiles?.username || a.username;
+              const aName = a.profiles?.display_name || a.profiles?.username || a.username;
               return (
-                <View key={a.id} style={styles.post}>
-                  <Text style={styles.username}>@{ancestorName}</Text>
-                  <Text style={styles.postContent}>{a.content}</Text>
-                  <Text style={styles.timestamp}>{timeAgo(a.created_at)}</Text>
-                </View>
+                <TouchableOpacity key={a.id} onPress={() => navigation.push('ReplyDetail', { reply: a })}>
+                  <View style={styles.post}>
+                    <Text style={styles.username}>@{aName}</Text>
+                    <Text style={styles.postContent}>{a.content}</Text>
+                    <Text style={styles.timestamp}>{timeAgo(a.created_at)}</Text>
+                  </View>
+                </TouchableOpacity>
               );
             })}
 
