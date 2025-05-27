@@ -51,7 +51,8 @@ export default function TopTabsNavigator() {
   const insets = useSafeAreaInsets();
   const HEADER_CONTENT_HEIGHT = 70;
   const headerHeight = insets.top + HEADER_CONTENT_HEIGHT;
-  const tabTopOffset = headerHeight - TAB_BAR_HEIGHT;
+  // Shift the tab bar down by its own height relative to the header
+  const tabTopOffset = headerHeight;
 
   const [modalVisible, setModalVisible] = useState(false);
   const [postText, setPostText] = useState('');
