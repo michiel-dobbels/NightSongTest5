@@ -13,10 +13,12 @@ import {
   TextInput,
   Modal,
   StyleSheet,
-  SafeAreaView,
   StatusBar,
 } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import {
+  SafeAreaView,
+  useSafeAreaInsets,
+} from 'react-native-safe-area-context';
 import { useAuth } from '../AuthContext';
 import HomeScreen, { HomeScreenRef } from './screens/HomeScreen';
 import { supabase } from '../lib/supabase';
@@ -51,6 +53,7 @@ function HeaderTabBar(
       tint="dark"
       style={[styles.headerBlur, { paddingTop: insetsTop + 10 }]}
     >
+      <StatusBar barStyle="light-content" translucent backgroundColor="transparent" />
       <Text style={{ color: 'white', textAlign: 'center' }}>{welcomeText}</Text>
       <View style={{ alignItems: 'center', marginTop: 10 }}>
         <Button title="Logout" onPress={signOut} />
@@ -109,8 +112,10 @@ export default function TopTabsNavigator() {
   const ForYouScreen = () => <HomeScreen ref={homeScreenRef} hideInput />;
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: colors.background }}>
-      <StatusBar barStyle="light-content" translucent backgroundColor="transparent" />
+    <SafeAreaView
+      style={{ flex: 1, backgroundColor: colors.background }}
+      edges={['bottom']}
+    >
       <Tab.Navigator
         tabBar={(props) => (
           <HeaderTabBar
