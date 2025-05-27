@@ -65,6 +65,7 @@ export default function ReplyDetailScreen() {
   const originalPost = route.params.originalPost as Post | undefined;
   const ancestors = (route.params.ancestors as Reply[]) || [];
 
+
   const STORAGE_KEY = `${CHILD_PREFIX}${parent.id}`;
 
   const [replyText, setReplyText] = useState('');
@@ -203,6 +204,7 @@ export default function ReplyDetailScreen() {
                 </View>
               );
             })}
+
             <View style={styles.post}>
               <Text style={styles.username}>@{name}</Text>
               <Text style={styles.postContent}>{parent.content}</Text>
@@ -226,6 +228,7 @@ export default function ReplyDetailScreen() {
                 })
               }
             >
+
 
               <View style={styles.reply}>
                 <Text style={styles.username}>@{childName}</Text>
