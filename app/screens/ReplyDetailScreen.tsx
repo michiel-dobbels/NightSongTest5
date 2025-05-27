@@ -136,19 +136,12 @@ export default function ReplyDetailScreen() {
         <Text style={styles.postContent}>{parent.content}</Text>
       </View>
 
-      <TextInput
-        placeholder="Write a reply"
-        value={replyText}
-        onChangeText={setReplyText}
-        style={styles.input}
-        multiline
-      />
-      <Button title="Post" onPress={handleReply} />
-
       <FlatList
+        contentContainerStyle={{ paddingBottom: 100 }}
         data={replies}
         keyExtractor={item => item.id}
         contentContainerStyle={{ paddingBottom: 100 }}
+
         renderItem={({ item }) => {
           const childName = item.profiles?.display_name || item.profiles?.username || item.username;
           return (
@@ -183,6 +176,7 @@ const styles = StyleSheet.create({
     flex: 1,
     padding: 16,
     paddingTop: 100,
+    paddingBottom: 0,
     backgroundColor: colors.background,
   },
   post: {
@@ -217,5 +211,6 @@ const styles = StyleSheet.create({
     bottom: 0,
     backgroundColor: colors.background,
     paddingBottom: 16,
+
   },
 });
