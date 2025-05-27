@@ -33,7 +33,6 @@ function FollowingScreen() {
 
 const Tab = createMaterialTopTabNavigator();
 const TAB_BAR_HEIGHT = 48;
-const HEADER_BOTTOM_PADDING = 10;
 
 function BlurredTabBar({ topOffset, ...props }: MaterialTopTabBarProps & { topOffset: number }) {
   return (
@@ -51,8 +50,8 @@ export default function TopTabsNavigator() {
   const insets = useSafeAreaInsets();
   const HEADER_CONTENT_HEIGHT = 70;
   const headerHeight = insets.top + HEADER_CONTENT_HEIGHT;
-  // Align the tab bar with the bottom of the header
-  const tabTopOffset = headerHeight - TAB_BAR_HEIGHT;
+  // Move the tab bar 10% higher relative to the header
+  const tabTopOffset = headerHeight - TAB_BAR_HEIGHT * 1.1;
 
 
   const [modalVisible, setModalVisible] = useState(false);
