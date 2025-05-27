@@ -51,9 +51,9 @@ export default function TopTabsNavigator() {
   const insets = useSafeAreaInsets();
   const HEADER_CONTENT_HEIGHT = 70;
   const headerHeight = insets.top + HEADER_CONTENT_HEIGHT;
-  // Position the tab bar slightly higher to reduce the gap
-  // Move it up by 10% relative to the bottom of the header
-  const tabTopOffset = (headerHeight + HEADER_BOTTOM_PADDING) * 0.9;
+  // Align the tab bar with the bottom of the header including padding
+  // then shift it upward by 20% to reduce the gap
+  const tabTopOffset = (headerHeight + HEADER_BOTTOM_PADDING) * 0.8;
 
 
 
