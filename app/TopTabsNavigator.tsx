@@ -33,6 +33,9 @@ function FollowingScreen() {
 
 const Tab = createMaterialTopTabNavigator();
 const TAB_BAR_HEIGHT = 48;
+const HEADER_BOTTOM_PADDING = 10;
+const BLUR_BACKGROUND_COLOR = 'rgba(29,21,43,0.6)';
+
 
 function BlurredTabBar({ topOffset, ...props }: MaterialTopTabBarProps & { topOffset: number }) {
   return (
@@ -50,8 +53,8 @@ export default function TopTabsNavigator() {
   const insets = useSafeAreaInsets();
   const HEADER_CONTENT_HEIGHT = 70;
   const headerHeight = insets.top + HEADER_CONTENT_HEIGHT;
-  // Move the tab bar 10% higher relative to the header
-  const tabTopOffset = headerHeight - TAB_BAR_HEIGHT * 1.1;
+  // Align the tab bar with the bottom of the header including padding
+  const tabTopOffset = headerHeight + HEADER_BOTTOM_PADDING;
 
 
 
@@ -184,9 +187,8 @@ const styles = StyleSheet.create({
     top: 0,
     left: 0,
     right: 0,
-    paddingBottom: 10,
-
-    backgroundColor: 'rgba(29,21,43,0.6)',
+    paddingBottom: HEADER_BOTTOM_PADDING,
+    backgroundColor: BLUR_BACKGROUND_COLOR,
     zIndex: 20,
   },
 
@@ -195,9 +197,7 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     height: TAB_BAR_HEIGHT,
-    overflow: 'hidden',
-    backgroundColor: 'rgba(29,21,43,0.6)',
-
+    backgroundColor: BLUR_BACKGROUND_COLOR,
     zIndex: 10,
   },
   blurredBar: {
