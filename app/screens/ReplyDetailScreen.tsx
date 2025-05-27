@@ -69,6 +69,7 @@ export default function ReplyDetailScreen() {
   const [replies, setReplies] = useState<Reply[]>([]);
   const [post, setPost] = useState<Post | null>(null);
   const [ancestors, setAncestors] = useState<Reply[]>([]);
+
   const [keyboardOffset, setKeyboardOffset] = useState(0);
 
   const fetchReplies = async () => {
@@ -125,6 +126,7 @@ export default function ReplyDetailScreen() {
       const chain: Reply[] = [];
 
       while (parentId) {
+
         const { data, error } = await supabase
           .from('replies')
           .select(
@@ -141,6 +143,7 @@ export default function ReplyDetailScreen() {
         parentId = (data as Reply).parent_id;
       }
 
+
       setAncestors(chain);
     };
 
@@ -148,6 +151,7 @@ export default function ReplyDetailScreen() {
   }, []);
 
   useEffect(() => {
+
     const show = Keyboard.addListener(
       Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow',
       e => setKeyboardOffset(e.endCoordinates.height),
@@ -245,6 +249,7 @@ export default function ReplyDetailScreen() {
                 </View>
               );
             })}
+
             <View style={styles.post}>
               <Text style={styles.username}>@{name}</Text>
               <Text style={styles.postContent}>{parent.content}</Text>
