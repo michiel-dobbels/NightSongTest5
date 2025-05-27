@@ -249,6 +249,7 @@ export default function PostDetailScreen() {
           return (
             <TouchableOpacity
               onPress={() => navigation.push('ReplyDetail', { reply: item, originalPost: post })}
+
             >
 
               <View style={styles.reply}>
