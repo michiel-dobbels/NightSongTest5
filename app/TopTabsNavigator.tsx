@@ -33,7 +33,7 @@ function FollowingScreen() {
 
 const Tab = createMaterialTopTabNavigator();
 const TAB_BAR_HEIGHT = 48;
-const HEADER_BOTTOM_PADDING = 10;
+const HEADER_BOTTOM_PADDING = 0;
 const BLUR_BACKGROUND_COLOR = 'rgba(29,21,43,0.6)';
 
 
@@ -110,10 +110,7 @@ export default function TopTabsNavigator() {
   const ForYouScreen = () => <HomeScreen ref={homeScreenRef} hideInput />;
 
   return (
-    <SafeAreaView
-      edges={['bottom']}
-      style={{ flex: 1, backgroundColor: colors.background }}
-    >
+    <SafeAreaView style={{ flex: 1, backgroundColor: colors.background }}>
 
       <Tab.Navigator
         tabBar={(props) => (
