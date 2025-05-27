@@ -251,7 +251,9 @@ const styles = StyleSheet.create({
     marginBottom: 10,
   },
   highlightPost: {
-    backgroundColor: '#c8102e',
+    borderColor: '#c8102e',
+    borderWidth: 2,
+
   },
   reply: {
     backgroundColor: '#ffffff10',
