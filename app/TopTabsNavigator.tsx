@@ -34,6 +34,8 @@ function FollowingScreen() {
 const Tab = createMaterialTopTabNavigator();
 const TAB_BAR_HEIGHT = 48;
 const HEADER_BOTTOM_PADDING = 10;
+const BLUR_BACKGROUND_COLOR = 'rgba(29,21,43,0.6)';
+
 
 function HeaderTabBar(
   props: MaterialTopTabBarProps & {
@@ -68,6 +70,7 @@ export default function TopTabsNavigator() {
   const headerHeight = insets.top + HEADER_CONTENT_HEIGHT;
   const HEADER_TOTAL_HEIGHT =
     headerHeight + HEADER_BOTTOM_PADDING + TAB_BAR_HEIGHT;
+
 
 
   const [modalVisible, setModalVisible] = useState(false);
@@ -202,6 +205,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(29,21,43,0.6)',
     zIndex: 20,
   },
+
   blurredBar: {
     backgroundColor: 'transparent',
   },
