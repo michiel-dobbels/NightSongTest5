@@ -137,6 +137,7 @@ export default function ReplyDetailScreen() {
       </View>
 
       <FlatList
+        contentContainerStyle={{ paddingBottom: 100 }}
         data={replies}
         keyExtractor={item => item.id}
         contentContainerStyle={{ paddingBottom: 120 }}
@@ -204,9 +205,10 @@ const styles = StyleSheet.create({
   },
   inputContainer: {
     position: 'absolute',
+    bottom: 0,
     left: 0,
     right: 0,
-    bottom: 0,
+
     padding: 16,
     backgroundColor: colors.background,
   },
