@@ -113,7 +113,10 @@ export default function TopTabsNavigator() {
   const ForYouScreen = () => <HomeScreen ref={homeScreenRef} hideInput />;
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: colors.background }}>
+    <SafeAreaView
+      style={{ flex: 1, backgroundColor: colors.background }}
+      edges={['bottom']}
+    >
 
       <Tab.Navigator
         tabBar={(props) => (
