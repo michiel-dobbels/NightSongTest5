@@ -12,6 +12,7 @@ import {
   SafeAreaView,
   StatusBar,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuth } from '../AuthContext';
 import HomeScreen, { HomeScreenRef } from './screens/HomeScreen';
 import { supabase } from '../lib/supabase';
@@ -29,9 +30,9 @@ function FollowingScreen() {
 const Tab = createMaterialTopTabNavigator();
 const TAB_BAR_HEIGHT = 48;
 
-function BlurredTabBar(props: MaterialTopTabBarProps) {
+function BlurredTabBar({ topOffset, ...props }: MaterialTopTabBarProps & { topOffset: number }) {
   return (
-    <BlurView intensity={50} tint="dark" style={styles.blurredWrapper}>
+    <BlurView intensity={50} tint="dark" style={[styles.blurredWrapper, { top: topOffset }]}>
       <MaterialTopTabBar
         {...props}
         style={[props.style, styles.blurredBar]}
@@ -42,6 +43,9 @@ function BlurredTabBar(props: MaterialTopTabBarProps) {
 
 export default function TopTabsNavigator() {
   const { profile, user, signOut } = useAuth() as any;
+  const insets = useSafeAreaInsets();
+  const HEADER_CONTENT_HEIGHT = 70;
+  const headerHeight = insets.top + HEADER_CONTENT_HEIGHT;
   const [modalVisible, setModalVisible] = useState(false);
   const [postText, setPostText] = useState('');
   const [modalText, setModalText] = useState('');
@@ -79,8 +83,8 @@ export default function TopTabsNavigator() {
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: colors.background }}>
-      <StatusBar barStyle="light-content" backgroundColor={colors.background} />
-      <BlurView intensity={50} tint="dark" style={styles.headerBlur}>
+      <StatusBar barStyle="light-content" translucent backgroundColor="transparent" />
+      <BlurView intensity={50} tint="dark" style={[styles.headerBlur, { paddingTop: insets.top + 10 }]}>
         <Text style={{ color: 'white', textAlign: 'center' }}>{welcomeText}</Text>
         <View style={{ alignItems: 'center', marginTop: 10 }}>
           <Button title="Logout" onPress={signOut} />
@@ -88,8 +92,10 @@ export default function TopTabsNavigator() {
       </BlurView>
 
       <Tab.Navigator
-        tabBar={(props) => <BlurredTabBar {...props} />}
-        sceneContainerStyle={{ paddingTop: TAB_BAR_HEIGHT }}
+        tabBar={(props) => (
+          <BlurredTabBar {...props} topOffset={headerHeight + TAB_BAR_HEIGHT} />
+        )}
+        sceneContainerStyle={{ paddingTop: headerHeight + TAB_BAR_HEIGHT * 2 }}
         screenOptions={{
           tabBarStyle: {
             backgroundColor: 'transparent',
@@ -165,14 +171,17 @@ const styles = StyleSheet.create({
     zIndex: 100,
   },
   headerBlur: {
-    paddingTop: 10,
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
     paddingBottom: 10,
     backgroundColor: 'rgba(29,21,43,0.6)',
+    zIndex: 20,
   },
 
   blurredWrapper: {
     position: 'absolute',
-    top: 0,
     left: 0,
     right: 0,
     height: TAB_BAR_HEIGHT,
