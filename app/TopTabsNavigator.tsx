@@ -51,8 +51,8 @@ export default function TopTabsNavigator() {
   const insets = useSafeAreaInsets();
   const HEADER_CONTENT_HEIGHT = 70;
   const headerHeight = insets.top + HEADER_CONTENT_HEIGHT;
-  // Align the tab bar with the bottom of the header
-  const tabTopOffset = headerHeight - TAB_BAR_HEIGHT;
+  // Align the tab bar with the bottom of the header including padding
+  const tabTopOffset = headerHeight + HEADER_BOTTOM_PADDING;
 
 
   const [modalVisible, setModalVisible] = useState(false);
@@ -185,11 +185,9 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     paddingBottom: 10,
-
     backgroundColor: 'rgba(29,21,43,0.6)',
     zIndex: 20,
   },
-
   blurredWrapper: {
     position: 'absolute',
     left: 0,
@@ -197,7 +195,6 @@ const styles = StyleSheet.create({
     height: TAB_BAR_HEIGHT,
     overflow: 'hidden',
     backgroundColor: 'rgba(29,21,43,0.6)',
-
     zIndex: 10,
   },
   blurredBar: {
