@@ -45,6 +45,18 @@ interface Reply {
   } | null;
 }
 
+interface Post {
+  id: string;
+  content: string;
+  user_id: string;
+  created_at: string;
+  username?: string;
+  profiles?: {
+    username: string | null;
+    display_name: string | null;
+  } | null;
+}
+
 export default function ReplyDetailScreen() {
   const route = useRoute<any>();
   const navigation = useNavigation<any>();
@@ -55,6 +67,8 @@ export default function ReplyDetailScreen() {
 
   const [replyText, setReplyText] = useState('');
   const [replies, setReplies] = useState<Reply[]>([]);
+  const [post, setPost] = useState<Post | null>(null);
+  const [ancestors, setAncestors] = useState<Reply[]>([]);
   const [keyboardOffset, setKeyboardOffset] = useState(0);
 
   const fetchReplies = async () => {
@@ -86,6 +100,43 @@ export default function ReplyDetailScreen() {
       fetchReplies();
     };
     loadCached();
+  }, []);
+
+  useEffect(() => {
+    const fetchPost = async () => {
+      const { data, error } = await supabase
+        .from('posts')
+        .select(
+          'id, content, user_id, created_at, username, profiles(username, display_name)'
+        )
+        .eq('id', parent.post_id)
+        .single();
+      if (!error && data) {
+        setPost(data as Post);
+      }
+    };
+
+    fetchPost();
+  }, []);
+
+  useEffect(() => {
+    const loadAncestors = async () => {
+      const chain: Reply[] = [];
+      let currentId = parent.parent_id;
+      while (currentId) {
+        const { data, error } = await supabase
+          .from('replies')
+          .select('id, post_id, parent_id, user_id, content, created_at, username, profiles(username, display_name)')
+          .eq('id', currentId)
+          .single();
+        if (error || !data) break;
+        chain.unshift(data as Reply);
+        currentId = (data as Reply).parent_id;
+      }
+      setAncestors(chain);
+    };
+
+    loadAncestors();
   }, []);
 
   useEffect(() => {
@@ -162,12 +213,39 @@ export default function ReplyDetailScreen() {
       <View style={styles.backButton}>
         <Button title="Return" onPress={() => navigation.goBack()} />
       </View>
-      <View style={styles.post}>
-        <Text style={styles.username}>@{name}</Text>
-        <Text style={styles.postContent}>{parent.content}</Text>
-      </View>
-
       <FlatList
+        ListHeaderComponent={() => (
+          <>
+            {post && (
+              <TouchableOpacity onPress={() => navigation.navigate('PostDetail', { post })}>
+                <View style={[styles.post, styles.highlightPost]}>
+                  <Text style={styles.username}>
+                    @{post.profiles?.display_name || post.profiles?.username || post.username}
+                  </Text>
+                  <Text style={styles.postContent}>{post.content}</Text>
+                  <Text style={styles.timestamp}>{timeAgo(post.created_at)}</Text>
+                </View>
+              </TouchableOpacity>
+            )}
+            {ancestors.map(a => {
+              const aName = a.profiles?.display_name || a.profiles?.username || a.username;
+              return (
+                <TouchableOpacity key={a.id} onPress={() => navigation.push('ReplyDetail', { reply: a })}>
+                  <View style={styles.post}>
+                    <Text style={styles.username}>@{aName}</Text>
+                    <Text style={styles.postContent}>{a.content}</Text>
+                    <Text style={styles.timestamp}>{timeAgo(a.created_at)}</Text>
+                  </View>
+                </TouchableOpacity>
+              );
+            })}
+            <View style={styles.post}>
+              <Text style={styles.username}>@{name}</Text>
+              <Text style={styles.postContent}>{parent.content}</Text>
+              <Text style={styles.timestamp}>{timeAgo(parent.created_at)}</Text>
+            </View>
+          </>
+        )}
         contentContainerStyle={{ paddingBottom: 100 }}
         data={replies}
         keyExtractor={item => item.id}
@@ -214,6 +292,10 @@ const styles = StyleSheet.create({
     borderRadius: 6,
     padding: 10,
     marginBottom: 10,
+  },
+  highlightPost: {
+    borderColor: '#c8102e',
+    borderWidth: 2,
   },
   reply: {
     backgroundColor: '#ffffff10',
