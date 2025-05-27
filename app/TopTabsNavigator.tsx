@@ -34,17 +34,8 @@ function FollowingScreen() {
 const Tab = createMaterialTopTabNavigator();
 const TAB_BAR_HEIGHT = 48;
 const HEADER_BOTTOM_PADDING = 10;
+const BLUR_BACKGROUND_COLOR = 'rgba(29,21,43,0.6)';
 
-function BlurredTabBar({ topOffset, ...props }: MaterialTopTabBarProps & { topOffset: number }) {
-  return (
-    <BlurView intensity={50} tint="dark" style={[styles.blurredWrapper, { top: topOffset }]}>
-      <MaterialTopTabBar
-        {...props}
-        style={[props.style, styles.blurredBar]}
-      />
-    </BlurView>
-  );
-}
 
 export default function TopTabsNavigator() {
   const { profile, user, signOut } = useAuth() as any;
@@ -53,6 +44,7 @@ export default function TopTabsNavigator() {
   const headerHeight = insets.top + HEADER_CONTENT_HEIGHT;
   // Align the tab bar with the bottom of the header including padding
   const tabTopOffset = headerHeight + HEADER_BOTTOM_PADDING;
+
 
 
   const [modalVisible, setModalVisible] = useState(false);
@@ -95,15 +87,28 @@ export default function TopTabsNavigator() {
       <BlurView intensity={50} tint="dark" style={[styles.headerBlur, { paddingTop: insets.top + 10 }]}>
         <StatusBar barStyle="light-content" translucent backgroundColor="transparent" />
 
+
         <Text style={{ color: 'white', textAlign: 'center' }}>{welcomeText}</Text>
         <View style={{ alignItems: 'center', marginTop: 10 }}>
           <Button title="Logout" onPress={signOut} />
         </View>
+        <MaterialTopTabBar
+          {...props}
+          style={[props.style, styles.blurredBar]}
+        />
       </BlurView>
+    );
+  }
 
+  const ForYouScreen = () => <HomeScreen ref={homeScreenRef} hideInput />;
+
+  return (
+    <SafeAreaView style={{ flex: 1, backgroundColor: colors.background }}>
       <Tab.Navigator
-        tabBar={(props) => <BlurredTabBar {...props} topOffset={tabTopOffset} />}
-        sceneContainerStyle={{ paddingTop: tabTopOffset + TAB_BAR_HEIGHT }}
+        tabBar={(props) => <HeaderTabBar {...props} />}
+
+
+        sceneContainerStyle={{ paddingTop: HEADER_TOTAL_HEIGHT }}
 
         screenOptions={{
           tabBarStyle: {
@@ -184,22 +189,11 @@ const styles = StyleSheet.create({
     top: 0,
     left: 0,
     right: 0,
-    paddingBottom: 10,
-
+    paddingBottom: HEADER_BOTTOM_PADDING,
     backgroundColor: 'rgba(29,21,43,0.6)',
     zIndex: 20,
   },
 
-  blurredWrapper: {
-    position: 'absolute',
-    left: 0,
-    right: 0,
-    height: TAB_BAR_HEIGHT,
-    overflow: 'hidden',
-    backgroundColor: 'rgba(29,21,43,0.6)',
-
-    zIndex: 10,
-  },
   blurredBar: {
     backgroundColor: 'transparent',
   },
