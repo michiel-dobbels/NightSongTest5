@@ -147,8 +147,11 @@ export default function ReplyDetailScreen() {
       </View>
 
       <FlatList
+        contentContainerStyle={{ paddingBottom: 100 }}
         data={replies}
         keyExtractor={item => item.id}
+        contentContainerStyle={{ paddingBottom: 100 }}
+
         renderItem={({ item }) => {
           const childName = item.profiles?.display_name || item.profiles?.username || item.username;
           return (
@@ -180,6 +183,7 @@ export default function ReplyDetailScreen() {
           <Button title="Post" onPress={handleReply} />
         </View>
       </KeyboardAvoidingView>
+
     </View>
   );
 }
@@ -189,6 +193,7 @@ const styles = StyleSheet.create({
     flex: 1,
     padding: 16,
     paddingTop: 100,
+    paddingBottom: 0,
     backgroundColor: colors.background,
   },
   post: {
@@ -223,5 +228,6 @@ const styles = StyleSheet.create({
     bottom: 0,
     padding: 16,
     backgroundColor: colors.background,
+
   },
 });
