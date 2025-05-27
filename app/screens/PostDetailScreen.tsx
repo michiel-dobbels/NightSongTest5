@@ -165,16 +165,8 @@ export default function PostDetailScreen() {
         <Text style={styles.postContent}>{post.content}</Text>
       </View>
 
-      <TextInput
-        placeholder="Write a reply"
-        value={replyText}
-        onChangeText={setReplyText}
-        style={styles.input}
-        multiline
-      />
-      <Button title="Post" onPress={handleReply} />
-
       <FlatList
+        contentContainerStyle={{ paddingBottom: 100 }}
         data={replies}
         keyExtractor={item => item.id}
         renderItem={({ item }) => {
@@ -191,6 +183,17 @@ export default function PostDetailScreen() {
           );
         }}
       />
+
+      <View style={styles.inputContainer}>
+        <TextInput
+          placeholder="Write a reply"
+          value={replyText}
+          onChangeText={setReplyText}
+          style={styles.input}
+          multiline
+        />
+        <Button title="Post" onPress={handleReply} />
+      </View>
     </View>
   );
 }
@@ -226,5 +229,13 @@ const styles = StyleSheet.create({
   backButton: {
     alignSelf: 'flex-start',
     marginBottom: 10,
+  },
+  inputContainer: {
+    position: 'absolute',
+    left: 16,
+    right: 16,
+    bottom: 0,
+    backgroundColor: colors.background,
+    paddingBottom: 16,
   },
 });
