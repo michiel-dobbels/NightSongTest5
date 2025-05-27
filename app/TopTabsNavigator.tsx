@@ -34,6 +34,8 @@ function FollowingScreen() {
 const Tab = createMaterialTopTabNavigator();
 const TAB_BAR_HEIGHT = 48;
 const HEADER_BOTTOM_PADDING = 10;
+const BLUR_BACKGROUND_COLOR = 'rgba(29,21,43,0.6)';
+
 
 export default function TopTabsNavigator() {
   const { profile, user, signOut } = useAuth() as any;
@@ -42,6 +44,7 @@ export default function TopTabsNavigator() {
   const headerHeight = insets.top + HEADER_CONTENT_HEIGHT;
   const HEADER_TOTAL_HEIGHT =
     headerHeight + HEADER_BOTTOM_PADDING + TAB_BAR_HEIGHT;
+
 
 
   const [modalVisible, setModalVisible] = useState(false);
@@ -89,6 +92,7 @@ export default function TopTabsNavigator() {
           translucent
           backgroundColor="transparent"
         />
+
         <Text style={{ color: 'white', textAlign: 'center' }}>{welcomeText}</Text>
         <View style={{ alignItems: 'center', marginTop: 10 }}>
           <Button title="Logout" onPress={signOut} />
@@ -107,6 +111,8 @@ export default function TopTabsNavigator() {
     <SafeAreaView style={{ flex: 1, backgroundColor: colors.background }}>
       <Tab.Navigator
         tabBar={(props) => <HeaderTabBar {...props} />}
+
+
         sceneContainerStyle={{ paddingTop: HEADER_TOTAL_HEIGHT }}
 
         screenOptions={{
@@ -188,11 +194,11 @@ const styles = StyleSheet.create({
     top: 0,
     left: 0,
     right: 0,
-    paddingBottom: 10,
-
+    paddingBottom: HEADER_BOTTOM_PADDING,
     backgroundColor: 'rgba(29,21,43,0.6)',
     zIndex: 20,
   },
+
   blurredBar: {
     backgroundColor: 'transparent',
   },
