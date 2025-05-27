@@ -124,6 +124,7 @@ export default function ReplyDetailScreen() {
     const loadAncestors = async () => {
       let parentId = parent.parent_id;
       const chain: Reply[] = [];
+
       while (parentId) {
 
         const { data, error } = await supabase
@@ -133,11 +134,16 @@ export default function ReplyDetailScreen() {
           )
           .eq('id', parentId)
           .single();
-        if (error || !data) break;
+
+        if (error || !data) {
+          break;
+        }
+
         chain.unshift(data as Reply);
         parentId = (data as Reply).parent_id;
-
       }
+
+
       setAncestors(chain);
     };
 
@@ -233,21 +239,14 @@ export default function ReplyDetailScreen() {
                 </View>
               </TouchableOpacity>
             )}
-            {ancestors.map(ancestor => {
-              const ancestorName =
-                ancestor.profiles?.display_name || ancestor.profiles?.username || ancestor.username;
+            {ancestors.map(a => {
+              const ancestorName = a.profiles?.display_name || a.profiles?.username || a.username;
               return (
-                <TouchableOpacity
-                  key={ancestor.id}
-                  onPress={() => navigation.push('ReplyDetail', { reply: ancestor })}
-                >
-                  <View style={styles.post}>
-                    <Text style={styles.username}>@{ancestorName}</Text>
-                    <Text style={styles.postContent}>{ancestor.content}</Text>
-                    <Text style={styles.timestamp}>{timeAgo(ancestor.created_at)}</Text>
-
-                  </View>
-                </TouchableOpacity>
+                <View key={a.id} style={styles.post}>
+                  <Text style={styles.username}>@{ancestorName}</Text>
+                  <Text style={styles.postContent}>{a.content}</Text>
+                  <Text style={styles.timestamp}>{timeAgo(a.created_at)}</Text>
+                </View>
               );
             })}
 
