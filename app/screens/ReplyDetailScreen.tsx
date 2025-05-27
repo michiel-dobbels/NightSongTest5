@@ -140,6 +140,7 @@ export default function ReplyDetailScreen() {
         contentContainerStyle={{ paddingBottom: 100 }}
         data={replies}
         keyExtractor={item => item.id}
+        contentContainerStyle={{ paddingBottom: 120 }}
         renderItem={({ item }) => {
           const childName = item.profiles?.display_name || item.profiles?.username || item.username;
           return (
@@ -174,6 +175,7 @@ const styles = StyleSheet.create({
     flex: 1,
     padding: 16,
     paddingTop: 100,
+    paddingBottom: 0,
     backgroundColor: colors.background,
   },
   post: {
@@ -206,6 +208,7 @@ const styles = StyleSheet.create({
     bottom: 0,
     left: 0,
     right: 0,
+
     padding: 16,
     backgroundColor: colors.background,
   },
