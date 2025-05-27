@@ -1,5 +1,16 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, TextInput, Button, FlatList, StyleSheet, TouchableOpacity } from 'react-native';
+import {
+  View,
+  Text,
+  TextInput,
+  Button,
+  FlatList,
+  StyleSheet,
+  TouchableOpacity,
+  KeyboardAvoidingView,
+  Platform,
+  Keyboard,
+} from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useRoute, useNavigation } from '@react-navigation/native';
 
@@ -44,6 +55,7 @@ export default function ReplyDetailScreen() {
 
   const [replyText, setReplyText] = useState('');
   const [replies, setReplies] = useState<Reply[]>([]);
+  const [keyboardOffset, setKeyboardOffset] = useState(0);
 
   const fetchReplies = async () => {
     const { data, error } = await supabase
@@ -74,6 +86,22 @@ export default function ReplyDetailScreen() {
       fetchReplies();
     };
     loadCached();
+  }, []);
+
+  useEffect(() => {
+    const showListener = Keyboard.addListener(
+      Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow',
+      event => setKeyboardOffset(event.endCoordinates.height),
+    );
+    const hideListener = Keyboard.addListener(
+      Platform.OS === 'ios' ? 'keyboardWillHide' : 'keyboardDidHide',
+      () => setKeyboardOffset(0),
+    );
+
+    return () => {
+      showListener.remove();
+      hideListener.remove();
+    };
   }, []);
 
   const handleReply = async () => {
@@ -127,7 +155,11 @@ export default function ReplyDetailScreen() {
   const name = parent.profiles?.display_name || parent.profiles?.username || parent.username;
 
   return (
-    <View style={styles.container}>
+    <KeyboardAvoidingView
+      style={styles.container}
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      keyboardVerticalOffset={80}
+    >
       <View style={styles.backButton}>
         <Button title="Return" onPress={() => navigation.goBack()} />
       </View>
@@ -140,7 +172,6 @@ export default function ReplyDetailScreen() {
         contentContainerStyle={{ paddingBottom: 100 }}
         data={replies}
         keyExtractor={item => item.id}
-        contentContainerStyle={{ paddingBottom: 100 }}
 
         renderItem={({ item }) => {
           const childName = item.profiles?.display_name || item.profiles?.username || item.username;
@@ -157,7 +188,7 @@ export default function ReplyDetailScreen() {
         }}
       />
 
-      <View style={styles.inputContainer}>
+      <View style={[styles.inputContainer, { bottom: keyboardOffset }]}>
         <TextInput
           placeholder="Write a reply"
           value={replyText}
@@ -167,7 +198,7 @@ export default function ReplyDetailScreen() {
         />
         <Button title="Post" onPress={handleReply} />
       </View>
-    </View>
+    </KeyboardAvoidingView>
   );
 }
 
