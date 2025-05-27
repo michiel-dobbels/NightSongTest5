@@ -10,6 +10,7 @@ import {
   KeyboardAvoidingView,
   Platform,
   Keyboard,
+  Alert,
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useRoute, useNavigation } from '@react-navigation/native';
@@ -45,11 +46,24 @@ interface Reply {
   } | null;
 }
 
+interface Post {
+  id: string;
+  content: string;
+  user_id: string;
+  created_at: string;
+  username?: string;
+  profiles?: {
+    username: string | null;
+    display_name: string | null;
+  } | null;
+}
+
 export default function ReplyDetailScreen() {
   const route = useRoute<any>();
   const navigation = useNavigation<any>();
   const { user, profile } = useAuth() as any;
   const parent = route.params.reply as Reply;
+  const originalPost = route.params.originalPost as Post | undefined;
 
   const STORAGE_KEY = `${CHILD_PREFIX}${parent.id}`;
 
@@ -151,7 +165,48 @@ export default function ReplyDetailScreen() {
     }
   };
 
-  const name = parent.profiles?.display_name || parent.profiles?.username || parent.username;
+  const handleDeleteReply = async (id: string) => {
+    const { error } = await supabase.from('replies').delete().eq('id', id);
+    if (error) {
+      Alert.alert('Delete failed', error.message);
+    }
+    setReplies(prev => {
+      const updated = prev.filter(r => r.id !== id);
+      AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
+      return updated;
+    });
+  };
+
+  const confirmDeleteReply = (id: string) => {
+    Alert.alert('Delete reply', 'Are you sure you want to delete this reply?', [
+      { text: 'Cancel', style: 'cancel' },
+      { text: 'Delete', style: 'destructive', onPress: () => handleDeleteReply(id) },
+    ]);
+  };
+
+  const handleDeletePost = async (id: string) => {
+    const { error } = await supabase.from('posts').delete().eq('id', id);
+    if (error) {
+      Alert.alert('Delete failed', error.message);
+    } else {
+      navigation.goBack();
+    }
+  };
+
+  const confirmDeletePost = (id: string) => {
+    Alert.alert('Delete post', 'Are you sure you want to delete this post?', [
+      { text: 'Cancel', style: 'cancel' },
+      { text: 'Delete', style: 'destructive', onPress: () => handleDeletePost(id) },
+    ]);
+  };
+
+  const name =
+    parent.profiles?.display_name || parent.profiles?.username || parent.username;
+  const originalName = originalPost
+    ? originalPost.profiles?.display_name ||
+      originalPost.profiles?.username ||
+      originalPost.username
+    : undefined;
 
   return (
     <KeyboardAvoidingView
@@ -162,12 +217,33 @@ export default function ReplyDetailScreen() {
       <View style={styles.backButton}>
         <Button title="Return" onPress={() => navigation.goBack()} />
       </View>
-      <View style={styles.post}>
-        <Text style={styles.username}>@{name}</Text>
-        <Text style={styles.postContent}>{parent.content}</Text>
-      </View>
-
       <FlatList
+        ListHeaderComponent={() => (
+          <>
+            {originalPost && (
+              <View style={[styles.post, styles.highlightPost]}>
+                {originalPost.user_id === user?.id && (
+                  <TouchableOpacity style={styles.deleteButton} onPress={() => confirmDeletePost(originalPost.id)}>
+                    <Text style={styles.deleteText}>X</Text>
+                  </TouchableOpacity>
+                )}
+                <Text style={styles.username}>@{originalName}</Text>
+                <Text style={styles.postContent}>{originalPost.content}</Text>
+                <Text style={styles.timestamp}>{timeAgo(originalPost.created_at)}</Text>
+              </View>
+            )}
+            <View style={styles.post}>
+              {parent.user_id === user?.id && (
+                <TouchableOpacity style={styles.deleteButton} onPress={() => confirmDeleteReply(parent.id)}>
+                  <Text style={styles.deleteText}>X</Text>
+                </TouchableOpacity>
+              )}
+              <Text style={styles.username}>@{name}</Text>
+              <Text style={styles.postContent}>{parent.content}</Text>
+              <Text style={styles.timestamp}>{timeAgo(parent.created_at)}</Text>
+            </View>
+          </>
+        )}
         contentContainerStyle={{ paddingBottom: 100 }}
         data={replies}
         keyExtractor={item => item.id}
@@ -175,9 +251,13 @@ export default function ReplyDetailScreen() {
         renderItem={({ item }) => {
           const childName = item.profiles?.display_name || item.profiles?.username || item.username;
           return (
-            <TouchableOpacity onPress={() => navigation.push('ReplyDetail', { reply: item })}>
-
+            <TouchableOpacity onPress={() => navigation.push('ReplyDetail', { reply: item, originalPost })}>
               <View style={styles.reply}>
+                {item.user_id === user?.id && (
+                  <TouchableOpacity style={styles.deleteButton} onPress={() => confirmDeleteReply(item.id)}>
+                    <Text style={styles.deleteText}>X</Text>
+                  </TouchableOpacity>
+                )}
                 <Text style={styles.username}>@{childName}</Text>
                 <Text style={styles.postContent}>{item.content}</Text>
                 <Text style={styles.timestamp}>{timeAgo(item.created_at)}</Text>
@@ -221,6 +301,11 @@ const styles = StyleSheet.create({
     padding: 10,
     marginTop: 10,
   },
+  highlightPost: {
+    borderColor: '#4f1fde',
+    borderWidth: 2,
+
+  },
   postContent: { color: 'white' },
   username: { fontWeight: 'bold', color: 'white' },
   timestamp: { fontSize: 10, color: 'gray' },
@@ -243,4 +328,11 @@ const styles = StyleSheet.create({
     paddingBottom: 16,
 
   },
+  deleteButton: {
+    position: 'absolute',
+    top: 4,
+    right: 4,
+    padding: 4,
+  },
+  deleteText: { color: 'red', fontWeight: 'bold' },
 });

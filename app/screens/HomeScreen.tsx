@@ -1,5 +1,14 @@
 import React, { useEffect, useState, forwardRef, useImperativeHandle } from 'react';
-import { View, TextInput, Button, FlatList, Text, StyleSheet, Alert, TouchableOpacity } from 'react-native';
+import {
+  View,
+  TextInput,
+  Button,
+  FlatList,
+  Text,
+  StyleSheet,
+  Alert,
+  TouchableOpacity,
+} from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { supabase } from '../../lib/supabase';
@@ -139,6 +148,25 @@ const HomeScreen = forwardRef<HomeScreenRef, HomeScreenProps>(
     }
   };
 
+  const handleDeletePost = async (id: string) => {
+    const { error } = await supabase.from('posts').delete().eq('id', id);
+    if (error) {
+      Alert.alert('Delete failed', error.message);
+    }
+    setPosts(prev => {
+      const updated = prev.filter(p => p.id !== id);
+      AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
+      return updated;
+    });
+  };
+
+  const confirmDeletePost = (id: string) => {
+    Alert.alert('Delete post', 'Are you sure you want to delete this post?', [
+      { text: 'Cancel', style: 'cancel' },
+      { text: 'Delete', style: 'destructive', onPress: () => handleDeletePost(id) },
+    ]);
+  };
+
   const handlePost = () => createPost(postText);
 
   useImperativeHandle(ref, () => ({
@@ -189,6 +217,11 @@ const HomeScreen = forwardRef<HomeScreenRef, HomeScreenProps>(
           return (
             <TouchableOpacity onPress={() => navigation.navigate('PostDetail', { post: item })}>
               <View style={styles.post}>
+                {item.user_id === user?.id && (
+                  <TouchableOpacity style={styles.deleteButton} onPress={() => confirmDeletePost(item.id)}>
+                    <Text style={styles.deleteText}>X</Text>
+                  </TouchableOpacity>
+                )}
                 <Text style={styles.username}>@{displayName}</Text>
                 <Text style={styles.postContent}>{item.content}</Text>
                 <Text style={styles.timestamp}>{timeAgo(item.created_at)}</Text>
@@ -225,6 +258,13 @@ const styles = StyleSheet.create({
   postContent: { color: 'white' },
   username: { fontWeight: 'bold', color: 'white' },
   timestamp: { fontSize: 10, color: 'gray' },
+  deleteButton: {
+    position: 'absolute',
+    top: 4,
+    right: 4,
+    padding: 4,
+  },
+  deleteText: { color: 'red', fontWeight: 'bold' },
 });
 
 export default HomeScreen;
