@@ -136,18 +136,10 @@ export default function ReplyDetailScreen() {
         <Text style={styles.postContent}>{parent.content}</Text>
       </View>
 
-      <TextInput
-        placeholder="Write a reply"
-        value={replyText}
-        onChangeText={setReplyText}
-        style={styles.input}
-        multiline
-      />
-      <Button title="Post" onPress={handleReply} />
-
       <FlatList
         data={replies}
         keyExtractor={item => item.id}
+        contentContainerStyle={{ paddingBottom: 120 }}
         renderItem={({ item }) => {
           const childName = item.profiles?.display_name || item.profiles?.username || item.username;
           return (
@@ -162,6 +154,17 @@ export default function ReplyDetailScreen() {
           );
         }}
       />
+
+      <View style={styles.inputContainer}>
+        <TextInput
+          placeholder="Write a reply"
+          value={replyText}
+          onChangeText={setReplyText}
+          style={styles.input}
+          multiline
+        />
+        <Button title="Post" onPress={handleReply} />
+      </View>
     </View>
   );
 }
@@ -171,6 +174,7 @@ const styles = StyleSheet.create({
     flex: 1,
     padding: 16,
     paddingTop: 100,
+    paddingBottom: 0,
     backgroundColor: colors.background,
   },
   post: {
@@ -197,5 +201,13 @@ const styles = StyleSheet.create({
   backButton: {
     alignSelf: 'flex-start',
     marginBottom: 10,
+  },
+  inputContainer: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    bottom: 0,
+    padding: 16,
+    backgroundColor: colors.background,
   },
 });
