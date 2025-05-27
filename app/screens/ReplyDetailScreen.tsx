@@ -63,6 +63,8 @@ export default function ReplyDetailScreen() {
   const { user, profile } = useAuth() as any;
   const parent = route.params.reply as Reply;
   const originalPost = route.params.originalPost as Post | undefined;
+  const ancestors = (route.params.ancestors as Reply[]) || [];
+
 
   const STORAGE_KEY = `${CHILD_PREFIX}${parent.id}`;
 
@@ -191,6 +193,18 @@ export default function ReplyDetailScreen() {
                 <Text style={styles.timestamp}>{timeAgo(originalPost.created_at)}</Text>
               </View>
             )}
+            {ancestors.map(a => {
+              const ancestorName =
+                a.profiles?.display_name || a.profiles?.username || a.username;
+              return (
+                <View key={a.id} style={styles.post}>
+                  <Text style={styles.username}>@{ancestorName}</Text>
+                  <Text style={styles.postContent}>{a.content}</Text>
+                  <Text style={styles.timestamp}>{timeAgo(a.created_at)}</Text>
+                </View>
+              );
+            })}
+
             <View style={styles.post}>
               <Text style={styles.username}>@{name}</Text>
               <Text style={styles.postContent}>{parent.content}</Text>
@@ -205,7 +219,16 @@ export default function ReplyDetailScreen() {
         renderItem={({ item }) => {
           const childName = item.profiles?.display_name || item.profiles?.username || item.username;
           return (
-            <TouchableOpacity onPress={() => navigation.push('ReplyDetail', { reply: item, originalPost })}>
+            <TouchableOpacity
+              onPress={() =>
+                navigation.push('ReplyDetail', {
+                  reply: item,
+                  originalPost,
+                  ancestors: [...ancestors, parent],
+                })
+              }
+            >
+
 
               <View style={styles.reply}>
                 <Text style={styles.username}>@{childName}</Text>

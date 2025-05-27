@@ -207,7 +207,14 @@ export default function PostDetailScreen() {
           const name = item.profiles?.display_name || item.profiles?.username || item.username;
           return (
             <TouchableOpacity
-              onPress={() => navigation.push('ReplyDetail', { reply: item, originalPost: post })}
+              onPress={() =>
+                navigation.push('ReplyDetail', {
+                  reply: item,
+                  originalPost: post,
+                  ancestors: [],
+                })
+              }
+
             >
 
               <View style={styles.reply}>
