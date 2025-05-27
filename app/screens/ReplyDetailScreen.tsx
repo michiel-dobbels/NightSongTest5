@@ -68,7 +68,7 @@ export default function ReplyDetailScreen() {
   const [replyText, setReplyText] = useState('');
   const [replies, setReplies] = useState<Reply[]>([]);
   const [keyboardOffset, setKeyboardOffset] = useState(0);
-  const [thread, setThread] = useState<(Post | Reply)[]>([]);
+
 
   const fetchReplies = async () => {
     const { data, error } = await supabase
@@ -134,6 +134,7 @@ export default function ReplyDetailScreen() {
   }, []);
 
   useEffect(() => {
+
     const show = Keyboard.addListener(
       Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow',
       e => setKeyboardOffset(e.endCoordinates.height),
