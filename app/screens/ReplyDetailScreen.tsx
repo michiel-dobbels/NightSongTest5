@@ -122,21 +122,21 @@ export default function ReplyDetailScreen() {
 
   useEffect(() => {
     const loadAncestors = async () => {
-
-      let currentId = parent.parent_id;
+      let parentId = parent.parent_id;
       const chain: Reply[] = [];
-      while (currentId) {
+      while (parentId) {
+
         const { data, error } = await supabase
           .from('replies')
           .select(
             'id, post_id, parent_id, user_id, content, created_at, username, profiles(username, display_name)'
           )
-          .eq('id', currentId)
+          .eq('id', parentId)
           .single();
         if (error || !data) break;
-        const ancestor = data as Reply;
-        chain.unshift(ancestor);
-        currentId = ancestor.parent_id;
+        chain.unshift(data as Reply);
+        parentId = (data as Reply).parent_id;
+
       }
       setAncestors(chain);
     };
@@ -233,14 +233,19 @@ export default function ReplyDetailScreen() {
                 </View>
               </TouchableOpacity>
             )}
-            {ancestors.map(a => {
-              const aName = a.profiles?.display_name || a.profiles?.username || a.username;
+            {ancestors.map(ancestor => {
+              const ancestorName =
+                ancestor.profiles?.display_name || ancestor.profiles?.username || ancestor.username;
               return (
-                <TouchableOpacity key={a.id} onPress={() => navigation.push('ReplyDetail', { reply: a })}>
+                <TouchableOpacity
+                  key={ancestor.id}
+                  onPress={() => navigation.push('ReplyDetail', { reply: ancestor })}
+                >
                   <View style={styles.post}>
-                    <Text style={styles.username}>@{aName}</Text>
-                    <Text style={styles.postContent}>{a.content}</Text>
-                    <Text style={styles.timestamp}>{timeAgo(a.created_at)}</Text>
+                    <Text style={styles.username}>@{ancestorName}</Text>
+                    <Text style={styles.postContent}>{ancestor.content}</Text>
+                    <Text style={styles.timestamp}>{timeAgo(ancestor.created_at)}</Text>
+
                   </View>
                 </TouchableOpacity>
               );
