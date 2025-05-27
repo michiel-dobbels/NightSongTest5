@@ -92,7 +92,8 @@ export function AuthProvider({ children }) {
     });
 
     return () => {
-      listener?.subscription.unsubscribe();
+      // V1 returns the subscription directly, so call unsubscribe() if available
+      listener?.unsubscribe();
     };
   }, []);
 

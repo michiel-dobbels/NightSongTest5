@@ -129,11 +129,6 @@ export default function ReplyDetailScreen() {
     loadCached();
   }, []);
 
-  useEffect(() => {
-    fetchThread();
-  }, []);
-
-  useEffect(() => {
 
     const show = Keyboard.addListener(
       Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow',
