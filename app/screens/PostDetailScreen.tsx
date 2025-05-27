@@ -1,5 +1,15 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, TextInput, Button, FlatList, StyleSheet, TouchableOpacity } from 'react-native';
+import {
+  View,
+  Text,
+  TextInput,
+  Button,
+  FlatList,
+  StyleSheet,
+  TouchableOpacity,
+  KeyboardAvoidingView,
+  Platform,
+} from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useRoute, useNavigation } from '@react-navigation/native';
 
@@ -165,15 +175,6 @@ export default function PostDetailScreen() {
         <Text style={styles.postContent}>{post.content}</Text>
       </View>
 
-      <TextInput
-        placeholder="Write a reply"
-        value={replyText}
-        onChangeText={setReplyText}
-        style={styles.input}
-        multiline
-      />
-      <Button title="Post" onPress={handleReply} />
-
       <FlatList
         data={replies}
         keyExtractor={item => item.id}
@@ -190,7 +191,24 @@ export default function PostDetailScreen() {
             </TouchableOpacity>
           );
         }}
+        contentContainerStyle={{ paddingBottom: 100 }}
       />
+
+      <KeyboardAvoidingView
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        keyboardVerticalOffset={80}
+      >
+        <View style={styles.inputContainer}>
+          <TextInput
+            placeholder="Write a reply"
+            value={replyText}
+            onChangeText={setReplyText}
+            style={styles.input}
+            multiline
+          />
+          <Button title="Post" onPress={handleReply} />
+        </View>
+      </KeyboardAvoidingView>
     </View>
   );
 }
@@ -226,5 +244,13 @@ const styles = StyleSheet.create({
   backButton: {
     alignSelf: 'flex-start',
     marginBottom: 10,
+  },
+  inputContainer: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    bottom: 0,
+    padding: 16,
+    backgroundColor: colors.background,
   },
 });
