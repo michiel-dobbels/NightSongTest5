@@ -45,11 +45,25 @@ interface Reply {
   } | null;
 }
 
+interface Post {
+  id: string;
+  content: string;
+  user_id: string;
+  created_at: string;
+  username?: string;
+  profiles?: {
+    username: string | null;
+    display_name: string | null;
+  } | null;
+}
+
 export default function ReplyDetailScreen() {
   const route = useRoute<any>();
   const navigation = useNavigation<any>();
   const { user, profile } = useAuth() as any;
   const parent = route.params.reply as Reply;
+  const originalPost = route.params.originalPost as Post | undefined;
+  const ancestors = (route.params.ancestors as Reply[]) || [];
 
   const STORAGE_KEY = `${CHILD_PREFIX}${parent.id}`;
 
@@ -151,7 +165,13 @@ export default function ReplyDetailScreen() {
     }
   };
 
-  const name = parent.profiles?.display_name || parent.profiles?.username || parent.username;
+  const name =
+    parent.profiles?.display_name || parent.profiles?.username || parent.username;
+  const originalName = originalPost
+    ? originalPost.profiles?.display_name ||
+      originalPost.profiles?.username ||
+      originalPost.username
+    : undefined;
 
   return (
     <KeyboardAvoidingView
@@ -162,12 +182,34 @@ export default function ReplyDetailScreen() {
       <View style={styles.backButton}>
         <Button title="Return" onPress={() => navigation.goBack()} />
       </View>
-      <View style={styles.post}>
-        <Text style={styles.username}>@{name}</Text>
-        <Text style={styles.postContent}>{parent.content}</Text>
-      </View>
-
       <FlatList
+        ListHeaderComponent={() => (
+          <>
+            {originalPost && (
+              <View style={[styles.post, styles.highlightPost]}>
+                <Text style={styles.username}>@{originalName}</Text>
+                <Text style={styles.postContent}>{originalPost.content}</Text>
+                <Text style={styles.timestamp}>{timeAgo(originalPost.created_at)}</Text>
+              </View>
+            )}
+            {ancestors.map(a => {
+              const ancestorName =
+                a.profiles?.display_name || a.profiles?.username || a.username;
+              return (
+                <View key={a.id} style={styles.post}>
+                  <Text style={styles.username}>@{ancestorName}</Text>
+                  <Text style={styles.postContent}>{a.content}</Text>
+                  <Text style={styles.timestamp}>{timeAgo(a.created_at)}</Text>
+                </View>
+              );
+            })}
+            <View style={styles.post}>
+              <Text style={styles.username}>@{name}</Text>
+              <Text style={styles.postContent}>{parent.content}</Text>
+              <Text style={styles.timestamp}>{timeAgo(parent.created_at)}</Text>
+            </View>
+          </>
+        )}
         contentContainerStyle={{ paddingBottom: 100 }}
         data={replies}
         keyExtractor={item => item.id}
@@ -175,7 +217,15 @@ export default function ReplyDetailScreen() {
         renderItem={({ item }) => {
           const childName = item.profiles?.display_name || item.profiles?.username || item.username;
           return (
-            <TouchableOpacity onPress={() => navigation.push('ReplyDetail', { reply: item })}>
+            <TouchableOpacity
+              onPress={() =>
+                navigation.push('ReplyDetail', {
+                  reply: item,
+                  originalPost,
+                  ancestors: [...ancestors, parent],
+                })
+              }
+            >
 
               <View style={styles.reply}>
                 <Text style={styles.username}>@{childName}</Text>
@@ -220,6 +270,11 @@ const styles = StyleSheet.create({
     borderRadius: 6,
     padding: 10,
     marginTop: 10,
+  },
+  highlightPost: {
+    borderColor: '#4f1fde',
+    borderWidth: 2,
+
   },
   postContent: { color: 'white' },
   username: { fontWeight: 'bold', color: 'white' },
