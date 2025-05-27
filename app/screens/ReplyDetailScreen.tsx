@@ -31,6 +31,18 @@ function timeAgo(dateString: string): string {
   return `${days}d ago`;
 }
 
+interface Post {
+  id: string;
+  content: string;
+  user_id: string;
+  created_at: string;
+  username?: string;
+  profiles?: {
+    username: string | null;
+    display_name: string | null;
+  } | null;
+}
+
 interface Reply {
   id: string;
   post_id: string;
@@ -57,6 +69,7 @@ export default function ReplyDetailScreen() {
   const [replies, setReplies] = useState<Reply[]>([]);
   const [keyboardOffset, setKeyboardOffset] = useState(0);
 
+
   const fetchReplies = async () => {
     const { data, error } = await supabase
       .from('replies')
@@ -71,6 +84,34 @@ export default function ReplyDetailScreen() {
         return merged;
       });
     }
+  };
+
+  const fetchThread = async () => {
+    const chain: (Post | Reply)[] = [];
+    let current: Reply | null = parent;
+    chain.unshift(current);
+
+    while (current.parent_id) {
+      const { data } = await supabase
+        .from('replies')
+        .select('id, post_id, parent_id, user_id, content, created_at, username, profiles(username, display_name)')
+        .eq('id', current.parent_id)
+        .single();
+      if (!data) break;
+      current = data as Reply;
+      chain.unshift(current);
+    }
+
+    const { data: post } = await supabase
+      .from('posts')
+      .select('id, content, user_id, created_at, username, profiles(username, display_name)')
+      .eq('id', parent.post_id)
+      .single();
+    if (post) {
+      chain.unshift(post as Post);
+    }
+
+    setThread(chain);
   };
 
   useEffect(() => {
@@ -101,6 +142,7 @@ export default function ReplyDetailScreen() {
     return () => {
       showListener.remove();
       hideListener.remove();
+
     };
   }, []);
 
@@ -152,8 +194,6 @@ export default function ReplyDetailScreen() {
     }
   };
 
-  const name = parent.profiles?.display_name || parent.profiles?.username || parent.username;
-
   return (
     <KeyboardAvoidingView
       style={styles.container}
@@ -163,10 +203,15 @@ export default function ReplyDetailScreen() {
       <View style={styles.backButton}>
         <Button title="Return" onPress={() => navigation.goBack()} />
       </View>
-      <View style={styles.post}>
-        <Text style={styles.username}>@{name}</Text>
-        <Text style={styles.postContent}>{parent.content}</Text>
-      </View>
+      {thread.map(item => {
+        const displayName = item.profiles?.display_name || item.profiles?.username || item.username;
+        return (
+          <View key={item.id} style={styles.post}>
+            <Text style={styles.username}>@{displayName}</Text>
+            <Text style={styles.postContent}>{item.content}</Text>
+          </View>
+        );
+      })}
 
       <FlatList
         contentContainerStyle={{ paddingBottom: 100 }}
