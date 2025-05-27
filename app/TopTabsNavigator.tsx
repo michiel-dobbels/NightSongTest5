@@ -42,8 +42,8 @@ export default function TopTabsNavigator() {
   const insets = useSafeAreaInsets();
   const HEADER_CONTENT_HEIGHT = 70;
   const headerHeight = insets.top + HEADER_CONTENT_HEIGHT;
-  const HEADER_TOTAL_HEIGHT =
-    headerHeight + HEADER_BOTTOM_PADDING + TAB_BAR_HEIGHT;
+  // Align the tab bar with the bottom of the header including padding
+  const tabTopOffset = headerHeight + HEADER_BOTTOM_PADDING;
 
 
 
@@ -80,18 +80,13 @@ export default function TopTabsNavigator() {
     ? `Welcome ${user.email}`
     : 'Welcome';
 
-  function HeaderTabBar(props: MaterialTopTabBarProps) {
-    return (
-      <BlurView
-        intensity={50}
-        tint="dark"
-        style={[styles.headerBlur, { paddingTop: insets.top + 10 }]}
-      >
-        <StatusBar
-          barStyle="light-content"
-          translucent
-          backgroundColor="transparent"
-        />
+  const ForYouScreen = () => <HomeScreen ref={homeScreenRef} hideInput />;
+
+  return (
+    <SafeAreaView style={{ flex: 1, backgroundColor: colors.background }}>
+      <BlurView intensity={50} tint="dark" style={[styles.headerBlur, { paddingTop: insets.top + 10 }]}>
+        <StatusBar barStyle="light-content" translucent backgroundColor="transparent" />
+
 
         <Text style={{ color: 'white', textAlign: 'center' }}>{welcomeText}</Text>
         <View style={{ alignItems: 'center', marginTop: 10 }}>
