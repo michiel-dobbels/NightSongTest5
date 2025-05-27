@@ -1,5 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { View, Text, TextInput, Button, FlatList, StyleSheet, TouchableOpacity, KeyboardAvoidingView, Platform } from 'react-native';
+
+
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useRoute, useNavigation } from '@react-navigation/native';
 
@@ -137,9 +139,12 @@ export default function ReplyDetailScreen() {
       </View>
 
       <FlatList
+        contentContainerStyle={{ paddingBottom: 100 }}
         data={replies}
         keyExtractor={item => item.id}
         contentContainerStyle={{ paddingBottom: 80 }}
+
+
         renderItem={({ item }) => {
           const childName = item.profiles?.display_name || item.profiles?.username || item.username;
           return (
@@ -153,10 +158,12 @@ export default function ReplyDetailScreen() {
             </TouchableOpacity>
           );
         }}
+        contentContainerStyle={{ paddingBottom: 100 }}
       />
 
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+
         keyboardVerticalOffset={80}
       >
         <View style={styles.inputContainer}>
@@ -170,6 +177,7 @@ export default function ReplyDetailScreen() {
           <Button title="Post" onPress={handleReply} />
         </View>
       </KeyboardAvoidingView>
+
     </View>
   );
 }
@@ -179,6 +187,7 @@ const styles = StyleSheet.create({
     flex: 1,
     padding: 16,
     paddingTop: 100,
+    paddingBottom: 0,
     backgroundColor: colors.background,
   },
   post: {
@@ -215,5 +224,14 @@ const styles = StyleSheet.create({
   backButton: {
     alignSelf: 'flex-start',
     marginBottom: 10,
+  },
+  inputContainer: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    bottom: 0,
+    padding: 16,
+    backgroundColor: colors.background,
+
   },
 });
