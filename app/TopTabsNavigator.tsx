@@ -35,24 +35,13 @@ const Tab = createMaterialTopTabNavigator();
 const TAB_BAR_HEIGHT = 48;
 const HEADER_BOTTOM_PADDING = 10;
 
-function BlurredTabBar({ topOffset, ...props }: MaterialTopTabBarProps & { topOffset: number }) {
-  return (
-    <BlurView intensity={50} tint="dark" style={[styles.blurredWrapper, { top: topOffset }]}>
-      <MaterialTopTabBar
-        {...props}
-        style={[props.style, styles.blurredBar]}
-      />
-    </BlurView>
-  );
-}
-
 export default function TopTabsNavigator() {
   const { profile, user, signOut } = useAuth() as any;
   const insets = useSafeAreaInsets();
   const HEADER_CONTENT_HEIGHT = 70;
   const headerHeight = insets.top + HEADER_CONTENT_HEIGHT;
-  // Align the tab bar with the bottom of the header
-  const tabTopOffset = headerHeight - TAB_BAR_HEIGHT;
+  const HEADER_TOTAL_HEIGHT =
+    headerHeight + HEADER_BOTTOM_PADDING + TAB_BAR_HEIGHT;
 
 
   const [modalVisible, setModalVisible] = useState(false);
@@ -88,22 +77,37 @@ export default function TopTabsNavigator() {
     ? `Welcome ${user.email}`
     : 'Welcome';
 
-  const ForYouScreen = () => <HomeScreen ref={homeScreenRef} hideInput />;
-
-  return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: colors.background }}>
-      <StatusBar barStyle="light-content" translucent backgroundColor="transparent" />
-      <BlurView intensity={50} tint="dark" style={[styles.headerBlur, { paddingTop: insets.top + 10 }]}>
-
+  function HeaderTabBar(props: MaterialTopTabBarProps) {
+    return (
+      <BlurView
+        intensity={50}
+        tint="dark"
+        style={[styles.headerBlur, { paddingTop: insets.top + 10 }]}
+      >
+        <StatusBar
+          barStyle="light-content"
+          translucent
+          backgroundColor="transparent"
+        />
         <Text style={{ color: 'white', textAlign: 'center' }}>{welcomeText}</Text>
         <View style={{ alignItems: 'center', marginTop: 10 }}>
           <Button title="Logout" onPress={signOut} />
         </View>
+        <MaterialTopTabBar
+          {...props}
+          style={[props.style, styles.blurredBar]}
+        />
       </BlurView>
+    );
+  }
 
+  const ForYouScreen = () => <HomeScreen ref={homeScreenRef} hideInput />;
+
+  return (
+    <SafeAreaView style={{ flex: 1, backgroundColor: colors.background }}>
       <Tab.Navigator
-        tabBar={(props) => <BlurredTabBar {...props} topOffset={tabTopOffset} />}
-        sceneContainerStyle={{ paddingTop: tabTopOffset + TAB_BAR_HEIGHT }}
+        tabBar={(props) => <HeaderTabBar {...props} />}
+        sceneContainerStyle={{ paddingTop: HEADER_TOTAL_HEIGHT }}
 
         screenOptions={{
           tabBarStyle: {
@@ -188,17 +192,6 @@ const styles = StyleSheet.create({
 
     backgroundColor: 'rgba(29,21,43,0.6)',
     zIndex: 20,
-  },
-
-  blurredWrapper: {
-    position: 'absolute',
-    left: 0,
-    right: 0,
-    height: TAB_BAR_HEIGHT,
-    overflow: 'hidden',
-    backgroundColor: 'rgba(29,21,43,0.6)',
-
-    zIndex: 10,
   },
   blurredBar: {
     backgroundColor: 'transparent',
