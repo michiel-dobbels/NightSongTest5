@@ -56,6 +56,7 @@ export default function TopTabsNavigator() {
   const tabTopOffset = (headerHeight + HEADER_BOTTOM_PADDING) * 0.8;
 
 
+
   const [modalVisible, setModalVisible] = useState(false);
   const [postText, setPostText] = useState('');
   const [modalText, setModalText] = useState('');
