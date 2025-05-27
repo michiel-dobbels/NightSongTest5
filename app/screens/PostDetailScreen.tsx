@@ -189,6 +189,7 @@ const handleReply = async () => {
     } else {
       navigation.goBack();
     }
+
   };
 
   const confirmDeletePost = () => {
@@ -214,6 +215,7 @@ const handleReply = async () => {
     Alert.alert('Delete reply', 'Are you sure you want to delete this reply?', [
       { text: 'Cancel', style: 'cancel' },
       { text: 'Delete', style: 'destructive', onPress: () => handleDeleteReply(id) },
+
     ]);
   };
 
@@ -236,6 +238,7 @@ const handleReply = async () => {
                 <Text style={styles.deleteText}>X</Text>
               </TouchableOpacity>
             )}
+
             <Text style={styles.username}>@{displayName}</Text>
             <Text style={styles.postContent}>{post.content}</Text>
             <Text style={styles.timestamp}>{timeAgo(post.created_at)}</Text>
@@ -257,6 +260,7 @@ const handleReply = async () => {
                     <Text style={styles.deleteText}>X</Text>
                   </TouchableOpacity>
                 )}
+
                 <Text style={styles.username}>@{name}</Text>
                 <Text style={styles.postContent}>{item.content}</Text>
                 <Text style={styles.timestamp}>{timeAgo(item.created_at)}</Text>
@@ -292,6 +296,7 @@ const styles = StyleSheet.create({
     borderRadius: 6,
     padding: 10,
     marginBottom: 10,
+    position: 'relative',
   },
   highlightPost: {
     borderColor: '#4f1fde',
@@ -303,7 +308,15 @@ const styles = StyleSheet.create({
     borderRadius: 6,
     padding: 10,
     marginTop: 10,
+    position: 'relative',
   },
+  deleteButton: {
+    position: 'absolute',
+    top: 4,
+    right: 4,
+    padding: 4,
+  },
+  deleteText: { color: 'white', fontWeight: 'bold' },
   postContent: { color: 'white' },
   username: { fontWeight: 'bold', color: 'white' },
   timestamp: { fontSize: 10, color: 'gray' },

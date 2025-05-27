@@ -169,6 +169,23 @@ const HomeScreen = forwardRef<HomeScreenRef, HomeScreenProps>(
 
   const handlePost = () => createPost(postText);
 
+  const deletePost = async (postId: string) => {
+    setPosts(prev => {
+      const updated = prev.filter(p => p.id !== postId);
+      AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
+      return updated;
+    });
+
+    await supabase.from('posts').delete().eq('id', postId);
+  };
+
+  const confirmDelete = (postId: string) => {
+    Alert.alert('Delete post', 'Are you sure you want to delete this post?', [
+      { text: 'Cancel', style: 'cancel' },
+      { text: 'Confirm', style: 'destructive', onPress: () => deletePost(postId) },
+    ]);
+  };
+
   useImperativeHandle(ref, () => ({
     createPost,
   }));
@@ -222,6 +239,7 @@ const HomeScreen = forwardRef<HomeScreenRef, HomeScreenProps>(
                     <Text style={styles.deleteText}>X</Text>
                   </TouchableOpacity>
                 )}
+
                 <Text style={styles.username}>@{displayName}</Text>
                 <Text style={styles.postContent}>{item.content}</Text>
                 <Text style={styles.timestamp}>{timeAgo(item.created_at)}</Text>
@@ -254,7 +272,15 @@ const styles = StyleSheet.create({
     borderRadius: 6,
     padding: 10,
     marginBottom: 10,
+    position: 'relative',
   },
+  deleteButton: {
+    position: 'absolute',
+    top: 4,
+    right: 4,
+    padding: 4,
+  },
+  deleteText: { color: 'white', fontWeight: 'bold' },
   postContent: { color: 'white' },
   username: { fontWeight: 'bold', color: 'white' },
   timestamp: { fontSize: 10, color: 'gray' },

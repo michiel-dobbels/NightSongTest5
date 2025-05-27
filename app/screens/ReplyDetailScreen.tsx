@@ -65,6 +65,7 @@ export default function ReplyDetailScreen() {
   const parent = route.params.reply as Reply;
   const originalPost = route.params.originalPost as Post | undefined;
 
+
   const STORAGE_KEY = `${CHILD_PREFIX}${parent.id}`;
 
   const [replyText, setReplyText] = useState('');
@@ -200,6 +201,7 @@ export default function ReplyDetailScreen() {
     ]);
   };
 
+
   const name =
     parent.profiles?.display_name || parent.profiles?.username || parent.username;
   const originalName = originalPost
@@ -227,6 +229,7 @@ export default function ReplyDetailScreen() {
                     <Text style={styles.deleteText}>X</Text>
                   </TouchableOpacity>
                 )}
+
                 <Text style={styles.username}>@{originalName}</Text>
                 <Text style={styles.postContent}>{originalPost.content}</Text>
                 <Text style={styles.timestamp}>{timeAgo(originalPost.created_at)}</Text>
@@ -238,6 +241,7 @@ export default function ReplyDetailScreen() {
                   <Text style={styles.deleteText}>X</Text>
                 </TouchableOpacity>
               )}
+
               <Text style={styles.username}>@{name}</Text>
               <Text style={styles.postContent}>{parent.content}</Text>
               <Text style={styles.timestamp}>{timeAgo(parent.created_at)}</Text>
@@ -258,6 +262,7 @@ export default function ReplyDetailScreen() {
                     <Text style={styles.deleteText}>X</Text>
                   </TouchableOpacity>
                 )}
+
                 <Text style={styles.username}>@{childName}</Text>
                 <Text style={styles.postContent}>{item.content}</Text>
                 <Text style={styles.timestamp}>{timeAgo(item.created_at)}</Text>
@@ -294,12 +299,24 @@ const styles = StyleSheet.create({
     borderRadius: 6,
     padding: 10,
     marginBottom: 10,
+    position: 'relative',
   },
   reply: {
     backgroundColor: '#ffffff10',
     borderRadius: 6,
     padding: 10,
     marginTop: 10,
+    position: 'relative',
+  },
+  highlightPost: {
+    borderColor: '#4f1fde',
+    borderWidth: 2,
+
+  },
+  highlightPost: {
+    borderColor: '#4f1fde',
+    borderWidth: 2,
+
   },
   highlightPost: {
     borderColor: '#4f1fde',
@@ -319,6 +336,13 @@ const styles = StyleSheet.create({
     alignSelf: 'flex-start',
     marginBottom: 10,
   },
+  deleteButton: {
+    position: 'absolute',
+    top: 4,
+    right: 4,
+    padding: 4,
+  },
+  deleteText: { color: 'white', fontWeight: 'bold' },
   inputContainer: {
     position: 'absolute',
     left: 16,
