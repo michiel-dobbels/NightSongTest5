@@ -166,6 +166,7 @@ export default function PostDetailScreen() {
       </View>
 
       <FlatList
+        contentContainerStyle={{ paddingBottom: 100 }}
         data={replies}
         keyExtractor={item => item.id}
         renderItem={({ item }) => {
@@ -199,6 +200,7 @@ export default function PostDetailScreen() {
           <Button title="Post" onPress={handleReply} />
         </View>
       </KeyboardAvoidingView>
+
     </View>
   );
 }
@@ -242,5 +244,6 @@ const styles = StyleSheet.create({
     bottom: 0,
     padding: 16,
     backgroundColor: colors.background,
+
   },
 });
