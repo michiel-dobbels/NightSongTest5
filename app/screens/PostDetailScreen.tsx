@@ -198,6 +198,13 @@ export default function PostDetailScreen() {
       </View>
 
       <FlatList
+        ListHeaderComponent={() => (
+          <View style={[styles.post, styles.highlightPost]}>
+            <Text style={styles.username}>@{displayName}</Text>
+            <Text style={styles.postContent}>{post.content}</Text>
+            <Text style={styles.timestamp}>{timeAgo(post.created_at)}</Text>
+          </View>
+        )}
         contentContainerStyle={{ paddingBottom: 100 }}
         data={replies}
         keyExtractor={item => item.id}
@@ -242,6 +249,10 @@ const styles = StyleSheet.create({
     borderRadius: 6,
     padding: 10,
     marginBottom: 10,
+  },
+  highlightPost: {
+    borderColor: '#c8102e',
+    borderWidth: 2,
   },
   reply: {
     backgroundColor: '#ffffff10',
