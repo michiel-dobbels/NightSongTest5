@@ -1,5 +1,16 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, TextInput, Button, FlatList, StyleSheet, TouchableOpacity } from 'react-native';
+import {
+  View,
+  Text,
+  TextInput,
+  Button,
+  FlatList,
+  StyleSheet,
+  TouchableOpacity,
+  KeyboardAvoidingView,
+  Platform,
+  Keyboard,
+} from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useRoute, useNavigation } from '@react-navigation/native';
 
@@ -18,6 +29,18 @@ function timeAgo(dateString: string): string {
   if (hours < 24) return `${hours}h ago`;
   const days = Math.floor(hours / 24);
   return `${days}d ago`;
+}
+
+interface Post {
+  id: string;
+  content: string;
+  user_id: string;
+  created_at: string;
+  username?: string;
+  profiles?: {
+    username: string | null;
+    display_name: string | null;
+  } | null;
 }
 
 interface Reply {
@@ -44,6 +67,8 @@ export default function ReplyDetailScreen() {
 
   const [replyText, setReplyText] = useState('');
   const [replies, setReplies] = useState<Reply[]>([]);
+  const [keyboardOffset, setKeyboardOffset] = useState(0);
+  const [thread, setThread] = useState<(Post | Reply)[]>([]);
 
   const fetchReplies = async () => {
     const { data, error } = await supabase
@@ -61,6 +86,34 @@ export default function ReplyDetailScreen() {
     }
   };
 
+  const fetchThread = async () => {
+    const chain: (Post | Reply)[] = [];
+    let current: Reply | null = parent;
+    chain.unshift(current);
+
+    while (current.parent_id) {
+      const { data } = await supabase
+        .from('replies')
+        .select('id, post_id, parent_id, user_id, content, created_at, username, profiles(username, display_name)')
+        .eq('id', current.parent_id)
+        .single();
+      if (!data) break;
+      current = data as Reply;
+      chain.unshift(current);
+    }
+
+    const { data: post } = await supabase
+      .from('posts')
+      .select('id, content, user_id, created_at, username, profiles(username, display_name)')
+      .eq('id', parent.post_id)
+      .single();
+    if (post) {
+      chain.unshift(post as Post);
+    }
+
+    setThread(chain);
+  };
+
   useEffect(() => {
     const loadCached = async () => {
       const stored = await AsyncStorage.getItem(STORAGE_KEY);
@@ -74,6 +127,25 @@ export default function ReplyDetailScreen() {
       fetchReplies();
     };
     loadCached();
+  }, []);
+
+  useEffect(() => {
+    fetchThread();
+  }, []);
+
+  useEffect(() => {
+    const show = Keyboard.addListener(
+      Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow',
+      e => setKeyboardOffset(e.endCoordinates.height),
+    );
+    const hide = Keyboard.addListener(
+      Platform.OS === 'ios' ? 'keyboardWillHide' : 'keyboardDidHide',
+      () => setKeyboardOffset(0),
+    );
+    return () => {
+      show.remove();
+      hide.remove();
+    };
   }, []);
 
   const handleReply = async () => {
@@ -124,23 +196,29 @@ export default function ReplyDetailScreen() {
     }
   };
 
-  const name = parent.profiles?.display_name || parent.profiles?.username || parent.username;
-
   return (
-    <View style={styles.container}>
+    <KeyboardAvoidingView
+      style={styles.container}
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      keyboardVerticalOffset={80}
+    >
       <View style={styles.backButton}>
         <Button title="Return" onPress={() => navigation.goBack()} />
       </View>
-      <View style={styles.post}>
-        <Text style={styles.username}>@{name}</Text>
-        <Text style={styles.postContent}>{parent.content}</Text>
-      </View>
+      {thread.map(item => {
+        const displayName = item.profiles?.display_name || item.profiles?.username || item.username;
+        return (
+          <View key={item.id} style={styles.post}>
+            <Text style={styles.username}>@{displayName}</Text>
+            <Text style={styles.postContent}>{item.content}</Text>
+          </View>
+        );
+      })}
 
       <FlatList
         contentContainerStyle={{ paddingBottom: 100 }}
         data={replies}
         keyExtractor={item => item.id}
-        contentContainerStyle={{ paddingBottom: 100 }}
 
         renderItem={({ item }) => {
           const childName = item.profiles?.display_name || item.profiles?.username || item.username;
@@ -157,7 +235,7 @@ export default function ReplyDetailScreen() {
         }}
       />
 
-      <View style={styles.inputContainer}>
+      <View style={[styles.inputContainer, { bottom: keyboardOffset }]}>
         <TextInput
           placeholder="Write a reply"
           value={replyText}
@@ -167,7 +245,7 @@ export default function ReplyDetailScreen() {
         />
         <Button title="Post" onPress={handleReply} />
       </View>
-    </View>
+    </KeyboardAvoidingView>
   );
 }
 
