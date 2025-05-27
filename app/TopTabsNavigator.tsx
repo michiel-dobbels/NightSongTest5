@@ -54,6 +54,7 @@ export default function TopTabsNavigator() {
   // Align the tab bar with the bottom of the header
   const tabTopOffset = headerHeight - TAB_BAR_HEIGHT;
 
+
   const [modalVisible, setModalVisible] = useState(false);
   const [postText, setPostText] = useState('');
   const [modalText, setModalText] = useState('');
