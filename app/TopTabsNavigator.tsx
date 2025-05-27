@@ -114,6 +114,7 @@ export default function TopTabsNavigator() {
       edges={['bottom']}
       style={{ flex: 1, backgroundColor: colors.background }}
     >
+
       <Tab.Navigator
         tabBar={(props) => (
           <HeaderTabBar
