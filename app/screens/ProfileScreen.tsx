@@ -29,6 +29,7 @@ export default function ProfileScreen() {
       finalStatus = permission.status;
     }
     if (finalStatus !== 'granted') {
+
       alert('Permission to access images is required!');
       return;
     }
