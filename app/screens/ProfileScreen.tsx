@@ -22,16 +22,14 @@ export default function ProfileScreen() {
   }, [profile]);
 
   const pickImage = async () => {
-    const { status } = await ImagePicker.getMediaLibraryPermissionsAsync();
-    let finalStatus = status;
-    if (finalStatus !== 'granted') {
-      const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
-      finalStatus = permission.status;
-    }
-    if (finalStatus !== 'granted') {
+    let permission = await ImagePicker.getMediaLibraryPermissionsAsync();
+    if (!permission.granted) {
+      permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      if (!permission.granted) {
+        alert('Permission to access images is required!');
+        return;
+      }
 
-      alert('Permission to access images is required!');
-      return;
     }
     const result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
