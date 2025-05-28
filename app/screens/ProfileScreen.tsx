@@ -1,4 +1,5 @@
 import React from 'react';
+
 import {
   View,
   Text,
@@ -17,6 +18,7 @@ export default function ProfileScreen() {
   const navigation = useNavigation<any>();
   const { profile, profileImageUri, setProfileImageUri } = useAuth() as any;
 
+
   const pickImage = async () => {
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (status !== 'granted') {
@@ -30,6 +32,7 @@ export default function ProfileScreen() {
 
     if (!result.canceled && result.assets && result.assets.length > 0) {
       setProfileImageUri(result.assets[0].uri);
+
     }
   };
 
@@ -50,6 +53,7 @@ export default function ProfileScreen() {
       {profileImageUri && (
         <Image source={{ uri: profileImageUri }} style={styles.image} />
       )}
+
     </View>
 
   );
@@ -65,16 +69,31 @@ const styles = StyleSheet.create({
     alignSelf: 'flex-start',
     marginBottom: 20,
   },
+  profileRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+  avatar: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+  },
+  placeholder: {
+    backgroundColor: '#ffffff20',
+  },
+  textContainer: {
+    marginLeft: 15,
+  },
   username: {
     color: 'white',
     fontSize: 24,
     fontWeight: 'bold',
-    marginBottom: 10,
   },
   name: {
     color: 'white',
     fontSize: 20,
-
+    marginTop: 4,
   },
   uploadLink: {
     marginTop: 20,
@@ -85,4 +104,5 @@ const styles = StyleSheet.create({
   },
   uploadText: { color: 'white' },
   image: { width: 100, height: 100, borderRadius: 50, marginTop: 20 },
+
 });
