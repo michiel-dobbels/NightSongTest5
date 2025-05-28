@@ -1,13 +1,6 @@
 import React, { useState } from 'react';
-import {
-  View,
-  Text,
-  TextInput,
-  Button,
-  TouchableOpacity,
-  StyleSheet,
-  Alert,
-} from 'react-native';
+import { View, Text, TextInput, Button, TouchableOpacity, StyleSheet, Alert } from 'react-native';
+
 import { useAuth } from './AuthContext';
 import { useNavigation } from '@react-navigation/native';
 
@@ -44,6 +37,7 @@ function AuthPage() {
 
         const { error } = await signUp(email, password, username, name);
         if (error) throw error;
+        Alert.alert('Check your email', 'Confirm your account to finish signing up.');
 
         Alert.alert(
           'Sign Up',

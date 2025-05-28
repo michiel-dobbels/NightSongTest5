@@ -120,6 +120,7 @@ export function AuthProvider({ children }) {
       return { error: { message: 'Username is required' } };
     }
 
+
     const { user: newUser, session, error } = await supabase.auth.signUp(
       { email, password },
       { data: { username, display_name: name || username } }
@@ -134,10 +135,10 @@ export function AuthProvider({ children }) {
       return { error };
     }
 
-    // If Supabase returned a session we can set the user and profile immediately
-    if (session && newUser) {
-      setUser(newUser);
-      await ensureProfile(newUser);
+    if (session) {
+      setUser(session.user);
+      await ensureProfile(session.user);
+
       return { error: null };
     }
 
@@ -146,9 +147,13 @@ export function AuthProvider({ children }) {
     // email without seeing an error.
     const { error: signInErr } = await signIn(email, password);
 
-    if (signInErr &&
-        signInErr.message &&
-        signInErr.message.toLowerCase().includes('confirm')) {
+    if (
+      signInErr &&
+      signInErr.message &&
+      signInErr.message.toLowerCase().includes('invalid login credentials')
+    ) {
+      // Account created but email confirmation pending
+
       return { error: null };
     }
 
