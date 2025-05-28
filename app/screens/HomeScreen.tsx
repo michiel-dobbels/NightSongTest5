@@ -1,5 +1,15 @@
 import React, { useEffect, useState, forwardRef, useImperativeHandle } from 'react';
-import { View, TextInput, Button, FlatList, Text, StyleSheet, Alert, TouchableOpacity } from 'react-native';
+import {
+  View,
+  TextInput,
+  Button,
+  FlatList,
+  Text,
+  StyleSheet,
+  Alert,
+  TouchableOpacity,
+  Image,
+} from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { supabase } from '../../lib/supabase';
@@ -42,7 +52,7 @@ interface HomeScreenProps {
 const HomeScreen = forwardRef<HomeScreenRef, HomeScreenProps>(
   ({ hideInput }, ref) => {
     const navigation = useNavigation<any>();
-    const { user, profile } = useAuth();
+    const { user, profile, profileImageUri } = useAuth() as any;
     const [postText, setPostText] = useState('');
   const [posts, setPosts] = useState<Post[]>([]);
 
@@ -206,10 +216,12 @@ const HomeScreen = forwardRef<HomeScreenRef, HomeScreenProps>(
             item.profiles?.display_name ||
             item.profiles?.username ||
             item.username;
+          const isMe = user?.id === item.user_id;
+          const avatarUri = isMe ? profileImageUri : undefined;
           return (
             <TouchableOpacity onPress={() => navigation.navigate('PostDetail', { post: item })}>
               <View style={styles.post}>
-                {user?.id === item.user_id && (
+                {isMe && (
                   <TouchableOpacity
                     onPress={() => confirmDeletePost(item.id)}
                     style={styles.deleteButton}
@@ -217,9 +229,18 @@ const HomeScreen = forwardRef<HomeScreenRef, HomeScreenProps>(
                     <Text style={{ color: 'white' }}>X</Text>
                   </TouchableOpacity>
                 )}
-                <Text style={styles.username}>@{displayName}</Text>
-                <Text style={styles.postContent}>{item.content}</Text>
-                <Text style={styles.timestamp}>{timeAgo(item.created_at)}</Text>
+                <View style={styles.row}>
+                  {avatarUri ? (
+                    <Image source={{ uri: avatarUri }} style={styles.avatar} />
+                  ) : (
+                    <View style={[styles.avatar, styles.placeholder]} />
+                  )}
+                  <View style={{ flex: 1 }}>
+                    <Text style={styles.username}>@{displayName}</Text>
+                    <Text style={styles.postContent}>{item.content}</Text>
+                    <Text style={styles.timestamp}>{timeAgo(item.created_at)}</Text>
+                  </View>
+                </View>
               </View>
             </TouchableOpacity>
           );
@@ -251,6 +272,9 @@ const styles = StyleSheet.create({
     marginBottom: 10,
     position: 'relative',
   },
+  row: { flexDirection: 'row', alignItems: 'flex-start' },
+  avatar: { width: 32, height: 32, borderRadius: 16, marginRight: 8 },
+  placeholder: { backgroundColor: '#555' },
   deleteButton: {
     position: 'absolute',
     right: 6,

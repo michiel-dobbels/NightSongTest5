@@ -11,6 +11,7 @@ import {
   Platform,
   Keyboard,
   Alert,
+  Image,
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useRoute, useNavigation } from '@react-navigation/native';
@@ -61,7 +62,7 @@ interface Post {
 export default function ReplyDetailScreen() {
   const route = useRoute<any>();
   const navigation = useNavigation<any>();
-  const { user, profile } = useAuth() as any;
+  const { user, profile, profileImageUri } = useAuth() as any;
   const parent = route.params.reply as Reply;
   const originalPost = route.params.originalPost as Post | undefined;
   const ancestors = (route.params.ancestors as Reply[]) || [];
@@ -235,17 +236,28 @@ export default function ReplyDetailScreen() {
                     <Text style={{ color: 'white' }}>X</Text>
                   </TouchableOpacity>
                 )}
-                <Text style={styles.username}>@{originalName}</Text>
-                <Text style={styles.postContent}>{originalPost.content}</Text>
-                <Text style={styles.timestamp}>{timeAgo(originalPost.created_at)}</Text>
+                <View style={styles.row}>
+                  {user?.id === originalPost.user_id && profileImageUri ? (
+                    <Image source={{ uri: profileImageUri }} style={styles.avatar} />
+                  ) : (
+                    <View style={[styles.avatar, styles.placeholder]} />
+                  )}
+                  <View style={{ flex: 1 }}>
+                    <Text style={styles.username}>@{originalName}</Text>
+                    <Text style={styles.postContent}>{originalPost.content}</Text>
+                    <Text style={styles.timestamp}>{timeAgo(originalPost.created_at)}</Text>
+                  </View>
+                </View>
               </View>
             )}
             {ancestors.map(a => {
               const ancestorName =
                 a.profiles?.display_name || a.profiles?.username || a.username;
+              const isMe = user?.id === a.user_id;
+              const avatarUri = isMe ? profileImageUri : undefined;
               return (
                 <View key={a.id} style={styles.post}>
-                  {user?.id === a.user_id && (
+                  {isMe && (
                     <TouchableOpacity
                       onPress={() => confirmDeleteReply(a.id)}
                       style={styles.deleteButton}
@@ -253,9 +265,18 @@ export default function ReplyDetailScreen() {
                       <Text style={{ color: 'white' }}>X</Text>
                     </TouchableOpacity>
                   )}
-                  <Text style={styles.username}>@{ancestorName}</Text>
-                  <Text style={styles.postContent}>{a.content}</Text>
-                  <Text style={styles.timestamp}>{timeAgo(a.created_at)}</Text>
+                  <View style={styles.row}>
+                    {avatarUri ? (
+                      <Image source={{ uri: avatarUri }} style={styles.avatar} />
+                    ) : (
+                      <View style={[styles.avatar, styles.placeholder]} />
+                    )}
+                    <View style={{ flex: 1 }}>
+                      <Text style={styles.username}>@{ancestorName}</Text>
+                      <Text style={styles.postContent}>{a.content}</Text>
+                      <Text style={styles.timestamp}>{timeAgo(a.created_at)}</Text>
+                    </View>
+                  </View>
                 </View>
               );
             })}
@@ -269,9 +290,18 @@ export default function ReplyDetailScreen() {
                   <Text style={{ color: 'white' }}>X</Text>
                 </TouchableOpacity>
               )}
-              <Text style={styles.username}>@{name}</Text>
-              <Text style={styles.postContent}>{parent.content}</Text>
-              <Text style={styles.timestamp}>{timeAgo(parent.created_at)}</Text>
+              <View style={styles.row}>
+                {user?.id === parent.user_id && profileImageUri ? (
+                  <Image source={{ uri: profileImageUri }} style={styles.avatar} />
+                ) : (
+                  <View style={[styles.avatar, styles.placeholder]} />
+                )}
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.username}>@{name}</Text>
+                  <Text style={styles.postContent}>{parent.content}</Text>
+                  <Text style={styles.timestamp}>{timeAgo(parent.created_at)}</Text>
+                </View>
+              </View>
             </View>
           </>
         )}
@@ -281,6 +311,8 @@ export default function ReplyDetailScreen() {
 
         renderItem={({ item }) => {
           const childName = item.profiles?.display_name || item.profiles?.username || item.username;
+          const isMe = user?.id === item.user_id;
+          const avatarUri = isMe ? profileImageUri : undefined;
           return (
             <TouchableOpacity
               onPress={() =>
@@ -291,10 +323,8 @@ export default function ReplyDetailScreen() {
                 })
               }
             >
-
-
               <View style={styles.reply}>
-                {user?.id === item.user_id && (
+                {isMe && (
                   <TouchableOpacity
                     onPress={() => confirmDeleteReply(item.id)}
                     style={styles.deleteButton}
@@ -302,9 +332,18 @@ export default function ReplyDetailScreen() {
                     <Text style={{ color: 'white' }}>X</Text>
                   </TouchableOpacity>
                 )}
-                <Text style={styles.username}>@{childName}</Text>
-                <Text style={styles.postContent}>{item.content}</Text>
-                <Text style={styles.timestamp}>{timeAgo(item.created_at)}</Text>
+                <View style={styles.row}>
+                  {avatarUri ? (
+                    <Image source={{ uri: avatarUri }} style={styles.avatar} />
+                  ) : (
+                    <View style={[styles.avatar, styles.placeholder]} />
+                  )}
+                  <View style={{ flex: 1 }}>
+                    <Text style={styles.username}>@{childName}</Text>
+                    <Text style={styles.postContent}>{item.content}</Text>
+                    <Text style={styles.timestamp}>{timeAgo(item.created_at)}</Text>
+                  </View>
+                </View>
               </View>
             </TouchableOpacity>
           );
@@ -340,6 +379,9 @@ const styles = StyleSheet.create({
     marginBottom: 10,
     position: 'relative',
   },
+  row: { flexDirection: 'row', alignItems: 'flex-start' },
+  avatar: { width: 32, height: 32, borderRadius: 16, marginRight: 8 },
+  placeholder: { backgroundColor: '#555' },
   reply: {
     backgroundColor: '#ffffff10',
     borderRadius: 6,

@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { supabase } from './lib/supabase';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const AuthContext = createContext();
 
@@ -7,6 +8,7 @@ export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
   const [profile, setProfile] = useState(null); // 🧠 includes username
   const [loading, setLoading] = useState(true);
+  const [profileImageUri, setProfileImageUriState] = useState(null);
 
   // Helper ensures a profile exists for the given user so posts can
   // reference it without foreign-key errors
@@ -96,6 +98,14 @@ export function AuthProvider({ children }) {
     };
   }, []);
 
+  useEffect(() => {
+    const loadImage = async () => {
+      const stored = await AsyncStorage.getItem('profile_image_uri');
+      if (stored) setProfileImageUriState(stored);
+    };
+    loadImage();
+  }, []);
+
   // 🔐 Sign in
   async function signIn(email, password) {
     const { user, error } = await supabase.auth.signIn({
@@ -167,7 +177,17 @@ export function AuthProvider({ children }) {
     await supabase.auth.signOut();
     setUser(null);
     setProfile(null);
+    setProfileImageUriState(null);
+    await AsyncStorage.removeItem('profile_image_uri');
+  };
 
+  const setProfileImageUri = async (uri) => {
+    setProfileImageUriState(uri);
+    if (uri) {
+      await AsyncStorage.setItem('profile_image_uri', uri);
+    } else {
+      await AsyncStorage.removeItem('profile_image_uri');
+    }
   };
 
   // 🔍 Fetch profile by ID
@@ -199,6 +219,8 @@ export function AuthProvider({ children }) {
     user,
     profile,      // ⬅️ includes .username for posts
     loading,
+    profileImageUri,
+    setProfileImageUri,
     signUp,
     signIn,
     signOut,
