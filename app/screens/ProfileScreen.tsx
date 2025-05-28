@@ -59,6 +59,7 @@ export default function ProfileScreen() {
       <TouchableOpacity onPress={pickImage} style={styles.uploadLink}>
         <Text style={styles.uploadText}>Upload Profile Picture</Text>
       </TouchableOpacity>
+
     </View>
 
   );
@@ -108,4 +109,5 @@ const styles = StyleSheet.create({
     alignSelf: 'flex-start',
   },
   uploadText: { color: 'white' },
+
 });
