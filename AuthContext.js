@@ -115,7 +115,7 @@ export function AuthProvider({ children }) {
   }
 
   // 🔐 Sign up
-  const signUp = async (email, password, username) => {
+  const signUp = async (email, password, username, name) => {
     if (!username) {
       return { error: { message: 'Username is required' } };
     }
@@ -123,7 +123,7 @@ export function AuthProvider({ children }) {
     // supabase-js v1 uses a different signature than v2
     const { user: newUser, error } = await supabase.auth.signUp(
       { email, password },
-      { data: { username, display_name: username } }
+      { data: { username, display_name: name || username } }
     );
 
     if (error) {

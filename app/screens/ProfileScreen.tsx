@@ -12,6 +12,7 @@ export default function ProfileScreen() {
     <SafeAreaView style={styles.container}>
       <Text style={styles.username}>@{username}</Text>
     </SafeAreaView>
+
   );
 }
 
@@ -25,5 +26,6 @@ const styles = StyleSheet.create({
   username: {
     color: 'white',
     fontSize: 18,
+
   },
 });
