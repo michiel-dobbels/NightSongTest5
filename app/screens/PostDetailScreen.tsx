@@ -238,6 +238,7 @@ export default function PostDetailScreen() {
             >
               <Text style={{ color: 'white' }}>X</Text>
             </TouchableOpacity>
+
             <Text style={styles.username}>@{displayName}</Text>
             <Text style={styles.postContent}>{post.content}</Text>
             <Text style={styles.timestamp}>{timeAgo(post.created_at)}</Text>
@@ -265,6 +266,7 @@ export default function PostDetailScreen() {
                 >
                   <Text style={{ color: 'white' }}>X</Text>
                 </TouchableOpacity>
+
                 <Text style={styles.username}>@{name}</Text>
                 <Text style={styles.postContent}>{item.content}</Text>
                 <Text style={styles.timestamp}>{timeAgo(item.created_at)}</Text>

@@ -17,6 +17,7 @@ import {
   Animated,
   TouchableWithoutFeedback,
   Dimensions,
+
 } from 'react-native';
 import {
   SafeAreaView,
@@ -118,6 +119,7 @@ export default function TopTabsNavigator() {
   const ForYouScreen = () => <HomeScreen ref={homeScreenRef} hideInput />;
 
   const drawerWidth = Dimensions.get('window').width * 0.8;
+
   const drawerAnim = useRef(new Animated.Value(0)).current;
   const [drawerOpen, setDrawerOpen] = useState(false);
 
@@ -150,6 +152,7 @@ export default function TopTabsNavigator() {
     inputRange: [0, 1],
     outputRange: [-drawerWidth, 0],
   });
+
 
   return (
     <SafeAreaView
@@ -186,29 +189,31 @@ export default function TopTabsNavigator() {
       >
         <Tab.Screen name="For you" component={ForYouScreen} />
         <Tab.Screen name="Following" component={FollowingScreen} />
-      </Tab.Navigator>
+        </Tab.Navigator>
 
-      <TouchableOpacity
-        onPress={() => setModalVisible(true)}
-        style={styles.fab}
-      >
-        <Text style={{ color: 'white', fontSize: 24 }}>+</Text>
-      </TouchableOpacity>
+        <TouchableOpacity
+          onPress={() => setModalVisible(true)}
+          style={styles.fab}
+        >
+          <Text style={{ color: 'white', fontSize: 24 }}>+</Text>
+        </TouchableOpacity>
 
-      <Modal visible={modalVisible} animationType="slide" transparent>
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
-            <TextInput
-              placeholder="What's on your mind?"
-              style={styles.input}
-              value={modalText}
-              onChangeText={setModalText}
-            />
-            <Button title="Post" onPress={handleModalPost} />
-            <Button title="Cancel" onPress={() => setModalVisible(false)} />
+        <Modal visible={modalVisible} animationType="slide" transparent>
+          <View style={styles.modalOverlay}>
+            <View style={styles.modalContent}>
+              <TextInput
+                placeholder="What's on your mind?"
+                style={styles.input}
+                value={modalText}
+                onChangeText={setModalText}
+              />
+              <Button title="Post" onPress={handleModalPost} />
+              <Button title="Cancel" onPress={() => setModalVisible(false)} />
+            </View>
           </View>
         </View>
       </Modal>
+
       </Animated.View>
 
       {drawerOpen && (
@@ -218,6 +223,7 @@ export default function TopTabsNavigator() {
       )}
 
       <Animated.View style={[styles.drawer, { width: drawerWidth, transform: [{ translateX: drawerTranslate }] }]}>
+
         <TouchableOpacity>
           <Text style={styles.menuItem}>Profile</Text>
         </TouchableOpacity>
@@ -275,6 +281,7 @@ const styles = StyleSheet.create({
     left: 0,
     top: 0,
     bottom: 0,
+
     backgroundColor: '#1d152b',
     paddingTop: 100,
     paddingHorizontal: 20,

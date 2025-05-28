@@ -215,6 +215,7 @@ const HomeScreen = forwardRef<HomeScreenRef, HomeScreenProps>(
                 >
                   <Text style={{ color: 'white' }}>X</Text>
                 </TouchableOpacity>
+
                 <Text style={styles.username}>@{displayName}</Text>
                 <Text style={styles.postContent}>{item.content}</Text>
                 <Text style={styles.timestamp}>{timeAgo(item.created_at)}</Text>

@@ -233,6 +233,7 @@ export default function ReplyDetailScreen() {
                 >
                   <Text style={{ color: 'white' }}>X</Text>
                 </TouchableOpacity>
+
                 <Text style={styles.username}>@{originalName}</Text>
                 <Text style={styles.postContent}>{originalPost.content}</Text>
                 <Text style={styles.timestamp}>{timeAgo(originalPost.created_at)}</Text>
@@ -249,6 +250,7 @@ export default function ReplyDetailScreen() {
                   >
                     <Text style={{ color: 'white' }}>X</Text>
                   </TouchableOpacity>
+
                   <Text style={styles.username}>@{ancestorName}</Text>
                   <Text style={styles.postContent}>{a.content}</Text>
                   <Text style={styles.timestamp}>{timeAgo(a.created_at)}</Text>
@@ -263,6 +265,7 @@ export default function ReplyDetailScreen() {
               >
                 <Text style={{ color: 'white' }}>X</Text>
               </TouchableOpacity>
+
               <Text style={styles.username}>@{name}</Text>
               <Text style={styles.postContent}>{parent.content}</Text>
               <Text style={styles.timestamp}>{timeAgo(parent.created_at)}</Text>
@@ -294,6 +297,7 @@ export default function ReplyDetailScreen() {
                 >
                   <Text style={{ color: 'white' }}>X</Text>
                 </TouchableOpacity>
+
                 <Text style={styles.username}>@{childName}</Text>
                 <Text style={styles.postContent}>{item.content}</Text>
                 <Text style={styles.timestamp}>{timeAgo(item.created_at)}</Text>
