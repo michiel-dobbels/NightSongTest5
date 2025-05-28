@@ -12,13 +12,18 @@ function AuthPage() {
   const [password, setPassword] = useState('');
   const [passwordConfirm, setPasswordConfirm] = useState('');
   const [username, setUsername] = useState('');
+  const [name, setName] = useState('');
   const [error, setError] = useState(null);
   const { signUp, signIn } = useAuth();
 
   const handleSubmit = async () => {
   setError(null);
 
-    if (!email || !password || (mode === 'signup' && (!username || !passwordConfirm))) {
+    if (
+      !email ||
+      !password ||
+      (mode === 'signup' && (!username || !name || !passwordConfirm))
+    ) {
       setError('Please fill in all fields');
       return;
     }
@@ -29,7 +34,7 @@ function AuthPage() {
           throw new Error('Passwords do not match');
         }
 
-        const { error } = await signUp(email, password, username);
+        const { error } = await signUp(email, password, username, name);
         if (error) throw error;
 
       } else {
@@ -54,6 +59,15 @@ function AuthPage() {
           placeholder="Username"
           value={username}
           onChangeText={setUsername}
+          style={styles.input}
+        />
+      )}
+
+      {mode === 'signup' && (
+        <TextInput
+          placeholder="Name"
+          value={name}
+          onChangeText={setName}
           style={styles.input}
         />
       )}

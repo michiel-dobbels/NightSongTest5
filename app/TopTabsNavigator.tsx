@@ -16,6 +16,7 @@ import {
   StatusBar,
   Animated,
   TouchableWithoutFeedback,
+  Dimensions,
 } from 'react-native';
 import {
   SafeAreaView,
@@ -23,6 +24,7 @@ import {
 } from 'react-native-safe-area-context';
 
 import { useAuth } from '../AuthContext';
+import { useNavigation } from '@react-navigation/native';
 import HomeScreen, { HomeScreenRef } from './screens/HomeScreen';
 import { supabase } from '../lib/supabase';
 import { colors } from './styles/colors';
@@ -40,6 +42,8 @@ const Tab = createMaterialTopTabNavigator();
 const TAB_BAR_HEIGHT = 48;
 const HEADER_BOTTOM_PADDING = 0;
 const BLUR_BACKGROUND_COLOR = 'rgba(29,21,43,0.6)';
+const SCREEN_WIDTH = Dimensions.get('window').width;
+const DRAWER_WIDTH = SCREEN_WIDTH * 0.8;
 
 
 function HeaderTabBar(
@@ -73,6 +77,7 @@ function HeaderTabBar(
 
 export default function TopTabsNavigator() {
   const { profile, user, signOut } = useAuth() as any;
+  const navigation = useNavigation<any>();
   const insets = useSafeAreaInsets();
   const HEADER_CONTENT_HEIGHT = 70;
   const headerHeight = insets.top + HEADER_CONTENT_HEIGHT;
@@ -136,9 +141,15 @@ export default function TopTabsNavigator() {
     }).start(() => setDrawerOpen(false));
   };
 
-  const translateX = drawerAnim.interpolate({ inputRange: [0, 1], outputRange: [0, 200] });
+  const translateX = drawerAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: [0, DRAWER_WIDTH],
+  });
   const overlayOpacity = drawerAnim.interpolate({ inputRange: [0, 1], outputRange: [0, 0.3] });
-  const drawerTranslate = drawerAnim.interpolate({ inputRange: [0, 1], outputRange: [-200, 0] });
+  const drawerTranslate = drawerAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: [-DRAWER_WIDTH, 0],
+  });
 
   return (
     <SafeAreaView
@@ -206,7 +217,12 @@ export default function TopTabsNavigator() {
       )}
 
       <Animated.View style={[styles.drawer, { transform: [{ translateX: drawerTranslate }] }]}>
-        <TouchableOpacity>
+        <TouchableOpacity
+          onPress={() => {
+            closeDrawer();
+            navigation.navigate('Profile');
+          }}
+        >
           <Text style={styles.menuItem}>Profile</Text>
         </TouchableOpacity>
       </Animated.View>
@@ -263,7 +279,7 @@ const styles = StyleSheet.create({
     left: 0,
     top: 0,
     bottom: 0,
-    width: 200,
+    width: DRAWER_WIDTH,
     backgroundColor: '#1d152b',
     paddingTop: 100,
     paddingHorizontal: 20,
