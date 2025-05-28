@@ -25,6 +25,7 @@ import {
 import { useNavigation } from '@react-navigation/native';
 
 import { useAuth } from '../AuthContext';
+import { useNavigation } from '@react-navigation/native';
 import HomeScreen, { HomeScreenRef } from './screens/HomeScreen';
 import { supabase } from '../lib/supabase';
 import { colors } from './styles/colors';
@@ -78,6 +79,7 @@ function HeaderTabBar(
 export default function TopTabsNavigator() {
   const { profile, user, signOut } = useAuth() as any;
   const navigation = useNavigation();
+
   const insets = useSafeAreaInsets();
   const HEADER_CONTENT_HEIGHT = 70;
   const headerHeight = insets.top + HEADER_CONTENT_HEIGHT;
@@ -221,6 +223,7 @@ export default function TopTabsNavigator() {
           onPress={() => {
             navigation.navigate('Profile' as never);
             closeDrawer();
+
           }}
         >
           <Text style={styles.menuItem}>Profile</Text>

@@ -18,6 +18,7 @@ export default function ProfileScreen() {
         </>
       )}
       <Button title="Back" onPress={() => navigation.goBack()} />
+
     </View>
   );
 }
@@ -38,5 +39,6 @@ const styles = StyleSheet.create({
     color: 'white',
     fontSize: 18,
     marginBottom: 20,
+
   },
 });
