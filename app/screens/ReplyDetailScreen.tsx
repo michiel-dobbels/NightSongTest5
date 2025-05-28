@@ -10,6 +10,7 @@ import {
   KeyboardAvoidingView,
   Platform,
   Keyboard,
+  Alert,
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useRoute, useNavigation } from '@react-navigation/native';
@@ -71,6 +72,44 @@ export default function ReplyDetailScreen() {
   const [replyText, setReplyText] = useState('');
   const [replies, setReplies] = useState<Reply[]>([]);
   const [keyboardOffset, setKeyboardOffset] = useState(0);
+
+  const confirmDeletePost = (id: string) => {
+    Alert.alert('Delete Post', 'Are you sure you want to delete this post?', [
+      { text: 'Cancel', style: 'cancel' },
+      {
+        text: 'Delete',
+        style: 'destructive',
+        onPress: () => handleDeletePost(id),
+      },
+    ]);
+  };
+
+  const handleDeletePost = async (id: string) => {
+    await supabase.from('posts').delete().eq('id', id);
+    navigation.goBack();
+  };
+
+  const confirmDeleteReply = (id: string) => {
+    Alert.alert('Delete Post', 'Are you sure you want to delete this post?', [
+      { text: 'Cancel', style: 'cancel' },
+      {
+        text: 'Delete',
+        style: 'destructive',
+        onPress: () => handleDeleteReply(id),
+      },
+    ]);
+  };
+
+  const handleDeleteReply = async (id: string) => {
+    // Remove from local state
+    setReplies(prev => {
+      const updated = prev.filter(r => r.id !== id);
+      AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
+      return updated;
+    });
+
+    await supabase.from('replies').delete().eq('id', id);
+  };
 
   const fetchReplies = async () => {
     const { data, error } = await supabase
@@ -188,6 +227,14 @@ export default function ReplyDetailScreen() {
           <>
             {originalPost && (
               <View style={[styles.post, styles.highlightPost]}>
+                {user?.id === originalPost.user_id && (
+                  <TouchableOpacity
+                    onPress={() => confirmDeletePost(originalPost.id)}
+                    style={styles.deleteButton}
+                  >
+                    <Text style={{ color: 'white' }}>X</Text>
+                  </TouchableOpacity>
+                )}
                 <Text style={styles.username}>@{originalName}</Text>
                 <Text style={styles.postContent}>{originalPost.content}</Text>
                 <Text style={styles.timestamp}>{timeAgo(originalPost.created_at)}</Text>
@@ -198,6 +245,14 @@ export default function ReplyDetailScreen() {
                 a.profiles?.display_name || a.profiles?.username || a.username;
               return (
                 <View key={a.id} style={styles.post}>
+                  {user?.id === a.user_id && (
+                    <TouchableOpacity
+                      onPress={() => confirmDeleteReply(a.id)}
+                      style={styles.deleteButton}
+                    >
+                      <Text style={{ color: 'white' }}>X</Text>
+                    </TouchableOpacity>
+                  )}
                   <Text style={styles.username}>@{ancestorName}</Text>
                   <Text style={styles.postContent}>{a.content}</Text>
                   <Text style={styles.timestamp}>{timeAgo(a.created_at)}</Text>
@@ -206,6 +261,14 @@ export default function ReplyDetailScreen() {
             })}
 
             <View style={styles.post}>
+              {user?.id === parent.user_id && (
+                <TouchableOpacity
+                  onPress={() => confirmDeleteReply(parent.id)}
+                  style={styles.deleteButton}
+                >
+                  <Text style={{ color: 'white' }}>X</Text>
+                </TouchableOpacity>
+              )}
               <Text style={styles.username}>@{name}</Text>
               <Text style={styles.postContent}>{parent.content}</Text>
               <Text style={styles.timestamp}>{timeAgo(parent.created_at)}</Text>
@@ -231,6 +294,14 @@ export default function ReplyDetailScreen() {
 
 
               <View style={styles.reply}>
+                {user?.id === item.user_id && (
+                  <TouchableOpacity
+                    onPress={() => confirmDeleteReply(item.id)}
+                    style={styles.deleteButton}
+                  >
+                    <Text style={{ color: 'white' }}>X</Text>
+                  </TouchableOpacity>
+                )}
                 <Text style={styles.username}>@{childName}</Text>
                 <Text style={styles.postContent}>{item.content}</Text>
                 <Text style={styles.timestamp}>{timeAgo(item.created_at)}</Text>
@@ -267,12 +338,14 @@ const styles = StyleSheet.create({
     borderRadius: 6,
     padding: 10,
     marginBottom: 10,
+    position: 'relative',
   },
   reply: {
     backgroundColor: '#ffffff10',
     borderRadius: 6,
     padding: 10,
     marginTop: 10,
+    position: 'relative',
   },
   highlightPost: {
     borderColor: '#4f1fde',
@@ -291,6 +364,12 @@ const styles = StyleSheet.create({
   backButton: {
     alignSelf: 'flex-start',
     marginBottom: 10,
+  },
+  deleteButton: {
+    position: 'absolute',
+    right: 6,
+    top: 6,
+    padding: 4,
   },
   inputContainer: {
     position: 'absolute',
