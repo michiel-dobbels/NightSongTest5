@@ -115,15 +115,17 @@ export function AuthProvider({ children }) {
   }
 
   // 🔐 Sign up
-  const signUp = async (email, password, username, name) => {
-    if (!username) {
-      return { error: { message: 'Username is required' } };
+  const signUp = async (email, password, username, displayName) => {
+    if (!username || !displayName) {
+      return { error: { message: 'Username and name are required' } };
+
     }
 
 
     const { user: newUser, session, error } = await supabase.auth.signUp(
       { email, password },
-      { data: { username, display_name: name || username } }
+      { data: { username, display_name: displayName } }
+
     );
 
     if (error) {

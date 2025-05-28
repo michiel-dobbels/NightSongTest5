@@ -23,7 +23,8 @@ function AuthPage() {
     if (
       !email ||
       !password ||
-      (mode === 'signup' && (!username || !passwordConfirm || !name))
+      (mode === 'signup' && (!username || !name || !passwordConfirm))
+
     ) {
       setError('Please fill in all fields');
       return;
@@ -76,6 +77,15 @@ function AuthPage() {
             style={styles.input}
           />
         </>
+      )}
+
+      {mode === 'signup' && (
+        <TextInput
+          placeholder="Name"
+          value={name}
+          onChangeText={setName}
+          style={styles.input}
+        />
       )}
 
       <TextInput

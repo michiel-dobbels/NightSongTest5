@@ -78,7 +78,7 @@ function HeaderTabBar(
 
 export default function TopTabsNavigator() {
   const { profile, user, signOut } = useAuth() as any;
-  const navigation = useNavigation();
+  const navigation = useNavigation<any>();
 
   const insets = useSafeAreaInsets();
   const navigation = useNavigation<any>();
@@ -220,7 +220,12 @@ export default function TopTabsNavigator() {
       )}
 
       <Animated.View style={[styles.drawer, { transform: [{ translateX: drawerTranslate }] }]}>
-        <TouchableOpacity onPress={() => { closeDrawer(); navigation.navigate('Profile'); }}>
+        <TouchableOpacity
+          onPress={() => {
+            closeDrawer();
+            navigation.navigate('Profile');
+          }}
+        >
 
           <Text style={styles.menuItem}>Profile</Text>
         </TouchableOpacity>
