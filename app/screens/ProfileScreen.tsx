@@ -1,44 +1,31 @@
 import React from 'react';
-import { View, Text, Button, StyleSheet } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
+import { View, Text, StyleSheet } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuth } from '../../AuthContext';
+import { colors } from '../styles/colors';
 
 export default function ProfileScreen() {
-  const navigation = useNavigation();
-  const { profile } = useAuth();
+  const { profile } = useAuth() as any;
+  const username = profile?.username || 'Unknown';
 
   return (
-    <View style={styles.container}>
-      {profile && (
-        <>
-          <Text style={styles.username}>@{profile.username}</Text>
-          {profile.display_name && (
-            <Text style={styles.name}>{profile.display_name}</Text>
-          )}
-        </>
-      )}
-      <Button title="Back" onPress={() => navigation.goBack()} />
+    <SafeAreaView style={styles.container}>
+      <Text style={styles.username}>@{username}</Text>
+    </SafeAreaView>
 
-    </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    backgroundColor: colors.background,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#061e45',
   },
   username: {
     color: 'white',
-    fontSize: 24,
-    marginBottom: 10,
-  },
-  name: {
-    color: 'white',
     fontSize: 18,
-    marginBottom: 20,
 
   },
 });
