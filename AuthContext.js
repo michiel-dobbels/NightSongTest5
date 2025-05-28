@@ -120,15 +120,12 @@ export function AuthProvider({ children }) {
       return { error: { message: 'Username is required' } };
     }
 
-    // supabase-js v1 uses a different signature than v2
-    const { user: newUser, error } = await supabase.auth.signUp(
+    const { user: newUser, session, error } = await supabase.auth.signUp(
       { email, password },
       { data: { username, display_name: username } }
     );
 
     if (error) {
-      // If an account already exists for this email, treat the attempt as a
-      // regular sign in so the original username remains linked to the email.
       if (error.message && error.message.toLowerCase().includes('already')) {
         return await signIn(email, password);
       }
@@ -137,10 +134,23 @@ export function AuthProvider({ children }) {
       return { error };
     }
 
+    // If Supabase returned a session we can set the user and profile immediately
+    if (session && newUser) {
+      setUser(newUser);
+      await ensureProfile(newUser);
+      return { error: null };
+    }
 
-    // Signing in again ensures we have a session so RLS policies pass
+    // Otherwise sign in to create the profile. If sign-in fails because the
+    // email needs confirmation, treat as success so the user can verify via
+    // email without seeing an error.
     const { error: signInErr } = await signIn(email, password);
 
+    if (signInErr &&
+        signInErr.message &&
+        signInErr.message.toLowerCase().includes('confirm')) {
+      return { error: null };
+    }
 
     return { error: signInErr };
   };

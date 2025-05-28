@@ -1,5 +1,13 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, Button, TouchableOpacity, StyleSheet } from 'react-native';
+import {
+  View,
+  Text,
+  TextInput,
+  Button,
+  TouchableOpacity,
+  StyleSheet,
+  Alert,
+} from 'react-native';
 import { useAuth } from './AuthContext';
 import { useNavigation } from '@react-navigation/native';
 
@@ -31,6 +39,11 @@ function AuthPage() {
 
         const { error } = await signUp(email, password, username);
         if (error) throw error;
+
+        Alert.alert(
+          'Sign Up',
+          'Check your email to confirm your account before logging in.'
+        );
 
       } else {
         const { error } = await signIn(email, password);
