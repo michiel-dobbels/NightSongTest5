@@ -22,6 +22,7 @@ import {
   SafeAreaView,
   useSafeAreaInsets,
 } from 'react-native-safe-area-context';
+import { useNavigation } from '@react-navigation/native';
 
 import { useAuth } from '../AuthContext';
 import { useNavigation } from '@react-navigation/native';
@@ -77,7 +78,8 @@ function HeaderTabBar(
 
 export default function TopTabsNavigator() {
   const { profile, user, signOut } = useAuth() as any;
-  const navigation = useNavigation<any>();
+  const navigation = useNavigation();
+
   const insets = useSafeAreaInsets();
   const HEADER_CONTENT_HEIGHT = 70;
   const headerHeight = insets.top + HEADER_CONTENT_HEIGHT;
@@ -219,8 +221,9 @@ export default function TopTabsNavigator() {
       <Animated.View style={[styles.drawer, { transform: [{ translateX: drawerTranslate }] }]}>
         <TouchableOpacity
           onPress={() => {
+            navigation.navigate('Profile' as never);
             closeDrawer();
-            navigation.navigate('Profile');
+
           }}
         >
           <Text style={styles.menuItem}>Profile</Text>
