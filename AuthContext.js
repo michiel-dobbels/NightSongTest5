@@ -118,17 +118,17 @@ export function AuthProvider({ children }) {
   const signUp = async (email, password, username, displayName) => {
     if (!username || !displayName) {
       return { error: { message: 'Username and name are required' } };
+
     }
 
-    // supabase-js v1 uses a different signature than v2
-    const { user: newUser, error } = await supabase.auth.signUp(
+
+    const { user: newUser, session, error } = await supabase.auth.signUp(
       { email, password },
       { data: { username, display_name: displayName } }
+
     );
 
     if (error) {
-      // If an account already exists for this email, treat the attempt as a
-      // regular sign in so the original username remains linked to the email.
       if (error.message && error.message.toLowerCase().includes('already')) {
         return await signIn(email, password);
       }
@@ -137,10 +137,27 @@ export function AuthProvider({ children }) {
       return { error };
     }
 
+    if (session) {
+      setUser(session.user);
+      await ensureProfile(session.user);
 
-    // Signing in again ensures we have a session so RLS policies pass
+      return { error: null };
+    }
+
+    // Otherwise sign in to create the profile. If sign-in fails because the
+    // email needs confirmation, treat as success so the user can verify via
+    // email without seeing an error.
     const { error: signInErr } = await signIn(email, password);
 
+    if (
+      signInErr &&
+      signInErr.message &&
+      signInErr.message.toLowerCase().includes('invalid login credentials')
+    ) {
+      // Account created but email confirmation pending
+
+      return { error: null };
+    }
 
     return { error: signInErr };
   };

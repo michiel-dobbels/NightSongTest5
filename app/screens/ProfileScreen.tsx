@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, Text, Button, StyleSheet } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
+
 import { useAuth } from '../../AuthContext';
 import { colors } from '../styles/colors';
 
@@ -20,6 +21,7 @@ export default function ProfileScreen() {
         <Text style={styles.name}>{profile.display_name}</Text>
       )}
     </View>
+
   );
 }
 
@@ -42,5 +44,6 @@ const styles = StyleSheet.create({
   name: {
     color: 'white',
     fontSize: 20,
+
   },
 });
