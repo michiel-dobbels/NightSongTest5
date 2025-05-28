@@ -121,7 +121,7 @@ export function AuthProvider({ children }) {
     }
 
     // supabase-js v1 uses a different signature than v2
-    const { user: newUser, error } = await supabase.auth.signUp(
+    const { user: newUser, session, error } = await supabase.auth.signUp(
       { email, password },
       { data: { username, display_name: username } }
     );
@@ -137,10 +137,23 @@ export function AuthProvider({ children }) {
       return { error };
     }
 
+    if (session) {
+      setUser(session.user);
+      await ensureProfile(session.user);
+      return { error: null };
+    }
 
     // Signing in again ensures we have a session so RLS policies pass
     const { error: signInErr } = await signIn(email, password);
 
+    if (
+      signInErr &&
+      signInErr.message &&
+      signInErr.message.toLowerCase().includes('invalid login credentials')
+    ) {
+      // Account created but email confirmation pending
+      return { error: null };
+    }
 
     return { error: signInErr };
   };
