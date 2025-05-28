@@ -78,16 +78,6 @@ function AuthPage() {
           />
         </>
       )}
-
-      {mode === 'signup' && (
-        <TextInput
-          placeholder="Name"
-          value={name}
-          onChangeText={setName}
-          style={styles.input}
-        />
-      )}
-
       <TextInput
         placeholder="Email"
         value={email}
