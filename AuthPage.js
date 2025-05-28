@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { View, Text, TextInput, Button, TouchableOpacity, StyleSheet, Alert } from 'react-native';
+
 import { useAuth } from './AuthContext';
 import { useNavigation } from '@react-navigation/native';
 
@@ -12,13 +13,18 @@ function AuthPage() {
   const [password, setPassword] = useState('');
   const [passwordConfirm, setPasswordConfirm] = useState('');
   const [username, setUsername] = useState('');
+  const [name, setName] = useState('');
   const [error, setError] = useState(null);
   const { signUp, signIn } = useAuth();
 
   const handleSubmit = async () => {
   setError(null);
 
-    if (!email || !password || (mode === 'signup' && (!username || !passwordConfirm))) {
+    if (
+      !email ||
+      !password ||
+      (mode === 'signup' && (!username || !passwordConfirm || !name))
+    ) {
       setError('Please fill in all fields');
       return;
     }
@@ -29,9 +35,14 @@ function AuthPage() {
           throw new Error('Passwords do not match');
         }
 
-        const { error } = await signUp(email, password, username);
+        const { error } = await signUp(email, password, username, name);
         if (error) throw error;
         Alert.alert('Check your email', 'Confirm your account to finish signing up.');
+
+        Alert.alert(
+          'Sign Up',
+          'Check your email to confirm your account before logging in.'
+        );
 
       } else {
         const { error } = await signIn(email, password);
@@ -51,12 +62,20 @@ function AuthPage() {
       <Text style={styles.title}>{mode === 'login' ? 'Login' : 'Sign Up'}</Text>
 
       {mode === 'signup' && (
-        <TextInput
-          placeholder="Username"
-          value={username}
-          onChangeText={setUsername}
-          style={styles.input}
-        />
+        <>
+          <TextInput
+            placeholder="Username"
+            value={username}
+            onChangeText={setUsername}
+            style={styles.input}
+          />
+          <TextInput
+            placeholder="Name"
+            value={name}
+            onChangeText={setName}
+            style={styles.input}
+          />
+        </>
       )}
 
       <TextInput

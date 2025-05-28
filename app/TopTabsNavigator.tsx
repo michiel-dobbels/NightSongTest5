@@ -22,8 +22,10 @@ import {
   SafeAreaView,
   useSafeAreaInsets,
 } from 'react-native-safe-area-context';
+import { useNavigation } from '@react-navigation/native';
 
 import { useAuth } from '../AuthContext';
+import { useNavigation } from '@react-navigation/native';
 import HomeScreen, { HomeScreenRef } from './screens/HomeScreen';
 import { supabase } from '../lib/supabase';
 import { colors } from './styles/colors';
@@ -76,7 +78,10 @@ function HeaderTabBar(
 
 export default function TopTabsNavigator() {
   const { profile, user, signOut } = useAuth() as any;
+  const navigation = useNavigation();
+
   const insets = useSafeAreaInsets();
+  const navigation = useNavigation<any>();
   const HEADER_CONTENT_HEIGHT = 70;
   const headerHeight = insets.top + HEADER_CONTENT_HEIGHT;
   const HEADER_TOTAL_HEIGHT =
@@ -215,7 +220,8 @@ export default function TopTabsNavigator() {
       )}
 
       <Animated.View style={[styles.drawer, { transform: [{ translateX: drawerTranslate }] }]}>
-        <TouchableOpacity>
+        <TouchableOpacity onPress={() => { closeDrawer(); navigation.navigate('Profile'); }}>
+
           <Text style={styles.menuItem}>Profile</Text>
         </TouchableOpacity>
       </Animated.View>
