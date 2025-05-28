@@ -14,6 +14,8 @@ import {
   Modal,
   StyleSheet,
   StatusBar,
+  Animated,
+  TouchableWithoutFeedback,
 } from 'react-native';
 import {
   SafeAreaView,
@@ -45,9 +47,10 @@ function HeaderTabBar(
     insetsTop: number;
     welcomeText: string;
     signOut: () => void;
+    onProfile: () => void;
   },
 ) {
-  const { insetsTop, welcomeText, signOut, ...barProps } = props;
+  const { insetsTop, welcomeText, signOut, onProfile, ...barProps } = props;
   return (
     <BlurView
       intensity={50}
@@ -56,7 +59,8 @@ function HeaderTabBar(
     >
       <StatusBar barStyle="light-content" translucent backgroundColor="transparent" />
       <Text style={{ color: 'white', textAlign: 'center' }}>{welcomeText}</Text>
-      <View style={{ alignItems: 'center', marginTop: 10 }}>
+      <View style={{ flexDirection: 'row', justifyContent: 'center', marginTop: 10 }}>
+        <Button title="Profile" onPress={onProfile} />
         <Button title="Logout" onPress={signOut} />
       </View>
       <MaterialTopTabBar
@@ -112,22 +116,47 @@ export default function TopTabsNavigator() {
 
   const ForYouScreen = () => <HomeScreen ref={homeScreenRef} hideInput />;
 
+  const drawerAnim = useRef(new Animated.Value(0)).current;
+  const [drawerOpen, setDrawerOpen] = useState(false);
+
+  const openDrawer = () => {
+    setDrawerOpen(true);
+    Animated.timing(drawerAnim, {
+      toValue: 1,
+      duration: 250,
+      useNativeDriver: true,
+    }).start();
+  };
+
+  const closeDrawer = () => {
+    Animated.timing(drawerAnim, {
+      toValue: 0,
+      duration: 250,
+      useNativeDriver: true,
+    }).start(() => setDrawerOpen(false));
+  };
+
+  const translateX = drawerAnim.interpolate({ inputRange: [0, 1], outputRange: [0, 200] });
+  const overlayOpacity = drawerAnim.interpolate({ inputRange: [0, 1], outputRange: [0, 0.3] });
+  const drawerTranslate = drawerAnim.interpolate({ inputRange: [0, 1], outputRange: [-200, 0] });
+
   return (
     <SafeAreaView
       style={{ flex: 1, backgroundColor: colors.background }}
       edges={['bottom']}
     >
-
-      <Tab.Navigator
-        tabBar={(props) => (
-          <HeaderTabBar
-            {...props}
-            insetsTop={insets.top}
-            welcomeText={welcomeText}
-            signOut={signOut}
-          />
-        )}
-        sceneContainerStyle={{ paddingTop: HEADER_TOTAL_HEIGHT }}
+      <Animated.View style={{ flex: 1, transform: [{ translateX }] }}>
+        <Tab.Navigator
+          tabBar={(props) => (
+            <HeaderTabBar
+              {...props}
+              insetsTop={insets.top}
+              welcomeText={welcomeText}
+              signOut={signOut}
+              onProfile={openDrawer}
+            />
+          )}
+          sceneContainerStyle={{ paddingTop: HEADER_TOTAL_HEIGHT }}
 
         screenOptions={{
           tabBarStyle: {
@@ -145,29 +174,42 @@ export default function TopTabsNavigator() {
       >
         <Tab.Screen name="For you" component={ForYouScreen} />
         <Tab.Screen name="Following" component={FollowingScreen} />
-      </Tab.Navigator>
+        </Tab.Navigator>
 
-      <TouchableOpacity
-        onPress={() => setModalVisible(true)}
-        style={styles.fab}
-      >
-        <Text style={{ color: 'white', fontSize: 24 }}>+</Text>
-      </TouchableOpacity>
+        <TouchableOpacity
+          onPress={() => setModalVisible(true)}
+          style={styles.fab}
+        >
+          <Text style={{ color: 'white', fontSize: 24 }}>+</Text>
+        </TouchableOpacity>
 
-      <Modal visible={modalVisible} animationType="slide" transparent>
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
-            <TextInput
-              placeholder="What's on your mind?"
-              style={styles.input}
-              value={modalText}
-              onChangeText={setModalText}
-            />
-            <Button title="Post" onPress={handleModalPost} />
-            <Button title="Cancel" onPress={() => setModalVisible(false)} />
+        <Modal visible={modalVisible} animationType="slide" transparent>
+          <View style={styles.modalOverlay}>
+            <View style={styles.modalContent}>
+              <TextInput
+                placeholder="What's on your mind?"
+                style={styles.input}
+                value={modalText}
+                onChangeText={setModalText}
+              />
+              <Button title="Post" onPress={handleModalPost} />
+              <Button title="Cancel" onPress={() => setModalVisible(false)} />
+            </View>
           </View>
-        </View>
-      </Modal>
+        </Modal>
+      </Animated.View>
+
+      {drawerOpen && (
+        <TouchableWithoutFeedback onPress={closeDrawer}>
+          <Animated.View style={[styles.overlay, { opacity: overlayOpacity }]} />
+        </TouchableWithoutFeedback>
+      )}
+
+      <Animated.View style={[styles.drawer, { transform: [{ translateX: drawerTranslate }] }]}>
+        <TouchableOpacity>
+          <Text style={styles.menuItem}>Profile</Text>
+        </TouchableOpacity>
+      </Animated.View>
     </SafeAreaView>
   );
 }
@@ -215,5 +257,30 @@ const styles = StyleSheet.create({
 
   blurredBar: {
     backgroundColor: 'transparent',
+  },
+  drawer: {
+    position: 'absolute',
+    left: 0,
+    top: 0,
+    bottom: 0,
+    width: 200,
+    backgroundColor: '#1d152b',
+    paddingTop: 100,
+    paddingHorizontal: 20,
+    zIndex: 30,
+  },
+  menuItem: {
+    color: 'white',
+    paddingVertical: 10,
+    fontSize: 16,
+  },
+  overlay: {
+    position: 'absolute',
+    left: 0,
+    top: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'black',
+    zIndex: 25,
   },
 });
