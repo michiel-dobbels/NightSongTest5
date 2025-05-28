@@ -25,10 +25,10 @@ export default function ProfileScreen() {
     let permission = await ImagePicker.getMediaLibraryPermissionsAsync();
     if (!permission.granted) {
       permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
-      if (!permission.granted) {
-        alert('Permission to access images is required!');
-        return;
-      }
+    }
+    if (!permission.granted) {
+      alert('Permission to access images is required!');
+      return;
 
     }
     const result = await ImagePicker.launchImageLibraryAsync({
