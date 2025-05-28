@@ -11,7 +11,7 @@ import {
   Platform,
   Keyboard,
   Alert,
-
+  Image,
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useRoute, useNavigation } from '@react-navigation/native';
@@ -62,7 +62,7 @@ interface Reply {
 export default function PostDetailScreen() {
   const route = useRoute<any>();
   const navigation = useNavigation<any>();
-  const { user, profile } = useAuth() as any;
+  const { user, profile, profileImageUri } = useAuth() as any;
   const post = route.params.post as Post;
 
   const STORAGE_KEY = `${REPLY_STORAGE_PREFIX}${post.id}`;
@@ -240,9 +240,18 @@ export default function PostDetailScreen() {
                 <Text style={{ color: 'white' }}>X</Text>
               </TouchableOpacity>
             )}
-            <Text style={styles.username}>@{displayName}</Text>
-            <Text style={styles.postContent}>{post.content}</Text>
-            <Text style={styles.timestamp}>{timeAgo(post.created_at)}</Text>
+            <View style={styles.row}>
+              {user?.id === post.user_id && profileImageUri ? (
+                <Image source={{ uri: profileImageUri }} style={styles.avatar} />
+              ) : (
+                <View style={[styles.avatar, styles.placeholder]} />
+              )}
+              <View style={{ flex: 1 }}>
+                <Text style={styles.username}>@{displayName}</Text>
+                <Text style={styles.postContent}>{post.content}</Text>
+                <Text style={styles.timestamp}>{timeAgo(post.created_at)}</Text>
+              </View>
+            </View>
           </View>
         )}
         contentContainerStyle={{ paddingBottom: 100 }}
@@ -250,6 +259,8 @@ export default function PostDetailScreen() {
         keyExtractor={item => item.id}
         renderItem={({ item }) => {
           const name = item.profiles?.display_name || item.profiles?.username || item.username;
+          const isMe = user?.id === item.user_id;
+          const avatarUri = isMe ? profileImageUri : undefined;
           return (
             <TouchableOpacity
               onPress={() =>
@@ -261,7 +272,7 @@ export default function PostDetailScreen() {
               }
             >
               <View style={styles.reply}>
-                {user?.id === item.user_id && (
+                {isMe && (
                   <TouchableOpacity
                     onPress={() => confirmDeleteReply(item.id)}
                     style={styles.deleteButton}
@@ -269,9 +280,18 @@ export default function PostDetailScreen() {
                     <Text style={{ color: 'white' }}>X</Text>
                   </TouchableOpacity>
                 )}
-                <Text style={styles.username}>@{name}</Text>
-                <Text style={styles.postContent}>{item.content}</Text>
-                <Text style={styles.timestamp}>{timeAgo(item.created_at)}</Text>
+                <View style={styles.row}>
+                  {avatarUri ? (
+                    <Image source={{ uri: avatarUri }} style={styles.avatar} />
+                  ) : (
+                    <View style={[styles.avatar, styles.placeholder]} />
+                  )}
+                  <View style={{ flex: 1 }}>
+                    <Text style={styles.username}>@{name}</Text>
+                    <Text style={styles.postContent}>{item.content}</Text>
+                    <Text style={styles.timestamp}>{timeAgo(item.created_at)}</Text>
+                  </View>
+                </View>
               </View>
             </TouchableOpacity>
           );
@@ -306,6 +326,9 @@ const styles = StyleSheet.create({
     marginBottom: 10,
     position: 'relative',
   },
+  row: { flexDirection: 'row', alignItems: 'flex-start' },
+  avatar: { width: 32, height: 32, borderRadius: 16, marginRight: 8 },
+  placeholder: { backgroundColor: '#555' },
   highlightPost: {
     borderColor: '#4f1fde',
     borderWidth: 2,

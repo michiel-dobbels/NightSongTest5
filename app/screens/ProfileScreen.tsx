@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React from 'react';
+
 import {
   View,
   Text,
@@ -15,8 +16,8 @@ import { colors } from '../styles/colors';
 
 export default function ProfileScreen() {
   const navigation = useNavigation<any>();
-  const { profile } = useAuth() as any;
-  const [imageUri, setImageUri] = useState<string | null>(null);
+  const { profile, profileImageUri, setProfileImageUri } = useAuth() as any;
+
 
   const pickImage = async () => {
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
@@ -30,7 +31,8 @@ export default function ProfileScreen() {
     });
 
     if (!result.canceled && result.assets && result.assets.length > 0) {
-      setImageUri(result.assets[0].uri);
+      setProfileImageUri(result.assets[0].uri);
+
     }
   };
 
@@ -41,24 +43,16 @@ export default function ProfileScreen() {
       <View style={styles.backButton}>
         <Button title="Back" onPress={() => navigation.goBack()} />
       </View>
-
-      <View style={styles.profileRow}>
-        {imageUri ? (
-          <Image source={{ uri: imageUri }} style={styles.avatar} />
-        ) : (
-          <View style={[styles.avatar, styles.placeholder]} />
-        )}
-        <View style={styles.textContainer}>
-          <Text style={styles.username}>@{profile.username}</Text>
-          {profile.display_name && (
-            <Text style={styles.name}>{profile.display_name}</Text>
-          )}
-        </View>
-      </View>
-
+      <Text style={styles.username}>@{profile.username}</Text>
+      {profile.display_name && (
+        <Text style={styles.name}>{profile.display_name}</Text>
+      )}
       <TouchableOpacity onPress={pickImage} style={styles.uploadLink}>
         <Text style={styles.uploadText}>Upload Profile Picture</Text>
       </TouchableOpacity>
+      {profileImageUri && (
+        <Image source={{ uri: profileImageUri }} style={styles.image} />
+      )}
 
     </View>
 
@@ -109,5 +103,6 @@ const styles = StyleSheet.create({
     alignSelf: 'flex-start',
   },
   uploadText: { color: 'white' },
+  image: { width: 100, height: 100, borderRadius: 50, marginTop: 20 },
 
 });
