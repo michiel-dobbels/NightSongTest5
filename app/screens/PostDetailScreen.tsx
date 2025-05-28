@@ -10,6 +10,7 @@ import {
   KeyboardAvoidingView,
   Platform,
   Keyboard,
+  Alert,
 
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -69,6 +70,42 @@ export default function PostDetailScreen() {
   const [replyText, setReplyText] = useState('');
   const [replies, setReplies] = useState<Reply[]>([]);
   const [keyboardOffset, setKeyboardOffset] = useState(0);
+
+  const confirmDeletePost = (id: string) => {
+    Alert.alert('Delete Post', 'Are you sure you want to delete this post?', [
+      { text: 'Cancel', style: 'cancel' },
+      {
+        text: 'Delete',
+        style: 'destructive',
+        onPress: () => handleDeletePost(id),
+      },
+    ]);
+  };
+
+  const handleDeletePost = async (id: string) => {
+    await supabase.from('posts').delete().eq('id', id);
+    navigation.goBack();
+  };
+
+  const confirmDeleteReply = (id: string) => {
+    Alert.alert('Delete Post', 'Are you sure you want to delete this post?', [
+      { text: 'Cancel', style: 'cancel' },
+      {
+        text: 'Delete',
+        style: 'destructive',
+        onPress: () => handleDeleteReply(id),
+      },
+    ]);
+  };
+
+  const handleDeleteReply = async (id: string) => {
+    setReplies(prev => {
+      const updated = prev.filter(r => r.id !== id);
+      AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
+      return updated;
+    });
+    await supabase.from('replies').delete().eq('id', id);
+  };
 
   useEffect(() => {
     const show = Keyboard.addListener(
@@ -195,6 +232,14 @@ export default function PostDetailScreen() {
       <FlatList
         ListHeaderComponent={() => (
           <View style={[styles.post, styles.highlightPost]}>
+            {user?.id === post.user_id && (
+              <TouchableOpacity
+                onPress={() => confirmDeletePost(post.id)}
+                style={styles.deleteButton}
+              >
+                <Text style={{ color: 'white' }}>X</Text>
+              </TouchableOpacity>
+            )}
             <Text style={styles.username}>@{displayName}</Text>
             <Text style={styles.postContent}>{post.content}</Text>
             <Text style={styles.timestamp}>{timeAgo(post.created_at)}</Text>
@@ -214,10 +259,16 @@ export default function PostDetailScreen() {
                   ancestors: [],
                 })
               }
-
             >
-
               <View style={styles.reply}>
+                {user?.id === item.user_id && (
+                  <TouchableOpacity
+                    onPress={() => confirmDeleteReply(item.id)}
+                    style={styles.deleteButton}
+                  >
+                    <Text style={{ color: 'white' }}>X</Text>
+                  </TouchableOpacity>
+                )}
                 <Text style={styles.username}>@{name}</Text>
                 <Text style={styles.postContent}>{item.content}</Text>
                 <Text style={styles.timestamp}>{timeAgo(item.created_at)}</Text>
@@ -253,6 +304,7 @@ const styles = StyleSheet.create({
     borderRadius: 6,
     padding: 10,
     marginBottom: 10,
+    position: 'relative',
   },
   highlightPost: {
     borderColor: '#4f1fde',
@@ -264,6 +316,7 @@ const styles = StyleSheet.create({
     borderRadius: 6,
     padding: 10,
     marginTop: 10,
+    position: 'relative',
   },
   postContent: { color: 'white' },
   username: { fontWeight: 'bold', color: 'white' },
@@ -277,6 +330,12 @@ const styles = StyleSheet.create({
   backButton: {
     alignSelf: 'flex-start',
     marginBottom: 10,
+  },
+  deleteButton: {
+    position: 'absolute',
+    right: 6,
+    top: 6,
+    padding: 4,
   },
   inputContainer: {
     position: 'absolute',
