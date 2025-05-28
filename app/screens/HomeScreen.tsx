@@ -44,7 +44,27 @@ const HomeScreen = forwardRef<HomeScreenRef, HomeScreenProps>(
     const navigation = useNavigation<any>();
     const { user, profile } = useAuth();
     const [postText, setPostText] = useState('');
-    const [posts, setPosts] = useState<Post[]>([]);
+  const [posts, setPosts] = useState<Post[]>([]);
+
+  const confirmDeletePost = (id: string) => {
+    Alert.alert('Delete Post', 'Are you sure you want to delete this post?', [
+      { text: 'Cancel', style: 'cancel' },
+      {
+        text: 'Delete',
+        style: 'destructive',
+        onPress: () => handleDeletePost(id),
+      },
+    ]);
+  };
+
+  const handleDeletePost = async (id: string) => {
+    setPosts(prev => {
+      const updated = prev.filter(p => p.id !== id);
+      AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
+      return updated;
+    });
+    await supabase.from('posts').delete().eq('id', id);
+  };
 
 
 
@@ -189,6 +209,14 @@ const HomeScreen = forwardRef<HomeScreenRef, HomeScreenProps>(
           return (
             <TouchableOpacity onPress={() => navigation.navigate('PostDetail', { post: item })}>
               <View style={styles.post}>
+                {user?.id === item.user_id && (
+                  <TouchableOpacity
+                    onPress={() => confirmDeletePost(item.id)}
+                    style={styles.deleteButton}
+                  >
+                    <Text style={{ color: 'white' }}>X</Text>
+                  </TouchableOpacity>
+                )}
                 <Text style={styles.username}>@{displayName}</Text>
                 <Text style={styles.postContent}>{item.content}</Text>
                 <Text style={styles.timestamp}>{timeAgo(item.created_at)}</Text>
@@ -221,6 +249,13 @@ const styles = StyleSheet.create({
     borderRadius: 6,
     padding: 10,
     marginBottom: 10,
+    position: 'relative',
+  },
+  deleteButton: {
+    position: 'absolute',
+    right: 6,
+    top: 6,
+    padding: 4,
   },
   postContent: { color: 'white' },
   username: { fontWeight: 'bold', color: 'white' },
