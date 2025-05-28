@@ -41,14 +41,25 @@ export default function ProfileScreen() {
       <View style={styles.backButton}>
         <Button title="Back" onPress={() => navigation.goBack()} />
       </View>
-      <Text style={styles.username}>@{profile.username}</Text>
-      {profile.display_name && (
-        <Text style={styles.name}>{profile.display_name}</Text>
-      )}
+
+      <View style={styles.profileRow}>
+        {imageUri ? (
+          <Image source={{ uri: imageUri }} style={styles.avatar} />
+        ) : (
+          <View style={[styles.avatar, styles.placeholder]} />
+        )}
+        <View style={styles.textContainer}>
+          <Text style={styles.username}>@{profile.username}</Text>
+          {profile.display_name && (
+            <Text style={styles.name}>{profile.display_name}</Text>
+          )}
+        </View>
+      </View>
+
       <TouchableOpacity onPress={pickImage} style={styles.uploadLink}>
         <Text style={styles.uploadText}>Upload Profile Picture</Text>
       </TouchableOpacity>
-      {imageUri && <Image source={{ uri: imageUri }} style={styles.image} />}
+
     </View>
 
   );
@@ -64,16 +75,31 @@ const styles = StyleSheet.create({
     alignSelf: 'flex-start',
     marginBottom: 20,
   },
+  profileRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+  avatar: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+  },
+  placeholder: {
+    backgroundColor: '#ffffff20',
+  },
+  textContainer: {
+    marginLeft: 15,
+  },
   username: {
     color: 'white',
     fontSize: 24,
     fontWeight: 'bold',
-    marginBottom: 10,
   },
   name: {
     color: 'white',
     fontSize: 20,
-
+    marginTop: 4,
   },
   uploadLink: {
     marginTop: 20,
@@ -83,5 +109,5 @@ const styles = StyleSheet.create({
     alignSelf: 'flex-start',
   },
   uploadText: { color: 'white' },
-  image: { width: 100, height: 100, borderRadius: 50, marginTop: 20 },
+
 });
