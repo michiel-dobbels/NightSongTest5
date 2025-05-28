@@ -22,6 +22,16 @@ export default function ProfileScreen() {
   }, [profile]);
 
   const pickImage = async () => {
+    const { status } = await ImagePicker.getMediaLibraryPermissionsAsync();
+    let finalStatus = status;
+    if (finalStatus !== 'granted') {
+      const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      finalStatus = permission.status;
+    }
+    if (finalStatus !== 'granted') {
+      alert('Permission to access images is required!');
+      return;
+    }
     const result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
       allowsEditing: true,
