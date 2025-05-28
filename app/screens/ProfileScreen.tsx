@@ -30,6 +30,7 @@ export default function ProfileScreen() {
     if (!granted) {
       alert('Permission to access images is required!');
       return;
+
     }
     const result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
