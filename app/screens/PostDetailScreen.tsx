@@ -238,6 +238,15 @@ export default function PostDetailScreen() {
         }
       }
 
+      const countStored = await AsyncStorage.getItem(COUNT_STORAGE_KEY);
+      if (countStored) {
+        try {
+          setReplyCounts(prev => ({ ...prev, ...JSON.parse(countStored) }));
+        } catch (e) {
+          console.error('Failed to parse cached counts', e);
+        }
+      }
+
       fetchReplies();
     };
 
