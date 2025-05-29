@@ -142,7 +142,17 @@ export default function ReplyDetailScreen() {
       let removed = descendants.size + 1;
       const { [id]: _omit, ...rest } = prev;
       descendants.forEach(d => delete rest[d]);
-      const counts = { ...rest, [parent.id]: (prev[parent.id] || 0) - removed };
+      const counts: { [key: string]: number } = {
+        ...rest,
+        [parent.id]: (prev[parent.id] || 0) - removed,
+      };
+      ancestors.forEach(a => {
+        counts[a.id] = (counts[a.id] || prev[a.id] || 0) - removed;
+      });
+      if (originalPost) {
+        counts[originalPost.id] = (counts[originalPost.id] || prev[originalPost.id] || 0) - removed;
+      }
+
       AsyncStorage.setItem(COUNT_STORAGE_KEY, JSON.stringify(counts));
       return counts;
     });
@@ -177,9 +187,11 @@ export default function ReplyDetailScreen() {
         .single();
       const entries = all.map(r => [r.id, r.reply_count ?? 0]);
       if (postData) entries.push([parent.post_id, postData.reply_count ?? all.length]);
-      const counts = Object.fromEntries(entries);
-      setReplyCounts(counts);
-      AsyncStorage.setItem(COUNT_STORAGE_KEY, JSON.stringify(counts));
+      setReplyCounts(prev => {
+        const counts = { ...prev, ...Object.fromEntries(entries) };
+        AsyncStorage.setItem(COUNT_STORAGE_KEY, JSON.stringify(counts));
+        return counts;
+      });
 
 
     }
@@ -194,12 +206,17 @@ export default function ReplyDetailScreen() {
           setReplies(cached);
           setAllReplies(cached);
           const entries = cached.map((r: any) => [r.id, r.reply_count ?? 0]);
-          setReplyCounts(prev => ({ ...prev, ...Object.fromEntries(entries) }));
+          setReplyCounts(prev => {
+            const counts = { ...prev, ...Object.fromEntries(entries) };
+            AsyncStorage.setItem(COUNT_STORAGE_KEY, JSON.stringify(counts));
+            return counts;
+          });
 
         } catch (e) {
           console.error('Failed to parse cached replies', e);
         }
       }
+
       const countStored = await AsyncStorage.getItem(COUNT_STORAGE_KEY);
       if (countStored) {
         try {
@@ -208,6 +225,7 @@ export default function ReplyDetailScreen() {
           console.error('Failed to parse cached counts', e);
         }
       }
+
       fetchReplies();
     };
     loadCached();
@@ -251,7 +269,17 @@ export default function ReplyDetailScreen() {
     });
     setAllReplies(prev => [...prev, newReply]);
     setReplyCounts(prev => {
-      const counts = { ...prev, [parent.id]: (prev[parent.id] || 0) + 1, [newReply.id]: 0 };
+      const counts: { [key: string]: number } = {
+        ...prev,
+        [parent.id]: (prev[parent.id] || 0) + 1,
+        [newReply.id]: 0,
+      };
+      ancestors.forEach(a => {
+        counts[a.id] = (counts[a.id] || prev[a.id] || 0) + 1;
+      });
+      if (originalPost) {
+        counts[originalPost.id] = (counts[originalPost.id] || prev[originalPost.id] || 0) + 1;
+      }
 
       AsyncStorage.setItem(COUNT_STORAGE_KEY, JSON.stringify(counts));
       return counts;
@@ -301,7 +329,18 @@ export default function ReplyDetailScreen() {
         setReplyCounts(prev => {
           const temp = prev[newReply.id] ?? 0;
           const { [newReply.id]: _omit, ...rest } = prev;
-          const counts = { ...rest, [data.id]: temp, [parent.id]: prev[parent.id] || 0 };
+          const counts: { [key: string]: number } = {
+            ...rest,
+            [data.id]: temp,
+            [parent.id]: prev[parent.id],
+          };
+          ancestors.forEach(a => {
+            if (prev[a.id] !== undefined) counts[a.id] = prev[a.id];
+          });
+          if (originalPost && prev[originalPost.id] !== undefined) {
+            counts[originalPost.id] = prev[originalPost.id];
+          }
+
           AsyncStorage.setItem(COUNT_STORAGE_KEY, JSON.stringify(counts));
           return counts;
         });

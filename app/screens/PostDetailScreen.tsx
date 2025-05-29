@@ -189,9 +189,11 @@ export default function PostDetailScreen() {
       const entries = all.map(r => [r.id, r.reply_count ?? 0]);
       if (postData) entries.push([post.id, postData.reply_count ?? all.length]);
       else entries.push([post.id, post.reply_count ?? all.length]);
-      const counts = Object.fromEntries(entries);
-      setReplyCounts(counts);
-      AsyncStorage.setItem(COUNT_STORAGE_KEY, JSON.stringify(counts));
+      setReplyCounts(prev => {
+        const counts = { ...prev, ...Object.fromEntries(entries) };
+        AsyncStorage.setItem(COUNT_STORAGE_KEY, JSON.stringify(counts));
+        return counts;
+      });
 
 
     }
@@ -207,13 +209,26 @@ export default function PostDetailScreen() {
           setAllReplies(cached);
           const entries = cached.map((r: any) => [r.id, r.reply_count ?? 0]);
           entries.push([post.id, post.reply_count ?? cached.length]);
-          const counts = Object.fromEntries(entries);
-          setReplyCounts(counts);
+          setReplyCounts(prev => {
+            const counts = { ...prev, ...Object.fromEntries(entries) };
+            AsyncStorage.setItem(COUNT_STORAGE_KEY, JSON.stringify(counts));
+            return counts;
+          });
+
 
         } catch (e) {
           console.error('Failed to parse cached replies', e);
         }
       }
+      const countStored = await AsyncStorage.getItem(COUNT_STORAGE_KEY);
+      if (countStored) {
+        try {
+          setReplyCounts(prev => ({ ...prev, ...JSON.parse(countStored) }));
+        } catch (e) {
+          console.error('Failed to parse cached counts', e);
+        }
+      }
+
       const countStored = await AsyncStorage.getItem(COUNT_STORAGE_KEY);
       if (countStored) {
         try {
@@ -252,7 +267,11 @@ export default function PostDetailScreen() {
     });
     setAllReplies(prev => [...prev, newReply]);
     setReplyCounts(prev => {
-      const counts = { ...prev, [post.id]: (prev[post.id] || 0) + 1, [newReply.id]: 0 };
+      const counts = {
+        ...prev,
+        [post.id]: (prev[post.id] || 0) + 1,
+        [newReply.id]: 0,
+      };
 
       AsyncStorage.setItem(COUNT_STORAGE_KEY, JSON.stringify(counts));
       return counts;
