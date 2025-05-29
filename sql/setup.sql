@@ -23,7 +23,8 @@ create table if not exists public.posts (
     user_id uuid not null references public.profiles(id) on delete cascade,
     username text not null,
     content text not null,
-    created_at timestamptz not null default now()
+    created_at timestamptz not null default now(),
+    reply_count integer not null default 0
 );
 
 -- Enable Row Level Security and allow cross-user access
@@ -48,13 +49,53 @@ create table if not exists public.replies (
     user_id uuid not null references public.profiles(id) on delete cascade,
     username text not null,
     content text not null,
-    created_at timestamptz not null default now()
+    created_at timestamptz not null default now(),
+    reply_count integer not null default 0
 );
 alter table public.replies enable row level security;
 create policy "Users can insert replies" on public.replies
   for insert with check (auth.uid() = user_id);
 create policy "Anyone can read replies" on public.replies
   for select using (true);
+
+-- Maintain nested reply counts for posts and replies
+create or replace function public.increment_reply_counts() returns trigger as $$
+declare
+  current uuid;
+begin
+  update public.posts set reply_count = reply_count + 1 where id = NEW.post_id;
+  current := NEW.parent_id;
+  while current is not null loop
+    update public.replies set reply_count = reply_count + 1
+      where id = current
+      returning parent_id into current;
+  end loop;
+  return NEW;
+end;
+$$ language plpgsql;
+
+create or replace function public.decrement_reply_counts() returns trigger as $$
+declare
+  current uuid;
+begin
+  update public.posts set reply_count = reply_count - 1 where id = OLD.post_id;
+  current := OLD.parent_id;
+  while current is not null loop
+    update public.replies set reply_count = reply_count - 1
+      where id = current
+      returning parent_id into current;
+  end loop;
+  return OLD;
+end;
+$$ language plpgsql;
+
+create trigger replies_insert_reply_count
+after insert on public.replies
+for each row execute procedure public.increment_reply_counts();
+
+create trigger replies_delete_reply_count
+after delete on public.replies
+for each row execute procedure public.decrement_reply_counts();
 
 -- Example: insert a profile row so posting succeeds for a user
 -- Replace the UUID and username with your values
