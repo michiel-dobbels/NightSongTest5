@@ -14,7 +14,7 @@ import {
   Image,
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { useRoute, useNavigation } from '@react-navigation/native';
+import { useRoute, useNavigation, useFocusEffect } from '@react-navigation/native';
 
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../AuthContext';
@@ -158,12 +158,40 @@ export default function PostDetailScreen() {
     };
   }, []);
 
+  useFocusEffect(
+    React.useCallback(() => {
+      fetchReplies();
+    }, []),
+  );
+
+  const computeCounts = (replyList: Reply[]) => {
+    const childrenMap: { [key: string]: Reply[] } = {};
+    replyList.forEach(r => {
+      if (r.parent_id) {
+        if (!childrenMap[r.parent_id]) childrenMap[r.parent_id] = [];
+        childrenMap[r.parent_id].push(r);
+      }
+    });
+    const counts: { [key: string]: number } = {};
+    const countRec = (id: string): number => {
+      const children = childrenMap[id] || [];
+      let total = children.length;
+      for (const c of children) total += countRec(c.id);
+      counts[id] = total;
+      return total;
+    };
+    replyList.forEach(r => {
+      if (!counts[r.id]) countRec(r.id);
+    });
+    counts[post.id] = replyList.length;
+    return counts;
+  };
 
 
   const fetchReplies = async () => {
     const { data, error } = await supabase
       .from('replies')
-      .select('id, post_id, parent_id, user_id, content, created_at, reply_count, username')
+      .select('id, post_id, parent_id, user_id, content, created_at, username')
 
       .eq('post_id', post.id)
       .order('created_at', { ascending: false });
@@ -177,16 +205,7 @@ export default function PostDetailScreen() {
         AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(merged));
         return merged;
       });
-
-      const { data: postData } = await supabase
-        .from('posts')
-        .select('reply_count')
-        .eq('id', post.id)
-        .single();
-      const entries = all.map(r => [r.id, r.reply_count ?? 0]);
-      if (postData) entries.push([post.id, postData.reply_count ?? all.length]);
-      else entries.push([post.id, post.reply_count ?? all.length]);
-      setReplyCounts(Object.fromEntries(entries));
+      setReplyCounts(computeCounts(all));
 
     }
   };

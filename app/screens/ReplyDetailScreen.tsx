@@ -14,7 +14,7 @@ import {
   Image,
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { useRoute, useNavigation } from '@react-navigation/native';
+import { useRoute, useNavigation, useFocusEffect } from '@react-navigation/native';
 
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../AuthContext';
@@ -148,11 +148,34 @@ export default function ReplyDetailScreen() {
     fetchReplies();
   };
 
+  const computeCounts = (replyList: Reply[], rootPostId: string) => {
+    const childrenMap: { [key: string]: Reply[] } = {};
+    replyList.forEach(r => {
+      if (r.parent_id) {
+        if (!childrenMap[r.parent_id]) childrenMap[r.parent_id] = [];
+        childrenMap[r.parent_id].push(r);
+      }
+    });
+    const counts: { [key: string]: number } = {};
+    const countRec = (id: string): number => {
+      const children = childrenMap[id] || [];
+      let total = children.length;
+      for (const c of children) total += countRec(c.id);
+      counts[id] = total;
+      return total;
+    };
+    replyList.forEach(r => {
+      if (!counts[r.id]) countRec(r.id);
+    });
+    counts[rootPostId] = replyList.length;
+    return counts;
+  };
+
 
   const fetchReplies = async () => {
     const { data, error } = await supabase
       .from('replies')
-      .select('id, post_id, parent_id, user_id, content, created_at, reply_count, username')
+      .select('id, post_id, parent_id, user_id, content, created_at, username')
 
       .eq('post_id', parent.post_id)
       .order('created_at', { ascending: false });
@@ -166,15 +189,8 @@ export default function ReplyDetailScreen() {
         AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(merged));
         return merged;
       });
-
-      const { data: postData } = await supabase
-        .from('posts')
-        .select('reply_count')
-        .eq('id', parent.post_id)
-        .single();
-      const entries = all.map(r => [r.id, r.reply_count ?? 0]);
-      if (postData) entries.push([parent.post_id, postData.reply_count ?? all.length]);
-      setReplyCounts(Object.fromEntries(entries));
+      const counts = computeCounts(all, parent.post_id);
+      setReplyCounts(counts);
 
     }
   };
@@ -198,6 +214,12 @@ export default function ReplyDetailScreen() {
     };
     loadCached();
   }, []);
+
+  useFocusEffect(
+    React.useCallback(() => {
+      fetchReplies();
+    }, []),
+  );
 
   useEffect(() => {
     const show = Keyboard.addListener(
@@ -505,15 +527,6 @@ const styles = StyleSheet.create({
 
     position: 'relative',
   },
-  threadLine: {
-    position: 'absolute',
-    left: 26,
-    top: 0,
-    bottom: -10,
-    width: 2,
-    backgroundColor: '#66538f',
-    zIndex: -1,
-  },
   highlightPost: {
     borderColor: '#4f1fde',
     borderWidth: 2,
@@ -539,6 +552,17 @@ const styles = StyleSheet.create({
     top: 6,
     padding: 4,
   },
+  threadLine: {
+    position: 'absolute',
+    left: 26,
+    top: 42,
+    bottom: -20,
+    width: 2,
+    backgroundColor: '#6f6b8e',
+    zIndex: -1,
+
+  },
+
   inputContainer: {
     position: 'absolute',
     left: 16,

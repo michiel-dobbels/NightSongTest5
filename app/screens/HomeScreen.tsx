@@ -11,7 +11,7 @@ import {
   Image,
 } from 'react-native';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
-import { useCallback } from 'react';
+
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../AuthContext';
@@ -60,6 +60,21 @@ const HomeScreen = forwardRef<HomeScreenRef, HomeScreenProps>(
   const [posts, setPosts] = useState<Post[]>([]);
   const [replyCounts, setReplyCounts] = useState<{ [key: string]: number }>({});
 
+  const fetchReplyCount = async (postId: string) => {
+    const { count } = await supabase
+      .from('replies')
+      .select('id', { count: 'exact', head: true })
+      .eq('post_id', postId);
+    return count || 0;
+  };
+
+  const fetchCountsForPosts = async (postList: Post[]) => {
+    const entries = await Promise.all(
+      postList.map(async p => [p.id, await fetchReplyCount(p.id)] as [string, number]),
+    );
+    setReplyCounts(Object.fromEntries(entries));
+  };
+
 
   const confirmDeletePost = (id: string) => {
     Alert.alert('Delete Post', 'Are you sure you want to delete this post?', [
@@ -98,8 +113,7 @@ const HomeScreen = forwardRef<HomeScreenRef, HomeScreenProps>(
     if (!error && data) {
       setPosts(data as Post[]);
       AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(data));
-      const entries = (data as any[]).map(p => [p.id, p.reply_count ?? 0]);
-      setReplyCounts(Object.fromEntries(entries));
+      fetchCountsForPosts(data as Post[]);
 
     }
   };
@@ -206,10 +220,9 @@ const HomeScreen = forwardRef<HomeScreenRef, HomeScreenProps>(
       const stored = await AsyncStorage.getItem(STORAGE_KEY);
       if (stored) {
         try {
-          const cached = JSON.parse(stored);
-          setPosts(cached);
-          const entries = cached.map((p: any) => [p.id, p.reply_count ?? 0]);
-          setReplyCounts(Object.fromEntries(entries));
+          const parsed = JSON.parse(stored);
+          setPosts(parsed);
+          fetchCountsForPosts(parsed);
 
         } catch (e) {
           console.error('Failed to parse cached posts', e);
@@ -231,7 +244,8 @@ const HomeScreen = forwardRef<HomeScreenRef, HomeScreenProps>(
   }, []);
 
   useFocusEffect(
-    useCallback(() => {
+    React.useCallback(() => {
+
       fetchPosts();
     }, []),
   );
