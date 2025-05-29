@@ -24,6 +24,7 @@ type Post = {
   username?: string;
   user_id: string;
   created_at: string;
+  reply_count?: number;
   profiles?: {
     username: string | null;
     display_name: string | null;
@@ -57,20 +58,6 @@ const HomeScreen = forwardRef<HomeScreenRef, HomeScreenProps>(
   const [posts, setPosts] = useState<Post[]>([]);
   const [replyCounts, setReplyCounts] = useState<{ [key: string]: number }>({});
 
-  const fetchReplyCount = async (postId: string) => {
-    const { count } = await supabase
-      .from('replies')
-      .select('id', { count: 'exact', head: true })
-      .eq('post_id', postId);
-    return count || 0;
-  };
-
-  const fetchCountsForPosts = async (postList: Post[]) => {
-    const entries = await Promise.all(
-      postList.map(async p => [p.id, await fetchReplyCount(p.id)] as [string, number]),
-    );
-    setReplyCounts(Object.fromEntries(entries));
-  };
 
   const confirmDeletePost = (id: string) => {
     Alert.alert('Delete Post', 'Are you sure you want to delete this post?', [
@@ -102,13 +89,15 @@ const HomeScreen = forwardRef<HomeScreenRef, HomeScreenProps>(
   const fetchPosts = async () => {
     const { data, error } = await supabase
       .from('posts')
-      .select('id, content, user_id, created_at, profiles(username, display_name)')
+      .select('id, content, user_id, created_at, reply_count, profiles(username, display_name)')
       .order('created_at', { ascending: false });
 
     if (!error && data) {
-      setPosts(data as Post[]);
-      AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(data));
-      fetchCountsForPosts(data as Post[]);
+      const list = data as Post[];
+      setPosts(list);
+      AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(list));
+      setReplyCounts(Object.fromEntries(list.map(p => [p.id, p.reply_count || 0])));
+
     }
   };
 
@@ -123,6 +112,7 @@ const HomeScreen = forwardRef<HomeScreenRef, HomeScreenProps>(
       username: profile.display_name || profile.username,
       user_id: user.id,
       created_at: new Date().toISOString(),
+      reply_count: 0,
       profiles: {
         username: profile.username,
         display_name: profile.display_name,
@@ -166,7 +156,7 @@ const HomeScreen = forwardRef<HomeScreenRef, HomeScreenProps>(
         setPosts((prev) => {
           const updated = prev.map((p) =>
             p.id === newPost.id
-              ? { ...p, id: data.id, created_at: data.created_at }
+              ? { ...p, id: data.id, created_at: data.created_at, reply_count: 0 }
               : p
           );
           AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
@@ -206,7 +196,9 @@ const HomeScreen = forwardRef<HomeScreenRef, HomeScreenProps>(
       const stored = await AsyncStorage.getItem(STORAGE_KEY);
       if (stored) {
         try {
-          setPosts(JSON.parse(stored));
+          const cached = JSON.parse(stored);
+          setPosts(cached);
+          setReplyCounts(Object.fromEntries(cached.map((p: Post) => [p.id, p.reply_count || 0])));
         } catch (e) {
           console.error('Failed to parse cached posts', e);
         }

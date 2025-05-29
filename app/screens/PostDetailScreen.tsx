@@ -39,6 +39,7 @@ interface Post {
   user_id: string;
   created_at: string;
   username?: string;
+  reply_count?: number;
   profiles?: {
     username: string | null;
     display_name: string | null;
@@ -53,6 +54,7 @@ interface Reply {
   content: string;
   created_at: string;
   username?: string;
+  reply_count?: number;
   profiles?: {
     username: string | null;
     display_name: string | null;
@@ -153,33 +155,13 @@ export default function PostDetailScreen() {
     };
   }, []);
 
-  const computeCounts = (replyList: Reply[]) => {
-    const childrenMap: { [key: string]: Reply[] } = {};
-    replyList.forEach(r => {
-      if (r.parent_id) {
-        if (!childrenMap[r.parent_id]) childrenMap[r.parent_id] = [];
-        childrenMap[r.parent_id].push(r);
-      }
-    });
-    const counts: { [key: string]: number } = {};
-    const countRec = (id: string): number => {
-      const children = childrenMap[id] || [];
-      let total = children.length;
-      for (const c of children) total += countRec(c.id);
-      counts[id] = total;
-      return total;
-    };
-    replyList.forEach(r => {
-      if (!counts[r.id]) countRec(r.id);
-    });
-    counts[post.id] = replyList.length;
-    return counts;
-  };
+
 
   const fetchReplies = async () => {
     const { data, error } = await supabase
       .from('replies')
-      .select('id, post_id, parent_id, user_id, content, created_at, username')
+      .select('id, post_id, parent_id, user_id, content, created_at, username, reply_count')
+
       .eq('post_id', post.id)
       .order('created_at', { ascending: false });
     if (!error && data) {
@@ -192,7 +174,15 @@ export default function PostDetailScreen() {
         AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(merged));
         return merged;
       });
-      setReplyCounts(computeCounts(all));
+      const counts: { [key: string]: number } = Object.fromEntries(all.map(r => [r.id, r.reply_count || 0]));
+      const { data: postData } = await supabase
+        .from('posts')
+        .select('reply_count')
+        .eq('id', post.id)
+        .single();
+      if (postData) counts[post.id] = postData.reply_count || 0;
+      setReplyCounts(counts);
+
     }
   };
 
@@ -201,7 +191,11 @@ export default function PostDetailScreen() {
       const stored = await AsyncStorage.getItem(STORAGE_KEY);
       if (stored) {
         try {
-          setReplies(JSON.parse(stored));
+          const cached = JSON.parse(stored);
+          setReplies(cached);
+          const counts: { [key: string]: number } = Object.fromEntries(cached.map((r: Reply) => [r.id, r.reply_count || 0]));
+          counts[post.id] = post.reply_count || 0;
+          setReplyCounts(counts);
         } catch (e) {
           console.error('Failed to parse cached replies', e);
         }
@@ -225,6 +219,7 @@ export default function PostDetailScreen() {
       content: replyText,
       created_at: new Date().toISOString(),
       username: profile.display_name || profile.username,
+      reply_count: 0,
       profiles: { username: profile.username, display_name: profile.display_name },
     };
 
@@ -264,12 +259,19 @@ export default function PostDetailScreen() {
       if (data) {
         setReplies(prev =>
           prev.map(r =>
-            r.id === newReply.id ? { ...r, id: data.id, created_at: data.created_at } : r,
+            r.id === newReply.id
+              ? { ...r, id: data.id, created_at: data.created_at, reply_count: 0 }
+              : r,
           ),
         );
         setAllReplies(prev =>
-          prev.map(r => (r.id === newReply.id ? { ...r, id: data.id, created_at: data.created_at } : r)),
+          prev.map(r =>
+            r.id === newReply.id
+              ? { ...r, id: data.id, created_at: data.created_at, reply_count: 0 }
+              : r,
+          ),
         );
+
         setReplyCounts(prev => {
           const temp = prev[newReply.id] ?? 0;
           const { [newReply.id]: _omit, ...rest } = prev;
