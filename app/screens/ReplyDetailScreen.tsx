@@ -256,7 +256,7 @@ export default function ReplyDetailScreen() {
                 </View>
               </View>
             )}
-            {ancestors.map(a => {
+            {ancestors.map((a, idx) => {
               const ancestorName =
                 a.profiles?.display_name || a.profiles?.username || a.username;
               const ancestorUserName = a.profiles?.username || a.username;
@@ -264,6 +264,9 @@ export default function ReplyDetailScreen() {
               const avatarUri = isMe ? profileImageUri : undefined;
               return (
                 <View key={a.id} style={styles.post}>
+                  {idx < ancestors.length - 1 && (
+                    <View style={styles.threadLine} />
+                  )}
                   {isMe && (
                     <TouchableOpacity
                       onPress={() => confirmDeleteReply(a.id)}
@@ -408,6 +411,15 @@ const styles = StyleSheet.create({
     borderBottomWidth: StyleSheet.hairlineWidth,
 
     position: 'relative',
+  },
+  threadLine: {
+    position: 'absolute',
+    left: 26,
+    top: 0,
+    bottom: -10,
+    width: 2,
+    backgroundColor: '#66538f',
+    zIndex: -1,
   },
   highlightPost: {
     borderColor: '#4f1fde',
