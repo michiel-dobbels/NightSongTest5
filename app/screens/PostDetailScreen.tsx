@@ -321,8 +321,9 @@ export default function PostDetailScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    padding: 16,
+    paddingHorizontal: 0,
     paddingTop: 100,
+    paddingBottom: 0,
     backgroundColor: colors.background,
   },
   post: {
@@ -332,6 +333,7 @@ const styles = StyleSheet.create({
     marginBottom: 0,
     borderBottomColor: 'gray',
     borderBottomWidth: StyleSheet.hairlineWidth,
+
     position: 'relative',
   },
   row: { flexDirection: 'row', alignItems: 'flex-start' },
@@ -349,6 +351,7 @@ const styles = StyleSheet.create({
     marginTop: 0,
     borderBottomColor: 'gray',
     borderBottomWidth: StyleSheet.hairlineWidth,
+
     position: 'relative',
   },
   postContent: { color: 'white' },
