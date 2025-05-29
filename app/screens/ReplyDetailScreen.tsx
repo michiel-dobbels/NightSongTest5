@@ -21,6 +21,7 @@ import { useAuth } from '../../AuthContext';
 import { colors } from '../styles/colors';
 
 const CHILD_PREFIX = 'cached_child_replies_';
+const COUNT_STORAGE_KEY = 'cached_reply_counts';
 
 function timeAgo(dateString: string): string {
   const diff = Date.now() - new Date(dateString).getTime();
@@ -141,7 +142,9 @@ export default function ReplyDetailScreen() {
       let removed = descendants.size + 1;
       const { [id]: _omit, ...rest } = prev;
       descendants.forEach(d => delete rest[d]);
-      return { ...rest, [parent.id]: (prev[parent.id] || 0) - removed };
+      const counts = { ...rest, [parent.id]: (prev[parent.id] || 0) - removed };
+      AsyncStorage.setItem(COUNT_STORAGE_KEY, JSON.stringify(counts));
+      return counts;
     });
 
     await supabase.from('replies').delete().eq('id', id);
@@ -174,7 +177,9 @@ export default function ReplyDetailScreen() {
         .single();
       const entries = all.map(r => [r.id, r.reply_count ?? 0]);
       if (postData) entries.push([parent.post_id, postData.reply_count ?? all.length]);
-      setReplyCounts(Object.fromEntries(entries));
+      const counts = Object.fromEntries(entries);
+      setReplyCounts(counts);
+      AsyncStorage.setItem(COUNT_STORAGE_KEY, JSON.stringify(counts));
 
     }
   };
@@ -189,9 +194,16 @@ export default function ReplyDetailScreen() {
           setAllReplies(cached);
           const entries = cached.map((r: any) => [r.id, r.reply_count ?? 0]);
           setReplyCounts(prev => ({ ...prev, ...Object.fromEntries(entries) }));
-
         } catch (e) {
           console.error('Failed to parse cached replies', e);
+        }
+      }
+      const countStored = await AsyncStorage.getItem(COUNT_STORAGE_KEY);
+      if (countStored) {
+        try {
+          setReplyCounts(prev => ({ ...prev, ...JSON.parse(countStored) }));
+        } catch (e) {
+          console.error('Failed to parse cached counts', e);
         }
       }
       fetchReplies();
@@ -236,11 +248,11 @@ export default function ReplyDetailScreen() {
       return updated;
     });
     setAllReplies(prev => [...prev, newReply]);
-    setReplyCounts(prev => ({
-      ...prev,
-      [parent.id]: (prev[parent.id] || 0) + 1,
-      [newReply.id]: 0,
-    }));
+    setReplyCounts(prev => {
+      const counts = { ...prev, [parent.id]: (prev[parent.id] || 0) + 1, [newReply.id]: 0 };
+      AsyncStorage.setItem(COUNT_STORAGE_KEY, JSON.stringify(counts));
+      return counts;
+    });
     setReplyText('');
 
     let { data, error } = await supabase
@@ -286,7 +298,9 @@ export default function ReplyDetailScreen() {
         setReplyCounts(prev => {
           const temp = prev[newReply.id] ?? 0;
           const { [newReply.id]: _omit, ...rest } = prev;
-          return { ...rest, [data.id]: temp, [parent.id]: prev[parent.id] || 0 };
+          const counts = { ...rest, [data.id]: temp, [parent.id]: prev[parent.id] || 0 };
+          AsyncStorage.setItem(COUNT_STORAGE_KEY, JSON.stringify(counts));
+          return counts;
         });
 
       }

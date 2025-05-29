@@ -80,7 +80,7 @@ const HomeScreen = forwardRef<HomeScreenRef, HomeScreenProps>(
     });
     setReplyCounts(prev => {
       const { [id]: _removed, ...rest } = prev;
-
+      AsyncStorage.setItem(COUNT_STORAGE_KEY, JSON.stringify(rest));
       return rest;
     });
     await supabase.from('posts').delete().eq('id', id);
@@ -92,15 +92,18 @@ const HomeScreen = forwardRef<HomeScreenRef, HomeScreenProps>(
   const fetchPosts = async () => {
     const { data, error } = await supabase
       .from('posts')
-      .select('id, content, user_id, created_at, reply_count, profiles(username, display_name)')
+      .select(
+        'id, content, user_id, created_at, reply_count, profiles(username, display_name)',
+      )
       .order('created_at', { ascending: false });
 
     if (!error && data) {
       setPosts(data as Post[]);
       AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(data));
       const entries = (data as any[]).map(p => [p.id, p.reply_count ?? 0]);
-      setReplyCounts(Object.fromEntries(entries));
-
+      const counts = Object.fromEntries(entries);
+      setReplyCounts(counts);
+      AsyncStorage.setItem(COUNT_STORAGE_KEY, JSON.stringify(counts));
     }
   };
 
@@ -128,7 +131,11 @@ const HomeScreen = forwardRef<HomeScreenRef, HomeScreenProps>(
       AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
       return updated;
     });
-    setReplyCounts(prev => ({ ...prev, [newPost.id]: 0 }));
+    setReplyCounts(prev => {
+      const counts = { ...prev, [newPost.id]: 0 };
+      AsyncStorage.setItem(COUNT_STORAGE_KEY, JSON.stringify(counts));
+      return counts;
+    });
 
     if (!hideInput) {
       setPostText('');
@@ -168,7 +175,9 @@ const HomeScreen = forwardRef<HomeScreenRef, HomeScreenProps>(
         });
         setReplyCounts(prev => {
           const { [newPost.id]: tempCount, ...rest } = prev;
-          return { ...rest, [data.id]: tempCount };
+          const counts = { ...rest, [data.id]: tempCount };
+          AsyncStorage.setItem(COUNT_STORAGE_KEY, JSON.stringify(counts));
+          return counts;
 
         });
       }
