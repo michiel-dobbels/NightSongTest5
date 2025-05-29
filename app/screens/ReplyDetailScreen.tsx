@@ -208,11 +208,15 @@ export default function ReplyDetailScreen() {
 
   const name =
     parent.profiles?.display_name || parent.profiles?.username || parent.username;
+  const parentUserName = parent.profiles?.username || parent.username;
   const originalName = originalPost
-    ? originalPost.profiles?.display_name ||
-      originalPost.profiles?.username ||
-      originalPost.username
+    ?
+        originalPost.profiles?.display_name ||
+        originalPost.profiles?.username ||
+        originalPost.username
     : undefined;
+  const originalUserName =
+    originalPost?.profiles?.username || originalPost?.username;
 
   return (
     <KeyboardAvoidingView
@@ -226,13 +230,14 @@ export default function ReplyDetailScreen() {
       <FlatList
         ListHeaderComponent={() => (
           <>
-            {originalPost && (
-              <View style={[styles.post, styles.highlightPost]}>
-                {user?.id === originalPost.user_id && (
-                  <TouchableOpacity
-                    onPress={() => confirmDeletePost(originalPost.id)}
-                    style={styles.deleteButton}
-                  >
+              {originalPost && (
+                <View style={[styles.post, styles.highlightPost]}>
+                  <View style={styles.threadLine} pointerEvents="none" />
+                  {user?.id === originalPost.user_id && (
+                    <TouchableOpacity
+                      onPress={() => confirmDeletePost(originalPost.id)}
+                      style={styles.deleteButton}
+                    >
                     <Text style={{ color: 'white' }}>X</Text>
                   </TouchableOpacity>
                 )}
@@ -243,20 +248,24 @@ export default function ReplyDetailScreen() {
                     <View style={[styles.avatar, styles.placeholder]} />
                   )}
                   <View style={{ flex: 1 }}>
-                    <Text style={styles.username}>@{originalName}</Text>
+                    <Text style={styles.username}>
+                      {originalName} @{originalUserName}
+                    </Text>
                     <Text style={styles.postContent}>{originalPost.content}</Text>
                     <Text style={styles.timestamp}>{timeAgo(originalPost.created_at)}</Text>
                   </View>
                 </View>
               </View>
             )}
-            {ancestors.map(a => {
-              const ancestorName =
-                a.profiles?.display_name || a.profiles?.username || a.username;
-              const isMe = user?.id === a.user_id;
-              const avatarUri = isMe ? profileImageUri : undefined;
-              return (
+              {ancestors.map(a => {
+                const ancestorName =
+                  a.profiles?.display_name || a.profiles?.username || a.username;
+                const ancestorUserName = a.profiles?.username || a.username;
+                const isMe = user?.id === a.user_id;
+                const avatarUri = isMe ? profileImageUri : undefined;
+                return (
                 <View key={a.id} style={styles.post}>
+                  <View style={styles.threadLine} pointerEvents="none" />
                   {isMe && (
                     <TouchableOpacity
                       onPress={() => confirmDeleteReply(a.id)}
@@ -272,7 +281,9 @@ export default function ReplyDetailScreen() {
                       <View style={[styles.avatar, styles.placeholder]} />
                     )}
                     <View style={{ flex: 1 }}>
-                      <Text style={styles.username}>@{ancestorName}</Text>
+                      <Text style={styles.username}>
+                        {ancestorName} @{ancestorUserName}
+                      </Text>
                       <Text style={styles.postContent}>{a.content}</Text>
                       <Text style={styles.timestamp}>{timeAgo(a.created_at)}</Text>
                     </View>
@@ -297,7 +308,9 @@ export default function ReplyDetailScreen() {
                   <View style={[styles.avatar, styles.placeholder]} />
                 )}
                 <View style={{ flex: 1 }}>
-                  <Text style={styles.username}>@{name}</Text>
+                  <Text style={styles.username}>
+                    {name} @{parentUserName}
+                  </Text>
                   <Text style={styles.postContent}>{parent.content}</Text>
                   <Text style={styles.timestamp}>{timeAgo(parent.created_at)}</Text>
                 </View>
@@ -311,6 +324,7 @@ export default function ReplyDetailScreen() {
 
         renderItem={({ item }) => {
           const childName = item.profiles?.display_name || item.profiles?.username || item.username;
+          const childUserName = item.profiles?.username || item.username;
           const isMe = user?.id === item.user_id;
           const avatarUri = isMe ? profileImageUri : undefined;
           return (
@@ -339,7 +353,9 @@ export default function ReplyDetailScreen() {
                     <View style={[styles.avatar, styles.placeholder]} />
                   )}
                   <View style={{ flex: 1 }}>
-                    <Text style={styles.username}>@{childName}</Text>
+                    <Text style={styles.username}>
+                      {childName} @{childUserName}
+                    </Text>
                     <Text style={styles.postContent}>{item.content}</Text>
                     <Text style={styles.timestamp}>{timeAgo(item.created_at)}</Text>
                   </View>
@@ -412,6 +428,14 @@ const styles = StyleSheet.create({
     right: 6,
     top: 6,
     padding: 4,
+  },
+  threadLine: {
+    position: 'absolute',
+    left: 26,
+    top: 42,
+    bottom: -20,
+    width: 2,
+    backgroundColor: '#6f6b8e',
   },
   inputContainer: {
     position: 'absolute',

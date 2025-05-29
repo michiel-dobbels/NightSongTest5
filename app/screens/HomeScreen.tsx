@@ -216,6 +216,7 @@ const HomeScreen = forwardRef<HomeScreenRef, HomeScreenProps>(
             item.profiles?.display_name ||
             item.profiles?.username ||
             item.username;
+          const userName = item.profiles?.username || item.username;
           const isMe = user?.id === item.user_id;
           const avatarUri = isMe ? profileImageUri : undefined;
           return (
@@ -236,7 +237,9 @@ const HomeScreen = forwardRef<HomeScreenRef, HomeScreenProps>(
                     <View style={[styles.avatar, styles.placeholder]} />
                   )}
                   <View style={{ flex: 1 }}>
-                    <Text style={styles.username}>@{displayName}</Text>
+                    <Text style={styles.username}>
+                      {displayName} @{userName}
+                    </Text>
                     <Text style={styles.postContent}>{item.content}</Text>
                     <Text style={styles.timestamp}>{timeAgo(item.created_at)}</Text>
                   </View>
