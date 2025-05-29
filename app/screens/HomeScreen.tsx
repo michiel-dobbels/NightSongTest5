@@ -55,6 +55,22 @@ const HomeScreen = forwardRef<HomeScreenRef, HomeScreenProps>(
     const { user, profile, profileImageUri } = useAuth() as any;
     const [postText, setPostText] = useState('');
   const [posts, setPosts] = useState<Post[]>([]);
+  const [replyCounts, setReplyCounts] = useState<{ [key: string]: number }>({});
+
+  const fetchReplyCount = async (postId: string) => {
+    const { count } = await supabase
+      .from('replies')
+      .select('id', { count: 'exact', head: true })
+      .eq('post_id', postId);
+    return count || 0;
+  };
+
+  const fetchCountsForPosts = async (postList: Post[]) => {
+    const entries = await Promise.all(
+      postList.map(async p => [p.id, await fetchReplyCount(p.id)] as [string, number]),
+    );
+    setReplyCounts(Object.fromEntries(entries));
+  };
 
   const confirmDeletePost = (id: string) => {
     Alert.alert('Delete Post', 'Are you sure you want to delete this post?', [
@@ -73,6 +89,10 @@ const HomeScreen = forwardRef<HomeScreenRef, HomeScreenProps>(
       AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
       return updated;
     });
+    setReplyCounts(prev => {
+      const { [id]: _removed, ...rest } = prev;
+      return rest;
+    });
     await supabase.from('posts').delete().eq('id', id);
   };
 
@@ -88,6 +108,7 @@ const HomeScreen = forwardRef<HomeScreenRef, HomeScreenProps>(
     if (!error && data) {
       setPosts(data as Post[]);
       AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+      fetchCountsForPosts(data as Post[]);
     }
   };
 
@@ -114,6 +135,7 @@ const HomeScreen = forwardRef<HomeScreenRef, HomeScreenProps>(
       AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
       return updated;
     });
+    setReplyCounts(prev => ({ ...prev, [newPost.id]: 0 }));
     if (!hideInput) {
       setPostText('');
     }
@@ -149,6 +171,10 @@ const HomeScreen = forwardRef<HomeScreenRef, HomeScreenProps>(
           );
           AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
           return updated;
+        });
+        setReplyCounts(prev => {
+          const { [newPost.id]: tempCount, ...rest } = prev;
+          return { ...rest, [data.id]: tempCount };
         });
       }
 
@@ -244,6 +270,7 @@ const HomeScreen = forwardRef<HomeScreenRef, HomeScreenProps>(
                     <Text style={styles.timestamp}>{timeAgo(item.created_at)}</Text>
                   </View>
                 </View>
+                <Text style={styles.replyCount}>{replyCounts[item.id] || 0}</Text>
               </View>
             </TouchableOpacity>
           );
@@ -289,6 +316,7 @@ const styles = StyleSheet.create({
   postContent: { color: 'white' },
   username: { fontWeight: 'bold', color: 'white' },
   timestamp: { fontSize: 10, color: 'gray' },
+  replyCount: { position: 'absolute', bottom: 6, left: 10, fontSize: 10, color: 'gray' },
 });
 
 export default HomeScreen;
