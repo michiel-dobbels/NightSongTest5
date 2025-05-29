@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import {
   View,
   Text,
@@ -14,13 +14,14 @@ import {
   Image,
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { useRoute, useNavigation } from '@react-navigation/native';
+import { useRoute, useNavigation, useFocusEffect } from '@react-navigation/native';
 
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../AuthContext';
 import { colors } from '../styles/colors';
 
 const CHILD_PREFIX = 'cached_child_replies_';
+const COUNT_STORAGE_KEY = 'cached_reply_counts';
 
 function timeAgo(dateString: string): string {
   const diff = Date.now() - new Date(dateString).getTime();
@@ -141,7 +142,9 @@ export default function ReplyDetailScreen() {
       let removed = descendants.size + 1;
       const { [id]: _omit, ...rest } = prev;
       descendants.forEach(d => delete rest[d]);
-      return { ...rest, [parent.id]: (prev[parent.id] || 0) - removed };
+      const counts = { ...rest, [parent.id]: (prev[parent.id] || 0) - removed };
+      AsyncStorage.setItem(COUNT_STORAGE_KEY, JSON.stringify(counts));
+      return counts;
     });
 
     await supabase.from('replies').delete().eq('id', id);
@@ -174,7 +177,11 @@ export default function ReplyDetailScreen() {
         .single();
       const entries = all.map(r => [r.id, r.reply_count ?? 0]);
       if (postData) entries.push([parent.post_id, postData.reply_count ?? all.length]);
-      setReplyCounts(Object.fromEntries(entries));
+      setReplyCounts(prev => {
+        const counts = { ...prev, ...Object.fromEntries(entries) };
+        AsyncStorage.setItem(COUNT_STORAGE_KEY, JSON.stringify(counts));
+        return counts;
+      });
 
     }
   };
@@ -182,22 +189,52 @@ export default function ReplyDetailScreen() {
   useEffect(() => {
     const loadCached = async () => {
       const stored = await AsyncStorage.getItem(STORAGE_KEY);
+      const countStored = await AsyncStorage.getItem(COUNT_STORAGE_KEY);
+      let storedCounts: { [key: string]: number } = {};
+      if (countStored) {
+        try {
+          storedCounts = JSON.parse(countStored);
+        } catch (e) {
+          console.error('Failed to parse cached counts', e);
+        }
+      }
       if (stored) {
         try {
           const cached = JSON.parse(stored);
           setReplies(cached);
           setAllReplies(cached);
           const entries = cached.map((r: any) => [r.id, r.reply_count ?? 0]);
-          setReplyCounts(prev => ({ ...prev, ...Object.fromEntries(entries) }));
+          const counts = { ...storedCounts, ...Object.fromEntries(entries) };
+          setReplyCounts(prev => ({ ...prev, ...counts }));
+          AsyncStorage.setItem(COUNT_STORAGE_KEY, JSON.stringify(counts));
 
         } catch (e) {
           console.error('Failed to parse cached replies', e);
         }
+      } else if (countStored) {
+        setReplyCounts(prev => ({ ...prev, ...storedCounts }));
       }
       fetchReplies();
     };
     loadCached();
   }, []);
+
+  useFocusEffect(
+    useCallback(() => {
+      const refreshCounts = async () => {
+        const stored = await AsyncStorage.getItem(COUNT_STORAGE_KEY);
+        if (stored) {
+          try {
+            setReplyCounts(prev => ({ ...prev, ...JSON.parse(stored) }));
+          } catch (e) {
+            console.error('Failed to parse cached counts', e);
+          }
+        }
+      };
+      refreshCounts();
+      fetchReplies();
+    }, []),
+  );
 
   useEffect(() => {
     const show = Keyboard.addListener(
@@ -236,11 +273,15 @@ export default function ReplyDetailScreen() {
       return updated;
     });
     setAllReplies(prev => [...prev, newReply]);
-    setReplyCounts(prev => ({
-      ...prev,
-      [parent.id]: (prev[parent.id] || 0) + 1,
-      [newReply.id]: 0,
-    }));
+    setReplyCounts(prev => {
+      const counts = {
+        ...prev,
+        [parent.id]: (prev[parent.id] || 0) + 1,
+        [newReply.id]: 0,
+      };
+      AsyncStorage.setItem(COUNT_STORAGE_KEY, JSON.stringify(counts));
+      return counts;
+    });
     setReplyText('');
 
     let { data, error } = await supabase
@@ -286,7 +327,9 @@ export default function ReplyDetailScreen() {
         setReplyCounts(prev => {
           const temp = prev[newReply.id] ?? 0;
           const { [newReply.id]: _omit, ...rest } = prev;
-          return { ...rest, [data.id]: temp, [parent.id]: prev[parent.id] || 0 };
+          const counts = { ...rest, [data.id]: temp, [parent.id]: prev[parent.id] || 0 };
+          AsyncStorage.setItem(COUNT_STORAGE_KEY, JSON.stringify(counts));
+          return counts;
         });
 
       }
