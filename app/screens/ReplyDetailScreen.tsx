@@ -181,6 +181,7 @@ export default function ReplyDetailScreen() {
       setReplyCounts(counts);
       AsyncStorage.setItem(COUNT_STORAGE_KEY, JSON.stringify(counts));
 
+
     }
   };
 
@@ -194,6 +195,7 @@ export default function ReplyDetailScreen() {
           setAllReplies(cached);
           const entries = cached.map((r: any) => [r.id, r.reply_count ?? 0]);
           setReplyCounts(prev => ({ ...prev, ...Object.fromEntries(entries) }));
+
         } catch (e) {
           console.error('Failed to parse cached replies', e);
         }
@@ -250,6 +252,7 @@ export default function ReplyDetailScreen() {
     setAllReplies(prev => [...prev, newReply]);
     setReplyCounts(prev => {
       const counts = { ...prev, [parent.id]: (prev[parent.id] || 0) + 1, [newReply.id]: 0 };
+
       AsyncStorage.setItem(COUNT_STORAGE_KEY, JSON.stringify(counts));
       return counts;
     });

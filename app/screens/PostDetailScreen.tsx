@@ -193,6 +193,7 @@ export default function PostDetailScreen() {
       setReplyCounts(counts);
       AsyncStorage.setItem(COUNT_STORAGE_KEY, JSON.stringify(counts));
 
+
     }
   };
 
@@ -208,6 +209,7 @@ export default function PostDetailScreen() {
           entries.push([post.id, post.reply_count ?? cached.length]);
           const counts = Object.fromEntries(entries);
           setReplyCounts(counts);
+
         } catch (e) {
           console.error('Failed to parse cached replies', e);
         }
@@ -251,6 +253,7 @@ export default function PostDetailScreen() {
     setAllReplies(prev => [...prev, newReply]);
     setReplyCounts(prev => {
       const counts = { ...prev, [post.id]: (prev[post.id] || 0) + 1, [newReply.id]: 0 };
+
       AsyncStorage.setItem(COUNT_STORAGE_KEY, JSON.stringify(counts));
       return counts;
     });
