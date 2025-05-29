@@ -40,7 +40,9 @@ interface Reply {
   user_id: string;
   content: string;
   created_at: string;
+  reply_count?: number;
   username?: string;
+  reply_count?: number;
   profiles?: {
     username: string | null;
     display_name: string | null;
@@ -52,7 +54,9 @@ interface Post {
   content: string;
   user_id: string;
   created_at: string;
+  reply_count?: number;
   username?: string;
+  reply_count?: number;
   profiles?: {
     username: string | null;
     display_name: string | null;
@@ -141,6 +145,7 @@ export default function ReplyDetailScreen() {
     });
 
     await supabase.from('replies').delete().eq('id', id);
+    fetchReplies();
   };
 
   const computeCounts = (replyList: Reply[], rootPostId: string) => {
@@ -166,10 +171,12 @@ export default function ReplyDetailScreen() {
     return counts;
   };
 
+
   const fetchReplies = async () => {
     const { data, error } = await supabase
       .from('replies')
       .select('id, post_id, parent_id, user_id, content, created_at, username')
+
       .eq('post_id', parent.post_id)
       .order('created_at', { ascending: false });
     if (!error && data) {
@@ -184,6 +191,7 @@ export default function ReplyDetailScreen() {
       });
       const counts = computeCounts(all, parent.post_id);
       setReplyCounts(counts);
+
     }
   };
 
@@ -192,7 +200,12 @@ export default function ReplyDetailScreen() {
       const stored = await AsyncStorage.getItem(STORAGE_KEY);
       if (stored) {
         try {
-          setReplies(JSON.parse(stored));
+          const cached = JSON.parse(stored);
+          setReplies(cached);
+          setAllReplies(cached);
+          const entries = cached.map((r: any) => [r.id, r.reply_count ?? 0]);
+          setReplyCounts(prev => ({ ...prev, ...Object.fromEntries(entries) }));
+
         } catch (e) {
           console.error('Failed to parse cached replies', e);
         }
@@ -233,7 +246,9 @@ export default function ReplyDetailScreen() {
       user_id: user.id,
       content: replyText,
       created_at: new Date().toISOString(),
+      reply_count: 0,
       username: profile.display_name || profile.username,
+      reply_count: 0,
       profiles: { username: profile.username, display_name: profile.display_name },
     };
 
@@ -270,6 +285,21 @@ export default function ReplyDetailScreen() {
     if (!error) {
       if (data) {
         setReplies(prev =>
+          prev.map(r =>
+            r.id === newReply.id
+              ? { ...r, id: data.id, created_at: data.created_at, reply_count: 0 }
+              : r,
+          ),
+        );
+        setAllReplies(prev =>
+          prev.map(r =>
+            r.id === newReply.id
+              ? { ...r, id: data.id, created_at: data.created_at, reply_count: 0 }
+              : r,
+          ),
+
+        );
+        setAllReplies(prev =>
           prev.map(r => (r.id === newReply.id ? { ...r, id: data.id, created_at: data.created_at } : r)),
         );
         setAllReplies(prev =>
@@ -280,6 +310,7 @@ export default function ReplyDetailScreen() {
           const { [newReply.id]: _omit, ...rest } = prev;
           return { ...rest, [data.id]: temp, [parent.id]: prev[parent.id] || 0 };
         });
+
       }
       fetchReplies();
     }
@@ -531,6 +562,7 @@ const styles = StyleSheet.create({
     zIndex: -1,
 
   },
+
   inputContainer: {
     position: 'absolute',
     left: 16,
