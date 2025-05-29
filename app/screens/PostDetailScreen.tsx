@@ -190,11 +190,9 @@ export default function PostDetailScreen() {
       if (postData) entries.push([post.id, postData.reply_count ?? all.length]);
       else entries.push([post.id, post.reply_count ?? all.length]);
       const counts = Object.fromEntries(entries);
-      setReplyCounts(prev => {
-        const merged = { ...prev, ...counts };
-        AsyncStorage.setItem(COUNT_STORAGE_KEY, JSON.stringify(merged));
-        return merged;
-      });
+      setReplyCounts(counts);
+      AsyncStorage.setItem(COUNT_STORAGE_KEY, JSON.stringify(counts));
+
 
     }
   };
@@ -210,14 +208,18 @@ export default function PostDetailScreen() {
           const entries = cached.map((r: any) => [r.id, r.reply_count ?? 0]);
           entries.push([post.id, post.reply_count ?? cached.length]);
           const counts = Object.fromEntries(entries);
-          setReplyCounts(prev => {
-            const merged = { ...prev, ...counts };
-            AsyncStorage.setItem(COUNT_STORAGE_KEY, JSON.stringify(merged));
-            return merged;
-          });
+          setReplyCounts(counts);
 
         } catch (e) {
           console.error('Failed to parse cached replies', e);
+        }
+      }
+      const countStored = await AsyncStorage.getItem(COUNT_STORAGE_KEY);
+      if (countStored) {
+        try {
+          setReplyCounts(prev => ({ ...prev, ...JSON.parse(countStored) }));
+        } catch (e) {
+          console.error('Failed to parse cached counts', e);
         }
       }
 
@@ -250,11 +252,8 @@ export default function PostDetailScreen() {
     });
     setAllReplies(prev => [...prev, newReply]);
     setReplyCounts(prev => {
-      const counts = {
-        ...prev,
-        [post.id]: (prev[post.id] || 0) + 1,
-        [newReply.id]: 0,
-      };
+      const counts = { ...prev, [post.id]: (prev[post.id] || 0) + 1, [newReply.id]: 0 };
+
       AsyncStorage.setItem(COUNT_STORAGE_KEY, JSON.stringify(counts));
       return counts;
     });

@@ -178,11 +178,9 @@ export default function ReplyDetailScreen() {
       const entries = all.map(r => [r.id, r.reply_count ?? 0]);
       if (postData) entries.push([parent.post_id, postData.reply_count ?? all.length]);
       const counts = Object.fromEntries(entries);
-      setReplyCounts(prev => {
-        const merged = { ...prev, ...counts };
-        AsyncStorage.setItem(COUNT_STORAGE_KEY, JSON.stringify(merged));
-        return merged;
-      });
+      setReplyCounts(counts);
+      AsyncStorage.setItem(COUNT_STORAGE_KEY, JSON.stringify(counts));
+
 
     }
   };
@@ -196,15 +194,18 @@ export default function ReplyDetailScreen() {
           setReplies(cached);
           setAllReplies(cached);
           const entries = cached.map((r: any) => [r.id, r.reply_count ?? 0]);
-          const counts = Object.fromEntries(entries);
-          setReplyCounts(prev => {
-            const merged = { ...prev, ...counts };
-            AsyncStorage.setItem(COUNT_STORAGE_KEY, JSON.stringify(merged));
-            return merged;
-          });
+          setReplyCounts(prev => ({ ...prev, ...Object.fromEntries(entries) }));
 
         } catch (e) {
           console.error('Failed to parse cached replies', e);
+        }
+      }
+      const countStored = await AsyncStorage.getItem(COUNT_STORAGE_KEY);
+      if (countStored) {
+        try {
+          setReplyCounts(prev => ({ ...prev, ...JSON.parse(countStored) }));
+        } catch (e) {
+          console.error('Failed to parse cached counts', e);
         }
       }
       fetchReplies();
@@ -250,11 +251,8 @@ export default function ReplyDetailScreen() {
     });
     setAllReplies(prev => [...prev, newReply]);
     setReplyCounts(prev => {
-      const counts = {
-        ...prev,
-        [parent.id]: (prev[parent.id] || 0) + 1,
-        [newReply.id]: 0,
-      };
+      const counts = { ...prev, [parent.id]: (prev[parent.id] || 0) + 1, [newReply.id]: 0 };
+
       AsyncStorage.setItem(COUNT_STORAGE_KEY, JSON.stringify(counts));
       return counts;
     });
