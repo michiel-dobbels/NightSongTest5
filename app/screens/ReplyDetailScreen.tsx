@@ -238,6 +238,7 @@ export default function ReplyDetailScreen() {
                       onPress={() => confirmDeletePost(originalPost.id)}
                       style={styles.deleteButton}
                     >
+
                     <Text style={{ color: 'white' }}>X</Text>
                   </TouchableOpacity>
                 )}
@@ -266,6 +267,7 @@ export default function ReplyDetailScreen() {
                 return (
                 <View key={a.id} style={styles.post}>
                   <View style={styles.threadLine} pointerEvents="none" />
+
                   {isMe && (
                     <TouchableOpacity
                       onPress={() => confirmDeleteReply(a.id)}
@@ -383,16 +385,19 @@ export default function ReplyDetailScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    padding: 16,
+    paddingHorizontal: 0,
     paddingTop: 100,
     paddingBottom: 0,
     backgroundColor: colors.background,
   },
   post: {
     backgroundColor: '#ffffff10',
-    borderRadius: 6,
+    borderRadius: 0,
     padding: 10,
-    marginBottom: 10,
+    marginBottom: 0,
+    borderBottomColor: 'gray',
+    borderBottomWidth: StyleSheet.hairlineWidth,
+
     position: 'relative',
   },
   row: { flexDirection: 'row', alignItems: 'flex-start' },
@@ -400,10 +405,22 @@ const styles = StyleSheet.create({
   placeholder: { backgroundColor: '#555' },
   reply: {
     backgroundColor: '#ffffff10',
-    borderRadius: 6,
+    borderRadius: 0,
     padding: 10,
-    marginTop: 10,
+    marginTop: 0,
+    borderBottomColor: 'gray',
+    borderBottomWidth: StyleSheet.hairlineWidth,
+
     position: 'relative',
+  },
+  threadLine: {
+    position: 'absolute',
+    left: 26,
+    top: 0,
+    bottom: -10,
+    width: 2,
+    backgroundColor: '#66538f',
+    zIndex: -1,
   },
   highlightPost: {
     borderColor: '#4f1fde',
@@ -436,6 +453,7 @@ const styles = StyleSheet.create({
     bottom: -20,
     width: 2,
     backgroundColor: '#6f6b8e',
+
   },
   inputContainer: {
     position: 'absolute',
