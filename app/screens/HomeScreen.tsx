@@ -256,10 +256,9 @@ const HomeScreen = forwardRef<HomeScreenRef, HomeScreenProps>(
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    paddingHorizontal: 16,
-    paddingBottom: 16,
+    paddingHorizontal: 0,
+    paddingBottom: 0,
     paddingTop: 0,
-
     backgroundColor: colors.background,
   },
   input: {
@@ -270,9 +269,12 @@ const styles = StyleSheet.create({
   },
   post: {
     backgroundColor: '#ffffff10',
-    borderRadius: 6,
+    borderRadius: 0,
     padding: 10,
-    marginBottom: 10,
+    marginBottom: 0,
+    borderBottomColor: 'gray',
+    borderBottomWidth: StyleSheet.hairlineWidth,
+
     position: 'relative',
   },
   row: { flexDirection: 'row', alignItems: 'flex-start' },
