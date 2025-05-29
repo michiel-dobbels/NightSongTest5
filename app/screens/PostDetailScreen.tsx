@@ -219,6 +219,7 @@ export default function PostDetailScreen() {
   };
 
   const displayName = post.profiles?.display_name || post.profiles?.username || post.username;
+  const userName = post.profiles?.username || post.username;
 
   return (
     <KeyboardAvoidingView
@@ -247,7 +248,9 @@ export default function PostDetailScreen() {
                 <View style={[styles.avatar, styles.placeholder]} />
               )}
               <View style={{ flex: 1 }}>
-                <Text style={styles.username}>@{displayName}</Text>
+                <Text style={styles.username}>
+                  {displayName} @{userName}
+                </Text>
                 <Text style={styles.postContent}>{post.content}</Text>
                 <Text style={styles.timestamp}>{timeAgo(post.created_at)}</Text>
               </View>
@@ -257,8 +260,9 @@ export default function PostDetailScreen() {
         contentContainerStyle={{ paddingBottom: 100 }}
         data={replies}
         keyExtractor={item => item.id}
-        renderItem={({ item }) => {
+          renderItem={({ item }) => {
           const name = item.profiles?.display_name || item.profiles?.username || item.username;
+          const replyUserName = item.profiles?.username || item.username;
           const isMe = user?.id === item.user_id;
           const avatarUri = isMe ? profileImageUri : undefined;
           return (
@@ -286,11 +290,13 @@ export default function PostDetailScreen() {
                   ) : (
                     <View style={[styles.avatar, styles.placeholder]} />
                   )}
-                  <View style={{ flex: 1 }}>
-                    <Text style={styles.username}>@{name}</Text>
-                    <Text style={styles.postContent}>{item.content}</Text>
-                    <Text style={styles.timestamp}>{timeAgo(item.created_at)}</Text>
-                  </View>
+                    <View style={{ flex: 1 }}>
+                      <Text style={styles.username}>
+                        {name} @{replyUserName}
+                      </Text>
+                      <Text style={styles.postContent}>{item.content}</Text>
+                      <Text style={styles.timestamp}>{timeAgo(item.created_at)}</Text>
+                    </View>
                 </View>
               </View>
             </TouchableOpacity>
@@ -315,15 +321,16 @@ export default function PostDetailScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    padding: 16,
+    paddingHorizontal: 0,
     paddingTop: 100,
+    paddingBottom: 0,
     backgroundColor: colors.background,
   },
   post: {
     backgroundColor: '#ffffff10',
     borderRadius: 6,
     padding: 10,
-    marginBottom: 10,
+    marginBottom: 0,
     position: 'relative',
   },
   row: { flexDirection: 'row', alignItems: 'flex-start' },
@@ -338,7 +345,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#ffffff10',
     borderRadius: 6,
     padding: 10,
-    marginTop: 10,
+    marginTop: 0,
     position: 'relative',
   },
   postContent: { color: 'white' },
