@@ -40,6 +40,7 @@ interface Reply {
   user_id: string;
   content: string;
   created_at: string;
+  reply_count?: number;
   username?: string;
   reply_count?: number;
   profiles?: {
@@ -53,6 +54,7 @@ interface Post {
   content: string;
   user_id: string;
   created_at: string;
+  reply_count?: number;
   username?: string;
   reply_count?: number;
   profiles?: {
@@ -112,17 +114,45 @@ export default function ReplyDetailScreen() {
       AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
       return updated;
     });
+    setAllReplies(prev => {
+      const descendants = new Set<string>();
+      const gather = (parentId: string) => {
+        prev.forEach(r => {
+          if (r.parent_id === parentId) {
+            descendants.add(r.id);
+            gather(r.id);
+          }
+        });
+      };
+      gather(id);
+      return prev.filter(r => r.id !== id && !descendants.has(r.id));
+    });
+    setReplyCounts(prev => {
+      const descendants = new Set<string>();
+      const gather = (parentId: string) => {
+        allReplies.forEach(r => {
+          if (r.parent_id === parentId) {
+            descendants.add(r.id);
+            gather(r.id);
+          }
+        });
+      };
+      gather(id);
+      let removed = descendants.size + 1;
+      const { [id]: _omit, ...rest } = prev;
+      descendants.forEach(d => delete rest[d]);
+      return { ...rest, [parent.id]: (prev[parent.id] || 0) - removed };
+    });
 
     await supabase.from('replies').delete().eq('id', id);
     fetchReplies();
   };
 
 
-
   const fetchReplies = async () => {
     const { data, error } = await supabase
       .from('replies')
-      .select('id, post_id, parent_id, user_id, content, created_at, username, reply_count')
+      .select('id, post_id, parent_id, user_id, content, created_at, reply_count, username')
 
       .eq('post_id', parent.post_id)
       .order('created_at', { ascending: false });
@@ -136,19 +166,16 @@ export default function ReplyDetailScreen() {
         AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(merged));
         return merged;
       });
-      const counts: { [key: string]: number } = {};
-      all.forEach(r => {
-        counts[r.id] = r.reply_count || 0;
-      });
 
       const { data: postData } = await supabase
         .from('posts')
         .select('reply_count')
         .eq('id', parent.post_id)
         .single();
-      if (postData) counts[parent.post_id] = postData.reply_count || 0;
+      const entries = all.map(r => [r.id, r.reply_count ?? 0]);
+      if (postData) entries.push([parent.post_id, postData.reply_count ?? all.length]);
+      setReplyCounts(Object.fromEntries(entries));
 
-      setReplyCounts(counts);
     }
   };
 
@@ -159,9 +186,10 @@ export default function ReplyDetailScreen() {
         try {
           const cached = JSON.parse(stored);
           setReplies(cached);
-          const counts: { [key: string]: number } = Object.fromEntries(cached.map((r: Reply) => [r.id, r.reply_count || 0]));
-          counts[parent.post_id] = parent.reply_count || 0;
-          setReplyCounts(counts);
+          setAllReplies(cached);
+          const entries = cached.map((r: any) => [r.id, r.reply_count ?? 0]);
+          setReplyCounts(prev => ({ ...prev, ...Object.fromEntries(entries) }));
+
         } catch (e) {
           console.error('Failed to parse cached replies', e);
         }
@@ -196,6 +224,7 @@ export default function ReplyDetailScreen() {
       user_id: user.id,
       content: replyText,
       created_at: new Date().toISOString(),
+      reply_count: 0,
       username: profile.display_name || profile.username,
       reply_count: 0,
       profiles: { username: profile.username, display_name: profile.display_name },
@@ -251,6 +280,14 @@ export default function ReplyDetailScreen() {
         setAllReplies(prev =>
           prev.map(r => (r.id === newReply.id ? { ...r, id: data.id, created_at: data.created_at } : r)),
         );
+        setAllReplies(prev =>
+          prev.map(r => (r.id === newReply.id ? { ...r, id: data.id, created_at: data.created_at } : r)),
+        );
+        setReplyCounts(prev => {
+          const temp = prev[newReply.id] ?? 0;
+          const { [newReply.id]: _omit, ...rest } = prev;
+          return { ...rest, [data.id]: temp, [parent.id]: prev[parent.id] || 0 };
+        });
 
       }
       fetchReplies();
@@ -501,15 +538,6 @@ const styles = StyleSheet.create({
     right: 6,
     top: 6,
     padding: 4,
-  },
-  threadLine: {
-    position: 'absolute',
-    left: 26,
-    top: 42,
-    bottom: -20,
-    width: 2,
-    backgroundColor: '#6f6b8e',
-
   },
   inputContainer: {
     position: 'absolute',

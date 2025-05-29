@@ -80,7 +80,6 @@ const HomeScreen = forwardRef<HomeScreenRef, HomeScreenProps>(
     });
     setReplyCounts(prev => {
       const { [id]: _removed, ...rest } = prev;
-      AsyncStorage.setItem(COUNT_STORAGE_KEY, JSON.stringify(rest));
 
       return rest;
     });
@@ -99,9 +98,8 @@ const HomeScreen = forwardRef<HomeScreenRef, HomeScreenProps>(
     if (!error && data) {
       setPosts(data as Post[]);
       AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(data));
-      const counts = Object.fromEntries((data as any[]).map((p: any) => [p.id, p.reply_count || 0]));
-      setReplyCounts(counts);
-      AsyncStorage.setItem(COUNT_STORAGE_KEY, JSON.stringify(counts));
+      const entries = (data as any[]).map(p => [p.id, p.reply_count ?? 0]);
+      setReplyCounts(Object.fromEntries(entries));
 
     }
   };
@@ -130,11 +128,7 @@ const HomeScreen = forwardRef<HomeScreenRef, HomeScreenProps>(
       AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
       return updated;
     });
-    setReplyCounts(prev => {
-      const updatedCounts = { ...prev, [newPost.id]: 0 };
-      AsyncStorage.setItem(COUNT_STORAGE_KEY, JSON.stringify(updatedCounts));
-      return updatedCounts;
-    });
+    setReplyCounts(prev => ({ ...prev, [newPost.id]: 0 }));
 
     if (!hideInput) {
       setPostText('');
@@ -174,9 +168,7 @@ const HomeScreen = forwardRef<HomeScreenRef, HomeScreenProps>(
         });
         setReplyCounts(prev => {
           const { [newPost.id]: tempCount, ...rest } = prev;
-          const updatedCounts = { ...rest, [data.id]: tempCount };
-          AsyncStorage.setItem(COUNT_STORAGE_KEY, JSON.stringify(updatedCounts));
-          return updatedCounts;
+          return { ...rest, [data.id]: tempCount };
 
         });
       }
@@ -216,7 +208,9 @@ const HomeScreen = forwardRef<HomeScreenRef, HomeScreenProps>(
         try {
           const cached = JSON.parse(stored);
           setPosts(cached);
-          setReplyCounts(Object.fromEntries(cached.map((p: Post) => [p.id, p.reply_count || 0])));
+          const entries = cached.map((p: any) => [p.id, p.reply_count ?? 0]);
+          setReplyCounts(Object.fromEntries(entries));
+
         } catch (e) {
           console.error('Failed to parse cached posts', e);
         }

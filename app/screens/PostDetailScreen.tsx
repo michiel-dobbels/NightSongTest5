@@ -38,6 +38,7 @@ interface Post {
   content: string;
   user_id: string;
   created_at: string;
+  reply_count?: number;
   username?: string;
   reply_count?: number;
   profiles?: {
@@ -53,6 +54,7 @@ interface Reply {
   user_id: string;
   content: string;
   created_at: string;
+  reply_count?: number;
   username?: string;
   reply_count?: number;
   profiles?: {
@@ -161,7 +163,7 @@ export default function PostDetailScreen() {
   const fetchReplies = async () => {
     const { data, error } = await supabase
       .from('replies')
-      .select('id, post_id, parent_id, user_id, content, created_at, username, reply_count')
+      .select('id, post_id, parent_id, user_id, content, created_at, reply_count, username')
 
       .eq('post_id', post.id)
       .order('created_at', { ascending: false });
@@ -175,18 +177,16 @@ export default function PostDetailScreen() {
         AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(merged));
         return merged;
       });
-      const counts: { [key: string]: number } = {};
-      all.forEach(r => {
-        counts[r.id] = r.reply_count || 0;
-      });
 
       const { data: postData } = await supabase
         .from('posts')
         .select('reply_count')
         .eq('id', post.id)
         .single();
-      if (postData) counts[post.id] = postData.reply_count || 0;
-      setReplyCounts(counts);
+      const entries = all.map(r => [r.id, r.reply_count ?? 0]);
+      if (postData) entries.push([post.id, postData.reply_count ?? all.length]);
+      else entries.push([post.id, post.reply_count ?? all.length]);
+      setReplyCounts(Object.fromEntries(entries));
 
     }
   };
@@ -198,9 +198,11 @@ export default function PostDetailScreen() {
         try {
           const cached = JSON.parse(stored);
           setReplies(cached);
-          const counts: { [key: string]: number } = Object.fromEntries(cached.map((r: Reply) => [r.id, r.reply_count || 0]));
-          counts[post.id] = post.reply_count || 0;
-          setReplyCounts(counts);
+          setAllReplies(cached);
+          const entries = cached.map((r: any) => [r.id, r.reply_count ?? 0]);
+          entries.push([post.id, post.reply_count ?? cached.length]);
+          setReplyCounts(Object.fromEntries(entries));
+
         } catch (e) {
           console.error('Failed to parse cached replies', e);
         }
@@ -279,6 +281,11 @@ export default function PostDetailScreen() {
         setAllReplies(prev =>
           prev.map(r => (r.id === newReply.id ? { ...r, id: data.id, created_at: data.created_at } : r)),
         );
+        setReplyCounts(prev => {
+          const temp = prev[newReply.id] ?? 0;
+          const { [newReply.id]: _omit, ...rest } = prev;
+          return { ...rest, [data.id]: temp, [post.id]: prev[post.id] || 0 };
+        });
 
       }
 
