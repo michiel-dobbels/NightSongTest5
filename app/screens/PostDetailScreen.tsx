@@ -13,6 +13,7 @@ import {
   Alert,
   Image,
 } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useRoute, useNavigation } from '@react-navigation/native';
 
@@ -333,6 +334,12 @@ export default function PostDetailScreen() {
                 <Text style={styles.timestamp}>{timeAgo(post.created_at)}</Text>
               </View>
             </View>
+            <Ionicons
+              name="heart-outline"
+              size={16}
+              color="red"
+              style={styles.heartIcon}
+            />
             <Text style={styles.replyCount}>{replyCounts[post.id] || 0}</Text>
           </View>
         )}
@@ -377,6 +384,12 @@ export default function PostDetailScreen() {
                       <Text style={styles.timestamp}>{timeAgo(item.created_at)}</Text>
                     </View>
                   </View>
+                  <Ionicons
+                    name="heart-outline"
+                    size={16}
+                    color="red"
+                    style={styles.heartIcon}
+                  />
                   <Text style={styles.replyCount}>{replyCounts[item.id] || 0}</Text>
                 </View>
               </TouchableOpacity>
@@ -437,6 +450,7 @@ const styles = StyleSheet.create({
   postContent: { color: 'white' },
   username: { fontWeight: 'bold', color: 'white' },
   timestamp: { fontSize: 10, color: 'gray' },
+  heartIcon: { position: 'absolute', bottom: 6, left: '50%', marginLeft: -8 },
   replyCount: { position: 'absolute', bottom: 6, left: 10, fontSize: 10, color: 'gray' },
   input: {
     backgroundColor: 'white',
