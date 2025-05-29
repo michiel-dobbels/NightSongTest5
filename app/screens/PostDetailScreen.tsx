@@ -14,7 +14,7 @@ import {
   Image,
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { useRoute, useNavigation } from '@react-navigation/native';
+import { useRoute, useNavigation, useFocusEffect } from '@react-navigation/native';
 
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../AuthContext';
@@ -38,7 +38,9 @@ interface Post {
   content: string;
   user_id: string;
   created_at: string;
+  reply_count?: number;
   username?: string;
+  reply_count?: number;
   profiles?: {
     username: string | null;
     display_name: string | null;
@@ -52,7 +54,9 @@ interface Reply {
   user_id: string;
   content: string;
   created_at: string;
+  reply_count?: number;
   username?: string;
+  reply_count?: number;
   profiles?: {
     username: string | null;
     display_name: string | null;
@@ -136,6 +140,7 @@ export default function PostDetailScreen() {
       return { ...rest, [post.id]: (prev[post.id] || 0) - removed };
     });
     await supabase.from('replies').delete().eq('id', id);
+    fetchReplies();
   };
 
   useEffect(() => {
@@ -152,6 +157,7 @@ export default function PostDetailScreen() {
       hide.remove();
     };
   }, []);
+
 
   const computeCounts = (replyList: Reply[]) => {
     const childrenMap: { [key: string]: Reply[] } = {};
@@ -176,10 +182,12 @@ export default function PostDetailScreen() {
     return counts;
   };
 
+
   const fetchReplies = async () => {
     const { data, error } = await supabase
       .from('replies')
       .select('id, post_id, parent_id, user_id, content, created_at, username')
+
       .eq('post_id', post.id)
       .order('created_at', { ascending: false });
     if (!error && data) {
@@ -193,6 +201,7 @@ export default function PostDetailScreen() {
         return merged;
       });
       setReplyCounts(computeCounts(all));
+
     }
   };
 
@@ -201,7 +210,13 @@ export default function PostDetailScreen() {
       const stored = await AsyncStorage.getItem(STORAGE_KEY);
       if (stored) {
         try {
-          setReplies(JSON.parse(stored));
+          const cached = JSON.parse(stored);
+          setReplies(cached);
+          setAllReplies(cached);
+          const entries = cached.map((r: any) => [r.id, r.reply_count ?? 0]);
+          entries.push([post.id, post.reply_count ?? cached.length]);
+          setReplyCounts(Object.fromEntries(entries));
+
         } catch (e) {
           console.error('Failed to parse cached replies', e);
         }
@@ -225,6 +240,7 @@ export default function PostDetailScreen() {
       content: replyText,
       created_at: new Date().toISOString(),
       username: profile.display_name || profile.username,
+      reply_count: 0,
       profiles: { username: profile.username, display_name: profile.display_name },
     };
 
@@ -264,10 +280,13 @@ export default function PostDetailScreen() {
       if (data) {
         setReplies(prev =>
           prev.map(r =>
-            r.id === newReply.id ? { ...r, id: data.id, created_at: data.created_at } : r,
+            r.id === newReply.id
+              ? { ...r, id: data.id, created_at: data.created_at, reply_count: 0 }
+              : r,
           ),
         );
         setAllReplies(prev =>
+
           prev.map(r => (r.id === newReply.id ? { ...r, id: data.id, created_at: data.created_at } : r)),
         );
         setReplyCounts(prev => {
@@ -275,6 +294,7 @@ export default function PostDetailScreen() {
           const { [newReply.id]: _omit, ...rest } = prev;
           return { ...rest, [data.id]: temp, [post.id]: prev[post.id] || 0 };
         });
+
       }
 
       // Whether or not data was returned, refresh from the server so the reply persists

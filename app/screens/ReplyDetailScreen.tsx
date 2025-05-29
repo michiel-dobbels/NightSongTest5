@@ -14,7 +14,7 @@ import {
   Image,
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { useRoute, useNavigation } from '@react-navigation/native';
+import { useRoute, useNavigation, useFocusEffect } from '@react-navigation/native';
 
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../AuthContext';
@@ -40,7 +40,9 @@ interface Reply {
   user_id: string;
   content: string;
   created_at: string;
+  reply_count?: number;
   username?: string;
+  reply_count?: number;
   profiles?: {
     username: string | null;
     display_name: string | null;
@@ -52,7 +54,9 @@ interface Post {
   content: string;
   user_id: string;
   created_at: string;
+  reply_count?: number;
   username?: string;
+  reply_count?: number;
   profiles?: {
     username: string | null;
     display_name: string | null;
@@ -141,6 +145,7 @@ export default function ReplyDetailScreen() {
     });
 
     await supabase.from('replies').delete().eq('id', id);
+    fetchReplies();
   };
 
   const computeCounts = (replyList: Reply[], rootPostId: string) => {
@@ -166,10 +171,35 @@ export default function ReplyDetailScreen() {
     return counts;
   };
 
+  const computeCounts = (replyList: Reply[], rootPostId: string) => {
+    const childrenMap: { [key: string]: Reply[] } = {};
+    replyList.forEach(r => {
+      if (r.parent_id) {
+        if (!childrenMap[r.parent_id]) childrenMap[r.parent_id] = [];
+        childrenMap[r.parent_id].push(r);
+      }
+    });
+    const counts: { [key: string]: number } = {};
+    const countRec = (id: string): number => {
+      const children = childrenMap[id] || [];
+      let total = children.length;
+      for (const c of children) total += countRec(c.id);
+      counts[id] = total;
+      return total;
+    };
+    replyList.forEach(r => {
+      if (!counts[r.id]) countRec(r.id);
+    });
+    counts[rootPostId] = replyList.length;
+    return counts;
+  };
+
+
   const fetchReplies = async () => {
     const { data, error } = await supabase
       .from('replies')
       .select('id, post_id, parent_id, user_id, content, created_at, username')
+
       .eq('post_id', parent.post_id)
       .order('created_at', { ascending: false });
     if (!error && data) {
@@ -184,6 +214,7 @@ export default function ReplyDetailScreen() {
       });
       const counts = computeCounts(all, parent.post_id);
       setReplyCounts(counts);
+
     }
   };
 
@@ -192,7 +223,12 @@ export default function ReplyDetailScreen() {
       const stored = await AsyncStorage.getItem(STORAGE_KEY);
       if (stored) {
         try {
-          setReplies(JSON.parse(stored));
+          const cached = JSON.parse(stored);
+          setReplies(cached);
+          setAllReplies(cached);
+          const entries = cached.map((r: any) => [r.id, r.reply_count ?? 0]);
+          setReplyCounts(prev => ({ ...prev, ...Object.fromEntries(entries) }));
+
         } catch (e) {
           console.error('Failed to parse cached replies', e);
         }
@@ -201,6 +237,12 @@ export default function ReplyDetailScreen() {
     };
     loadCached();
   }, []);
+
+  useFocusEffect(
+    React.useCallback(() => {
+      fetchReplies();
+    }, []),
+  );
 
   useEffect(() => {
     const show = Keyboard.addListener(
@@ -227,7 +269,9 @@ export default function ReplyDetailScreen() {
       user_id: user.id,
       content: replyText,
       created_at: new Date().toISOString(),
+      reply_count: 0,
       username: profile.display_name || profile.username,
+      reply_count: 0,
       profiles: { username: profile.username, display_name: profile.display_name },
     };
 
@@ -264,16 +308,36 @@ export default function ReplyDetailScreen() {
     if (!error) {
       if (data) {
         setReplies(prev =>
+          prev.map(r =>
+            r.id === newReply.id
+              ? { ...r, id: data.id, created_at: data.created_at, reply_count: 0 }
+              : r,
+          ),
+        );
+        setAllReplies(prev =>
+          prev.map(r =>
+            r.id === newReply.id
+              ? { ...r, id: data.id, created_at: data.created_at, reply_count: 0 }
+              : r,
+          ),
+
+        );
+        setAllReplies(prev =>
           prev.map(r => (r.id === newReply.id ? { ...r, id: data.id, created_at: data.created_at } : r)),
         );
         setAllReplies(prev =>
           prev.map(r => (r.id === newReply.id ? { ...r, id: data.id, created_at: data.created_at } : r)),
         );
+        setAllReplies(prev =>
+          prev.map(r => (r.id === newReply.id ? { ...r, id: data.id, created_at: data.created_at } : r)),
+        );
+
         setReplyCounts(prev => {
           const temp = prev[newReply.id] ?? 0;
           const { [newReply.id]: _omit, ...rest } = prev;
           return { ...rest, [data.id]: temp, [parent.id]: prev[parent.id] || 0 };
         });
+
       }
       fetchReplies();
     }
@@ -490,15 +554,6 @@ const styles = StyleSheet.create({
 
     position: 'relative',
   },
-  threadLine: {
-    position: 'absolute',
-    left: 26,
-    top: 0,
-    bottom: -10,
-    width: 2,
-    backgroundColor: '#66538f',
-    zIndex: -1,
-  },
   highlightPost: {
     borderColor: '#4f1fde',
     borderWidth: 2,
@@ -524,6 +579,7 @@ const styles = StyleSheet.create({
     top: 6,
     padding: 4,
   },
+
   inputContainer: {
     position: 'absolute',
     left: 16,
