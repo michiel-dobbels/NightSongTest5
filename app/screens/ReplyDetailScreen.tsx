@@ -208,11 +208,15 @@ export default function ReplyDetailScreen() {
 
   const name =
     parent.profiles?.display_name || parent.profiles?.username || parent.username;
+  const parentUserName = parent.profiles?.username || parent.username;
   const originalName = originalPost
-    ? originalPost.profiles?.display_name ||
-      originalPost.profiles?.username ||
-      originalPost.username
+    ?
+        originalPost.profiles?.display_name ||
+        originalPost.profiles?.username ||
+        originalPost.username
     : undefined;
+  const originalUserName =
+    originalPost?.profiles?.username || originalPost?.username;
 
   return (
     <KeyboardAvoidingView
@@ -243,20 +247,26 @@ export default function ReplyDetailScreen() {
                     <View style={[styles.avatar, styles.placeholder]} />
                   )}
                   <View style={{ flex: 1 }}>
-                    <Text style={styles.username}>@{originalName}</Text>
+                    <Text style={styles.username}>
+                      {originalName} @{originalUserName}
+                    </Text>
                     <Text style={styles.postContent}>{originalPost.content}</Text>
                     <Text style={styles.timestamp}>{timeAgo(originalPost.created_at)}</Text>
                   </View>
                 </View>
               </View>
             )}
-            {ancestors.map(a => {
+            {ancestors.map((a, idx) => {
               const ancestorName =
                 a.profiles?.display_name || a.profiles?.username || a.username;
+              const ancestorUserName = a.profiles?.username || a.username;
               const isMe = user?.id === a.user_id;
               const avatarUri = isMe ? profileImageUri : undefined;
               return (
                 <View key={a.id} style={styles.post}>
+                  {idx < ancestors.length - 1 && (
+                    <View style={styles.threadLine} />
+                  )}
                   {isMe && (
                     <TouchableOpacity
                       onPress={() => confirmDeleteReply(a.id)}
@@ -272,7 +282,9 @@ export default function ReplyDetailScreen() {
                       <View style={[styles.avatar, styles.placeholder]} />
                     )}
                     <View style={{ flex: 1 }}>
-                      <Text style={styles.username}>@{ancestorName}</Text>
+                      <Text style={styles.username}>
+                        {ancestorName} @{ancestorUserName}
+                      </Text>
                       <Text style={styles.postContent}>{a.content}</Text>
                       <Text style={styles.timestamp}>{timeAgo(a.created_at)}</Text>
                     </View>
@@ -297,7 +309,9 @@ export default function ReplyDetailScreen() {
                   <View style={[styles.avatar, styles.placeholder]} />
                 )}
                 <View style={{ flex: 1 }}>
-                  <Text style={styles.username}>@{name}</Text>
+                  <Text style={styles.username}>
+                    {name} @{parentUserName}
+                  </Text>
                   <Text style={styles.postContent}>{parent.content}</Text>
                   <Text style={styles.timestamp}>{timeAgo(parent.created_at)}</Text>
                 </View>
@@ -311,6 +325,7 @@ export default function ReplyDetailScreen() {
 
         renderItem={({ item }) => {
           const childName = item.profiles?.display_name || item.profiles?.username || item.username;
+          const childUserName = item.profiles?.username || item.username;
           const isMe = user?.id === item.user_id;
           const avatarUri = isMe ? profileImageUri : undefined;
           return (
@@ -339,7 +354,9 @@ export default function ReplyDetailScreen() {
                     <View style={[styles.avatar, styles.placeholder]} />
                   )}
                   <View style={{ flex: 1 }}>
-                    <Text style={styles.username}>@{childName}</Text>
+                    <Text style={styles.username}>
+                      {childName} @{childUserName}
+                    </Text>
                     <Text style={styles.postContent}>{item.content}</Text>
                     <Text style={styles.timestamp}>{timeAgo(item.created_at)}</Text>
                   </View>
@@ -388,6 +405,15 @@ const styles = StyleSheet.create({
     padding: 10,
     marginTop: 10,
     position: 'relative',
+  },
+  threadLine: {
+    position: 'absolute',
+    left: 26,
+    top: 0,
+    bottom: -10,
+    width: 2,
+    backgroundColor: '#66538f',
+    zIndex: -1,
   },
   highlightPost: {
     borderColor: '#4f1fde',
