@@ -152,6 +152,7 @@ export default function ReplyDetailScreen() {
       if (originalPost) {
         counts[originalPost.id] = (counts[originalPost.id] || prev[originalPost.id] || 0) - removed;
       }
+
       AsyncStorage.setItem(COUNT_STORAGE_KEY, JSON.stringify(counts));
       return counts;
     });
@@ -191,6 +192,7 @@ export default function ReplyDetailScreen() {
         AsyncStorage.setItem(COUNT_STORAGE_KEY, JSON.stringify(counts));
         return counts;
       });
+
 
     }
   };
@@ -278,6 +280,7 @@ export default function ReplyDetailScreen() {
       if (originalPost) {
         counts[originalPost.id] = (counts[originalPost.id] || prev[originalPost.id] || 0) + 1;
       }
+
       AsyncStorage.setItem(COUNT_STORAGE_KEY, JSON.stringify(counts));
       return counts;
     });
@@ -337,6 +340,7 @@ export default function ReplyDetailScreen() {
           if (originalPost && prev[originalPost.id] !== undefined) {
             counts[originalPost.id] = prev[originalPost.id];
           }
+
           AsyncStorage.setItem(COUNT_STORAGE_KEY, JSON.stringify(counts));
           return counts;
         });
