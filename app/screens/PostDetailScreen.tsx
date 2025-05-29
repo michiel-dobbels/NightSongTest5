@@ -138,6 +138,7 @@ export default function PostDetailScreen() {
       return { ...rest, [post.id]: (prev[post.id] || 0) - removed };
     });
     await supabase.from('replies').delete().eq('id', id);
+    fetchReplies();
   };
 
   useEffect(() => {
@@ -174,7 +175,11 @@ export default function PostDetailScreen() {
         AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(merged));
         return merged;
       });
-      const counts: { [key: string]: number } = Object.fromEntries(all.map(r => [r.id, r.reply_count || 0]));
+      const counts: { [key: string]: number } = {};
+      all.forEach(r => {
+        counts[r.id] = r.reply_count || 0;
+      });
+
       const { data: postData } = await supabase
         .from('posts')
         .select('reply_count')
@@ -271,12 +276,10 @@ export default function PostDetailScreen() {
               : r,
           ),
         );
+        setAllReplies(prev =>
+          prev.map(r => (r.id === newReply.id ? { ...r, id: data.id, created_at: data.created_at } : r)),
+        );
 
-        setReplyCounts(prev => {
-          const temp = prev[newReply.id] ?? 0;
-          const { [newReply.id]: _omit, ...rest } = prev;
-          return { ...rest, [data.id]: temp, [post.id]: prev[post.id] || 0 };
-        });
       }
 
       // Whether or not data was returned, refresh from the server so the reply persists

@@ -10,13 +10,15 @@ import {
   TouchableOpacity,
   Image,
 } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useFocusEffect } from '@react-navigation/native';
+import { useCallback } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../AuthContext';
 import { colors } from '../styles/colors';
 
 const STORAGE_KEY = 'cached_posts';
+const COUNT_STORAGE_KEY = 'cached_reply_counts';
 
 type Post = {
   id: string;
@@ -78,6 +80,8 @@ const HomeScreen = forwardRef<HomeScreenRef, HomeScreenProps>(
     });
     setReplyCounts(prev => {
       const { [id]: _removed, ...rest } = prev;
+      AsyncStorage.setItem(COUNT_STORAGE_KEY, JSON.stringify(rest));
+
       return rest;
     });
     await supabase.from('posts').delete().eq('id', id);
@@ -93,10 +97,11 @@ const HomeScreen = forwardRef<HomeScreenRef, HomeScreenProps>(
       .order('created_at', { ascending: false });
 
     if (!error && data) {
-      const list = data as Post[];
-      setPosts(list);
-      AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(list));
-      setReplyCounts(Object.fromEntries(list.map(p => [p.id, p.reply_count || 0])));
+      setPosts(data as Post[]);
+      AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+      const counts = Object.fromEntries((data as any[]).map((p: any) => [p.id, p.reply_count || 0]));
+      setReplyCounts(counts);
+      AsyncStorage.setItem(COUNT_STORAGE_KEY, JSON.stringify(counts));
 
     }
   };
@@ -125,7 +130,12 @@ const HomeScreen = forwardRef<HomeScreenRef, HomeScreenProps>(
       AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
       return updated;
     });
-    setReplyCounts(prev => ({ ...prev, [newPost.id]: 0 }));
+    setReplyCounts(prev => {
+      const updatedCounts = { ...prev, [newPost.id]: 0 };
+      AsyncStorage.setItem(COUNT_STORAGE_KEY, JSON.stringify(updatedCounts));
+      return updatedCounts;
+    });
+
     if (!hideInput) {
       setPostText('');
     }
@@ -164,7 +174,10 @@ const HomeScreen = forwardRef<HomeScreenRef, HomeScreenProps>(
         });
         setReplyCounts(prev => {
           const { [newPost.id]: tempCount, ...rest } = prev;
-          return { ...rest, [data.id]: tempCount };
+          const updatedCounts = { ...rest, [data.id]: tempCount };
+          AsyncStorage.setItem(COUNT_STORAGE_KEY, JSON.stringify(updatedCounts));
+          return updatedCounts;
+
         });
       }
 
@@ -177,6 +190,11 @@ const HomeScreen = forwardRef<HomeScreenRef, HomeScreenProps>(
         const updated = prev.filter((p) => p.id !== newPost.id);
         AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
         return updated;
+      });
+      setReplyCounts(prev => {
+        const { [newPost.id]: _omit, ...rest } = prev;
+        AsyncStorage.setItem(COUNT_STORAGE_KEY, JSON.stringify(rest));
+        return rest;
       });
 
       // Log the failure and surface it to the user
@@ -203,12 +221,26 @@ const HomeScreen = forwardRef<HomeScreenRef, HomeScreenProps>(
           console.error('Failed to parse cached posts', e);
         }
       }
+      const countStored = await AsyncStorage.getItem(COUNT_STORAGE_KEY);
+      if (countStored) {
+        try {
+          setReplyCounts(JSON.parse(countStored));
+        } catch (e) {
+          console.error('Failed to parse cached counts', e);
+        }
+      }
 
       fetchPosts();
     };
 
     loadCached();
   }, []);
+
+  useFocusEffect(
+    useCallback(() => {
+      fetchPosts();
+    }, []),
+  );
 
   return (
     

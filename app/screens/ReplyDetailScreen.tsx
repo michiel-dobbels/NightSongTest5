@@ -112,37 +112,9 @@ export default function ReplyDetailScreen() {
       AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
       return updated;
     });
-    setAllReplies(prev => {
-      const descendants = new Set<string>();
-      const gather = (parentId: string) => {
-        prev.forEach(r => {
-          if (r.parent_id === parentId) {
-            descendants.add(r.id);
-            gather(r.id);
-          }
-        });
-      };
-      gather(id);
-      return prev.filter(r => r.id !== id && !descendants.has(r.id));
-    });
-    setReplyCounts(prev => {
-      const descendants = new Set<string>();
-      const gather = (parentId: string) => {
-        allReplies.forEach(r => {
-          if (r.parent_id === parentId) {
-            descendants.add(r.id);
-            gather(r.id);
-          }
-        });
-      };
-      gather(id);
-      let removed = descendants.size + 1;
-      const { [id]: _omit, ...rest } = prev;
-      descendants.forEach(d => delete rest[d]);
-      return { ...rest, [parent.id]: (prev[parent.id] || 0) - removed };
-    });
 
     await supabase.from('replies').delete().eq('id', id);
+    fetchReplies();
   };
 
 
@@ -164,7 +136,11 @@ export default function ReplyDetailScreen() {
         AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(merged));
         return merged;
       });
-      const counts: { [key: string]: number } = Object.fromEntries(all.map(r => [r.id, r.reply_count || 0]));
+      const counts: { [key: string]: number } = {};
+      all.forEach(r => {
+        counts[r.id] = r.reply_count || 0;
+      });
+
       const { data: postData } = await supabase
         .from('posts')
         .select('reply_count')
@@ -272,11 +248,10 @@ export default function ReplyDetailScreen() {
           ),
 
         );
-        setReplyCounts(prev => {
-          const temp = prev[newReply.id] ?? 0;
-          const { [newReply.id]: _omit, ...rest } = prev;
-          return { ...rest, [data.id]: temp, [parent.id]: prev[parent.id] || 0 };
-        });
+        setAllReplies(prev =>
+          prev.map(r => (r.id === newReply.id ? { ...r, id: data.id, created_at: data.created_at } : r)),
+        );
+
       }
       fetchReplies();
     }
