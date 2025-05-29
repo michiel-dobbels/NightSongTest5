@@ -58,6 +58,7 @@ const HomeScreen = forwardRef<HomeScreenRef, HomeScreenProps>(
   const [posts, setPosts] = useState<Post[]>([]);
   const [replyCounts, setReplyCounts] = useState<{ [key: string]: number }>({});
 
+
   const confirmDeletePost = (id: string) => {
     Alert.alert('Delete Post', 'Are you sure you want to delete this post?', [
       { text: 'Cancel', style: 'cancel' },
@@ -96,6 +97,7 @@ const HomeScreen = forwardRef<HomeScreenRef, HomeScreenProps>(
       setPosts(list);
       AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(list));
       setReplyCounts(Object.fromEntries(list.map(p => [p.id, p.reply_count || 0])));
+
     }
   };
 

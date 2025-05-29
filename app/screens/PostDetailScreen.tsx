@@ -156,10 +156,12 @@ export default function PostDetailScreen() {
   }, []);
 
 
+
   const fetchReplies = async () => {
     const { data, error } = await supabase
       .from('replies')
       .select('id, post_id, parent_id, user_id, content, created_at, username, reply_count')
+
       .eq('post_id', post.id)
       .order('created_at', { ascending: false });
     if (!error && data) {
@@ -180,6 +182,7 @@ export default function PostDetailScreen() {
         .single();
       if (postData) counts[post.id] = postData.reply_count || 0;
       setReplyCounts(counts);
+
     }
   };
 
@@ -268,6 +271,7 @@ export default function PostDetailScreen() {
               : r,
           ),
         );
+
         setReplyCounts(prev => {
           const temp = prev[newReply.id] ?? 0;
           const { [newReply.id]: _omit, ...rest } = prev;
