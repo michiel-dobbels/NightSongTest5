@@ -143,6 +143,7 @@ export default function ReplyDetailScreen() {
       const { [id]: _omit, ...rest } = prev;
       descendants.forEach(d => delete rest[d]);
       const counts = { ...rest, [parent.id]: (prev[parent.id] || 0) - removed };
+
       AsyncStorage.setItem(COUNT_STORAGE_KEY, JSON.stringify(counts));
       return counts;
     });
@@ -183,6 +184,7 @@ export default function ReplyDetailScreen() {
         return counts;
       });
 
+
     }
   };
 
@@ -208,12 +210,23 @@ export default function ReplyDetailScreen() {
           setReplyCounts(prev => ({ ...prev, ...counts }));
           AsyncStorage.setItem(COUNT_STORAGE_KEY, JSON.stringify(counts));
 
+
         } catch (e) {
           console.error('Failed to parse cached replies', e);
         }
       } else if (countStored) {
         setReplyCounts(prev => ({ ...prev, ...storedCounts }));
       }
+
+      const countStored = await AsyncStorage.getItem(COUNT_STORAGE_KEY);
+      if (countStored) {
+        try {
+          setReplyCounts(prev => ({ ...prev, ...JSON.parse(countStored) }));
+        } catch (e) {
+          console.error('Failed to parse cached counts', e);
+        }
+      }
+
       fetchReplies();
     };
     loadCached();
@@ -275,10 +288,12 @@ export default function ReplyDetailScreen() {
     setAllReplies(prev => [...prev, newReply]);
     setReplyCounts(prev => {
       const counts = {
+
         ...prev,
         [parent.id]: (prev[parent.id] || 0) + 1,
         [newReply.id]: 0,
       };
+
       AsyncStorage.setItem(COUNT_STORAGE_KEY, JSON.stringify(counts));
       return counts;
     });
@@ -328,6 +343,7 @@ export default function ReplyDetailScreen() {
           const temp = prev[newReply.id] ?? 0;
           const { [newReply.id]: _omit, ...rest } = prev;
           const counts = { ...rest, [data.id]: temp, [parent.id]: prev[parent.id] || 0 };
+
           AsyncStorage.setItem(COUNT_STORAGE_KEY, JSON.stringify(counts));
           return counts;
         });
