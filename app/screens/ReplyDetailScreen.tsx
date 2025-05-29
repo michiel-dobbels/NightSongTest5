@@ -13,6 +13,7 @@ import {
   Alert,
   Image,
 } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useRoute, useNavigation } from '@react-navigation/native';
 
@@ -344,7 +345,15 @@ export default function ReplyDetailScreen() {
                     <Text style={styles.timestamp}>{timeAgo(originalPost.created_at)}</Text>
                   </View>
                 </View>
-                <Text style={styles.replyCount}>{replyCounts[originalPost.id] || 0}</Text>
+                <View style={styles.replyCountContainer}>
+                  <Ionicons
+                    name="chatbubble-outline"
+                    size={12}
+                    color="#66538f"
+                    style={{ marginRight: 2 }}
+                  />
+                  <Text style={styles.replyCount}>{replyCounts[originalPost.id] || 0}</Text>
+                </View>
               </View>
             )}
               {ancestors.map(a => {
@@ -379,7 +388,15 @@ export default function ReplyDetailScreen() {
                     <Text style={styles.timestamp}>{timeAgo(a.created_at)}</Text>
                   </View>
                 </View>
-                <Text style={styles.replyCount}>{replyCounts[a.id] || 0}</Text>
+                <View style={styles.replyCountContainer}>
+                  <Ionicons
+                    name="chatbubble-outline"
+                    size={12}
+                    color="#66538f"
+                    style={{ marginRight: 2 }}
+                  />
+                  <Text style={styles.replyCount}>{replyCounts[a.id] || 0}</Text>
+                </View>
               </View>
             );
           })}
@@ -407,7 +424,15 @@ export default function ReplyDetailScreen() {
                   <Text style={styles.timestamp}>{timeAgo(parent.created_at)}</Text>
                 </View>
               </View>
-            <Text style={styles.replyCount}>{replyCounts[parent.id] || 0}</Text>
+            <View style={styles.replyCountContainer}>
+              <Ionicons
+                name="chatbubble-outline"
+                size={12}
+                color="#66538f"
+                style={{ marginRight: 2 }}
+              />
+              <Text style={styles.replyCount}>{replyCounts[parent.id] || 0}</Text>
+            </View>
             </View>
           </>
         )}
@@ -453,7 +478,15 @@ export default function ReplyDetailScreen() {
                     <Text style={styles.timestamp}>{timeAgo(item.created_at)}</Text>
                   </View>
                 </View>
-                <Text style={styles.replyCount}>{replyCounts[item.id] || 0}</Text>
+                <View style={styles.replyCountContainer}>
+                  <Ionicons
+                    name="chatbubble-outline"
+                    size={12}
+                    color="#66538f"
+                    style={{ marginRight: 2 }}
+                  />
+                  <Text style={styles.replyCount}>{replyCounts[item.id] || 0}</Text>
+                </View>
               </View>
             </TouchableOpacity>
           );
@@ -522,7 +555,14 @@ const styles = StyleSheet.create({
   postContent: { color: 'white' },
   username: { fontWeight: 'bold', color: 'white' },
   timestamp: { fontSize: 10, color: 'gray' },
-  replyCount: { position: 'absolute', bottom: 6, left: 10, fontSize: 10, color: 'gray' },
+  replyCountContainer: {
+    position: 'absolute',
+    bottom: 6,
+    left: 10,
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  replyCount: { fontSize: 10, color: 'gray' },
   input: {
     backgroundColor: 'white',
     padding: 10,
