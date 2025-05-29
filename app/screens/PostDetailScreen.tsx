@@ -39,6 +39,7 @@ interface Post {
   user_id: string;
   created_at: string;
   username?: string;
+  reply_count?: number;
   profiles?: {
     username: string | null;
     display_name: string | null;
@@ -53,6 +54,7 @@ interface Reply {
   content: string;
   created_at: string;
   username?: string;
+  reply_count?: number;
   profiles?: {
     username: string | null;
     display_name: string | null;
@@ -69,6 +71,8 @@ export default function PostDetailScreen() {
 
   const [replyText, setReplyText] = useState('');
   const [replies, setReplies] = useState<Reply[]>([]);
+  const [allReplies, setAllReplies] = useState<Reply[]>([]);
+  const [replyCounts, setReplyCounts] = useState<{ [key: string]: number }>({});
   const [keyboardOffset, setKeyboardOffset] = useState(0);
 
   const confirmDeletePost = (id: string) => {
@@ -104,6 +108,35 @@ export default function PostDetailScreen() {
       AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
       return updated;
     });
+    setAllReplies(prev => {
+      const descendants = new Set<string>();
+      const gather = (parentId: string) => {
+        prev.forEach(r => {
+          if (r.parent_id === parentId) {
+            descendants.add(r.id);
+            gather(r.id);
+          }
+        });
+      };
+      gather(id);
+      return prev.filter(r => r.id !== id && !descendants.has(r.id));
+    });
+    setReplyCounts(prev => {
+      const descendants = new Set<string>();
+      const gather = (parentId: string) => {
+        allReplies.forEach(r => {
+          if (r.parent_id === parentId) {
+            descendants.add(r.id);
+            gather(r.id);
+          }
+        });
+      };
+      gather(id);
+      let removed = descendants.size + 1;
+      const { [id]: _omit, ...rest } = prev;
+      descendants.forEach(d => delete rest[d]);
+      return { ...rest, [post.id]: (prev[post.id] || 0) - removed };
+    });
     await supabase.from('replies').delete().eq('id', id);
   };
 
@@ -122,25 +155,31 @@ export default function PostDetailScreen() {
     };
   }, []);
 
+
   const fetchReplies = async () => {
     const { data, error } = await supabase
       .from('replies')
-      // fetch only reply fields to avoid missing relationship errors
-      .select('id, post_id, parent_id, user_id, content, created_at, username')
+      .select('id, post_id, parent_id, user_id, content, created_at, username, reply_count')
       .eq('post_id', post.id)
-      .is('parent_id', null)
       .order('created_at', { ascending: false });
     if (!error && data) {
+      const all = data as Reply[];
+      setAllReplies(all);
+      const topLevel = all.filter(r => r.parent_id === null);
       setReplies(prev => {
-        // Keep any replies that haven't been synced yet (ids starting with "temp-")
         const tempReplies = prev.filter(r => r.id.startsWith('temp-'));
-        const merged = [...tempReplies, ...(data as Reply[])];
-
-
+        const merged = [...tempReplies, ...topLevel];
         AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(merged));
         return merged;
       });
-
+      const counts: { [key: string]: number } = Object.fromEntries(all.map(r => [r.id, r.reply_count || 0]));
+      const { data: postData } = await supabase
+        .from('posts')
+        .select('reply_count')
+        .eq('id', post.id)
+        .single();
+      if (postData) counts[post.id] = postData.reply_count || 0;
+      setReplyCounts(counts);
     }
   };
 
@@ -149,7 +188,11 @@ export default function PostDetailScreen() {
       const stored = await AsyncStorage.getItem(STORAGE_KEY);
       if (stored) {
         try {
-          setReplies(JSON.parse(stored));
+          const cached = JSON.parse(stored);
+          setReplies(cached);
+          const counts: { [key: string]: number } = Object.fromEntries(cached.map((r: Reply) => [r.id, r.reply_count || 0]));
+          counts[post.id] = post.reply_count || 0;
+          setReplyCounts(counts);
         } catch (e) {
           console.error('Failed to parse cached replies', e);
         }
@@ -173,6 +216,7 @@ export default function PostDetailScreen() {
       content: replyText,
       created_at: new Date().toISOString(),
       username: profile.display_name || profile.username,
+      reply_count: 0,
       profiles: { username: profile.username, display_name: profile.display_name },
     };
 
@@ -181,6 +225,12 @@ export default function PostDetailScreen() {
       AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
       return updated;
     });
+    setAllReplies(prev => [...prev, newReply]);
+    setReplyCounts(prev => ({
+      ...prev,
+      [post.id]: (prev[post.id] || 0) + 1,
+      [newReply.id]: 0,
+    }));
     setReplyText('');
 
     let { data, error } = await supabase
@@ -206,9 +256,23 @@ export default function PostDetailScreen() {
       if (data) {
         setReplies(prev =>
           prev.map(r =>
-            r.id === newReply.id ? { ...r, id: data.id, created_at: data.created_at } : r,
+            r.id === newReply.id
+              ? { ...r, id: data.id, created_at: data.created_at, reply_count: 0 }
+              : r,
           ),
         );
+        setAllReplies(prev =>
+          prev.map(r =>
+            r.id === newReply.id
+              ? { ...r, id: data.id, created_at: data.created_at, reply_count: 0 }
+              : r,
+          ),
+        );
+        setReplyCounts(prev => {
+          const temp = prev[newReply.id] ?? 0;
+          const { [newReply.id]: _omit, ...rest } = prev;
+          return { ...rest, [data.id]: temp, [post.id]: prev[post.id] || 0 };
+        });
       }
 
       // Whether or not data was returned, refresh from the server so the reply persists
@@ -255,6 +319,7 @@ export default function PostDetailScreen() {
                 <Text style={styles.timestamp}>{timeAgo(post.created_at)}</Text>
               </View>
             </View>
+            <Text style={styles.replyCount}>{replyCounts[post.id] || 0}</Text>
           </View>
         )}
         contentContainerStyle={{ paddingBottom: 100 }}
@@ -297,9 +362,10 @@ export default function PostDetailScreen() {
                       <Text style={styles.postContent}>{item.content}</Text>
                       <Text style={styles.timestamp}>{timeAgo(item.created_at)}</Text>
                     </View>
+                  </View>
+                  <Text style={styles.replyCount}>{replyCounts[item.id] || 0}</Text>
                 </View>
-              </View>
-            </TouchableOpacity>
+              </TouchableOpacity>
           );
         }}
       />
@@ -357,6 +423,7 @@ const styles = StyleSheet.create({
   postContent: { color: 'white' },
   username: { fontWeight: 'bold', color: 'white' },
   timestamp: { fontSize: 10, color: 'gray' },
+  replyCount: { position: 'absolute', bottom: 6, left: 10, fontSize: 10, color: 'gray' },
   input: {
     backgroundColor: 'white',
     padding: 10,
