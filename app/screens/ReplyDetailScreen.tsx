@@ -232,6 +232,7 @@ export default function ReplyDetailScreen() {
           <>
             {originalPost && (
               <View style={[styles.post, styles.highlightPost]}>
+                <View style={styles.threadLine} />
                 {user?.id === originalPost.user_id && (
                   <TouchableOpacity
                     onPress={() => confirmDeletePost(originalPost.id)}
@@ -264,9 +265,8 @@ export default function ReplyDetailScreen() {
               const avatarUri = isMe ? profileImageUri : undefined;
               return (
                 <View key={a.id} style={styles.post}>
-                  {idx < ancestors.length - 1 && (
-                    <View style={styles.threadLine} />
-                  )}
+                  <View style={styles.threadLine} />
+
                   {isMe && (
                     <TouchableOpacity
                       onPress={() => confirmDeleteReply(a.id)}
@@ -444,6 +444,14 @@ const styles = StyleSheet.create({
     right: 6,
     top: 6,
     padding: 4,
+  },
+  threadLine: {
+    position: 'absolute',
+    left: 16,
+    top: 0,
+    bottom: 0,
+    width: 2,
+    backgroundColor: '#6e5b8f',
   },
   inputContainer: {
     position: 'absolute',
