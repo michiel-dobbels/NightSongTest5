@@ -195,6 +195,7 @@ export default function PostDetailScreen() {
         return counts;
       });
 
+
     }
   };
 
@@ -214,8 +215,26 @@ export default function PostDetailScreen() {
             return counts;
           });
 
+
         } catch (e) {
           console.error('Failed to parse cached replies', e);
+        }
+      }
+      const countStored = await AsyncStorage.getItem(COUNT_STORAGE_KEY);
+      if (countStored) {
+        try {
+          setReplyCounts(prev => ({ ...prev, ...JSON.parse(countStored) }));
+        } catch (e) {
+          console.error('Failed to parse cached counts', e);
+        }
+      }
+
+      const countStored = await AsyncStorage.getItem(COUNT_STORAGE_KEY);
+      if (countStored) {
+        try {
+          setReplyCounts(prev => ({ ...prev, ...JSON.parse(countStored) }));
+        } catch (e) {
+          console.error('Failed to parse cached counts', e);
         }
       }
 
@@ -262,6 +281,7 @@ export default function PostDetailScreen() {
         [post.id]: (prev[post.id] || 0) + 1,
         [newReply.id]: 0,
       };
+
       AsyncStorage.setItem(COUNT_STORAGE_KEY, JSON.stringify(counts));
       return counts;
     });
