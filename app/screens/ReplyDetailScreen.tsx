@@ -42,6 +42,7 @@ interface Reply {
   created_at: string;
   reply_count?: number;
   username?: string;
+  reply_count?: number;
   profiles?: {
     username: string | null;
     display_name: string | null;
@@ -55,6 +56,7 @@ interface Post {
   created_at: string;
   reply_count?: number;
   username?: string;
+  reply_count?: number;
   profiles?: {
     username: string | null;
     display_name: string | null;
@@ -143,6 +145,7 @@ export default function ReplyDetailScreen() {
     });
 
     await supabase.from('replies').delete().eq('id', id);
+    fetchReplies();
   };
 
 
@@ -150,6 +153,7 @@ export default function ReplyDetailScreen() {
     const { data, error } = await supabase
       .from('replies')
       .select('id, post_id, parent_id, user_id, content, created_at, reply_count, username')
+
       .eq('post_id', parent.post_id)
       .order('created_at', { ascending: false });
     if (!error && data) {
@@ -162,6 +166,7 @@ export default function ReplyDetailScreen() {
         AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(merged));
         return merged;
       });
+
       const { data: postData } = await supabase
         .from('posts')
         .select('reply_count')
@@ -170,6 +175,7 @@ export default function ReplyDetailScreen() {
       const entries = all.map(r => [r.id, r.reply_count ?? 0]);
       if (postData) entries.push([parent.post_id, postData.reply_count ?? all.length]);
       setReplyCounts(Object.fromEntries(entries));
+
     }
   };
 
@@ -183,6 +189,7 @@ export default function ReplyDetailScreen() {
           setAllReplies(cached);
           const entries = cached.map((r: any) => [r.id, r.reply_count ?? 0]);
           setReplyCounts(prev => ({ ...prev, ...Object.fromEntries(entries) }));
+
         } catch (e) {
           console.error('Failed to parse cached replies', e);
         }
@@ -219,6 +226,7 @@ export default function ReplyDetailScreen() {
       created_at: new Date().toISOString(),
       reply_count: 0,
       username: profile.display_name || profile.username,
+      reply_count: 0,
       profiles: { username: profile.username, display_name: profile.display_name },
     };
 
@@ -255,6 +263,21 @@ export default function ReplyDetailScreen() {
     if (!error) {
       if (data) {
         setReplies(prev =>
+          prev.map(r =>
+            r.id === newReply.id
+              ? { ...r, id: data.id, created_at: data.created_at, reply_count: 0 }
+              : r,
+          ),
+        );
+        setAllReplies(prev =>
+          prev.map(r =>
+            r.id === newReply.id
+              ? { ...r, id: data.id, created_at: data.created_at, reply_count: 0 }
+              : r,
+          ),
+
+        );
+        setAllReplies(prev =>
           prev.map(r => (r.id === newReply.id ? { ...r, id: data.id, created_at: data.created_at } : r)),
         );
         setAllReplies(prev =>
@@ -265,6 +288,7 @@ export default function ReplyDetailScreen() {
           const { [newReply.id]: _omit, ...rest } = prev;
           return { ...rest, [data.id]: temp, [parent.id]: prev[parent.id] || 0 };
         });
+
       }
       fetchReplies();
     }

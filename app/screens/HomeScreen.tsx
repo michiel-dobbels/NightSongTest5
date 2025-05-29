@@ -10,13 +10,15 @@ import {
   TouchableOpacity,
   Image,
 } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useFocusEffect } from '@react-navigation/native';
+import { useCallback } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../AuthContext';
 import { colors } from '../styles/colors';
 
 const STORAGE_KEY = 'cached_posts';
+const COUNT_STORAGE_KEY = 'cached_reply_counts';
 
 type Post = {
   id: string;
@@ -58,6 +60,7 @@ const HomeScreen = forwardRef<HomeScreenRef, HomeScreenProps>(
   const [posts, setPosts] = useState<Post[]>([]);
   const [replyCounts, setReplyCounts] = useState<{ [key: string]: number }>({});
 
+
   const confirmDeletePost = (id: string) => {
     Alert.alert('Delete Post', 'Are you sure you want to delete this post?', [
       { text: 'Cancel', style: 'cancel' },
@@ -77,6 +80,7 @@ const HomeScreen = forwardRef<HomeScreenRef, HomeScreenProps>(
     });
     setReplyCounts(prev => {
       const { [id]: _removed, ...rest } = prev;
+
       return rest;
     });
     await supabase.from('posts').delete().eq('id', id);
@@ -96,6 +100,7 @@ const HomeScreen = forwardRef<HomeScreenRef, HomeScreenProps>(
       AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(data));
       const entries = (data as any[]).map(p => [p.id, p.reply_count ?? 0]);
       setReplyCounts(Object.fromEntries(entries));
+
     }
   };
 
@@ -124,6 +129,7 @@ const HomeScreen = forwardRef<HomeScreenRef, HomeScreenProps>(
       return updated;
     });
     setReplyCounts(prev => ({ ...prev, [newPost.id]: 0 }));
+
     if (!hideInput) {
       setPostText('');
     }
@@ -154,7 +160,7 @@ const HomeScreen = forwardRef<HomeScreenRef, HomeScreenProps>(
         setPosts((prev) => {
           const updated = prev.map((p) =>
             p.id === newPost.id
-              ? { ...p, id: data.id, created_at: data.created_at }
+              ? { ...p, id: data.id, created_at: data.created_at, reply_count: 0 }
               : p
           );
           AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
@@ -163,6 +169,7 @@ const HomeScreen = forwardRef<HomeScreenRef, HomeScreenProps>(
         setReplyCounts(prev => {
           const { [newPost.id]: tempCount, ...rest } = prev;
           return { ...rest, [data.id]: tempCount };
+
         });
       }
 
@@ -175,6 +182,11 @@ const HomeScreen = forwardRef<HomeScreenRef, HomeScreenProps>(
         const updated = prev.filter((p) => p.id !== newPost.id);
         AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
         return updated;
+      });
+      setReplyCounts(prev => {
+        const { [newPost.id]: _omit, ...rest } = prev;
+        AsyncStorage.setItem(COUNT_STORAGE_KEY, JSON.stringify(rest));
+        return rest;
       });
 
       // Log the failure and surface it to the user
@@ -198,8 +210,17 @@ const HomeScreen = forwardRef<HomeScreenRef, HomeScreenProps>(
           setPosts(cached);
           const entries = cached.map((p: any) => [p.id, p.reply_count ?? 0]);
           setReplyCounts(Object.fromEntries(entries));
+
         } catch (e) {
           console.error('Failed to parse cached posts', e);
+        }
+      }
+      const countStored = await AsyncStorage.getItem(COUNT_STORAGE_KEY);
+      if (countStored) {
+        try {
+          setReplyCounts(JSON.parse(countStored));
+        } catch (e) {
+          console.error('Failed to parse cached counts', e);
         }
       }
 
@@ -208,6 +229,12 @@ const HomeScreen = forwardRef<HomeScreenRef, HomeScreenProps>(
 
     loadCached();
   }, []);
+
+  useFocusEffect(
+    useCallback(() => {
+      fetchPosts();
+    }, []),
+  );
 
   return (
     
