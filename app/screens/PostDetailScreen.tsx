@@ -14,7 +14,7 @@ import {
   Image,
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { useRoute, useNavigation } from '@react-navigation/native';
+import { useRoute, useNavigation, useFocusEffect } from '@react-navigation/native';
 
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../AuthContext';
@@ -69,6 +69,8 @@ export default function PostDetailScreen() {
 
   const [replyText, setReplyText] = useState('');
   const [replies, setReplies] = useState<Reply[]>([]);
+  const [allReplies, setAllReplies] = useState<Reply[]>([]);
+  const [replyCounts, setReplyCounts] = useState<{ [key: string]: number }>({});
   const [keyboardOffset, setKeyboardOffset] = useState(0);
 
   const confirmDeletePost = (id: string) => {
@@ -104,6 +106,35 @@ export default function PostDetailScreen() {
       AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
       return updated;
     });
+    setAllReplies(prev => {
+      const descendants = new Set<string>();
+      const gather = (parentId: string) => {
+        prev.forEach(r => {
+          if (r.parent_id === parentId) {
+            descendants.add(r.id);
+            gather(r.id);
+          }
+        });
+      };
+      gather(id);
+      return prev.filter(r => r.id !== id && !descendants.has(r.id));
+    });
+    setReplyCounts(prev => {
+      const descendants = new Set<string>();
+      const gather = (parentId: string) => {
+        allReplies.forEach(r => {
+          if (r.parent_id === parentId) {
+            descendants.add(r.id);
+            gather(r.id);
+          }
+        });
+      };
+      gather(id);
+      let removed = descendants.size + 1;
+      const { [id]: _omit, ...rest } = prev;
+      descendants.forEach(d => delete rest[d]);
+      return { ...rest, [post.id]: (prev[post.id] || 0) - removed };
+    });
     await supabase.from('replies').delete().eq('id', id);
   };
 
@@ -122,25 +153,52 @@ export default function PostDetailScreen() {
     };
   }, []);
 
+  useFocusEffect(
+    React.useCallback(() => {
+      fetchReplies();
+    }, []),
+  );
+
+  const computeCounts = (replyList: Reply[]) => {
+    const childrenMap: { [key: string]: Reply[] } = {};
+    replyList.forEach(r => {
+      if (r.parent_id) {
+        if (!childrenMap[r.parent_id]) childrenMap[r.parent_id] = [];
+        childrenMap[r.parent_id].push(r);
+      }
+    });
+    const counts: { [key: string]: number } = {};
+    const countRec = (id: string): number => {
+      const children = childrenMap[id] || [];
+      let total = children.length;
+      for (const c of children) total += countRec(c.id);
+      counts[id] = total;
+      return total;
+    };
+    replyList.forEach(r => {
+      if (!counts[r.id]) countRec(r.id);
+    });
+    counts[post.id] = replyList.length;
+    return counts;
+  };
+
   const fetchReplies = async () => {
     const { data, error } = await supabase
       .from('replies')
-      // fetch only reply fields to avoid missing relationship errors
       .select('id, post_id, parent_id, user_id, content, created_at, username')
       .eq('post_id', post.id)
-      .is('parent_id', null)
       .order('created_at', { ascending: false });
     if (!error && data) {
+      const all = data as Reply[];
+      setAllReplies(all);
+      const topLevel = all.filter(r => r.parent_id === null);
       setReplies(prev => {
-        // Keep any replies that haven't been synced yet (ids starting with "temp-")
         const tempReplies = prev.filter(r => r.id.startsWith('temp-'));
-        const merged = [...tempReplies, ...(data as Reply[])];
-
-
+        const merged = [...tempReplies, ...topLevel];
         AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(merged));
         return merged;
       });
-
+      setReplyCounts(computeCounts(all));
     }
   };
 
@@ -181,6 +239,12 @@ export default function PostDetailScreen() {
       AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
       return updated;
     });
+    setAllReplies(prev => [...prev, newReply]);
+    setReplyCounts(prev => ({
+      ...prev,
+      [post.id]: (prev[post.id] || 0) + 1,
+      [newReply.id]: 0,
+    }));
     setReplyText('');
 
     let { data, error } = await supabase
@@ -209,6 +273,14 @@ export default function PostDetailScreen() {
             r.id === newReply.id ? { ...r, id: data.id, created_at: data.created_at } : r,
           ),
         );
+        setAllReplies(prev =>
+          prev.map(r => (r.id === newReply.id ? { ...r, id: data.id, created_at: data.created_at } : r)),
+        );
+        setReplyCounts(prev => {
+          const temp = prev[newReply.id] ?? 0;
+          const { [newReply.id]: _omit, ...rest } = prev;
+          return { ...rest, [data.id]: temp, [post.id]: prev[post.id] || 0 };
+        });
       }
 
       // Whether or not data was returned, refresh from the server so the reply persists
@@ -255,6 +327,7 @@ export default function PostDetailScreen() {
                 <Text style={styles.timestamp}>{timeAgo(post.created_at)}</Text>
               </View>
             </View>
+            <Text style={styles.replyCount}>{replyCounts[post.id] || 0}</Text>
           </View>
         )}
         contentContainerStyle={{ paddingBottom: 100 }}
@@ -297,9 +370,10 @@ export default function PostDetailScreen() {
                       <Text style={styles.postContent}>{item.content}</Text>
                       <Text style={styles.timestamp}>{timeAgo(item.created_at)}</Text>
                     </View>
+                  </View>
+                  <Text style={styles.replyCount}>{replyCounts[item.id] || 0}</Text>
                 </View>
-              </View>
-            </TouchableOpacity>
+              </TouchableOpacity>
           );
         }}
       />
@@ -357,6 +431,7 @@ const styles = StyleSheet.create({
   postContent: { color: 'white' },
   username: { fontWeight: 'bold', color: 'white' },
   timestamp: { fontSize: 10, color: 'gray' },
+  replyCount: { position: 'absolute', bottom: 6, left: 10, fontSize: 10, color: 'gray' },
   input: {
     backgroundColor: 'white',
     padding: 10,

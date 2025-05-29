@@ -14,7 +14,7 @@ import {
   Image,
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { useRoute, useNavigation } from '@react-navigation/native';
+import { useRoute, useNavigation, useFocusEffect } from '@react-navigation/native';
 
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../AuthContext';
@@ -72,6 +72,8 @@ export default function ReplyDetailScreen() {
 
   const [replyText, setReplyText] = useState('');
   const [replies, setReplies] = useState<Reply[]>([]);
+  const [allReplies, setAllReplies] = useState<Reply[]>([]);
+  const [replyCounts, setReplyCounts] = useState<{ [key: string]: number }>({});
   const [keyboardOffset, setKeyboardOffset] = useState(0);
 
   const confirmDeletePost = (id: string) => {
@@ -108,23 +110,80 @@ export default function ReplyDetailScreen() {
       AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
       return updated;
     });
+    setAllReplies(prev => {
+      const descendants = new Set<string>();
+      const gather = (parentId: string) => {
+        prev.forEach(r => {
+          if (r.parent_id === parentId) {
+            descendants.add(r.id);
+            gather(r.id);
+          }
+        });
+      };
+      gather(id);
+      return prev.filter(r => r.id !== id && !descendants.has(r.id));
+    });
+    setReplyCounts(prev => {
+      const descendants = new Set<string>();
+      const gather = (parentId: string) => {
+        allReplies.forEach(r => {
+          if (r.parent_id === parentId) {
+            descendants.add(r.id);
+            gather(r.id);
+          }
+        });
+      };
+      gather(id);
+      let removed = descendants.size + 1;
+      const { [id]: _omit, ...rest } = prev;
+      descendants.forEach(d => delete rest[d]);
+      return { ...rest, [parent.id]: (prev[parent.id] || 0) - removed };
+    });
 
     await supabase.from('replies').delete().eq('id', id);
+  };
+
+  const computeCounts = (replyList: Reply[], rootPostId: string) => {
+    const childrenMap: { [key: string]: Reply[] } = {};
+    replyList.forEach(r => {
+      if (r.parent_id) {
+        if (!childrenMap[r.parent_id]) childrenMap[r.parent_id] = [];
+        childrenMap[r.parent_id].push(r);
+      }
+    });
+    const counts: { [key: string]: number } = {};
+    const countRec = (id: string): number => {
+      const children = childrenMap[id] || [];
+      let total = children.length;
+      for (const c of children) total += countRec(c.id);
+      counts[id] = total;
+      return total;
+    };
+    replyList.forEach(r => {
+      if (!counts[r.id]) countRec(r.id);
+    });
+    counts[rootPostId] = replyList.length;
+    return counts;
   };
 
   const fetchReplies = async () => {
     const { data, error } = await supabase
       .from('replies')
       .select('id, post_id, parent_id, user_id, content, created_at, username')
-      .eq('parent_id', parent.id)
+      .eq('post_id', parent.post_id)
       .order('created_at', { ascending: false });
     if (!error && data) {
+      const all = data as Reply[];
+      setAllReplies(all);
+      const children = all.filter(r => r.parent_id === parent.id);
       setReplies(prev => {
         const temp = prev.filter(r => r.id.startsWith('temp-'));
-        const merged = [...temp, ...(data as Reply[])];
+        const merged = [...temp, ...children];
         AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(merged));
         return merged;
       });
+      const counts = computeCounts(all, parent.post_id);
+      setReplyCounts(counts);
     }
   };
 
@@ -142,6 +201,12 @@ export default function ReplyDetailScreen() {
     };
     loadCached();
   }, []);
+
+  useFocusEffect(
+    React.useCallback(() => {
+      fetchReplies();
+    }, []),
+  );
 
   useEffect(() => {
     const show = Keyboard.addListener(
@@ -177,6 +242,12 @@ export default function ReplyDetailScreen() {
       AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
       return updated;
     });
+    setAllReplies(prev => [...prev, newReply]);
+    setReplyCounts(prev => ({
+      ...prev,
+      [parent.id]: (prev[parent.id] || 0) + 1,
+      [newReply.id]: 0,
+    }));
     setReplyText('');
 
     let { data, error } = await supabase
@@ -201,6 +272,14 @@ export default function ReplyDetailScreen() {
         setReplies(prev =>
           prev.map(r => (r.id === newReply.id ? { ...r, id: data.id, created_at: data.created_at } : r)),
         );
+        setAllReplies(prev =>
+          prev.map(r => (r.id === newReply.id ? { ...r, id: data.id, created_at: data.created_at } : r)),
+        );
+        setReplyCounts(prev => {
+          const temp = prev[newReply.id] ?? 0;
+          const { [newReply.id]: _omit, ...rest } = prev;
+          return { ...rest, [data.id]: temp, [parent.id]: prev[parent.id] || 0 };
+        });
       }
       fetchReplies();
     }
@@ -256,6 +335,7 @@ export default function ReplyDetailScreen() {
                     <Text style={styles.timestamp}>{timeAgo(originalPost.created_at)}</Text>
                   </View>
                 </View>
+                <Text style={styles.replyCount}>{replyCounts[originalPost.id] || 0}</Text>
               </View>
             )}
               {ancestors.map(a => {
@@ -287,12 +367,13 @@ export default function ReplyDetailScreen() {
                         {ancestorName} @{ancestorUserName}
                       </Text>
                       <Text style={styles.postContent}>{a.content}</Text>
-                      <Text style={styles.timestamp}>{timeAgo(a.created_at)}</Text>
-                    </View>
+                    <Text style={styles.timestamp}>{timeAgo(a.created_at)}</Text>
                   </View>
                 </View>
-              );
-            })}
+                <Text style={styles.replyCount}>{replyCounts[a.id] || 0}</Text>
+              </View>
+            );
+          })}
 
             <View style={styles.post}>
               {user?.id === parent.user_id && (
@@ -317,6 +398,7 @@ export default function ReplyDetailScreen() {
                   <Text style={styles.timestamp}>{timeAgo(parent.created_at)}</Text>
                 </View>
               </View>
+            <Text style={styles.replyCount}>{replyCounts[parent.id] || 0}</Text>
             </View>
           </>
         )}
@@ -362,6 +444,7 @@ export default function ReplyDetailScreen() {
                     <Text style={styles.timestamp}>{timeAgo(item.created_at)}</Text>
                   </View>
                 </View>
+                <Text style={styles.replyCount}>{replyCounts[item.id] || 0}</Text>
               </View>
             </TouchableOpacity>
           );
@@ -413,15 +496,6 @@ const styles = StyleSheet.create({
 
     position: 'relative',
   },
-  threadLine: {
-    position: 'absolute',
-    left: 26,
-    top: 0,
-    bottom: -10,
-    width: 2,
-    backgroundColor: '#66538f',
-    zIndex: -1,
-  },
   highlightPost: {
     borderColor: '#4f1fde',
     borderWidth: 2,
@@ -430,6 +504,7 @@ const styles = StyleSheet.create({
   postContent: { color: 'white' },
   username: { fontWeight: 'bold', color: 'white' },
   timestamp: { fontSize: 10, color: 'gray' },
+  replyCount: { position: 'absolute', bottom: 6, left: 10, fontSize: 10, color: 'gray' },
   input: {
     backgroundColor: 'white',
     padding: 10,
@@ -453,6 +528,7 @@ const styles = StyleSheet.create({
     bottom: -20,
     width: 2,
     backgroundColor: '#6f6b8e',
+    zIndex: -1,
 
   },
   inputContainer: {
