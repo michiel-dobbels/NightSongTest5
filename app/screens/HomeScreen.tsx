@@ -60,6 +60,7 @@ const HomeScreen = forwardRef<HomeScreenRef, HomeScreenProps>(
   const [posts, setPosts] = useState<Post[]>([]);
   const [replyCounts, setReplyCounts] = useState<{ [key: string]: number }>({});
 
+
   const confirmDeletePost = (id: string) => {
     Alert.alert('Delete Post', 'Are you sure you want to delete this post?', [
       { text: 'Cancel', style: 'cancel' },
@@ -80,6 +81,7 @@ const HomeScreen = forwardRef<HomeScreenRef, HomeScreenProps>(
     setReplyCounts(prev => {
       const { [id]: _removed, ...rest } = prev;
       AsyncStorage.setItem(COUNT_STORAGE_KEY, JSON.stringify(rest));
+
       return rest;
     });
     await supabase.from('posts').delete().eq('id', id);
@@ -100,6 +102,7 @@ const HomeScreen = forwardRef<HomeScreenRef, HomeScreenProps>(
       const counts = Object.fromEntries((data as any[]).map((p: any) => [p.id, p.reply_count || 0]));
       setReplyCounts(counts);
       AsyncStorage.setItem(COUNT_STORAGE_KEY, JSON.stringify(counts));
+
     }
   };
 
@@ -132,6 +135,7 @@ const HomeScreen = forwardRef<HomeScreenRef, HomeScreenProps>(
       AsyncStorage.setItem(COUNT_STORAGE_KEY, JSON.stringify(updatedCounts));
       return updatedCounts;
     });
+
     if (!hideInput) {
       setPostText('');
     }
@@ -162,7 +166,7 @@ const HomeScreen = forwardRef<HomeScreenRef, HomeScreenProps>(
         setPosts((prev) => {
           const updated = prev.map((p) =>
             p.id === newPost.id
-              ? { ...p, id: data.id, created_at: data.created_at }
+              ? { ...p, id: data.id, created_at: data.created_at, reply_count: 0 }
               : p
           );
           AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
@@ -173,6 +177,7 @@ const HomeScreen = forwardRef<HomeScreenRef, HomeScreenProps>(
           const updatedCounts = { ...rest, [data.id]: tempCount };
           AsyncStorage.setItem(COUNT_STORAGE_KEY, JSON.stringify(updatedCounts));
           return updatedCounts;
+
         });
       }
 
@@ -209,7 +214,9 @@ const HomeScreen = forwardRef<HomeScreenRef, HomeScreenProps>(
       const stored = await AsyncStorage.getItem(STORAGE_KEY);
       if (stored) {
         try {
-          setPosts(JSON.parse(stored));
+          const cached = JSON.parse(stored);
+          setPosts(cached);
+          setReplyCounts(Object.fromEntries(cached.map((p: Post) => [p.id, p.reply_count || 0])));
         } catch (e) {
           console.error('Failed to parse cached posts', e);
         }

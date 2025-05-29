@@ -112,15 +112,18 @@ export default function ReplyDetailScreen() {
       AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
       return updated;
     });
+
     await supabase.from('replies').delete().eq('id', id);
     fetchReplies();
   };
+
 
 
   const fetchReplies = async () => {
     const { data, error } = await supabase
       .from('replies')
       .select('id, post_id, parent_id, user_id, content, created_at, username, reply_count')
+
       .eq('post_id', parent.post_id)
       .order('created_at', { ascending: false });
     if (!error && data) {
@@ -137,12 +140,14 @@ export default function ReplyDetailScreen() {
       all.forEach(r => {
         counts[r.id] = r.reply_count || 0;
       });
+
       const { data: postData } = await supabase
         .from('posts')
         .select('reply_count')
         .eq('id', parent.post_id)
         .single();
       if (postData) counts[parent.post_id] = postData.reply_count || 0;
+
       setReplyCounts(counts);
     }
   };
@@ -152,7 +157,11 @@ export default function ReplyDetailScreen() {
       const stored = await AsyncStorage.getItem(STORAGE_KEY);
       if (stored) {
         try {
-          setReplies(JSON.parse(stored));
+          const cached = JSON.parse(stored);
+          setReplies(cached);
+          const counts: { [key: string]: number } = Object.fromEntries(cached.map((r: Reply) => [r.id, r.reply_count || 0]));
+          counts[parent.post_id] = parent.reply_count || 0;
+          setReplyCounts(counts);
         } catch (e) {
           console.error('Failed to parse cached replies', e);
         }
@@ -197,6 +206,12 @@ export default function ReplyDetailScreen() {
       AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
       return updated;
     });
+    setAllReplies(prev => [...prev, newReply]);
+    setReplyCounts(prev => ({
+      ...prev,
+      [parent.id]: (prev[parent.id] || 0) + 1,
+      [newReply.id]: 0,
+    }));
     setReplyText('');
 
     let { data, error } = await supabase
@@ -219,11 +234,24 @@ export default function ReplyDetailScreen() {
     if (!error) {
       if (data) {
         setReplies(prev =>
-          prev.map(r => (r.id === newReply.id ? { ...r, id: data.id, created_at: data.created_at } : r)),
+          prev.map(r =>
+            r.id === newReply.id
+              ? { ...r, id: data.id, created_at: data.created_at, reply_count: 0 }
+              : r,
+          ),
+        );
+        setAllReplies(prev =>
+          prev.map(r =>
+            r.id === newReply.id
+              ? { ...r, id: data.id, created_at: data.created_at, reply_count: 0 }
+              : r,
+          ),
+
         );
         setAllReplies(prev =>
           prev.map(r => (r.id === newReply.id ? { ...r, id: data.id, created_at: data.created_at } : r)),
         );
+
       }
       fetchReplies();
     }
