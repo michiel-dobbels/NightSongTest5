@@ -108,11 +108,13 @@ export default function ReplyDetailScreen() {
 
   const refreshLikeCount = async (id: string, isPost = false) => {
     const { data, error } = await supabase
+
       .from(isPost ? 'posts' : 'replies')
       .select('like_count')
       .eq('id', id)
       .single();
     if (!error && data) {
+
       setLikeCounts(prev => {
         const counts = { ...prev, [id]: data.like_count ?? 0 };
         AsyncStorage.setItem(LIKE_COUNT_KEY, JSON.stringify(counts));
@@ -139,11 +141,17 @@ export default function ReplyDetailScreen() {
       return counts;
     });
     if (isLiked) {
-      await supabase.from('likes').delete().match(isPost ? { post_id: id, user_id: user.id } : { reply_id: id, user_id: user.id });
+      await supabase
+        .from('likes')
+        .delete()
+        .match(isPost ? { post_id: id, user_id: user.id } : { reply_id: id, user_id: user.id });
     } else {
-      await supabase.from('likes').insert([isPost ? { post_id: id, user_id: user.id } : { reply_id: id, user_id: user.id }]);
+      await supabase
+        .from('likes')
+        .insert([isPost ? { post_id: id, user_id: user.id } : { reply_id: id, user_id: user.id }]);
     }
     refreshLikeCount(id, isPost);
+
   };
 
   const confirmDeleteReply = (id: string) => {
@@ -269,6 +277,7 @@ export default function ReplyDetailScreen() {
             map[key] = true;
           });
           setLikedItems(map);
+
           AsyncStorage.setItem(
             `${LIKED_KEY_PREFIX}${user.id}`,
             JSON.stringify(map),
@@ -343,6 +352,7 @@ export default function ReplyDetailScreen() {
       if (legacyLiked) {
         try {
           const parsed = JSON.parse(legacyLiked);
+
             setLikedItems(parsed);
             AsyncStorage.setItem(
               `${LIKED_KEY_PREFIX}${user.id}`,

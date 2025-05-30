@@ -105,11 +105,13 @@ export default function PostDetailScreen() {
 
   const refreshLikeCount = async (id: string, isPost: boolean) => {
     const { data, error } = await supabase
+
       .from(isPost ? 'posts' : 'replies')
       .select('like_count')
       .eq('id', id)
       .single();
     if (!error && data) {
+
       setLikeCounts(prev => {
         const counts = { ...prev, [id]: data.like_count ?? 0 };
         AsyncStorage.setItem(LIKE_COUNT_KEY, JSON.stringify(counts));
@@ -144,9 +146,9 @@ export default function PostDetailScreen() {
       await supabase
         .from('likes')
         .insert({ user_id: user.id, [isPost ? 'post_id' : 'reply_id']: id });
-
     }
     refreshLikeCount(id, isPost);
+
   };
 
   const confirmDeleteReply = (id: string) => {
@@ -321,6 +323,7 @@ export default function PostDetailScreen() {
             map[key] = true;
           });
           setLikedItems(map);
+
           AsyncStorage.setItem(
             `${LIKED_KEY_PREFIX}${user.id}`,
             JSON.stringify(map),
@@ -409,8 +412,8 @@ export default function PostDetailScreen() {
           );
         } catch (e) {
           console.error('Failed to parse cached likes', e);
+
         }
-      }
 
       fetchReplies();
     };
