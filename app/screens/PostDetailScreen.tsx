@@ -392,6 +392,9 @@ export default function PostDetailScreen() {
               />
               <Text style={styles.replyCount}>{replyCounts[post.id] || 0}</Text>
             </View>
+            <View style={styles.likeContainer}>
+              <Ionicons name="heart-outline" size={12} color="red" />
+            </View>
           </View>
         )}
         contentContainerStyle={{ paddingBottom: 100 }}
@@ -443,6 +446,9 @@ export default function PostDetailScreen() {
                       style={{ marginRight: 2 }}
                     />
                     <Text style={styles.replyCount}>{replyCounts[item.id] || 0}</Text>
+                  </View>
+                  <View style={styles.likeContainer}>
+                    <Ionicons name="heart-outline" size={12} color="red" />
                   </View>
                 </View>
               </TouchableOpacity>
@@ -511,6 +517,12 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   replyCount: { fontSize: 10, color: 'gray' },
+  likeContainer: {
+    position: 'absolute',
+    bottom: 6,
+    left: '50%',
+    transform: [{ translateX: -6 }],
+  },
   input: {
     backgroundColor: 'white',
     padding: 10,

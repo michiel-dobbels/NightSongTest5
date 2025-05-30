@@ -406,6 +406,9 @@ export default function ReplyDetailScreen() {
                   />
                   <Text style={styles.replyCount}>{replyCounts[originalPost.id] || 0}</Text>
                 </View>
+                <View style={styles.likeContainer}>
+                  <Ionicons name="heart-outline" size={12} color="red" />
+                </View>
               </View>
             )}
               {ancestors.map(a => {
@@ -449,6 +452,9 @@ export default function ReplyDetailScreen() {
                   />
                   <Text style={styles.replyCount}>{replyCounts[a.id] || 0}</Text>
                 </View>
+                <View style={styles.likeContainer}>
+                  <Ionicons name="heart-outline" size={12} color="red" />
+                </View>
               </View>
             );
           })}
@@ -476,16 +482,19 @@ export default function ReplyDetailScreen() {
                   <Text style={styles.timestamp}>{timeAgo(parent.created_at)}</Text>
                 </View>
               </View>
-            <View style={styles.replyCountContainer}>
-              <Ionicons
-                name="chatbubble-outline"
-                size={12}
-                color="#66538f"
-                style={{ marginRight: 2 }}
-              />
-              <Text style={styles.replyCount}>{replyCounts[parent.id] || 0}</Text>
-            </View>
-            </View>
+          <View style={styles.replyCountContainer}>
+            <Ionicons
+              name="chatbubble-outline"
+              size={12}
+              color="#66538f"
+              style={{ marginRight: 2 }}
+            />
+            <Text style={styles.replyCount}>{replyCounts[parent.id] || 0}</Text>
+          </View>
+          <View style={styles.likeContainer}>
+            <Ionicons name="heart-outline" size={12} color="red" />
+          </View>
+          </View>
           </>
         )}
         contentContainerStyle={{ paddingBottom: 100 }}
@@ -538,6 +547,9 @@ export default function ReplyDetailScreen() {
                     style={{ marginRight: 2 }}
                   />
                   <Text style={styles.replyCount}>{replyCounts[item.id] || 0}</Text>
+                </View>
+                <View style={styles.likeContainer}>
+                  <Ionicons name="heart-outline" size={12} color="red" />
                 </View>
               </View>
             </TouchableOpacity>
@@ -615,6 +627,12 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   replyCount: { fontSize: 10, color: 'gray' },
+  likeContainer: {
+    position: 'absolute',
+    bottom: 6,
+    left: '50%',
+    transform: [{ translateX: -6 }],
+  },
   input: {
     backgroundColor: 'white',
     padding: 10,
