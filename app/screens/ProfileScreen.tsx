@@ -43,19 +43,23 @@ export default function ProfileScreen() {
       <View style={styles.backButton}>
         <Button title="Back" onPress={() => navigation.goBack()} />
       </View>
-      <Text style={styles.username}>@{profile.username}</Text>
-      {profile.display_name && (
-        <Text style={styles.name}>{profile.display_name}</Text>
-      )}
+      <View style={styles.profileRow}>
+        {profileImageUri ? (
+          <Image source={{ uri: profileImageUri }} style={styles.avatar} />
+        ) : (
+          <View style={[styles.avatar, styles.placeholder]} />
+        )}
+        <View style={styles.textContainer}>
+          <Text style={styles.username}>@{profile.username}</Text>
+          {profile.display_name && (
+            <Text style={styles.name}>{profile.display_name}</Text>
+          )}
+        </View>
+      </View>
       <TouchableOpacity onPress={pickImage} style={styles.uploadLink}>
         <Text style={styles.uploadText}>Upload Profile Picture</Text>
       </TouchableOpacity>
-      {profileImageUri && (
-        <Image source={{ uri: profileImageUri }} style={styles.image} />
-      )}
-
     </View>
-
   );
 }
 
@@ -103,6 +107,5 @@ const styles = StyleSheet.create({
     alignSelf: 'flex-start',
   },
   uploadText: { color: 'white' },
-  image: { width: 100, height: 100, borderRadius: 50, marginTop: 20 },
 
 });
