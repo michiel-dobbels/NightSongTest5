@@ -23,6 +23,7 @@ const COUNT_STORAGE_KEY = 'cached_reply_counts';
 const LIKE_COUNT_KEY = 'cached_like_counts';
 const LIKED_KEY_PREFIX = 'cached_likes_';
 
+
 type Post = {
   id: string;
   content: string;
@@ -65,6 +66,7 @@ const HomeScreen = forwardRef<HomeScreenRef, HomeScreenProps>(
   const [replyCounts, setReplyCounts] = useState<{ [key: string]: number }>({});
   const [likeCounts, setLikeCounts] = useState<{ [key: string]: number }>({});
   const [likedPosts, setLikedPosts] = useState<{ [key: string]: boolean }>({});
+
 
 
   const confirmDeletePost = (id: string) => {
@@ -123,6 +125,7 @@ const HomeScreen = forwardRef<HomeScreenRef, HomeScreenProps>(
       await supabase.from('likes').delete().match({ user_id: user.id, post_id: id });
     } else {
       await supabase.from('likes').insert({ user_id: user.id, post_id: id });
+
     }
   };
 
@@ -166,6 +169,7 @@ const HomeScreen = forwardRef<HomeScreenRef, HomeScreenProps>(
             JSON.stringify(likedObj),
           );
         }
+
       }
     }
   };
@@ -255,6 +259,12 @@ const HomeScreen = forwardRef<HomeScreenRef, HomeScreenProps>(
           AsyncStorage.setItem(LIKE_COUNT_KEY, JSON.stringify(counts));
           return counts;
         });
+        setLikeCounts(prev => {
+          const { [newPost.id]: tempLike, ...rest } = prev;
+          const counts = { ...rest, [data.id]: tempLike ?? 0 };
+          AsyncStorage.setItem(LIKE_COUNT_KEY, JSON.stringify(counts));
+          return counts;
+        });
       }
 
       // Refresh from the server in the background to stay in sync
@@ -301,6 +311,7 @@ const HomeScreen = forwardRef<HomeScreenRef, HomeScreenProps>(
           setReplyCounts(Object.fromEntries(entries));
           const likeEntries = cached.map((p: any) => [p.id, p.like_count ?? 0]);
           setLikeCounts(Object.fromEntries(likeEntries));
+
         } catch (e) {
           console.error('Failed to parse cached posts', e);
         }
@@ -329,6 +340,7 @@ const HomeScreen = forwardRef<HomeScreenRef, HomeScreenProps>(
           } catch (e) {
             console.error('Failed to parse cached likes', e);
           }
+
         }
       }
 
@@ -365,6 +377,7 @@ const HomeScreen = forwardRef<HomeScreenRef, HomeScreenProps>(
             } catch (e) {
               console.error('Failed to parse cached likes', e);
             }
+
           }
         }
       };
@@ -440,12 +453,14 @@ const HomeScreen = forwardRef<HomeScreenRef, HomeScreenProps>(
                 >
                   <Ionicons
                     name={likedPosts[item.id] ? 'heart' : 'heart-outline'}
+
                     size={12}
                     color="red"
                     style={{ marginRight: 2 }}
                   />
                   <Text style={styles.replyCount}>{likeCounts[item.id] || 0}</Text>
                 </TouchableOpacity>
+
               </View>
             </TouchableOpacity>
           );
@@ -507,6 +522,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
   },
+
 });
 
 export default HomeScreen;
