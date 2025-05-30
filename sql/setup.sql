@@ -41,7 +41,10 @@ create policy "Anyone can read posts" on public.posts
 -- Add the username column only if it doesn't exist (for older setups)
 alter table public.posts add column if not exists username text;
 alter table public.posts add column if not exists reply_count integer not null default 0;
-alter table public.replies add column if not exists reply_count integer not null default 0;
+-- Older setups may already have the replies table. Add reply_count only if it
+-- exists to avoid errors when running this script on a fresh database.
+alter table if exists public.replies
+  add column if not exists reply_count integer not null default 0;
 
 
 -- Create replies table referencing posts and profiles
@@ -170,10 +173,13 @@ create trigger replies_delete_reply_count
 after delete on public.replies
 for each row execute procedure public.decrement_reply_counts();
 
--- Example: insert a profile row so posting succeeds for a user
--- Replace the UUID and username with your values
+-- Replace the placeholder ID with one that exists in auth.users. The
+-- conditional check avoids errors if that user hasn't signed up yet.
 insert into public.profiles (id, username, display_name)
-values ('00000000-0000-0000-0000-000000000000', 'some_username', 'Some Name')
+select '00000000-0000-0000-0000-000000000000', 'some_username', 'Some Name'
+where exists (
+  select 1 from auth.users where id = '00000000-0000-0000-0000-000000000000'
+)
 on conflict (id) do nothing;
 
 -- Create likes table for posts and replies
