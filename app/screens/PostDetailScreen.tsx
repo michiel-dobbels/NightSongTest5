@@ -105,22 +105,19 @@ export default function PostDetailScreen() {
 
   const toggleLike = async (id: string, isPost: boolean) => {
     if (!user) return;
-    const liked = likedItems[id];
-    setLikedItems(prev => {
-      const updated = { ...prev, [id]: !liked };
-      AsyncStorage.setItem(
-        `${LIKED_KEY_PREFIX}${user.id}`,
-        JSON.stringify(updated),
-      );
-      return updated;
-    });
-    setLikeCounts(prev => {
-      const count = (prev[id] || 0) + (liked ? -1 : 1);
-      const counts = { ...prev, [id]: count };
-      AsyncStorage.setItem(LIKE_COUNT_KEY, JSON.stringify(counts));
-      return counts;
-    });
-    if (liked) {
+    const currentLiked = !!likedItems[id];
+    const updatedLiked = { ...likedItems, [id]: !currentLiked };
+    const updatedCounts = {
+      ...likeCounts,
+      [id]: (likeCounts[id] || 0) + (currentLiked ? -1 : 1),
+    };
+    setLikedItems(updatedLiked);
+    setLikeCounts(updatedCounts);
+    AsyncStorage.multiSet([
+      [`${LIKED_KEY_PREFIX}${user.id}`, JSON.stringify(updatedLiked)],
+      [LIKE_COUNT_KEY, JSON.stringify(updatedCounts)],
+    ]);
+    if (currentLiked) {
       await supabase
         .from('likes')
         .delete()
@@ -129,7 +126,6 @@ export default function PostDetailScreen() {
       await supabase
         .from('likes')
         .insert({ user_id: user.id, [isPost ? 'post_id' : 'reply_id']: id });
-
     }
   };
 
@@ -304,8 +300,11 @@ export default function PostDetailScreen() {
             const key = l.post_id || l.reply_id;
             map[key] = true;
           });
-          setLiked(map);
-          AsyncStorage.setItem(LIKE_STATE_KEY, JSON.stringify(map));
+          setLikedItems(map);
+          AsyncStorage.setItem(
+            `${LIKED_KEY_PREFIX}${user.id}`,
+            JSON.stringify(map),
+          );
         }
       }
 
@@ -405,10 +404,12 @@ export default function PostDetailScreen() {
           console.error('Failed to parse cached like counts', e);
         }
       }
-      const likedStored = await AsyncStorage.getItem(LIKE_STATE_KEY);
+      const likedStored = await AsyncStorage.getItem(
+        `${LIKED_KEY_PREFIX}${user?.id}`,
+      );
       if (likedStored) {
         try {
-          setLiked(JSON.parse(likedStored));
+          setLikedItems(JSON.parse(likedStored));
         } catch (e) {
           console.error('Failed to parse cached likes', e);
         }
