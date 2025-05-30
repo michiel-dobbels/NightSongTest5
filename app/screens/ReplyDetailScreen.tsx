@@ -125,6 +125,7 @@ export default function ReplyDetailScreen() {
         .from('likes')
         .delete()
         .match(isPost ? { post_id: id, user_id: user.id } : { reply_id: id, user_id: user.id });
+
     } else {
       await supabase
         .from('likes')
