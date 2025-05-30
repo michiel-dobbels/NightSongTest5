@@ -106,6 +106,21 @@ export default function ReplyDetailScreen() {
     navigation.goBack();
   };
 
+  const refreshLikeCount = async (id: string, isPost: boolean) => {
+    const { data } = await supabase
+      .from(isPost ? 'posts' : 'replies')
+      .select('like_count')
+      .eq('id', id)
+      .single();
+    if (data) {
+      setLikeCounts(prev => {
+        const counts = { ...prev, [id]: data.like_count ?? 0 };
+        AsyncStorage.setItem(LIKE_COUNT_KEY, JSON.stringify(counts));
+        return counts;
+      });
+    }
+  };
+
   const toggleLike = async (id: string, isPost = false) => {
     if (!user) return;
     const key = id;
@@ -124,10 +139,16 @@ export default function ReplyDetailScreen() {
       return counts;
     });
     if (isLiked) {
-      await supabase.from('likes').delete().match(isPost ? { post_id: id, user_id: user.id } : { reply_id: id, user_id: user.id });
+      await supabase
+        .from('likes')
+        .delete()
+        .match(isPost ? { post_id: id, user_id: user.id } : { reply_id: id, user_id: user.id });
     } else {
-      await supabase.from('likes').insert([isPost ? { post_id: id, user_id: user.id } : { reply_id: id, user_id: user.id }]);
+      await supabase
+        .from('likes')
+        .insert([isPost ? { post_id: id, user_id: user.id } : { reply_id: id, user_id: user.id }]);
     }
+    await refreshLikeCount(id, isPost);
   };
 
   const confirmDeleteReply = (id: string) => {
