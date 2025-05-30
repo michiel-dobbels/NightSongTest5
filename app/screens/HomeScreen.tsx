@@ -20,6 +20,8 @@ import { colors } from '../styles/colors';
 
 const STORAGE_KEY = 'cached_posts';
 const COUNT_STORAGE_KEY = 'cached_reply_counts';
+const LIKE_COUNT_KEY = 'cached_like_counts';
+const LIKE_STATE_KEY = 'cached_likes';
 
 type Post = {
   id: string;
@@ -28,6 +30,7 @@ type Post = {
   user_id: string;
   created_at: string;
   reply_count?: number;
+  like_count?: number;
   profiles?: {
     username: string | null;
     display_name: string | null;
@@ -60,6 +63,8 @@ const HomeScreen = forwardRef<HomeScreenRef, HomeScreenProps>(
     const [postText, setPostText] = useState('');
   const [posts, setPosts] = useState<Post[]>([]);
   const [replyCounts, setReplyCounts] = useState<{ [key: string]: number }>({});
+  const [likeCounts, setLikeCounts] = useState<{ [key: string]: number }>({});
+  const [liked, setLiked] = useState<{ [key: string]: boolean }>({});
 
 
   const confirmDeletePost = (id: string) => {
@@ -87,6 +92,29 @@ const HomeScreen = forwardRef<HomeScreenRef, HomeScreenProps>(
     await supabase.from('posts').delete().eq('id', id);
   };
 
+  const toggleLike = async (id: string) => {
+    if (!user) return;
+    const isLiked = liked[id];
+    setLiked(prev => ({ ...prev, [id]: !isLiked }));
+    setLikeCounts(prev => ({
+      ...prev,
+      [id]: (prev[id] || 0) + (isLiked ? -1 : 1),
+    }));
+    AsyncStorage.setItem(
+      LIKE_COUNT_KEY,
+      JSON.stringify({ ...likeCounts, [id]: (likeCounts[id] || 0) + (isLiked ? -1 : 1) }),
+    );
+    AsyncStorage.setItem(
+      LIKE_STATE_KEY,
+      JSON.stringify({ ...liked, [id]: !isLiked }),
+    );
+    if (isLiked) {
+      await supabase.from('likes').delete().match({ post_id: id, user_id: user.id });
+    } else {
+      await supabase.from('likes').insert([{ post_id: id, user_id: user.id }]);
+    }
+  };
+
 
 
 
@@ -94,17 +122,33 @@ const HomeScreen = forwardRef<HomeScreenRef, HomeScreenProps>(
     const { data, error } = await supabase
       .from('posts')
       .select(
-        'id, content, user_id, created_at, reply_count, profiles(username, display_name)',
+        'id, content, user_id, created_at, reply_count, like_count, profiles(username, display_name)',
       )
       .order('created_at', { ascending: false });
 
     if (!error && data) {
       setPosts(data as Post[]);
       AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(data));
-      const entries = (data as any[]).map(p => [p.id, p.reply_count ?? 0]);
-      const counts = Object.fromEntries(entries);
-      setReplyCounts(counts);
-      AsyncStorage.setItem(COUNT_STORAGE_KEY, JSON.stringify(counts));
+      const replyEntries = data.map((p: any) => [p.id, p.reply_count ?? 0]);
+      const likeEntries = data.map((p: any) => [p.id, p.like_count ?? 0]);
+      const replyMap = Object.fromEntries(replyEntries);
+      const likeMap = Object.fromEntries(likeEntries);
+      setReplyCounts(replyMap);
+      setLikeCounts(likeMap);
+      AsyncStorage.setItem(COUNT_STORAGE_KEY, JSON.stringify(replyMap));
+      AsyncStorage.setItem(LIKE_COUNT_KEY, JSON.stringify(likeMap));
+    }
+
+    if (user) {
+      const { data: likedData } = await supabase
+        .from('likes')
+        .select('post_id')
+        .eq('user_id', user.id);
+      if (likedData) {
+        const likedMap = Object.fromEntries(likedData.map((l: any) => [l.post_id, true]));
+        setLiked(likedMap);
+        AsyncStorage.setItem(LIKE_STATE_KEY, JSON.stringify(likedMap));
+      }
     }
   };
 
@@ -120,6 +164,7 @@ const HomeScreen = forwardRef<HomeScreenRef, HomeScreenProps>(
       user_id: user.id,
       created_at: new Date().toISOString(),
       reply_count: 0,
+      like_count: 0,
       profiles: {
         username: profile.username,
         display_name: profile.display_name,
@@ -135,6 +180,11 @@ const HomeScreen = forwardRef<HomeScreenRef, HomeScreenProps>(
     setReplyCounts(prev => {
       const counts = { ...prev, [newPost.id]: 0 };
       AsyncStorage.setItem(COUNT_STORAGE_KEY, JSON.stringify(counts));
+      return counts;
+    });
+    setLikeCounts(prev => {
+      const counts = { ...prev, [newPost.id]: 0 };
+      AsyncStorage.setItem(LIKE_COUNT_KEY, JSON.stringify(counts));
       return counts;
     });
 
@@ -181,6 +231,12 @@ const HomeScreen = forwardRef<HomeScreenRef, HomeScreenProps>(
           return counts;
 
         });
+        setLikeCounts(prev => {
+          const { [newPost.id]: tempLike, ...rest } = prev;
+          const counts = { ...rest, [data.id]: tempLike ?? 0 };
+          AsyncStorage.setItem(LIKE_COUNT_KEY, JSON.stringify(counts));
+          return counts;
+        });
       }
 
       // Refresh from the server in the background to stay in sync
@@ -196,6 +252,11 @@ const HomeScreen = forwardRef<HomeScreenRef, HomeScreenProps>(
       setReplyCounts(prev => {
         const { [newPost.id]: _omit, ...rest } = prev;
         AsyncStorage.setItem(COUNT_STORAGE_KEY, JSON.stringify(rest));
+        return rest;
+      });
+      setLikeCounts(prev => {
+        const { [newPost.id]: _omit, ...rest } = prev;
+        AsyncStorage.setItem(LIKE_COUNT_KEY, JSON.stringify(rest));
         return rest;
       });
 
@@ -220,6 +281,8 @@ const HomeScreen = forwardRef<HomeScreenRef, HomeScreenProps>(
           setPosts(cached);
           const entries = cached.map((p: any) => [p.id, p.reply_count ?? 0]);
           setReplyCounts(Object.fromEntries(entries));
+          const likeEntries = cached.map((p: any) => [p.id, p.like_count ?? 0]);
+          setLikeCounts(Object.fromEntries(likeEntries));
 
         } catch (e) {
           console.error('Failed to parse cached posts', e);
@@ -231,6 +294,22 @@ const HomeScreen = forwardRef<HomeScreenRef, HomeScreenProps>(
           setReplyCounts(JSON.parse(countStored));
         } catch (e) {
           console.error('Failed to parse cached counts', e);
+        }
+      }
+      const likeStored = await AsyncStorage.getItem(LIKE_COUNT_KEY);
+      if (likeStored) {
+        try {
+          setLikeCounts(JSON.parse(likeStored));
+        } catch (e) {
+          console.error('Failed to parse cached like counts', e);
+        }
+      }
+      const likedStored = await AsyncStorage.getItem(LIKE_STATE_KEY);
+      if (likedStored) {
+        try {
+          setLiked(JSON.parse(likedStored));
+        } catch (e) {
+          console.error('Failed to parse cached likes', e);
         }
       }
 
@@ -249,6 +328,22 @@ const HomeScreen = forwardRef<HomeScreenRef, HomeScreenProps>(
             setReplyCounts(JSON.parse(stored));
           } catch (e) {
             console.error('Failed to parse cached counts', e);
+          }
+        }
+        const likeStored = await AsyncStorage.getItem(LIKE_COUNT_KEY);
+        if (likeStored) {
+          try {
+            setLikeCounts(JSON.parse(likeStored));
+          } catch (e) {
+            console.error('Failed to parse cached like counts', e);
+          }
+        }
+        const likedStored = await AsyncStorage.getItem(LIKE_STATE_KEY);
+        if (likedStored) {
+          try {
+            setLiked(JSON.parse(likedStored));
+          } catch (e) {
+            console.error('Failed to parse cached likes', e);
           }
         }
       };
@@ -318,6 +413,18 @@ const HomeScreen = forwardRef<HomeScreenRef, HomeScreenProps>(
                   />
                   <Text style={styles.replyCount}>{replyCounts[item.id] || 0}</Text>
                 </View>
+                <TouchableOpacity
+                  onPress={() => toggleLike(item.id)}
+                  style={styles.likeContainer}
+                >
+                  <Ionicons
+                    name={liked[item.id] ? 'heart' : 'heart-outline'}
+                    size={12}
+                    color="red"
+                    style={{ marginRight: 2 }}
+                  />
+                  <Text style={styles.likeCount}>{likeCounts[item.id] || 0}</Text>
+                </TouchableOpacity>
               </View>
             </TouchableOpacity>
           );
@@ -371,6 +478,15 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   replyCount: { fontSize: 10, color: 'gray' },
+  likeContainer: {
+    position: 'absolute',
+    bottom: 6,
+    left: '50%',
+    transform: [{ translateX: -6 }],
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  likeCount: { fontSize: 10, color: 'gray' },
 });
 
 export default HomeScreen;
