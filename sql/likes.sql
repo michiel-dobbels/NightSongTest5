@@ -18,6 +18,7 @@ create table if not exists public.likes (
 
 alter table public.likes enable row level security;
 
+
 create policy "Users can like" on public.likes
   for insert with check (auth.uid() = user_id);
 create policy "Users can unlike" on public.likes
@@ -31,6 +32,7 @@ begin
   if new.post_id is not null then
     update public.posts set like_count = like_count + 1 where id = new.post_id;
   elsif new.reply_id is not null then
+
     update public.replies set like_count = like_count + 1 where id = new.reply_id;
   end if;
   return new;
@@ -42,6 +44,7 @@ begin
   if old.post_id is not null then
     update public.posts set like_count = like_count - 1 where id = old.post_id;
   elsif old.reply_id is not null then
+
     update public.replies set like_count = like_count - 1 where id = old.reply_id;
   end if;
   return old;
@@ -55,3 +58,4 @@ for each row execute procedure public.increment_like_count();
 create trigger like_delete
 after delete on public.likes
 for each row execute procedure public.decrement_like_count();
+
