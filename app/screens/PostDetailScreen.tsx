@@ -304,8 +304,11 @@ export default function PostDetailScreen() {
             const key = l.post_id || l.reply_id;
             map[key] = true;
           });
-          setLiked(map);
-          AsyncStorage.setItem(LIKE_STATE_KEY, JSON.stringify(map));
+          setLikedItems(map);
+          AsyncStorage.setItem(
+            `${LIKED_KEY_PREFIX}${user.id}`,
+            JSON.stringify(map),
+          );
         }
       }
 
@@ -405,14 +408,20 @@ export default function PostDetailScreen() {
           console.error('Failed to parse cached like counts', e);
         }
       }
-      const likedStored = await AsyncStorage.getItem(LIKE_STATE_KEY);
-      if (likedStored) {
-        try {
-          setLiked(JSON.parse(likedStored));
-        } catch (e) {
-          console.error('Failed to parse cached likes', e);
+        // Legacy storage key for liked state; retained for backward compatibility
+        const legacyLiked = await AsyncStorage.getItem('LIKE_STATE_KEY');
+        if (legacyLiked) {
+          try {
+            const parsed = JSON.parse(legacyLiked);
+            setLikedItems(parsed);
+            AsyncStorage.setItem(
+              `${LIKED_KEY_PREFIX}${user.id}`,
+              JSON.stringify(parsed),
+            );
+          } catch (e) {
+            console.error('Failed to parse cached likes', e);
+          }
         }
-      }
 
       fetchReplies();
     };
