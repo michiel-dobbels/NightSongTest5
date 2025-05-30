@@ -121,6 +121,38 @@ export default function ReplyDetailScreen() {
     }
   };
 
+  const refreshChainLikes = async () => {
+    const replyIds = [parent.id, ...ancestors.map(a => a.id)];
+    if (replyIds.length) {
+      const { data } = await supabase
+        .from('replies')
+        .select('id, like_count')
+        .in('id', replyIds);
+      if (data) {
+        const entries = data.map(r => [r.id, r.like_count ?? 0]);
+        setLikeCounts(prev => {
+          const counts = { ...prev, ...Object.fromEntries(entries) } as Record<string, number>;
+          AsyncStorage.setItem(LIKE_COUNT_KEY, JSON.stringify(counts));
+          return counts;
+        });
+      }
+    }
+    if (originalPost) {
+      const { data } = await supabase
+        .from('posts')
+        .select('like_count')
+        .eq('id', originalPost.id)
+        .single();
+      if (data) {
+        setLikeCounts(prev => {
+          const counts = { ...prev, [originalPost.id]: data.like_count ?? 0 };
+          AsyncStorage.setItem(LIKE_COUNT_KEY, JSON.stringify(counts));
+          return counts;
+        });
+      }
+    }
+  };
+
   const toggleLike = async (id: string, isPost = false) => {
     if (!user) return;
     const key = id;
@@ -214,6 +246,7 @@ export default function ReplyDetailScreen() {
 
     await supabase.from('replies').delete().eq('id', id);
     fetchReplies();
+    refreshChainLikes();
   };
 
   
@@ -308,6 +341,7 @@ export default function ReplyDetailScreen() {
         }
       }
 
+      refreshChainLikes();
 
     }
   };
@@ -392,6 +426,7 @@ export default function ReplyDetailScreen() {
       
 
       fetchReplies();
+      refreshChainLikes();
     };
     loadCached();
   }, []);
@@ -429,8 +464,46 @@ export default function ReplyDetailScreen() {
       };
       refreshCounts();
       fetchReplies();
+      refreshChainLikes();
     }, []),
   );
+
+  useEffect(() => {
+    const reloadForUser = async () => {
+      if (user) {
+        const stored = await AsyncStorage.getItem(`${LIKED_KEY_PREFIX}${user.id}`);
+        if (stored) {
+          try {
+            setLikedItems(JSON.parse(stored));
+          } catch (e) {
+            console.error('Failed to parse cached likes', e);
+          }
+        } else {
+          const { data } = await supabase
+            .from('likes')
+            .select('post_id, reply_id')
+            .eq('user_id', user.id);
+          if (data) {
+            const map: Record<string, boolean> = {};
+            data.forEach(l => {
+              const key = l.post_id || l.reply_id;
+              if (key) map[key] = true;
+            });
+            setLikedItems(map);
+            AsyncStorage.setItem(
+              `${LIKED_KEY_PREFIX}${user.id}`,
+              JSON.stringify(map),
+            );
+          }
+        }
+      } else {
+        setLikedItems({});
+      }
+      fetchReplies();
+      refreshChainLikes();
+    };
+    reloadForUser();
+  }, [user?.id]);
 
   useEffect(() => {
     const show = Keyboard.addListener(
@@ -546,6 +619,7 @@ export default function ReplyDetailScreen() {
 
       }
       fetchReplies();
+      refreshChainLikes();
     }
   };
 
