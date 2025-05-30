@@ -523,6 +523,7 @@ export default function ReplyDetailScreen() {
                   />
                   <Text style={styles.likeCount}>{likeCounts[originalPost.id] || 0}</Text>
                 </TouchableOpacity>
+
               </View>
             )}
               {ancestors.map(a => {
@@ -578,6 +579,7 @@ export default function ReplyDetailScreen() {
                   />
                   <Text style={styles.likeCount}>{likeCounts[a.id] || 0}</Text>
                 </TouchableOpacity>
+
               </View>
             );
           })}
@@ -626,6 +628,7 @@ export default function ReplyDetailScreen() {
             />
             <Text style={styles.likeCount}>{likeCounts[parent.id] || 0}</Text>
           </TouchableOpacity>
+
           </View>
           </>
         )}
@@ -692,6 +695,7 @@ export default function ReplyDetailScreen() {
                   />
                   <Text style={styles.likeCount}>{likeCounts[item.id] || 0}</Text>
                 </TouchableOpacity>
+
               </View>
             </TouchableOpacity>
           );
@@ -777,6 +781,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   likeCount: { fontSize: 10, color: 'gray' },
+
   input: {
     backgroundColor: 'white',
     padding: 10,

@@ -525,6 +525,7 @@ export default function PostDetailScreen() {
               />
               <Text style={styles.likeCount}>{likeCounts[post.id] || 0}</Text>
             </TouchableOpacity>
+
           </View>
         )}
         contentContainerStyle={{ paddingBottom: 100 }}
@@ -589,6 +590,7 @@ export default function PostDetailScreen() {
                     />
                     <Text style={styles.likeCount}>{likeCounts[item.id] || 0}</Text>
                   </TouchableOpacity>
+
                 </View>
               </TouchableOpacity>
           );
@@ -665,6 +667,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   likeCount: { fontSize: 10, color: 'gray' },
+
   input: {
     backgroundColor: 'white',
     padding: 10,

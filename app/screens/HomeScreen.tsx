@@ -425,6 +425,7 @@ const HomeScreen = forwardRef<HomeScreenRef, HomeScreenProps>(
                   />
                   <Text style={styles.likeCount}>{likeCounts[item.id] || 0}</Text>
                 </TouchableOpacity>
+
               </View>
             </TouchableOpacity>
           );
@@ -487,6 +488,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   likeCount: { fontSize: 10, color: 'gray' },
+
 });
 
 export default HomeScreen;
