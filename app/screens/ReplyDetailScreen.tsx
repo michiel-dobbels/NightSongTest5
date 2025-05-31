@@ -107,14 +107,18 @@ export default function ReplyDetailScreen() {
   };
 
   const refreshLikeCount = async (id: string, isPost: boolean) => {
-    const { data } = await supabase
-      .from(isPost ? 'posts' : 'replies')
-      .select('like_count')
-      .eq('id', id)
-      .single();
-    if (data) {
+    const { count } = await supabase
+      .from('likes')
+      .select('id', { count: 'exact', head: true })
+      .match(isPost ? { post_id: id } : { reply_id: id });
+
+    if (typeof count === 'number') {
+      await supabase
+        .from(isPost ? 'posts' : 'replies')
+        .update({ like_count: count })
+        .eq('id', id);
       setLikeCounts(prev => {
-        const counts = { ...prev, [id]: data.like_count ?? 0 };
+        const counts = { ...prev, [id]: count };
         AsyncStorage.setItem(LIKE_COUNT_KEY, JSON.stringify(counts));
         return counts;
       });
@@ -124,12 +128,20 @@ export default function ReplyDetailScreen() {
   const refreshChainLikes = async () => {
     const replyIds = [parent.id, ...ancestors.map(a => a.id)];
     if (replyIds.length) {
-      const { data } = await supabase
-        .from('replies')
-        .select('id, like_count')
-        .in('id', replyIds);
-      if (data) {
-        const entries = data.map(r => [r.id, r.like_count ?? 0]);
+      const entries: [string, number][] = [];
+      await Promise.all(
+        replyIds.map(async rid => {
+          const { count } = await supabase
+            .from('likes')
+            .select('id', { count: 'exact', head: true })
+            .eq('reply_id', rid);
+          if (typeof count === 'number') {
+            entries.push([rid, count]);
+            await supabase.from('replies').update({ like_count: count }).eq('id', rid);
+          }
+        }),
+      );
+      if (entries.length) {
         setLikeCounts(prev => {
           const counts = { ...prev, ...Object.fromEntries(entries) } as Record<string, number>;
           AsyncStorage.setItem(LIKE_COUNT_KEY, JSON.stringify(counts));
@@ -138,14 +150,14 @@ export default function ReplyDetailScreen() {
       }
     }
     if (originalPost) {
-      const { data } = await supabase
-        .from('posts')
-        .select('like_count')
-        .eq('id', originalPost.id)
-        .single();
-      if (data) {
+      const { count } = await supabase
+        .from('likes')
+        .select('id', { count: 'exact', head: true })
+        .eq('post_id', originalPost.id);
+      if (typeof count === 'number') {
+        await supabase.from('posts').update({ like_count: count }).eq('id', originalPost.id);
         setLikeCounts(prev => {
-          const counts = { ...prev, [originalPost.id]: data.like_count ?? 0 };
+          const counts = { ...prev, [originalPost.id]: count };
           AsyncStorage.setItem(LIKE_COUNT_KEY, JSON.stringify(counts));
           return counts;
         });
