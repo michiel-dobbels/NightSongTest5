@@ -45,6 +45,7 @@ export const LikeProvider = ({ children }: { children: React.ReactNode }) => {
         }
       } else {
         setLikedItems({});
+
       }
     };
     load();
