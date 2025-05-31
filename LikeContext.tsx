@@ -23,11 +23,13 @@ export const LikeProvider = ({ children }: { children: React.ReactNode }) => {
   const [likedItems, setLikedItems] = useState<Record<string, boolean>>({});
 
   useEffect(() => {
+    let active = true;
     const load = async () => {
       const likeStored = await AsyncStorage.getItem(LIKE_COUNT_KEY);
       if (likeStored) {
         try {
-          setLikeCounts(JSON.parse(likeStored));
+          const parsed = JSON.parse(likeStored);
+          if (active) setLikeCounts(parsed);
         } catch (e) {
           console.error('Failed to parse cached like counts', e);
         }
@@ -36,19 +38,23 @@ export const LikeProvider = ({ children }: { children: React.ReactNode }) => {
         const likedStored = await AsyncStorage.getItem(`${LIKED_KEY_PREFIX}${user.id}`);
         if (likedStored) {
           try {
-            setLikedItems(JSON.parse(likedStored));
+            const parsedLikes = JSON.parse(likedStored);
+            if (active) setLikedItems(parsedLikes);
           } catch (e) {
             console.error('Failed to parse cached likes', e);
           }
-        } else {
+        } else if (active) {
           setLikedItems({});
         }
-      } else {
+      } else if (active) {
         setLikedItems({});
 
       }
     };
     load();
+    return () => {
+      active = false;
+    };
   }, [user]);
 
   const refreshLikeCount = async (id: string, isPost: boolean) => {

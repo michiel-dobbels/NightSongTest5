@@ -613,7 +613,7 @@ export default function ReplyDetailScreen() {
                     color="red"
                     style={{ marginRight: 2 }}
                   />
-                  <Text style={styles.replyCount}>{likeCounts[originalPost.id] || 0}</Text>
+                  <Text style={styles.replyCount}>{likeCounts[originalPost.id] ?? originalPost.like_count ?? 0}</Text>
                 </TouchableOpacity>
 
               </View>
@@ -670,7 +670,7 @@ export default function ReplyDetailScreen() {
                     color="red"
                     style={{ marginRight: 2 }}
                   />
-                  <Text style={styles.replyCount}>{likeCounts[a.id] || 0}</Text>
+                  <Text style={styles.replyCount}>{likeCounts[a.id] ?? a.like_count ?? 0}</Text>
                 </TouchableOpacity>
 
               </View>
@@ -720,7 +720,7 @@ export default function ReplyDetailScreen() {
               color="red"
               style={{ marginRight: 2 }}
             />
-            <Text style={styles.replyCount}>{likeCounts[parent.id] || 0}</Text>
+            <Text style={styles.replyCount}>{likeCounts[parent.id] ?? parent.like_count ?? 0}</Text>
           </TouchableOpacity>
 
           </View>
@@ -788,7 +788,7 @@ export default function ReplyDetailScreen() {
                     color="red"
                     style={{ marginRight: 2 }}
                   />
-                  <Text style={styles.replyCount}>{likeCounts[item.id] || 0}</Text>
+                  <Text style={styles.replyCount}>{likeCounts[item.id] ?? item.like_count ?? 0}</Text>
                 </TouchableOpacity>
 
               </View>
