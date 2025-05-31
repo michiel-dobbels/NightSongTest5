@@ -352,11 +352,19 @@ export default function ReplyDetailScreen() {
       const countStored = await AsyncStorage.getItem(COUNT_STORAGE_KEY);
       const likeStored = await AsyncStorage.getItem(LIKE_COUNT_KEY);
       let storedCounts: { [key: string]: number } = {};
+      let storedLikes: { [key: string]: number } = {};
       if (countStored) {
         try {
           storedCounts = JSON.parse(countStored);
         } catch (e) {
           console.error('Failed to parse cached counts', e);
+        }
+      }
+      if (likeStored) {
+        try {
+          storedLikes = JSON.parse(likeStored);
+        } catch (e) {
+          console.error('Failed to parse cached like counts', e);
         }
       }
       if (stored) {
@@ -371,23 +379,18 @@ export default function ReplyDetailScreen() {
 
           const likeEntries = cached.map((r: any) => [r.id, r.like_count ?? 0]);
           const likeObj = Object.fromEntries(likeEntries);
-          setLikeCounts(prev => ({ ...prev, ...likeObj }));
-          AsyncStorage.setItem(LIKE_COUNT_KEY, JSON.stringify(likeObj));
+          storedLikes = { ...storedLikes, ...likeObj };
+          setLikeCounts(prev => ({ ...prev, ...storedLikes }));
+          AsyncStorage.setItem(LIKE_COUNT_KEY, JSON.stringify(storedLikes));
 
 
 
         } catch (e) {
           console.error('Failed to parse cached replies', e);
         }
-      } else if (countStored) {
+      } else {
         setReplyCounts(prev => ({ ...prev, ...storedCounts }));
-      }
-      if (likeStored) {
-        try {
-          setLikeCounts(prev => ({ ...prev, ...JSON.parse(likeStored) }));
-        } catch (e) {
-          console.error('Failed to parse cached like counts', e);
-        }
+        setLikeCounts(prev => ({ ...prev, ...storedLikes }));
       }
       if (user) {
         const likedStored = await AsyncStorage.getItem(`${LIKED_KEY_PREFIX}${user.id}`);
@@ -397,15 +400,6 @@ export default function ReplyDetailScreen() {
           } catch (e) {
             console.error('Failed to parse cached likes', e);
           }
-        }
-      }
-
-     
-      if (likeStored) {
-        try {
-          setLikeCounts(JSON.parse(likeStored));
-        } catch (e) {
-          console.error('Failed to parse cached like counts', e);
         }
       }
         // Legacy storage key for liked state; retained for backward compatibility
