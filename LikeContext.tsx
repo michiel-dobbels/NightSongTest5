@@ -25,6 +25,7 @@ export const LikeProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [likeCounts, setLikeCounts] = useState<Record<string, number>>({});
   const [likedItems, setLikedItems] = useState<Record<string, boolean>>({});
 
+
   useEffect(() => {
     const load = async () => {
       const storedCounts = await AsyncStorage.getItem(LIKE_COUNT_KEY);
@@ -46,6 +47,7 @@ export const LikeProvider: React.FC<{ children: React.ReactNode }> = ({ children
         }
       } else {
         setLikedItems({});
+
       }
     };
     load();
@@ -77,6 +79,7 @@ export const LikeProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const refreshLikeCount = async (id: string, isPost: boolean) => {
+
     const { data } = await supabase
       .from(isPost ? 'posts' : 'replies')
       .select('like_count')
@@ -88,6 +91,7 @@ export const LikeProvider: React.FC<{ children: React.ReactNode }> = ({ children
         AsyncStorage.setItem(LIKE_COUNT_KEY, JSON.stringify(updated));
         return updated;
       });
+
     }
   };
 
@@ -123,4 +127,5 @@ export const LikeProvider: React.FC<{ children: React.ReactNode }> = ({ children
 };
 
 export const useLikes = () => useContext(LikeContext);
+
 

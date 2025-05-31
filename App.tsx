@@ -3,6 +3,7 @@ import { NavigationContainer } from '@react-navigation/native';
 import { AuthProvider } from './AuthContext';
 import { LikeProvider } from './LikeContext';
 import Navigator from './Navigator';
+import { LikeProvider } from './LikeContext';
 
 import { Buffer } from 'buffer';
 import process from 'process';

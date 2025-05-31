@@ -17,6 +17,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../AuthContext';
 import { useLikes } from '../../LikeContext';
+
 import { colors } from '../styles/colors';
 
 const STORAGE_KEY = 'cached_posts';
@@ -67,6 +68,7 @@ const HomeScreen = forwardRef<HomeScreenRef, HomeScreenProps>(
 
 
 
+
   const confirmDeletePost = (id: string) => {
     Alert.alert('Delete Post', 'Are you sure you want to delete this post?', [
       { text: 'Cancel', style: 'cancel' },
@@ -100,6 +102,7 @@ const HomeScreen = forwardRef<HomeScreenRef, HomeScreenProps>(
 
 
 
+
   const fetchPosts = async () => {
     const { data, error } = await supabase
       .from('posts')
@@ -118,6 +121,7 @@ const HomeScreen = forwardRef<HomeScreenRef, HomeScreenProps>(
       const ids = (data as any[]).map(p => p.id);
       await refreshLikeCounts({ posts: ids });
 
+
       if (user) {
         const { data: likedData } = await supabase
           .from('likes')
@@ -130,6 +134,7 @@ const HomeScreen = forwardRef<HomeScreenRef, HomeScreenProps>(
             if (l.post_id) likedObj[l.post_id] = true;
           });
           // Cache liked state in context
+
         }
 
       }
@@ -167,6 +172,7 @@ const HomeScreen = forwardRef<HomeScreenRef, HomeScreenProps>(
       return counts;
     });
     await refreshLikeCounts({ posts: [newPost.id] });
+
 
     if (!hideInput) {
       setPostText('');
@@ -211,6 +217,7 @@ const HomeScreen = forwardRef<HomeScreenRef, HomeScreenProps>(
           return counts;
         });
         await refreshLikeCounts({ posts: [data.id] });
+
       }
 
       // Refresh from the server in the background to stay in sync
@@ -229,6 +236,7 @@ const HomeScreen = forwardRef<HomeScreenRef, HomeScreenProps>(
         return rest;
       });
       // remove cached like count if optimistic post fails
+
 
       // Log the failure and surface it to the user
       console.error('Failed to post:', error?.message);
@@ -266,6 +274,7 @@ const HomeScreen = forwardRef<HomeScreenRef, HomeScreenProps>(
           console.error('Failed to parse cached counts', e);
         }
       }
+
       fetchPosts();
     };
 
@@ -283,6 +292,7 @@ const HomeScreen = forwardRef<HomeScreenRef, HomeScreenProps>(
             console.error('Failed to parse cached counts', e);
           }
         }
+
       };
       syncCounts();
       fetchPosts();
@@ -353,6 +363,7 @@ const HomeScreen = forwardRef<HomeScreenRef, HomeScreenProps>(
                 <TouchableOpacity
                   style={styles.likeContainer}
                   onPress={() => handleToggleLike(item.id)}
+
                 >
                   <Ionicons
                     name={likedItems[item.id] ? 'heart' : 'heart-outline'}
