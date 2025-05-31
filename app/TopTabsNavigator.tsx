@@ -17,6 +17,7 @@ import {
   Animated,
   TouchableWithoutFeedback,
   Dimensions,
+  Image,
 } from 'react-native';
 import {
   SafeAreaView,
@@ -29,6 +30,7 @@ import { useNavigation } from '@react-navigation/native';
 import HomeScreen, { HomeScreenRef } from './screens/HomeScreen';
 import { supabase } from '../lib/supabase';
 import { colors } from './styles/colors';
+import * as ImagePicker from 'expo-image-picker';
 
 
 function FollowingScreen() {
@@ -92,7 +94,19 @@ export default function TopTabsNavigator() {
   const [modalVisible, setModalVisible] = useState(false);
   const [postText, setPostText] = useState('');
   const [modalText, setModalText] = useState('');
+  const [modalImage, setModalImage] = useState<string | null>(null);
   const homeScreenRef = useRef<HomeScreenRef>(null);
+
+  const pickImage = async () => {
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: true,
+      quality: 0.8,
+    });
+    if (!result.canceled) {
+      setModalImage(result.assets[0].uri);
+    }
+  };
 
   const handlePost = async () => {
     if (!postText.trim() || !user) return;
@@ -110,8 +124,9 @@ export default function TopTabsNavigator() {
   };
 
   const handleModalPost = async () => {
-    await homeScreenRef.current?.createPost(modalText);
+    await homeScreenRef.current?.createPost(modalText, modalImage ?? undefined);
     setModalText('');
+    setModalImage(null);
     setModalVisible(false);
   };
 
@@ -206,7 +221,13 @@ export default function TopTabsNavigator() {
                 value={modalText}
                 onChangeText={setModalText}
               />
-              <Button title="Post" onPress={handleModalPost} />
+              {modalImage && (
+                <Image source={{ uri: modalImage }} style={styles.preview} />
+              )}
+              <View style={styles.buttonRow}>
+                <Button title="Add Image" onPress={pickImage} />
+                <Button title="Post" onPress={handleModalPost} />
+              </View>
               <Button title="Cancel" onPress={() => setModalVisible(false)} />
             </View>
           </View>
@@ -251,6 +272,17 @@ const styles = StyleSheet.create({
     backgroundColor: 'white',
     padding: 10,
     borderRadius: 6,
+    marginBottom: 10,
+  },
+  preview: {
+    width: '100%',
+    height: 200,
+    borderRadius: 6,
+    marginBottom: 10,
+  },
+  buttonRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
     marginBottom: 10,
   },
   fab: {

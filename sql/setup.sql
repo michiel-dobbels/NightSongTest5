@@ -41,7 +41,9 @@ create policy "Anyone can read posts" on public.posts
 -- Add the username column only if it doesn't exist (for older setups)
 alter table public.posts add column if not exists username text;
 alter table public.posts add column if not exists reply_count integer not null default 0;
+alter table public.posts add column if not exists image_url text;
 alter table public.replies add column if not exists reply_count integer not null default 0;
+alter table public.replies add column if not exists image_url text;
 
 
 -- Create replies table referencing posts and profiles

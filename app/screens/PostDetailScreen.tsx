@@ -13,6 +13,7 @@ import {
   Alert,
   Image,
 } from 'react-native';
+import * as ImagePicker from 'expo-image-picker';
 import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useRoute, useNavigation, useFocusEffect } from '@react-navigation/native';
@@ -41,6 +42,7 @@ function timeAgo(dateString: string): string {
 interface Post {
   id: string;
   content: string;
+  image_url?: string;
   user_id: string;
   created_at: string;
 
@@ -59,6 +61,7 @@ interface Reply {
   parent_id: string | null;
   user_id: string;
   content: string;
+  image_url?: string;
   created_at: string;
 
   username?: string;
@@ -79,6 +82,7 @@ export default function PostDetailScreen() {
   const STORAGE_KEY = `${REPLY_STORAGE_PREFIX}${post.id}`;
 
   const [replyText, setReplyText] = useState('');
+  const [replyImage, setReplyImage] = useState<string | null>(null);
   const [replies, setReplies] = useState<Reply[]>([]);
   const [allReplies, setAllReplies] = useState<Reply[]>([]);
   const [replyCounts, setReplyCounts] = useState<{ [key: string]: number }>({});
@@ -96,6 +100,17 @@ export default function PostDetailScreen() {
         onPress: () => handleDeletePost(id),
       },
     ]);
+  };
+
+  const pickImage = async () => {
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: true,
+      quality: 0.8,
+    });
+    if (!result.canceled) {
+      setReplyImage(result.assets[0].uri);
+    }
   };
 
   const handleDeletePost = async (id: string) => {
@@ -270,7 +285,7 @@ export default function PostDetailScreen() {
   const fetchReplies = async () => {
     const { data, error } = await supabase
       .from('replies')
-      .select('id, post_id, parent_id, user_id, content, created_at, reply_count, like_count, username')
+      .select('id, post_id, parent_id, user_id, content, image_url, created_at, reply_count, like_count, username')
 
       .eq('post_id', post.id)
       .order('created_at', { ascending: false });
@@ -453,7 +468,7 @@ export default function PostDetailScreen() {
 
 
   const handleReply = async () => {
-    if (!replyText.trim() || !user) return;
+    if ((!replyText.trim() && !replyImage) || !user) return;
 
     const newReply: Reply = {
       id: `temp-${Date.now()}`,
@@ -461,6 +476,7 @@ export default function PostDetailScreen() {
       parent_id: null,
       user_id: user.id,
       content: replyText,
+      image_url: replyImage ?? undefined,
       created_at: new Date().toISOString(),
       username: profile.display_name || profile.username,
       reply_count: 0,
@@ -491,6 +507,7 @@ export default function PostDetailScreen() {
 
     });
     setReplyText('');
+    setReplyImage(null);
 
     let { data, error } = await supabase
 
@@ -501,6 +518,7 @@ export default function PostDetailScreen() {
             parent_id: null,
             user_id: user.id,
             content: replyText,
+            image_url: replyImage,
             username: profile.display_name || profile.username,
           },
         ])
@@ -588,6 +606,9 @@ export default function PostDetailScreen() {
                   {displayName} @{userName}
                 </Text>
                 <Text style={styles.postContent}>{post.content}</Text>
+                {post.image_url && (
+                  <Image source={{ uri: post.image_url }} style={styles.postImage} />
+                )}
                 <Text style={styles.timestamp}>{timeAgo(post.created_at)}</Text>
               </View>
             </View>
@@ -654,6 +675,9 @@ export default function PostDetailScreen() {
                         {name} @{replyUserName}
                       </Text>
                       <Text style={styles.postContent}>{item.content}</Text>
+                      {item.image_url && (
+                        <Image source={{ uri: item.image_url }} style={styles.postImage} />
+                      )}
                       <Text style={styles.timestamp}>{timeAgo(item.created_at)}</Text>
                     </View>
                   </View>
@@ -686,7 +710,7 @@ export default function PostDetailScreen() {
         }}
       />
 
-      <View style={[styles.inputContainer, { bottom: keyboardOffset }]}> 
+      <View style={[styles.inputContainer, { bottom: keyboardOffset }]}>
         <TextInput
           placeholder="Write a reply"
           value={replyText}
@@ -694,7 +718,13 @@ export default function PostDetailScreen() {
           style={styles.input}
           multiline
         />
-        <Button title="Post" onPress={handleReply} />
+        {replyImage && (
+          <Image source={{ uri: replyImage }} style={styles.preview} />
+        )}
+        <View style={styles.buttonRow}>
+          <Button title="Add Image" onPress={pickImage} />
+          <Button title="Post" onPress={handleReply} />
+        </View>
       </View>
     </KeyboardAvoidingView>
   );
@@ -756,6 +786,13 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
 
+  postImage: {
+    width: '100%',
+    height: 200,
+    borderRadius: 6,
+    marginTop: 8,
+  },
+
   input: {
     backgroundColor: 'white',
     padding: 10,
@@ -779,5 +816,16 @@ const styles = StyleSheet.create({
     bottom: 0,
     backgroundColor: colors.background,
     paddingBottom: 16,
+  },
+  preview: {
+    width: '100%',
+    height: 200,
+    borderRadius: 6,
+    marginBottom: 10,
+  },
+  buttonRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 10,
   },
 });
