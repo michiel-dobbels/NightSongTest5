@@ -22,6 +22,7 @@ import { useAuth } from '../../AuthContext';
 import { colors } from '../styles/colors';
 import { useLikes } from '../../LikeContext';
 
+
 const CHILD_PREFIX = 'cached_child_replies_';
 const COUNT_STORAGE_KEY = 'cached_reply_counts';
 const LIKE_COUNT_KEY = 'cached_like_counts'; // deprecated constant
@@ -96,6 +97,7 @@ export default function ReplyDetailScreen() {
     refreshLike,
   } = useLikes();
 
+
   const [keyboardOffset, setKeyboardOffset] = useState(0);
 
   const confirmDeletePost = (id: string) => {
@@ -118,6 +120,7 @@ export default function ReplyDetailScreen() {
     await refreshLike(id, isPost);
   };
 
+
   const refreshChainLikes = async () => {
     const replyIds = [parent.id, ...ancestors.map(a => a.id)];
     if (replyIds.length) {
@@ -128,6 +131,7 @@ export default function ReplyDetailScreen() {
       if (data) {
         const entries = data.map(r => [r.id, r.like_count ?? 0]);
         mergeCounts(Object.fromEntries(entries));
+
       }
     }
     if (originalPost) {
@@ -144,7 +148,9 @@ export default function ReplyDetailScreen() {
 
   const handleToggleLike = async (id: string, isPost = false) => {
     await toggleLikeGlobal(id, isPost);
+
   };
+
 
   const confirmDeleteReply = (id: string) => {
     Alert.alert('Delete Post', 'Are you sure you want to delete this post?', [
@@ -199,6 +205,7 @@ export default function ReplyDetailScreen() {
     removeCounts([id]);
     removeLiked([id]);
 
+
     await supabase.from('replies').delete().eq('id', id);
     fetchReplies();
     refreshChainLikes();
@@ -246,6 +253,7 @@ export default function ReplyDetailScreen() {
       if (postLike) likeEntries.push([parent.post_id, postLike.like_count ?? 0]);
       mergeCounts(Object.fromEntries(likeEntries));
 
+
       if (user) {
         const { data: likedData } = await supabase
           .from('likes')
@@ -258,12 +266,14 @@ export default function ReplyDetailScreen() {
             map[key] = true;
           });
           setLikedBulk(map);
+
         }
       }
 
       
       if (postData) likeEntries.push([parent.post_id, postData.like_count ?? 0]);
       mergeCounts(Object.fromEntries(likeEntries));
+
 
       if (user) {
         const { data: likeData } = await supabase
@@ -277,6 +287,7 @@ export default function ReplyDetailScreen() {
             if (l.reply_id) likedObj[l.reply_id] = true;
           });
           setLikedBulk(likedObj);
+
         }
       }
 
@@ -314,6 +325,7 @@ export default function ReplyDetailScreen() {
 
 
 
+
         } catch (e) {
           console.error('Failed to parse cached replies', e);
         }
@@ -323,6 +335,7 @@ export default function ReplyDetailScreen() {
       if (likeStored) {
         try {
           mergeCounts(JSON.parse(likeStored));
+
         } catch (e) {
           console.error('Failed to parse cached like counts', e);
         }
@@ -380,6 +393,7 @@ export default function ReplyDetailScreen() {
         if (likeStored) {
           try {
             mergeCounts(JSON.parse(likeStored));
+
           } catch (e) {
             console.error('Failed to parse cached like counts', e);
           }
@@ -451,6 +465,7 @@ export default function ReplyDetailScreen() {
       return counts;
     });
     mergeCounts({ [newReply.id]: 0 });
+
     setReplyText('');
 
     let { data, error } = await supabase
@@ -504,6 +519,7 @@ export default function ReplyDetailScreen() {
         const temp = likeCounts[newReply.id] ?? 0;
         removeCounts([newReply.id]);
         mergeCounts({ [data.id]: temp });
+
 
       }
       fetchReplies();

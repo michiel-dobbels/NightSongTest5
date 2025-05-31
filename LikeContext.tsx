@@ -34,6 +34,7 @@ export const LikeProvider: React.FC<{ children: React.ReactNode }> = ({ children
       if (stored) {
         try {
           setLikeCounts(JSON.parse(stored));
+
         } catch (e) {
           console.error('Failed to parse cached like counts', e);
         }
@@ -100,6 +101,7 @@ export const LikeProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const refreshLike = async (id: string, isPost = true) => {
+
     const { data } = await supabase
       .from(isPost ? 'posts' : 'replies')
       .select('like_count')
@@ -115,6 +117,7 @@ export const LikeProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const liked = likedItems[id];
     const newCount = (likeCounts[id] || 0) + (liked ? -1 : 1);
 
+
     setLikedItems(prev => {
       const updated = { ...prev, [id]: !liked };
       AsyncStorage.setItem(`${LIKED_KEY_PREFIX}${user.id}`, JSON.stringify(updated));
@@ -122,6 +125,7 @@ export const LikeProvider: React.FC<{ children: React.ReactNode }> = ({ children
     });
 
     mergeCounts({ [id]: newCount });
+
 
     if (liked) {
       await supabase
@@ -163,4 +167,5 @@ export const useLikes = () => {
   if (!ctx) throw new Error('useLikes must be within LikeProvider');
   return ctx;
 };
+
 

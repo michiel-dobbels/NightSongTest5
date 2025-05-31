@@ -22,6 +22,7 @@ import { useAuth } from '../../AuthContext';
 import { colors } from '../styles/colors';
 import { useLikes } from '../../LikeContext';
 
+
 const REPLY_STORAGE_PREFIX = 'cached_replies_';
 const COUNT_STORAGE_KEY = 'cached_reply_counts';
 const LIKE_COUNT_KEY = 'cached_like_counts'; // deprecated constant for backward compatibility
@@ -93,6 +94,7 @@ export default function PostDetailScreen() {
     refreshLike,
   } = useLikes();
 
+
   const [keyboardOffset, setKeyboardOffset] = useState(0);
 
   const confirmDeletePost = (id: string) => {
@@ -117,7 +119,9 @@ export default function PostDetailScreen() {
 
   const handleToggleLike = async (id: string, isPost: boolean) => {
     await toggleLikeGlobal(id, isPost);
+
   };
+
 
   const confirmDeleteReply = (id: string) => {
     Alert.alert('Delete Post', 'Are you sure you want to delete this post?', [
@@ -169,6 +173,7 @@ export default function PostDetailScreen() {
     });
     removeCounts([id]);
     removeLiked([id]);
+
     await supabase.from('replies').delete().eq('id', id);
     fetchReplies();
   };
@@ -203,6 +208,7 @@ export default function PostDetailScreen() {
         if (likeStored) {
           try {
             mergeCounts(JSON.parse(likeStored));
+
           } catch (e) {
             console.error('Failed to parse cached like counts', e);
           }
@@ -267,6 +273,7 @@ export default function PostDetailScreen() {
       else likeEntries.push([post.id, post.like_count ?? 0]);
       mergeCounts(Object.fromEntries(likeEntries));
 
+
       if (user) {
         const { data: likedData } = await supabase
           .from('likes')
@@ -286,6 +293,7 @@ export default function PostDetailScreen() {
       if (postData) likeEntries.push([post.id, postData.like_count ?? 0]);
       else likeEntries.push([post.id, post.like_count ?? 0]);
       mergeCounts(Object.fromEntries(likeEntries));
+
 
       if (user) {
         const { data: likeData } = await supabase
@@ -420,6 +428,7 @@ export default function PostDetailScreen() {
       return counts;
     });
     mergeCounts({ [newReply.id]: 0 });
+
     setReplyText('');
 
     let { data, error } = await supabase
@@ -470,6 +479,7 @@ export default function PostDetailScreen() {
         const temp = likeCounts[newReply.id] ?? 0;
         removeCounts([newReply.id]);
         mergeCounts({ [data.id]: temp });
+
 
       }
 
