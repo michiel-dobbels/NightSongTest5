@@ -157,6 +157,7 @@ export default function ReplyDetailScreen() {
     if (!user) return;
     const key = id;
     const isLiked = likedItems[key];
+    const newCount = (likeCounts[key] || 0) + (isLiked ? -1 : 1);
     setLikedItems(prev => {
       const updated = { ...prev, [key]: !isLiked };
       AsyncStorage.setItem(
@@ -166,7 +167,7 @@ export default function ReplyDetailScreen() {
       return updated;
     });
     setLikeCounts(prev => {
-      const counts = { ...prev, [key]: (prev[key] || 0) + (isLiked ? -1 : 1) };
+      const counts = { ...prev, [key]: newCount };
       AsyncStorage.setItem(LIKE_COUNT_KEY, JSON.stringify(counts));
       return counts;
     });
@@ -175,10 +176,18 @@ export default function ReplyDetailScreen() {
         .from('likes')
         .delete()
         .match(isPost ? { post_id: id, user_id: user.id } : { reply_id: id, user_id: user.id });
+      await supabase
+        .from(isPost ? 'posts' : 'replies')
+        .update({ like_count: newCount })
+        .eq('id', id);
     } else {
       await supabase
         .from('likes')
         .insert([isPost ? { post_id: id, user_id: user.id } : { reply_id: id, user_id: user.id }]);
+      await supabase
+        .from(isPost ? 'posts' : 'replies')
+        .update({ like_count: newCount })
+        .eq('id', id);
     }
     await refreshLikeCount(id, isPost);
   };

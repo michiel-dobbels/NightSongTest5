@@ -121,6 +121,7 @@ export default function PostDetailScreen() {
   const toggleLike = async (id: string, isPost: boolean) => {
     if (!user) return;
     const liked = likedItems[id];
+    const newCount = (likeCounts[id] || 0) + (liked ? -1 : 1);
     setLikedItems(prev => {
       const updated = { ...prev, [id]: !liked };
       AsyncStorage.setItem(
@@ -130,8 +131,7 @@ export default function PostDetailScreen() {
       return updated;
     });
     setLikeCounts(prev => {
-      const count = (prev[id] || 0) + (liked ? -1 : 1);
-      const counts = { ...prev, [id]: count };
+      const counts = { ...prev, [id]: newCount };
       AsyncStorage.setItem(LIKE_COUNT_KEY, JSON.stringify(counts));
       return counts;
     });
@@ -140,10 +140,18 @@ export default function PostDetailScreen() {
         .from('likes')
         .delete()
         .match({ user_id: user.id, [isPost ? 'post_id' : 'reply_id']: id });
+      await supabase
+        .from(isPost ? 'posts' : 'replies')
+        .update({ like_count: newCount })
+        .eq('id', id);
     } else {
       await supabase
         .from('likes')
         .insert({ user_id: user.id, [isPost ? 'post_id' : 'reply_id']: id });
+      await supabase
+        .from(isPost ? 'posts' : 'replies')
+        .update({ like_count: newCount })
+        .eq('id', id);
     }
     await refreshLikeCount(id, isPost);
   };
