@@ -107,6 +107,7 @@ const HomeScreen = forwardRef<HomeScreenRef, HomeScreenProps>(
   const toggleLike = async (id: string) => {
     if (!user) return;
     const liked = likedPosts[id];
+    const newCount = (likeCounts[id] || 0) + (liked ? -1 : 1);
     setLikedPosts(prev => {
       const updated = { ...prev, [id]: !liked };
       AsyncStorage.setItem(
@@ -116,16 +117,28 @@ const HomeScreen = forwardRef<HomeScreenRef, HomeScreenProps>(
       return updated;
     });
     setLikeCounts(prev => {
-      const count = (prev[id] || 0) + (liked ? -1 : 1);
-      const counts = { ...prev, [id]: count };
+      const counts = { ...prev, [id]: newCount };
       AsyncStorage.setItem(LIKE_COUNT_KEY, JSON.stringify(counts));
       return counts;
     });
     if (liked) {
       await supabase.from('likes').delete().match({ user_id: user.id, post_id: id });
+      await supabase.from('posts').update({ like_count: newCount }).eq('id', id);
     } else {
       await supabase.from('likes').insert({ user_id: user.id, post_id: id });
-
+      await supabase.from('posts').update({ like_count: newCount }).eq('id', id);
+    }
+    const { data } = await supabase
+      .from('posts')
+      .select('like_count')
+      .eq('id', id)
+      .single();
+    if (data) {
+      setLikeCounts(prev => {
+        const counts = { ...prev, [id]: data.like_count ?? 0 };
+        AsyncStorage.setItem(LIKE_COUNT_KEY, JSON.stringify(counts));
+        return counts;
+      });
     }
   };
 
