@@ -20,6 +20,7 @@ import { useRoute, useNavigation, useFocusEffect } from '@react-navigation/nativ
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../AuthContext';
 import { colors } from '../styles/colors';
+import { useLikeContext } from '../../LikeContext';
 
 const CHILD_PREFIX = 'cached_child_replies_';
 const COUNT_STORAGE_KEY = 'cached_reply_counts';
@@ -85,8 +86,14 @@ export default function ReplyDetailScreen() {
   const [replies, setReplies] = useState<Reply[]>([]);
   const [allReplies, setAllReplies] = useState<Reply[]>([]);
   const [replyCounts, setReplyCounts] = useState<{ [key: string]: number }>({});
-  const [likeCounts, setLikeCounts] = useState<{ [key: string]: number }>({});
-  const [likedItems, setLikedItems] = useState<{ [key: string]: boolean }>({});
+  const {
+    likeCounts,
+    setLikeCounts,
+    likedItems,
+    setLikedItems,
+    toggleLike,
+    refreshLike,
+  } = useLikeContext();
 
   const [keyboardOffset, setKeyboardOffset] = useState(0);
 
@@ -106,21 +113,6 @@ export default function ReplyDetailScreen() {
     navigation.goBack();
   };
 
-  const refreshLikeCount = async (id: string, isPost: boolean) => {
-    const { data } = await supabase
-      .from(isPost ? 'posts' : 'replies')
-      .select('like_count')
-      .eq('id', id)
-      .single();
-    if (data) {
-      setLikeCounts(prev => {
-        const counts = { ...prev, [id]: data.like_count ?? 0 };
-        AsyncStorage.setItem(LIKE_COUNT_KEY, JSON.stringify(counts));
-        return counts;
-      });
-    }
-  };
-
   const refreshChainLikes = async () => {
     const replyIds = [parent.id, ...ancestors.map(a => a.id)];
     if (replyIds.length) {
@@ -130,11 +122,7 @@ export default function ReplyDetailScreen() {
         .in('id', replyIds);
       if (data) {
         const entries = data.map(r => [r.id, r.like_count ?? 0]);
-        setLikeCounts(prev => {
-          const counts = { ...prev, ...Object.fromEntries(entries) } as Record<string, number>;
-          AsyncStorage.setItem(LIKE_COUNT_KEY, JSON.stringify(counts));
-          return counts;
-        });
+        setLikeCounts({ ...likeCounts, ...Object.fromEntries(entries) });
       }
     }
     if (originalPost) {
@@ -144,53 +132,12 @@ export default function ReplyDetailScreen() {
         .eq('id', originalPost.id)
         .single();
       if (data) {
-        setLikeCounts(prev => {
-          const counts = { ...prev, [originalPost.id]: data.like_count ?? 0 };
-          AsyncStorage.setItem(LIKE_COUNT_KEY, JSON.stringify(counts));
-          return counts;
-        });
+        setLikeCounts({ ...likeCounts, [originalPost.id]: data.like_count ?? 0 });
       }
     }
   };
 
-  const toggleLike = async (id: string, isPost = false) => {
-    if (!user) return;
-    const key = id;
-    const isLiked = likedItems[key];
-    const newCount = (likeCounts[key] || 0) + (isLiked ? -1 : 1);
-    setLikedItems(prev => {
-      const updated = { ...prev, [key]: !isLiked };
-      AsyncStorage.setItem(
-        `${LIKED_KEY_PREFIX}${user.id}`,
-        JSON.stringify(updated),
-      );
-      return updated;
-    });
-    setLikeCounts(prev => {
-      const counts = { ...prev, [key]: newCount };
-      AsyncStorage.setItem(LIKE_COUNT_KEY, JSON.stringify(counts));
-      return counts;
-    });
-    if (isLiked) {
-      await supabase
-        .from('likes')
-        .delete()
-        .match(isPost ? { post_id: id, user_id: user.id } : { reply_id: id, user_id: user.id });
-      await supabase
-        .from(isPost ? 'posts' : 'replies')
-        .update({ like_count: newCount })
-        .eq('id', id);
-    } else {
-      await supabase
-        .from('likes')
-        .insert([isPost ? { post_id: id, user_id: user.id } : { reply_id: id, user_id: user.id }]);
-      await supabase
-        .from(isPost ? 'posts' : 'replies')
-        .update({ like_count: newCount })
-        .eq('id', id);
-    }
-    await refreshLikeCount(id, isPost);
-  };
+
 
   const confirmDeleteReply = (id: string) => {
     Alert.alert('Delete Post', 'Are you sure you want to delete this post?', [
@@ -242,16 +189,10 @@ export default function ReplyDetailScreen() {
       AsyncStorage.setItem(COUNT_STORAGE_KEY, JSON.stringify(counts));
       return counts;
     });
-    setLikeCounts(prev => {
-      const { [id]: _omit, ...rest } = prev;
-      AsyncStorage.setItem(LIKE_COUNT_KEY, JSON.stringify(rest));
-      return rest;
-    });
-    setLikedItems(prev => {
-      const { [id]: _o, ...rest } = prev;
-      AsyncStorage.setItem(`${LIKED_KEY_PREFIX}${user?.id}`, JSON.stringify(rest));
-      return rest;
-    });
+    const { [id]: _omit, ...restCounts } = likeCounts;
+    setLikeCounts(restCounts);
+    const { [id]: _o, ...restLiked } = likedItems;
+    setLikedItems(restLiked);
 
     await supabase.from('replies').delete().eq('id', id);
     fetchReplies();
@@ -298,11 +239,7 @@ export default function ReplyDetailScreen() {
         .eq('id', parent.post_id)
         .single();
       if (postLike) likeEntries.push([parent.post_id, postLike.like_count ?? 0]);
-      setLikeCounts(prev => {
-        const counts = { ...prev, ...Object.fromEntries(likeEntries) };
-        AsyncStorage.setItem(LIKE_COUNT_KEY, JSON.stringify(counts));
-        return counts;
-      });
+      setLikeCounts({ ...likeCounts, ...Object.fromEntries(likeEntries) });
 
       if (user) {
         const { data: likedData } = await supabase
@@ -316,20 +253,12 @@ export default function ReplyDetailScreen() {
             map[key] = true;
           });
           setLikedItems(map);
-          AsyncStorage.setItem(
-            `${LIKED_KEY_PREFIX}${user.id}`,
-            JSON.stringify(map),
-          );
         }
       }
 
       
       if (postData) likeEntries.push([parent.post_id, postData.like_count ?? 0]);
-      setLikeCounts(prev => {
-        const counts = { ...prev, ...Object.fromEntries(likeEntries) };
-        AsyncStorage.setItem(LIKE_COUNT_KEY, JSON.stringify(counts));
-        return counts;
-      });
+      setLikeCounts({ ...likeCounts, ...Object.fromEntries(likeEntries) });
 
       if (user) {
         const { data: likeData } = await supabase
@@ -343,10 +272,6 @@ export default function ReplyDetailScreen() {
             if (l.reply_id) likedObj[l.reply_id] = true;
           });
           setLikedItems(likedObj);
-          AsyncStorage.setItem(
-            `${LIKED_KEY_PREFIX}${user.id}`,
-            JSON.stringify(likedObj),
-          );
         }
       }
 
@@ -380,8 +305,7 @@ export default function ReplyDetailScreen() {
 
           const likeEntries = cached.map((r: any) => [r.id, r.like_count ?? 0]);
           const likeObj = Object.fromEntries(likeEntries);
-          setLikeCounts(prev => ({ ...prev, ...likeObj }));
-          AsyncStorage.setItem(LIKE_COUNT_KEY, JSON.stringify(likeObj));
+          setLikeCounts({ ...likeCounts, ...likeObj });
 
 
 
@@ -393,7 +317,7 @@ export default function ReplyDetailScreen() {
       }
       if (likeStored) {
         try {
-          setLikeCounts(prev => ({ ...prev, ...JSON.parse(likeStored) }));
+          setLikeCounts({ ...likeCounts, ...JSON.parse(likeStored) });
         } catch (e) {
           console.error('Failed to parse cached like counts', e);
         }
@@ -454,7 +378,7 @@ export default function ReplyDetailScreen() {
         const likeStored = await AsyncStorage.getItem(LIKE_COUNT_KEY);
         if (likeStored) {
           try {
-            setLikeCounts(prev => ({ ...prev, ...JSON.parse(likeStored) }));
+            setLikeCounts({ ...likeCounts, ...JSON.parse(likeStored) });
           } catch (e) {
             console.error('Failed to parse cached like counts', e);
           }
@@ -525,11 +449,7 @@ export default function ReplyDetailScreen() {
       AsyncStorage.setItem(COUNT_STORAGE_KEY, JSON.stringify(counts));
       return counts;
     });
-    setLikeCounts(prev => {
-      const counts = { ...prev, [newReply.id]: 0 };
-      AsyncStorage.setItem(LIKE_COUNT_KEY, JSON.stringify({ ...likeCounts, ...counts }));
-      return { ...prev, [newReply.id]: 0 };
-    });
+    setLikeCounts({ ...likeCounts, [newReply.id]: 0 });
     setReplyText('');
 
     let { data, error } = await supabase
@@ -580,14 +500,9 @@ export default function ReplyDetailScreen() {
           AsyncStorage.setItem(COUNT_STORAGE_KEY, JSON.stringify(counts));
           return counts;
         });
-        setLikeCounts(prev => {
-          const temp = prev[newReply.id] ?? 0;
-          const { [newReply.id]: _o, ...rest } = prev;
-
-          const counts = { ...rest, [data.id]: temp };
-          AsyncStorage.setItem(LIKE_COUNT_KEY, JSON.stringify(counts));
-          return counts;
-        });
+        const tempVal = likeCounts[newReply.id] ?? 0;
+        const { [newReply.id]: _o, ...restLikes } = likeCounts;
+        setLikeCounts({ ...restLikes, [data.id]: tempVal });
 
       }
       fetchReplies();
