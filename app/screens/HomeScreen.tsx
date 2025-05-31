@@ -113,6 +113,7 @@ const HomeScreen = forwardRef<HomeScreenRef, HomeScreenProps>(
     if (data) {
       setLikeCounts(prev => {
         const counts = { ...prev, [id]: data.like_count ?? 0 };
+
         AsyncStorage.setItem(LIKE_COUNT_KEY, JSON.stringify(counts));
         return counts;
       });

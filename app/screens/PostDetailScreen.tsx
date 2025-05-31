@@ -104,14 +104,18 @@ export default function PostDetailScreen() {
   };
 
   const refreshLikeCount = async (id: string, isPost: boolean) => {
-    const { data } = await supabase
-      .from(isPost ? 'posts' : 'replies')
-      .select('like_count')
-      .eq('id', id)
-      .single();
-    if (data) {
+    const { count } = await supabase
+      .from('likes')
+      .select('id', { count: 'exact', head: true })
+      .match(isPost ? { post_id: id } : { reply_id: id });
+
+    if (typeof count === 'number') {
+      await supabase
+        .from(isPost ? 'posts' : 'replies')
+        .update({ like_count: count })
+        .eq('id', id);
       setLikeCounts(prev => {
-        const counts = { ...prev, [id]: data.like_count ?? 0 };
+        const counts = { ...prev, [id]: count };
         AsyncStorage.setItem(LIKE_COUNT_KEY, JSON.stringify(counts));
         return counts;
       });
