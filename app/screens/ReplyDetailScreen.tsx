@@ -304,9 +304,15 @@ export default function ReplyDetailScreen() {
         .select('like_count')
         .eq('id', parent.post_id)
         .single();
-      if (postLike) likeEntries.push([parent.post_id, postLike.like_count ?? 0]);
+      const postLikeCount = postLike ? postLike.like_count ?? 0 : undefined;
+      if (postLikeCount !== undefined)
+        likeEntries.push([parent.post_id, postLikeCount]);
       setLikeCounts(prev => {
-        const counts = { ...prev, ...Object.fromEntries(likeEntries) };
+        const fromServer = Object.fromEntries(likeEntries) as Record<string, number>;
+        const counts = { ...prev, ...fromServer };
+        Object.keys(fromServer).forEach(id => {
+          if (prev[id] !== undefined) counts[id] = prev[id];
+        });
         AsyncStorage.setItem(LIKE_COUNT_KEY, JSON.stringify(counts));
         return counts;
       });
@@ -329,14 +335,6 @@ export default function ReplyDetailScreen() {
           );
         }
       }
-
-      
-      if (postData) likeEntries.push([parent.post_id, postData.like_count ?? 0]);
-      setLikeCounts(prev => {
-        const counts = { ...prev, ...Object.fromEntries(likeEntries) };
-        AsyncStorage.setItem(LIKE_COUNT_KEY, JSON.stringify(counts));
-        return counts;
-      });
 
       if (user) {
         const { data: likeData } = await supabase
@@ -368,11 +366,19 @@ export default function ReplyDetailScreen() {
       const countStored = await AsyncStorage.getItem(COUNT_STORAGE_KEY);
       const likeStored = await AsyncStorage.getItem(LIKE_COUNT_KEY);
       let storedCounts: { [key: string]: number } = {};
+      let storedLikes: { [key: string]: number } = {};
       if (countStored) {
         try {
           storedCounts = JSON.parse(countStored);
         } catch (e) {
           console.error('Failed to parse cached counts', e);
+        }
+      }
+      if (likeStored) {
+        try {
+          storedLikes = JSON.parse(likeStored);
+        } catch (e) {
+          console.error('Failed to parse cached like counts', e);
         }
       }
       if (stored) {
@@ -382,28 +388,22 @@ export default function ReplyDetailScreen() {
           setAllReplies(cached);
           const entries = cached.map((r: any) => [r.id, storedCounts[r.id] ?? r.reply_count ?? 0]);
           const counts = { ...storedCounts, ...Object.fromEntries(entries) };
-          setReplyCounts(prev => ({ ...prev, ...counts }));
+          setReplyCounts(counts);
           AsyncStorage.setItem(COUNT_STORAGE_KEY, JSON.stringify(counts));
 
-          const likeEntries = cached.map((r: any) => [r.id, r.like_count ?? 0]);
-          const likeObj = Object.fromEntries(likeEntries);
-          setLikeCounts(prev => ({ ...prev, ...likeObj }));
-          AsyncStorage.setItem(LIKE_COUNT_KEY, JSON.stringify(likeObj));
-
-
-
+          const likeEntries = cached.map((r: any) => [r.id, storedLikes[r.id] ?? r.like_count ?? 0]);
+          const likeCountsObj = {
+            ...storedLikes,
+            ...Object.fromEntries(likeEntries),
+          } as Record<string, number>;
+          setLikeCounts(likeCountsObj);
+          AsyncStorage.setItem(LIKE_COUNT_KEY, JSON.stringify(likeCountsObj));
         } catch (e) {
           console.error('Failed to parse cached replies', e);
         }
-      } else if (countStored) {
-        setReplyCounts(prev => ({ ...prev, ...storedCounts }));
-      }
-      if (likeStored) {
-        try {
-          setLikeCounts(prev => ({ ...prev, ...JSON.parse(likeStored) }));
-        } catch (e) {
-          console.error('Failed to parse cached like counts', e);
-        }
+      } else {
+        setReplyCounts(storedCounts);
+        setLikeCounts(storedLikes);
       }
       if (user) {
         const likedStored = await AsyncStorage.getItem(`${LIKED_KEY_PREFIX}${user.id}`);
@@ -416,28 +416,20 @@ export default function ReplyDetailScreen() {
         }
       }
 
-     
-      if (likeStored) {
+      // Legacy storage key for liked state; retained for backward compatibility
+      const legacyLiked = await AsyncStorage.getItem('LIKE_STATE_KEY');
+      if (legacyLiked) {
         try {
-          setLikeCounts(JSON.parse(likeStored));
+          const parsed = JSON.parse(legacyLiked);
+          setLikedItems(parsed);
+          AsyncStorage.setItem(
+            `${LIKED_KEY_PREFIX}${user.id}`,
+            JSON.stringify(parsed),
+          );
         } catch (e) {
-          console.error('Failed to parse cached like counts', e);
+          console.error('Failed to parse cached likes', e);
         }
       }
-        // Legacy storage key for liked state; retained for backward compatibility
-        const legacyLiked = await AsyncStorage.getItem('LIKE_STATE_KEY');
-        if (legacyLiked) {
-          try {
-            const parsed = JSON.parse(legacyLiked);
-            setLikedItems(parsed);
-            AsyncStorage.setItem(
-              `${LIKED_KEY_PREFIX}${user.id}`,
-              JSON.stringify(parsed),
-            );
-          } catch (e) {
-            console.error('Failed to parse cached likes', e);
-          }
-        }
 
       
 
