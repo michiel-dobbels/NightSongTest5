@@ -368,7 +368,10 @@ export default function PostDetailScreen() {
       const stored = await AsyncStorage.getItem(STORAGE_KEY);
       const countStored = await AsyncStorage.getItem(COUNT_STORAGE_KEY);
       const likeStored = await AsyncStorage.getItem(LIKE_COUNT_KEY);
+
       let storedCounts: { [key: string]: number } = {};
+      let storedLikes: { [key: string]: number } = {};
+
       if (countStored) {
         try {
           storedCounts = JSON.parse(countStored);
@@ -376,40 +379,47 @@ export default function PostDetailScreen() {
           console.error('Failed to parse cached counts', e);
         }
       }
+
+      if (likeStored) {
+        try {
+          storedLikes = JSON.parse(likeStored);
+        } catch (e) {
+          console.error('Failed to parse cached like counts', e);
+        }
+      }
+
       if (stored) {
         try {
           const cached = JSON.parse(stored);
           setReplies(cached);
           setAllReplies(cached);
+
           const entries = cached.map((r: any) => [r.id, r.reply_count ?? 0]);
           entries.push([post.id, post.reply_count ?? cached.length]);
           const counts = { ...storedCounts, ...Object.fromEntries(entries) };
           setReplyCounts(counts);
           AsyncStorage.setItem(COUNT_STORAGE_KEY, JSON.stringify(counts));
+
           const likeEntries = cached.map((r: any) => [r.id, r.like_count ?? 0]);
           likeEntries.push([post.id, post.like_count ?? 0]);
-          const likeCountsObj = Object.fromEntries(likeEntries);
+          const likeCountsObj = {
+            ...storedLikes,
+            ...Object.fromEntries(likeEntries),
+          };
           setLikeCounts(likeCountsObj);
           AsyncStorage.setItem(LIKE_COUNT_KEY, JSON.stringify(likeCountsObj));
-
-
         } catch (e) {
           console.error('Failed to parse cached replies', e);
         }
+      } else {
+        setReplyCounts(storedCounts);
+        setLikeCounts(storedLikes);
       }
 
-      if (countStored && !stored) {
-        setReplyCounts(storedCounts);
-      }
-      if (likeStored) {
-        try {
-          setLikeCounts(JSON.parse(likeStored));
-        } catch (e) {
-          console.error('Failed to parse cached like counts', e);
-        }
-      }
       if (user) {
-        const likedStored = await AsyncStorage.getItem(`${LIKED_KEY_PREFIX}${user.id}`);
+        const likedStored = await AsyncStorage.getItem(
+          `${LIKED_KEY_PREFIX}${user.id}`,
+        );
         if (likedStored) {
           try {
             setLikedItems(JSON.parse(likedStored));
@@ -417,17 +427,7 @@ export default function PostDetailScreen() {
             console.error('Failed to parse cached likes', e);
           }
         }
-      }
 
-      
-      if (likeStored) {
-        try {
-          setLikeCounts(JSON.parse(likeStored));
-        } catch (e) {
-          console.error('Failed to parse cached like counts', e);
-        }
-      }
-        // Legacy storage key for liked state; retained for backward compatibility
         const legacyLiked = await AsyncStorage.getItem('LIKE_STATE_KEY');
         if (legacyLiked) {
           try {
@@ -441,6 +441,7 @@ export default function PostDetailScreen() {
             console.error('Failed to parse cached likes', e);
           }
         }
+      }
 
       fetchReplies();
     };
