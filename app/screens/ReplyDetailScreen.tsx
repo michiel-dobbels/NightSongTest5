@@ -287,10 +287,14 @@ export default function ReplyDetailScreen() {
         .select('reply_count, like_count')
         .eq('id', parent.post_id)
         .single();
-      const entries = all.map(r => [r.id, r.reply_count ?? 0]);
-      if (postData) entries.push([parent.post_id, postData.reply_count ?? all.length]);
       setReplyCounts(prev => {
-        const counts = { ...prev, ...Object.fromEntries(entries) };
+        const counts = { ...prev };
+        all.forEach(r => {
+          counts[r.id] = prev[r.id] ?? r.reply_count ?? 0;
+        });
+        if (postData) {
+          counts[parent.post_id] = prev[parent.post_id] ?? postData.reply_count ?? all.length;
+        }
         AsyncStorage.setItem(COUNT_STORAGE_KEY, JSON.stringify(counts));
         return counts;
       });
@@ -382,7 +386,7 @@ export default function ReplyDetailScreen() {
           const cached = JSON.parse(stored);
           setReplies(cached);
           setAllReplies(cached);
-          const entries = cached.map((r: any) => [r.id, r.reply_count ?? 0]);
+          const entries = cached.map((r: any) => [r.id, storedCounts[r.id] ?? r.reply_count ?? 0]);
           const counts = { ...storedCounts, ...Object.fromEntries(entries) };
           setReplyCounts(counts);
           AsyncStorage.setItem(COUNT_STORAGE_KEY, JSON.stringify(counts));
