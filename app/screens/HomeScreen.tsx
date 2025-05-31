@@ -105,14 +105,16 @@ const HomeScreen = forwardRef<HomeScreenRef, HomeScreenProps>(
   };
 
   const refreshLikeCount = async (id: string) => {
-    const { data } = await supabase
-      .from('posts')
-      .select('like_count')
-      .eq('id', id)
-      .single();
-    if (data) {
+    const { count } = await supabase
+      .from('likes')
+      .select('id', { count: 'exact', head: true })
+      .eq('post_id', id);
+
+    if (typeof count === 'number') {
+      await supabase.from('posts').update({ like_count: count }).eq('id', id);
       setLikeCounts(prev => {
-        const counts = { ...prev, [id]: data.like_count ?? 0 };
+        const counts = { ...prev, [id]: count };
+
         AsyncStorage.setItem(LIKE_COUNT_KEY, JSON.stringify(counts));
         return counts;
       });
