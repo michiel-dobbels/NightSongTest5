@@ -114,6 +114,7 @@ const HomeScreen = forwardRef<HomeScreenRef, HomeScreenProps>(
       await supabase.from('posts').update({ like_count: count }).eq('id', id);
       setLikeCounts(prev => {
         const counts = { ...prev, [id]: count };
+
         AsyncStorage.setItem(LIKE_COUNT_KEY, JSON.stringify(counts));
         return counts;
       });
