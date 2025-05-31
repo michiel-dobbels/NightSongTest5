@@ -116,11 +116,10 @@ export default function PostDetailScreen() {
   };
 
   const handleDeleteReply = async (id: string) => {
-    setReplies(prev => {
-      const updated = prev.filter(r => r.id !== id);
-      AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
-      return updated;
-    });
+    const updated = replies.filter(r => r.id !== id);
+    setReplies(updated);
+    await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
+
     setAllReplies(prev => {
       const descendants = new Set<string>();
       const gather = (parentId: string) => {
@@ -134,34 +133,34 @@ export default function PostDetailScreen() {
       gather(id);
       return prev.filter(r => r.id !== id && !descendants.has(r.id));
     });
-    setReplyCounts(prev => {
-      const descendants = new Set<string>();
-      const gather = (parentId: string) => {
-        allReplies.forEach(r => {
-          if (r.parent_id === parentId) {
-            descendants.add(r.id);
-            gather(r.id);
-          }
-        });
-      };
-      gather(id);
-      let removed = descendants.size + 1;
-      const { [id]: _omit, ...rest } = prev;
-      descendants.forEach(d => delete rest[d]);
-      const counts = { ...rest, [post.id]: (prev[post.id] || 0) - removed };
-      AsyncStorage.setItem(COUNT_STORAGE_KEY, JSON.stringify(counts));
-      return counts;
-    });
-    setLikeCounts(prev => {
-      const { [id]: _om, ...rest } = prev;
-      AsyncStorage.setItem(LIKE_COUNT_KEY, JSON.stringify(rest));
-      return rest;
-    });
-    setLikedItems(prev => {
-      const { [id]: _om, ...rest } = prev;
-      AsyncStorage.setItem(`${LIKED_KEY_PREFIX}${user?.id}`, JSON.stringify(rest));
-      return rest;
-    });
+
+    const descendants = new Set<string>();
+    const gather = (parentId: string) => {
+      allReplies.forEach(r => {
+        if (r.parent_id === parentId) {
+          descendants.add(r.id);
+          gather(r.id);
+        }
+      });
+    };
+    gather(id);
+    let removed = descendants.size + 1;
+    const { [id]: _omit, ...rest } = replyCounts;
+    descendants.forEach(d => delete rest[d]);
+    const counts = { ...rest, [post.id]: (replyCounts[post.id] || 0) - removed };
+    setReplyCounts(counts);
+    await AsyncStorage.setItem(COUNT_STORAGE_KEY, JSON.stringify(counts));
+
+    const { [id]: _om, ...restLikes } = likeCounts;
+    setLikeCounts(restLikes);
+    await AsyncStorage.setItem(LIKE_COUNT_KEY, JSON.stringify(restLikes));
+
+    const { [id]: _omLiked, ...restLiked } = likedItems;
+    setLikedItems(restLiked);
+    await AsyncStorage.setItem(
+      `${LIKED_KEY_PREFIX}${user?.id}`,
+      JSON.stringify(restLiked),
+    );
     await supabase.from('replies').delete().eq('id', id);
     fetchReplies();
   };
@@ -230,12 +229,10 @@ export default function PostDetailScreen() {
       const all = data as Reply[];
       setAllReplies(all);
       const topLevel = all.filter(r => r.parent_id === null);
-      setReplies(prev => {
-        const tempReplies = prev.filter(r => r.id.startsWith('temp-'));
-        const merged = [...tempReplies, ...topLevel];
-        AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(merged));
-        return merged;
-      });
+      const tempReplies = replies.filter(r => r.id.startsWith('temp-'));
+      const merged = [...tempReplies, ...topLevel];
+      setReplies(merged);
+      await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(merged));
 
       const { data: postData } = await supabase
         .from('posts')
@@ -245,11 +242,12 @@ export default function PostDetailScreen() {
       const entries = all.map(r => [r.id, r.reply_count ?? 0]);
       if (postData) entries.push([post.id, postData.reply_count ?? all.length]);
       else entries.push([post.id, post.reply_count ?? all.length]);
-      setReplyCounts(prev => {
-        const counts = { ...prev, ...Object.fromEntries(entries) };
-        AsyncStorage.setItem(COUNT_STORAGE_KEY, JSON.stringify(counts));
-        return counts;
-      });
+      const counts = {
+        ...replyCounts,
+        ...Object.fromEntries(entries),
+      };
+      setReplyCounts(counts);
+      await AsyncStorage.setItem(COUNT_STORAGE_KEY, JSON.stringify(counts));
       const likeEntries = all.map(r => [r.id, r.like_count ?? 0]);
       const { data: postLike } = await supabase
         .from('posts')
@@ -258,11 +256,12 @@ export default function PostDetailScreen() {
         .single();
       if (postLike) likeEntries.push([post.id, postLike.like_count ?? 0]);
       else likeEntries.push([post.id, post.like_count ?? 0]);
-      setLikeCounts(prev => {
-        const counts = { ...prev, ...Object.fromEntries(likeEntries) };
-        AsyncStorage.setItem(LIKE_COUNT_KEY, JSON.stringify(counts));
-        return counts;
-      });
+      const likeCountsNew = {
+        ...likeCounts,
+        ...Object.fromEntries(likeEntries),
+      };
+      setLikeCounts(likeCountsNew);
+      await AsyncStorage.setItem(LIKE_COUNT_KEY, JSON.stringify(likeCountsNew));
 
       if (user) {
         const { data: likedData } = await supabase
@@ -276,7 +275,7 @@ export default function PostDetailScreen() {
             map[key] = true;
           });
           setLikedItems(map);
-          AsyncStorage.setItem(
+          await AsyncStorage.setItem(
             `${LIKED_KEY_PREFIX}${user.id}`,
             JSON.stringify(map),
           );

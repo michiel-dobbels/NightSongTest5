@@ -64,28 +64,28 @@ export const LikeProvider = ({ children }: { children: React.ReactNode }) => {
       .eq('id', id)
       .single();
     if (data) {
-      setLikeCounts(prev => {
-        const counts = { ...prev, [id]: data.like_count ?? 0 };
-        AsyncStorage.setItem(LIKE_COUNT_KEY, JSON.stringify(counts));
-        return counts;
-      });
+      const newCounts = { ...likeCounts, [id]: data.like_count ?? 0 };
+      setLikeCounts(newCounts);
+      await AsyncStorage.setItem(LIKE_COUNT_KEY, JSON.stringify(newCounts));
     }
   };
 
   const toggleLike = async (id: string, isPost: boolean) => {
     if (!user) return;
     const liked = likedItems[id];
-    setLikedItems(prev => {
-      const updated = { ...prev, [id]: !liked };
-      AsyncStorage.setItem(`${LIKED_KEY_PREFIX}${user.id}`, JSON.stringify(updated));
-      return updated;
-    });
-    setLikeCounts(prev => {
-      const count = (prev[id] || 0) + (liked ? -1 : 1);
-      const counts = { ...prev, [id]: count };
-      AsyncStorage.setItem(LIKE_COUNT_KEY, JSON.stringify(counts));
-      return counts;
-    });
+    const updatedLikes = { ...likedItems, [id]: !liked };
+    setLikedItems(updatedLikes);
+    await AsyncStorage.setItem(
+      `${LIKED_KEY_PREFIX}${user.id}`,
+      JSON.stringify(updatedLikes),
+    );
+
+    const newCounts = {
+      ...likeCounts,
+      [id]: (likeCounts[id] || 0) + (liked ? -1 : 1),
+    };
+    setLikeCounts(newCounts);
+    await AsyncStorage.setItem(LIKE_COUNT_KEY, JSON.stringify(newCounts));
     if (liked) {
       await supabase.from('likes').delete().match({ user_id: user.id, [isPost ? 'post_id' : 'reply_id']: id });
     } else {
