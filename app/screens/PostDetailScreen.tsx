@@ -41,6 +41,7 @@ function timeAgo(dateString: string): string {
 interface Post {
   id: string;
   content: string;
+  image_url?: string;
   user_id: string;
   created_at: string;
 
@@ -59,6 +60,7 @@ interface Reply {
   parent_id: string | null;
   user_id: string;
   content: string;
+  image_url?: string;
   created_at: string;
 
   username?: string;
@@ -270,7 +272,7 @@ export default function PostDetailScreen() {
   const fetchReplies = async () => {
     const { data, error } = await supabase
       .from('replies')
-      .select('id, post_id, parent_id, user_id, content, created_at, reply_count, like_count, username')
+      .select('id, post_id, parent_id, user_id, content, image_url, created_at, reply_count, like_count, username')
 
       .eq('post_id', post.id)
       .order('created_at', { ascending: false });
@@ -588,6 +590,9 @@ export default function PostDetailScreen() {
                   {displayName} @{userName}
                 </Text>
                 <Text style={styles.postContent}>{post.content}</Text>
+                {post.image_url && (
+                  <Image source={{ uri: post.image_url }} style={styles.postImage} />
+                )}
                 <Text style={styles.timestamp}>{timeAgo(post.created_at)}</Text>
               </View>
             </View>
@@ -654,6 +659,9 @@ export default function PostDetailScreen() {
                         {name} @{replyUserName}
                       </Text>
                       <Text style={styles.postContent}>{item.content}</Text>
+                      {item.image_url && (
+                        <Image source={{ uri: item.image_url }} style={styles.postImage} />
+                      )}
                       <Text style={styles.timestamp}>{timeAgo(item.created_at)}</Text>
                     </View>
                   </View>
@@ -754,6 +762,13 @@ const styles = StyleSheet.create({
     transform: [{ translateX: -6 }],
     flexDirection: 'row',
     alignItems: 'center',
+  },
+
+  postImage: {
+    width: '100%',
+    height: 200,
+    borderRadius: 6,
+    marginTop: 8,
   },
 
   input: {

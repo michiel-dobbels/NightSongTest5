@@ -27,6 +27,7 @@ const LIKED_KEY_PREFIX = 'cached_likes_';
 type Post = {
   id: string;
   content: string;
+  image_url?: string;
   username?: string;
   user_id: string;
   created_at: string;
@@ -50,7 +51,7 @@ function timeAgo(dateString: string): string {
 }
 
 export interface HomeScreenRef {
-  createPost: (text: string) => Promise<void>;
+  createPost: (text: string, imageUri?: string) => Promise<void>;
 }
 
 interface HomeScreenProps {
@@ -153,7 +154,7 @@ const HomeScreen = forwardRef<HomeScreenRef, HomeScreenProps>(
     const { data, error } = await supabase
       .from('posts')
       .select(
-        'id, content, user_id, created_at, reply_count, like_count, profiles(username, display_name)',
+        'id, content, image_url, user_id, created_at, reply_count, like_count, profiles(username, display_name)',
       )
       .order('created_at', { ascending: false });
 
@@ -191,7 +192,7 @@ const HomeScreen = forwardRef<HomeScreenRef, HomeScreenProps>(
     }
   };
 
-  const createPost = async (text: string) => {
+  const createPost = async (text: string, imageUri?: string) => {
     if (!text.trim()) return;
 
     if (!user) return;
@@ -199,6 +200,7 @@ const HomeScreen = forwardRef<HomeScreenRef, HomeScreenProps>(
     const newPost: Post = {
       id: `temp-${Date.now()}`,
       content: text,
+      image_url: imageUri,
       username: profile.display_name || profile.username,
       user_id: user.id,
       created_at: new Date().toISOString(),
@@ -239,6 +241,7 @@ const HomeScreen = forwardRef<HomeScreenRef, HomeScreenProps>(
           content: text,
           user_id: user.id,
           username: profile.display_name || profile.username,
+          image_url: imageUri,
         },
       ])
 
@@ -452,6 +455,9 @@ const HomeScreen = forwardRef<HomeScreenRef, HomeScreenProps>(
                       {displayName} @{userName}
                     </Text>
                     <Text style={styles.postContent}>{item.content}</Text>
+                    {item.image_url && (
+                      <Image source={{ uri: item.image_url }} style={styles.postImage} />
+                    )}
                     <Text style={styles.timestamp}>{timeAgo(item.created_at)}</Text>
                   </View>
                 </View>
@@ -538,6 +544,12 @@ const styles = StyleSheet.create({
     transform: [{ translateX: -6 }],
     flexDirection: 'row',
     alignItems: 'center',
+  },
+  postImage: {
+    width: '100%',
+    height: 200,
+    borderRadius: 6,
+    marginTop: 8,
   },
 
 });
