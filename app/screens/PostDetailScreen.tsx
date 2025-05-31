@@ -290,11 +290,14 @@ export default function PostDetailScreen() {
         .select('reply_count, like_count')
         .eq('id', post.id)
         .single();
-      const entries = all.map(r => [r.id, r.reply_count ?? 0]);
-      if (postData) entries.push([post.id, postData.reply_count ?? all.length]);
-      else entries.push([post.id, post.reply_count ?? all.length]);
       setReplyCounts(prev => {
-        const counts = { ...prev, ...Object.fromEntries(entries) };
+        const counts = { ...prev };
+        all.forEach(r => {
+          counts[r.id] = prev[r.id] ?? r.reply_count ?? 0;
+        });
+        counts[post.id] =
+          prev[post.id] ??
+          (postData ? postData.reply_count ?? all.length : post.reply_count ?? all.length);
         AsyncStorage.setItem(COUNT_STORAGE_KEY, JSON.stringify(counts));
         return counts;
       });
@@ -304,10 +307,15 @@ export default function PostDetailScreen() {
         .select('like_count')
         .eq('id', post.id)
         .single();
-      if (postLike) likeEntries.push([post.id, postLike.like_count ?? 0]);
-      else likeEntries.push([post.id, post.like_count ?? 0]);
+
+      const postLikeCount = postLike ? postLike.like_count ?? 0 : post.like_count ?? 0;
+      likeEntries.push([post.id, postLikeCount]);
+
       setLikeCounts(prev => {
         const counts = { ...prev, ...Object.fromEntries(likeEntries) };
+        if (prev[post.id] !== undefined) {
+          counts[post.id] = prev[post.id];
+        }
         AsyncStorage.setItem(LIKE_COUNT_KEY, JSON.stringify(counts));
         return counts;
       });
@@ -332,14 +340,6 @@ export default function PostDetailScreen() {
       }
 
       
-      if (postData) likeEntries.push([post.id, postData.like_count ?? 0]);
-      else likeEntries.push([post.id, post.like_count ?? 0]);
-      setLikeCounts(prev => {
-        const counts = { ...prev, ...Object.fromEntries(likeEntries) };
-        AsyncStorage.setItem(LIKE_COUNT_KEY, JSON.stringify(counts));
-        return counts;
-      });
-
       if (user) {
         const { data: likeData } = await supabase
           .from('likes')
@@ -394,14 +394,14 @@ export default function PostDetailScreen() {
           setReplies(cached);
           setAllReplies(cached);
 
-          const entries = cached.map((r: any) => [r.id, r.reply_count ?? 0]);
-          entries.push([post.id, post.reply_count ?? cached.length]);
+          const entries = cached.map((r: any) => [r.id, storedCounts[r.id] ?? r.reply_count ?? 0]);
+          entries.push([post.id, storedCounts[post.id] ?? post.reply_count ?? cached.length]);
           const counts = { ...storedCounts, ...Object.fromEntries(entries) };
           setReplyCounts(counts);
           AsyncStorage.setItem(COUNT_STORAGE_KEY, JSON.stringify(counts));
 
           const likeEntries = cached.map((r: any) => [r.id, r.like_count ?? 0]);
-          likeEntries.push([post.id, post.like_count ?? 0]);
+          likeEntries.push([post.id, storedLikes[post.id] ?? post.like_count ?? 0]);
           const likeCountsObj = {
             ...storedLikes,
             ...Object.fromEntries(likeEntries),
