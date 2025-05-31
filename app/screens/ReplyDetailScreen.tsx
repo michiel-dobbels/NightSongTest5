@@ -659,6 +659,9 @@ export default function ReplyDetailScreen() {
                       {originalName} @{originalUserName}
                     </Text>
                     <Text style={styles.postContent}>{originalPost.content}</Text>
+                    {originalPost.image_url && (
+                      <Image source={{ uri: originalPost.image_url }} style={styles.postImage} />
+                    )}
                     <Text style={styles.timestamp}>{timeAgo(originalPost.created_at)}</Text>
                   </View>
                 </View>
@@ -716,6 +719,9 @@ export default function ReplyDetailScreen() {
                         {ancestorName} @{ancestorUserName}
                       </Text>
                       <Text style={styles.postContent}>{a.content}</Text>
+                      {a.image_url && (
+                        <Image source={{ uri: a.image_url }} style={styles.postImage} />
+                      )}
                     <Text style={styles.timestamp}>{timeAgo(a.created_at)}</Text>
                   </View>
                 </View>
@@ -766,6 +772,9 @@ export default function ReplyDetailScreen() {
                     {name} @{parentUserName}
                   </Text>
                   <Text style={styles.postContent}>{parent.content}</Text>
+                  {parent.image_url && (
+                    <Image source={{ uri: parent.image_url }} style={styles.postImage} />
+                  )}
                   <Text style={styles.timestamp}>{timeAgo(parent.created_at)}</Text>
                 </View>
               </View>
