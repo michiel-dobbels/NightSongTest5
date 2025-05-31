@@ -104,6 +104,22 @@ const HomeScreen = forwardRef<HomeScreenRef, HomeScreenProps>(
     await supabase.from('posts').delete().eq('id', id);
   };
 
+  const refreshLikeCount = async (id: string) => {
+    const { count } = await supabase
+      .from('likes')
+      .select('id', { count: 'exact', head: true })
+      .eq('post_id', id);
+
+    if (typeof count === 'number') {
+      await supabase.from('posts').update({ like_count: count }).eq('id', id);
+      setLikeCounts(prev => {
+        const counts = { ...prev, [id]: count };
+        AsyncStorage.setItem(LIKE_COUNT_KEY, JSON.stringify(counts));
+        return counts;
+      });
+    }
+  };
+
   const toggleLike = async (id: string) => {
     if (!user) return;
     const liked = likedPosts[id];
@@ -127,6 +143,7 @@ const HomeScreen = forwardRef<HomeScreenRef, HomeScreenProps>(
       await supabase.from('likes').insert({ user_id: user.id, post_id: id });
 
     }
+    await refreshLikeCount(id);
   };
 
 
