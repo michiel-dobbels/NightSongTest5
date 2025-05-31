@@ -47,6 +47,8 @@ interface Post {
   username?: string;
   reply_count?: number;
   like_count?: number;
+  image_url?: string | null;
+  image_caption?: string | null;
   profiles?: {
     username: string | null;
     display_name: string | null;
@@ -64,6 +66,8 @@ interface Reply {
   username?: string;
   reply_count?: number;
   like_count?: number;
+  image_url?: string | null;
+  image_caption?: string | null;
   profiles?: {
     username: string | null;
     display_name: string | null;
@@ -270,7 +274,7 @@ export default function PostDetailScreen() {
   const fetchReplies = async () => {
     const { data, error } = await supabase
       .from('replies')
-      .select('id, post_id, parent_id, user_id, content, created_at, reply_count, like_count, username')
+      .select('id, post_id, parent_id, user_id, content, image_url, image_caption, created_at, reply_count, like_count, username')
 
       .eq('post_id', post.id)
       .order('created_at', { ascending: false });
@@ -461,6 +465,8 @@ export default function PostDetailScreen() {
       parent_id: null,
       user_id: user.id,
       content: replyText,
+      image_url: null,
+      image_caption: null,
       created_at: new Date().toISOString(),
       username: profile.display_name || profile.username,
       reply_count: 0,
@@ -501,6 +507,8 @@ export default function PostDetailScreen() {
             parent_id: null,
             user_id: user.id,
             content: replyText,
+            image_url: null,
+            image_caption: null,
             username: profile.display_name || profile.username,
           },
         ])

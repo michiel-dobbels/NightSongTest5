@@ -32,6 +32,8 @@ type Post = {
   created_at: string;
   reply_count?: number;
   like_count?: number;
+  image_url?: string | null;
+  image_caption?: string | null;
   profiles?: {
     username: string | null;
     display_name: string | null;
@@ -153,7 +155,7 @@ const HomeScreen = forwardRef<HomeScreenRef, HomeScreenProps>(
     const { data, error } = await supabase
       .from('posts')
       .select(
-        'id, content, user_id, created_at, reply_count, like_count, profiles(username, display_name)',
+        'id, content, image_url, image_caption, user_id, created_at, reply_count, like_count, profiles(username, display_name)',
       )
       .order('created_at', { ascending: false });
 

@@ -23,6 +23,8 @@ create table if not exists public.posts (
     user_id uuid not null references public.profiles(id) on delete cascade,
     username text not null,
     content text not null,
+    image_url text,
+    image_caption text,
     created_at timestamptz not null default now(),
     reply_count integer not null default 0
 );
@@ -41,7 +43,11 @@ create policy "Anyone can read posts" on public.posts
 -- Add the username column only if it doesn't exist (for older setups)
 alter table public.posts add column if not exists username text;
 alter table public.posts add column if not exists reply_count integer not null default 0;
+alter table public.posts add column if not exists image_url text;
+alter table public.posts add column if not exists image_caption text;
 alter table public.replies add column if not exists reply_count integer not null default 0;
+alter table public.replies add column if not exists image_url text;
+alter table public.replies add column if not exists image_caption text;
 
 
 -- Create replies table referencing posts and profiles
@@ -52,6 +58,8 @@ create table if not exists public.replies (
     user_id uuid not null references public.profiles(id) on delete cascade,
     username text not null,
     content text not null,
+    image_url text,
+    image_caption text,
     created_at timestamptz not null default now(),
     reply_count integer not null default 0
 );
