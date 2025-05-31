@@ -309,12 +309,10 @@ export default function PostDetailScreen() {
       likeEntries.push([post.id, postLikeCount]);
 
       setLikeCounts(prev => {
-        const counts = { ...prev };
-        likeEntries.forEach(([id, count]) => {
-          if (prev[id] === undefined) {
-            counts[id] = count;
-          }
-        });
+        const counts = { ...prev, ...Object.fromEntries(likeEntries) };
+        if (prev[post.id] !== undefined) {
+          counts[post.id] = prev[post.id];
+        }
 
         AsyncStorage.setItem(LIKE_COUNT_KEY, JSON.stringify(counts));
         return counts;
@@ -400,7 +398,7 @@ export default function PostDetailScreen() {
           setReplyCounts(counts);
           AsyncStorage.setItem(COUNT_STORAGE_KEY, JSON.stringify(counts));
 
-          const likeEntries = cached.map((r: any) => [r.id, storedLikes[r.id] ?? r.like_count ?? 0]);
+          const likeEntries = cached.map((r: any) => [r.id, r.like_count ?? 0]);
 
           likeEntries.push([post.id, storedLikes[post.id] ?? post.like_count ?? 0]);
           const likeCountsObj = {
