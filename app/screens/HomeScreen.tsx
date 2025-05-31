@@ -109,6 +109,7 @@ const HomeScreen = forwardRef<HomeScreenRef, HomeScreenProps>(
 
 
 
+
   const fetchPosts = async () => {
     const { data, error } = await supabase
       .from('posts')
