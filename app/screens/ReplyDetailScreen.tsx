@@ -137,6 +137,44 @@ export default function ReplyDetailScreen() {
     }
   };
 
+  const toggleLike = async (id: string, isPost = false) => {
+    if (!user) return;
+    const key = id;
+    const isLiked = likedItems[key];
+    const newCount = (likeCounts[key] || 0) + (isLiked ? -1 : 1);
+    setLikedItems(prev => {
+      const updated = { ...prev, [key]: !isLiked };
+      AsyncStorage.setItem(
+        `${LIKED_KEY_PREFIX}${user.id}`,
+        JSON.stringify(updated),
+      );
+      return updated;
+    });
+    setLikeCounts(prev => {
+      const counts = { ...prev, [key]: newCount };
+      AsyncStorage.setItem(LIKE_COUNT_KEY, JSON.stringify(counts));
+      return counts;
+    });
+    if (isLiked) {
+      await supabase
+        .from('likes')
+        .delete()
+        .match(isPost ? { post_id: id, user_id: user.id } : { reply_id: id, user_id: user.id });
+      await supabase
+        .from(isPost ? 'posts' : 'replies')
+        .update({ like_count: newCount })
+        .eq('id', id);
+    } else {
+      await supabase
+        .from('likes')
+        .insert([isPost ? { post_id: id, user_id: user.id } : { reply_id: id, user_id: user.id }]);
+      await supabase
+        .from(isPost ? 'posts' : 'replies')
+        .update({ like_count: newCount })
+        .eq('id', id);
+    }
+    await refreshLikeCount(id, isPost);
+  };
 
 
   const confirmDeleteReply = (id: string) => {
