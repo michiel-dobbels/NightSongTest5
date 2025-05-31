@@ -193,7 +193,8 @@ const HomeScreen = forwardRef<HomeScreenRef, HomeScreenProps>(
   };
 
   const createPost = async (text: string, imageUri?: string) => {
-    if (!text.trim()) return;
+    if (!text.trim() && !imageUri) return;
+
 
     if (!user) return;
 
