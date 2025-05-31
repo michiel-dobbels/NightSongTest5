@@ -40,7 +40,12 @@ export const LikeProvider = ({ children }: { children: React.ReactNode }) => {
           } catch (e) {
             console.error('Failed to parse cached likes', e);
           }
+        } else {
+          setLikedItems({});
         }
+      } else {
+        setLikedItems({});
+
       }
     };
     load();
