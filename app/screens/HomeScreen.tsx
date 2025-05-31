@@ -434,7 +434,7 @@ const HomeScreen = forwardRef<HomeScreenRef, HomeScreenProps>(
                     color="red"
                     style={{ marginRight: 2 }}
                   />
-                  <Text style={styles.replyCount}>{likeCounts[item.id] || 0}</Text>
+                  <Text style={styles.replyCount}>{likeCounts[item.id] ?? item.like_count ?? 0}</Text>
                 </TouchableOpacity>
 
               </View>
