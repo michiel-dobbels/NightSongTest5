@@ -81,26 +81,25 @@ const HomeScreen = forwardRef<HomeScreenRef, HomeScreenProps>(
   };
 
   const handleDeletePost = async (id: string) => {
-    setPosts(prev => {
-      const updated = prev.filter(p => p.id !== id);
-      AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
-      return updated;
-    });
-    setReplyCounts(prev => {
-      const { [id]: _removed, ...rest } = prev;
-      AsyncStorage.setItem(COUNT_STORAGE_KEY, JSON.stringify(rest));
-      return rest;
-    });
-    setLikeCounts(prev => {
-      const { [id]: _removed, ...rest } = prev;
-      AsyncStorage.setItem(LIKE_COUNT_KEY, JSON.stringify(rest));
-      return rest;
-    });
-    setLikedItems(prev => {
-      const { [id]: _omit, ...rest } = prev;
-      AsyncStorage.setItem(`${LIKED_KEY_PREFIX}${user?.id}`, JSON.stringify(rest));
-      return rest;
-    });
+    const updatedPosts = posts.filter(p => p.id !== id);
+    setPosts(updatedPosts);
+    await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(updatedPosts));
+
+    const { [id]: _removedCount, ...restCounts } = replyCounts;
+    setReplyCounts(restCounts);
+    await AsyncStorage.setItem(COUNT_STORAGE_KEY, JSON.stringify(restCounts));
+
+    const { [id]: _removedLike, ...restLikes } = likeCounts;
+    setLikeCounts(restLikes);
+    await AsyncStorage.setItem(LIKE_COUNT_KEY, JSON.stringify(restLikes));
+
+    const { [id]: _omit, ...restLiked } = likedItems;
+    setLikedItems(restLiked);
+    await AsyncStorage.setItem(
+      `${LIKED_KEY_PREFIX}${user?.id}`,
+      JSON.stringify(restLiked),
+    );
+
     await supabase.from('posts').delete().eq('id', id);
   };
 
@@ -118,15 +117,18 @@ const HomeScreen = forwardRef<HomeScreenRef, HomeScreenProps>(
 
     if (!error && data) {
       setPosts(data as Post[]);
-      AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+      await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(data));
       const replyEntries = (data as any[]).map(p => [p.id, p.reply_count ?? 0]);
       const replyCountsMap = Object.fromEntries(replyEntries);
       setReplyCounts(replyCountsMap);
-      AsyncStorage.setItem(COUNT_STORAGE_KEY, JSON.stringify(replyCountsMap));
+      await AsyncStorage.setItem(
+        COUNT_STORAGE_KEY,
+        JSON.stringify(replyCountsMap),
+      );
       const likeEntries = (data as any[]).map(p => [p.id, p.like_count ?? 0]);
       const likeMap = Object.fromEntries(likeEntries);
       setLikeCounts(likeMap);
-      AsyncStorage.setItem(LIKE_COUNT_KEY, JSON.stringify(likeMap));
+      await AsyncStorage.setItem(LIKE_COUNT_KEY, JSON.stringify(likeMap));
 
       if (user) {
         const { data: likedData } = await supabase
@@ -140,7 +142,7 @@ const HomeScreen = forwardRef<HomeScreenRef, HomeScreenProps>(
             if (l.post_id) likedObj[l.post_id] = true;
           });
           setLikedItems(likedObj);
-          AsyncStorage.setItem(
+          await AsyncStorage.setItem(
             `${LIKED_KEY_PREFIX}${user.id}`,
             JSON.stringify(likedObj),
           );
@@ -170,21 +172,20 @@ const HomeScreen = forwardRef<HomeScreenRef, HomeScreenProps>(
     };
 
     // Show the post immediately
-    setPosts((prev) => {
-      const updated = [newPost, ...prev];
-      AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
-      return updated;
-    });
-    setReplyCounts(prev => {
-      const counts = { ...prev, [newPost.id]: 0 };
-      AsyncStorage.setItem(COUNT_STORAGE_KEY, JSON.stringify(counts));
-      return counts;
-    });
-    setLikeCounts(prev => {
-      const counts = { ...prev, [newPost.id]: 0 };
-      AsyncStorage.setItem(LIKE_COUNT_KEY, JSON.stringify(counts));
-      return counts;
-    });
+    const updatedPosts = [newPost, ...posts];
+    setPosts(updatedPosts);
+    await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(updatedPosts));
+
+    const replyCountsInit = { ...replyCounts, [newPost.id]: 0 };
+    setReplyCounts(replyCountsInit);
+    await AsyncStorage.setItem(
+      COUNT_STORAGE_KEY,
+      JSON.stringify(replyCountsInit),
+    );
+
+    const likeInit = { ...likeCounts, [newPost.id]: 0 };
+    setLikeCounts(likeInit);
+    await AsyncStorage.setItem(LIKE_COUNT_KEY, JSON.stringify(likeInit));
 
     if (!hideInput) {
       setPostText('');
@@ -213,34 +214,27 @@ const HomeScreen = forwardRef<HomeScreenRef, HomeScreenProps>(
     if (!error) {
       if (data) {
         // Update the optimistic post with the real data from Supabase
-        setPosts((prev) => {
-          const updated = prev.map((p) =>
-            p.id === newPost.id
-              ? { ...p, id: data.id, created_at: data.created_at, reply_count: 0 }
-              : p
-          );
-          AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
-          return updated;
-        });
-        setReplyCounts(prev => {
-          const { [newPost.id]: tempCount, ...rest } = prev;
-          const counts = { ...rest, [data.id]: tempCount };
-          AsyncStorage.setItem(COUNT_STORAGE_KEY, JSON.stringify(counts));
-          return counts;
-        });
-        setLikeCounts(prev => {
-          const temp = prev[newPost.id] ?? 0;
-          const { [newPost.id]: _omit, ...rest } = prev;
-          const counts = { ...rest, [data.id]: temp };
-          AsyncStorage.setItem(LIKE_COUNT_KEY, JSON.stringify(counts));
-          return counts;
-        });
-        setLikeCounts(prev => {
-          const { [newPost.id]: tempLike, ...rest } = prev;
-          const counts = { ...rest, [data.id]: tempLike ?? 0 };
-          AsyncStorage.setItem(LIKE_COUNT_KEY, JSON.stringify(counts));
-          return counts;
-        });
+        const updated = posts.map(p =>
+          p.id === newPost.id
+            ? { ...p, id: data.id, created_at: data.created_at, reply_count: 0 }
+            : p,
+        );
+        setPosts(updated);
+        await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
+
+        const { [newPost.id]: tempCount, ...restCounts } = replyCounts;
+        const counts = { ...restCounts, [data.id]: tempCount };
+        setReplyCounts(counts);
+        await AsyncStorage.setItem(COUNT_STORAGE_KEY, JSON.stringify(counts));
+
+        const tempLikeVal = likeCounts[newPost.id] ?? 0;
+        const { [newPost.id]: _omitLike, ...restLikes } = likeCounts;
+        const likeCountsUpdated = { ...restLikes, [data.id]: tempLikeVal };
+        setLikeCounts(likeCountsUpdated);
+        await AsyncStorage.setItem(
+          LIKE_COUNT_KEY,
+          JSON.stringify(likeCountsUpdated),
+        );
       }
 
       // Refresh from the server in the background to stay in sync
@@ -248,21 +242,17 @@ const HomeScreen = forwardRef<HomeScreenRef, HomeScreenProps>(
 
     } else {
       // Remove the optimistic post if it failed to persist
-      setPosts((prev) => {
-        const updated = prev.filter((p) => p.id !== newPost.id);
-        AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
-        return updated;
-      });
-      setReplyCounts(prev => {
-        const { [newPost.id]: _omit, ...rest } = prev;
-        AsyncStorage.setItem(COUNT_STORAGE_KEY, JSON.stringify(rest));
-        return rest;
-      });
-      setLikeCounts(prev => {
-        const { [newPost.id]: _omit, ...rest } = prev;
-        AsyncStorage.setItem(LIKE_COUNT_KEY, JSON.stringify(rest));
-        return rest;
-      });
+      const updated = posts.filter(p => p.id !== newPost.id);
+      setPosts(updated);
+      await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
+
+      const { [newPost.id]: _omitCount, ...restCounts } = replyCounts;
+      setReplyCounts(restCounts);
+      await AsyncStorage.setItem(COUNT_STORAGE_KEY, JSON.stringify(restCounts));
+
+      const { [newPost.id]: _omitLike, ...restLikes } = likeCounts;
+      setLikeCounts(restLikes);
+      await AsyncStorage.setItem(LIKE_COUNT_KEY, JSON.stringify(restLikes));
 
       // Log the failure and surface it to the user
       console.error('Failed to post:', error?.message);
