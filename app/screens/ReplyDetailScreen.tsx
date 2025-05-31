@@ -44,6 +44,7 @@ interface Reply {
   parent_id: string | null;
   user_id: string;
   content: string;
+  image_url?: string;
   created_at: string;
   reply_count?: number;
   like_count?: number;
@@ -58,6 +59,7 @@ interface Reply {
 interface Post {
   id: string;
   content: string;
+  image_url?: string;
   user_id: string;
   created_at: string;
   reply_count?: number;
@@ -267,7 +269,7 @@ export default function ReplyDetailScreen() {
   const fetchReplies = async () => {
     const { data, error } = await supabase
       .from('replies')
-      .select('id, post_id, parent_id, user_id, content, created_at, reply_count, like_count, username')
+      .select('id, post_id, parent_id, user_id, content, image_url, created_at, reply_count, like_count, username')
 
       .eq('post_id', parent.post_id)
       .order('created_at', { ascending: false });
@@ -816,6 +818,9 @@ export default function ReplyDetailScreen() {
                       {childName} @{childUserName}
                     </Text>
                     <Text style={styles.postContent}>{item.content}</Text>
+                    {item.image_url && (
+                      <Image source={{ uri: item.image_url }} style={styles.postImage} />
+                    )}
                     <Text style={styles.timestamp}>{timeAgo(item.created_at)}</Text>
                   </View>
                 </View>
@@ -925,6 +930,13 @@ const styles = StyleSheet.create({
     transform: [{ translateX: -6 }],
     flexDirection: 'row',
     alignItems: 'center',
+  },
+
+  postImage: {
+    width: '100%',
+    height: 200,
+    borderRadius: 6,
+    marginTop: 8,
   },
 
   input: {
