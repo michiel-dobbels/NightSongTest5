@@ -26,6 +26,7 @@ create policy "Authenticated users can upload avatars" on storage.objects
 create policy "Anyone can read avatars" on storage.objects
   for select using ( bucket_id = 'profile-images' );
 
+
 -- Ensure new avatar_url column exists on older setups
 alter table public.profiles add column if not exists avatar_url text;
 
@@ -244,3 +245,15 @@ for each row execute procedure public.increment_like_count();
 
 create trigger like_delete after delete on public.likes
 for each row execute procedure public.decrement_like_count();
+
+-- Row level security policies for profile image uploads
+alter table storage.objects enable row level security;
+
+create policy "Anyone can read profile images" on storage.objects
+  for select using (bucket_id = 'profile-images');
+
+create policy "Authenticated uploads for profile images" on storage.objects
+  for insert with check (
+    bucket_id = 'profile-images' and auth.role() = 'authenticated'
+  );
+
