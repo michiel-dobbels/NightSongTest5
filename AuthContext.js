@@ -183,6 +183,10 @@ export function AuthProvider({ children }) {
 
   const setProfileImageUri = async (uri) => {
     setProfileImageUriState(uri);
+    const authUser = supabase.auth.user();
+    if (authUser) {
+      await supabase.from('profiles').update({ image_url: uri }).eq('id', authUser.id);
+    }
     if (uri) {
       await AsyncStorage.setItem('profile_image_uri', uri);
     } else {
@@ -209,6 +213,13 @@ export function AuthProvider({ children }) {
           data.display_name || meta.display_name || data.username || meta.username,
       };
       setProfile(profileData);
+      if (data.image_url) {
+        setProfileImageUriState(data.image_url);
+        await AsyncStorage.setItem('profile_image_uri', data.image_url);
+      } else {
+        setProfileImageUriState(null);
+        await AsyncStorage.removeItem('profile_image_uri');
+      }
       return profileData;
     }
 

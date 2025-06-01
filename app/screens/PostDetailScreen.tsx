@@ -14,6 +14,7 @@ import {
   Image,
 } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
+import * as FileSystem from 'expo-file-system';
 import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useRoute, useNavigation, useFocusEffect } from '@react-navigation/native';
@@ -109,7 +110,9 @@ export default function PostDetailScreen() {
       quality: 0.8,
     });
     if (!result.canceled) {
-      setReplyImage(result.assets[0].uri);
+      const uri = result.assets[0].uri;
+      const base64 = await FileSystem.readAsStringAsync(uri, { encoding: 'base64' });
+      setReplyImage(`data:image/jpeg;base64,${base64}`);
     }
   };
 
