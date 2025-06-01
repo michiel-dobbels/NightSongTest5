@@ -192,6 +192,10 @@ export function AuthProvider({ children }) {
     } else {
       await AsyncStorage.removeItem('profile_image_uri');
     }
+
+    if (user) {
+      await supabase.from('profiles').update({ image_url: uri }).eq('id', user.id);
+    }
   };
 
   // 🔍 Fetch profile by ID
@@ -220,6 +224,7 @@ export function AuthProvider({ children }) {
         setProfileImageUriState(null);
         await AsyncStorage.removeItem('profile_image_uri');
       }
+
       return profileData;
     }
 
