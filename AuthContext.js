@@ -2,6 +2,8 @@ import React, { createContext, useContext, useEffect, useState } from 'react';
 import { supabase } from './lib/supabase';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
+const PROFILE_IMAGE_KEY_PREFIX = 'profile_image_uri_';
+
 const AuthContext = createContext();
 
 export function AuthProvider({ children }) {
@@ -100,11 +102,23 @@ export function AuthProvider({ children }) {
 
   useEffect(() => {
     const loadImage = async () => {
-      const stored = await AsyncStorage.getItem('profile_image_uri');
-      if (stored) setProfileImageUriState(stored);
+      if (user?.id) {
+        const key = `${PROFILE_IMAGE_KEY_PREFIX}${user.id}`;
+        const stored = await AsyncStorage.getItem(key);
+        if (stored) {
+          setProfileImageUriState(stored);
+        } else if (profile?.avatar_url) {
+          setProfileImageUriState(profile.avatar_url);
+          await AsyncStorage.setItem(key, profile.avatar_url);
+        } else {
+          setProfileImageUriState(null);
+        }
+      } else {
+        setProfileImageUriState(null);
+      }
     };
     loadImage();
-  }, []);
+  }, [user, profile]);
 
   // 🔐 Sign in
   async function signIn(email, password) {
@@ -178,15 +192,48 @@ export function AuthProvider({ children }) {
     setUser(null);
     setProfile(null);
     setProfileImageUriState(null);
-    await AsyncStorage.removeItem('profile_image_uri');
+    if (user?.id) {
+      await AsyncStorage.removeItem(`${PROFILE_IMAGE_KEY_PREFIX}${user.id}`);
+    }
   };
 
+  const AVATAR_BUCKET = 'avatars';
+
   const setProfileImageUri = async (uri) => {
-    setProfileImageUriState(uri);
+    if (!user) {
+      setProfileImageUriState(uri);
+      return;
+    }
+
+    const key = `${PROFILE_IMAGE_KEY_PREFIX}${user.id}`;
     if (uri) {
-      await AsyncStorage.setItem('profile_image_uri', uri);
+      try {
+        setProfileImageUriState(uri);
+        const res = await fetch(uri);
+        const blob = await res.blob();
+        const ext = uri.split('.').pop() || 'jpg';
+        const path = `${user.id}/${Date.now()}.${ext}`;
+        const { error } = await supabase.storage
+          .from(AVATAR_BUCKET)
+          .upload(path, blob, { upsert: true });
+        if (!error) {
+          const { publicURL } = supabase.storage
+            .from(AVATAR_BUCKET)
+            .getPublicUrl(path).data;
+          await supabase
+            .from('profiles')
+            .update({ avatar_url: publicURL })
+            .eq('id', user.id);
+          await AsyncStorage.setItem(key, publicURL);
+          setProfileImageUriState(publicURL);
+        }
+      } catch (e) {
+        console.error('Failed to upload avatar', e);
+      }
     } else {
-      await AsyncStorage.removeItem('profile_image_uri');
+      setProfileImageUriState(null);
+      await AsyncStorage.removeItem(key);
+      await supabase.from('profiles').update({ avatar_url: null }).eq('id', user.id);
     }
   };
 
@@ -209,6 +256,11 @@ export function AuthProvider({ children }) {
           data.display_name || meta.display_name || data.username || meta.username,
       };
       setProfile(profileData);
+      if (data.avatar_url) {
+        const key = `${PROFILE_IMAGE_KEY_PREFIX}${data.id}`;
+        setProfileImageUriState(data.avatar_url);
+        await AsyncStorage.setItem(key, data.avatar_url);
+      }
       return profileData;
     }
 
