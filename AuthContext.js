@@ -9,6 +9,7 @@ export function AuthProvider({ children }) {
   const [profile, setProfile] = useState(null); // 🧠 includes username
   const [loading, setLoading] = useState(true);
   const [profileImageUri, setProfileImageUriState] = useState(null);
+  const [bannerImageUri, setBannerImageUriState] = useState(null);
 
   // Helper ensures a profile exists for the given user so posts can
   // reference it without foreign-key errors
@@ -102,6 +103,8 @@ export function AuthProvider({ children }) {
     const loadImage = async () => {
       const stored = await AsyncStorage.getItem('profile_image_uri');
       if (stored) setProfileImageUriState(stored);
+      const bannerStored = await AsyncStorage.getItem('banner_image_uri');
+      if (bannerStored) setBannerImageUriState(bannerStored);
     };
     loadImage();
   }, []);
@@ -178,7 +181,9 @@ export function AuthProvider({ children }) {
     setUser(null);
     setProfile(null);
     setProfileImageUriState(null);
+    setBannerImageUriState(null);
     await AsyncStorage.removeItem('profile_image_uri');
+    await AsyncStorage.removeItem('banner_image_uri');
   };
 
   const setProfileImageUri = async (uri) => {
@@ -195,6 +200,22 @@ export function AuthProvider({ children }) {
 
     if (user) {
       await supabase.from('profiles').update({ image_url: uri }).eq('id', user.id);
+    }
+  };
+
+  const setBannerImageUri = async (uri) => {
+    setBannerImageUriState(uri);
+    if (uri) {
+      await AsyncStorage.setItem('banner_image_uri', uri);
+    } else {
+      await AsyncStorage.removeItem('banner_image_uri');
+    }
+    if (user) {
+      const { error } = await supabase
+        .from('profiles')
+        .update({ banner_url: uri })
+        .eq('id', user.id);
+      if (error) console.error('Failed to update banner_url:', error);
     }
   };
 
@@ -217,12 +238,12 @@ export function AuthProvider({ children }) {
           data.display_name || meta.display_name || data.username || meta.username,
       };
       setProfile(profileData);
-      if (data.image_url) {
-        setProfileImageUriState(data.image_url);
-        await AsyncStorage.setItem('profile_image_uri', data.image_url);
+      if (data.banner_url) {
+        setBannerImageUriState(data.banner_url);
+        AsyncStorage.setItem('banner_image_uri', data.banner_url);
       } else {
-        setProfileImageUriState(null);
-        await AsyncStorage.removeItem('profile_image_uri');
+        setBannerImageUriState(null);
+        AsyncStorage.removeItem('banner_image_uri');
       }
 
       return profileData;
@@ -237,6 +258,8 @@ export function AuthProvider({ children }) {
     loading,
     profileImageUri,
     setProfileImageUri,
+    bannerImageUri,
+    setBannerImageUri,
     signUp,
     signIn,
     signOut,
