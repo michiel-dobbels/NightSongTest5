@@ -12,4 +12,5 @@ This project uses [Supabase](https://supabase.com) for authentication and storin
 5. Copy your project's URL and `anon` key into `lib/supabase.js`.
 6. Install dependencies with `npm install`.
 
+
 With the database configured you can run `npm start` to launch the Expo app.

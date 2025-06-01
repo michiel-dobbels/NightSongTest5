@@ -246,3 +246,4 @@ create policy "Authenticated uploads for profile images" on storage.objects
   for insert with check (
     bucket_id = 'profile-images' and auth.role() = 'authenticated'
   );
+
