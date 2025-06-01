@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import { supabase } from './lib/supabase';
+import { supabase, PROFILE_IMAGE_BUCKET } from './lib/supabase';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const AuthContext = createContext();
@@ -55,15 +55,7 @@ export function AuthProvider({ children }) {
     // Log any insertion error for easier debugging
     if (error) console.error('Failed to insert profile:', error);
 
-    const profileData = {
-      id: authUser.id,
-      username: defaultUsername,
-      display_name: defaultDisplayName,
-      email: authUser.email,
-    };
-
-    setProfile(profileData);
-    return profileData;
+    return await fetchProfile(authUser.id);
   };
 
   // 🔁 Refresh session on mount
@@ -181,6 +173,40 @@ export function AuthProvider({ children }) {
     await AsyncStorage.removeItem('profile_image_uri');
   };
 
+  const uploadProfileImage = async (uri) => {
+    if (!user || !uri) return;
+    try {
+      const res = await fetch(uri);
+      const blob = await res.blob();
+      const ext = uri.split('.').pop();
+      const path = `${user.id}/avatar.${ext}`;
+      const { error: uploadError } = await supabase.storage
+        .from(PROFILE_IMAGE_BUCKET)
+        .upload(path, blob, { upsert: true });
+      if (uploadError) {
+        if (
+          uploadError.message &&
+          uploadError.message.toLowerCase().includes('bucket not found')
+        ) {
+          console.error(
+            `Storage bucket "${PROFILE_IMAGE_BUCKET}" not found. Create it in Supabase Storage and make it public.`
+          );
+        }
+        throw uploadError;
+      }
+      const { publicURL } = supabase.storage
+        .from(PROFILE_IMAGE_BUCKET)
+        .getPublicUrl(path);
+      await supabase
+        .from('profiles')
+        .update({ avatar_url: publicURL })
+        .eq('id', user.id);
+      await setProfileImageUri(publicURL);
+    } catch (e) {
+      console.error('Failed to upload profile image', e);
+    }
+  };
+
   const setProfileImageUri = async (uri) => {
     setProfileImageUriState(uri);
     if (uri) {
@@ -209,6 +235,10 @@ export function AuthProvider({ children }) {
           data.display_name || meta.display_name || data.username || meta.username,
       };
       setProfile(profileData);
+      if (data.avatar_url) {
+        setProfileImageUriState(data.avatar_url);
+        await AsyncStorage.setItem('profile_image_uri', data.avatar_url);
+      }
       return profileData;
     }
 
@@ -221,6 +251,7 @@ export function AuthProvider({ children }) {
     loading,
     profileImageUri,
     setProfileImageUri,
+    uploadProfileImage,
     signUp,
     signIn,
     signOut,
