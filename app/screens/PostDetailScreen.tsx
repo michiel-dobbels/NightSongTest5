@@ -53,6 +53,7 @@ interface Post {
     username: string | null;
     display_name: string | null;
     avatar_url: string | null;
+
   } | null;
 }
 
@@ -72,6 +73,7 @@ interface Reply {
     username: string | null;
     display_name: string | null;
     avatar_url: string | null;
+
   } | null;
 }
 
@@ -483,7 +485,11 @@ export default function PostDetailScreen() {
       username: profile.display_name || profile.username,
       reply_count: 0,
       like_count: 0,
-      profiles: { username: profile.username, display_name: profile.display_name },
+      profiles: {
+        username: profile.username,
+        display_name: profile.display_name,
+        avatar_url: profileImageUri || null,
+      },
     };
 
     setReplies(prev => {
@@ -608,6 +614,7 @@ export default function PostDetailScreen() {
             ) : (
               <View style={[styles.avatar, styles.placeholder]} />
             )}
+
               <View style={{ flex: 1 }}>
                 <Text style={styles.username}>
                   {displayName} @{userName}
@@ -654,6 +661,7 @@ export default function PostDetailScreen() {
           const avatarUri = isMe
             ? profileImageUri
             : item.profiles?.avatar_url || undefined;
+
           return (
             <TouchableOpacity
               onPress={() =>

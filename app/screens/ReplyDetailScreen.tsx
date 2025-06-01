@@ -55,6 +55,7 @@ interface Reply {
     username: string | null;
     display_name: string | null;
     avatar_url: string | null;
+
   } | null;
 }
 
@@ -72,6 +73,7 @@ interface Post {
     username: string | null;
     display_name: string | null;
     avatar_url: string | null;
+
   } | null;
 }
 
@@ -522,7 +524,11 @@ export default function ReplyDetailScreen() {
       reply_count: 0,
       username: profile.display_name || profile.username,
       like_count: 0,
-      profiles: { username: profile.username, display_name: profile.display_name },
+      profiles: {
+        username: profile.username,
+        display_name: profile.display_name,
+        avatar_url: profileImageUri || null,
+      },
     };
 
     setReplies(prev => {
@@ -668,6 +674,7 @@ export default function ReplyDetailScreen() {
                   ) : (
                     <View style={[styles.avatar, styles.placeholder]} />
                   )}
+
                   <View style={{ flex: 1 }}>
                     <Text style={styles.username}>
                       {originalName} @{originalUserName}
@@ -712,6 +719,7 @@ export default function ReplyDetailScreen() {
                 const avatarUri = isMe
                   ? profileImageUri
                   : a.profiles?.avatar_url || undefined;
+
                 return (
                 <View key={a.id} style={styles.post}>
                   <View style={styles.threadLine} pointerEvents="none" />
@@ -793,6 +801,7 @@ export default function ReplyDetailScreen() {
                 ) : (
                   <View style={[styles.avatar, styles.placeholder]} />
                 )}
+
                 <View style={{ flex: 1 }}>
                   <Text style={styles.username}>
                     {name} @{parentUserName}
@@ -841,6 +850,7 @@ export default function ReplyDetailScreen() {
           const avatarUri = isMe
             ? profileImageUri
             : item.profiles?.avatar_url || undefined;
+
           return (
             <TouchableOpacity
               onPress={() =>
