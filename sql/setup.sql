@@ -19,6 +19,18 @@ create policy "Users can update their own profile"
 
 alter table public.profiles add column if not exists avatar_url text;
 
+-- Allow authenticated users to upload profile images
+alter table storage.objects enable row level security;
+create policy "Auth users can upload profile images" on storage.objects
+  for insert with check (
+    bucket_id = 'profile-images' and auth.role() = 'authenticated'
+  );
+create policy "Auth users can replace profile images" on storage.objects
+  for update using (
+    bucket_id = 'profile-images' and auth.role() = 'authenticated'
+  );
+
+
 -- Create posts table referencing profiles(id)
 create extension if not exists "uuid-ossp";
 create table if not exists public.posts (
