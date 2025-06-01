@@ -195,6 +195,7 @@ export function AuthProvider({ children }) {
             upsert: true,
             contentType: blob.type || 'image/jpeg',
           });
+
         if (error) throw error;
         const { publicURL } = supabase.storage
           .from('profile-images')

@@ -19,6 +19,7 @@ create policy "Users can update their own profile"
 
 alter table public.profiles add column if not exists avatar_url text;
 
+
 -- Create posts table referencing profiles(id)
 create extension if not exists "uuid-ossp";
 create table if not exists public.posts (
@@ -202,7 +203,7 @@ create policy "Users can delete their likes" on public.likes
 create policy "Anyone can read likes" on public.likes
   for select using (true);
 
--- Storage policies for profile pictures
+
 create policy "Users can upload avatar images"
   on storage.objects for insert to authenticated
   with check (bucket_id = 'profile-images');
@@ -243,3 +244,4 @@ for each row execute procedure public.increment_like_count();
 
 create trigger like_delete after delete on public.likes
 for each row execute procedure public.decrement_like_count();
+
