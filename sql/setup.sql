@@ -6,6 +6,7 @@ create table if not exists public.profiles (
   id uuid references auth.users(id) primary key,
   username text unique,
   display_name text,
+  avatar_url text,
   updated_at timestamp with time zone default timezone('utc', now())
 );
 

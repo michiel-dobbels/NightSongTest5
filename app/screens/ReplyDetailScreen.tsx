@@ -54,6 +54,7 @@ interface Reply {
   profiles?: {
     username: string | null;
     display_name: string | null;
+    avatar_url: string | null;
   } | null;
 }
 
@@ -70,6 +71,7 @@ interface Post {
   profiles?: {
     username: string | null;
     display_name: string | null;
+    avatar_url: string | null;
   } | null;
 }
 
@@ -282,7 +284,7 @@ export default function ReplyDetailScreen() {
   const fetchReplies = async () => {
     const { data, error } = await supabase
       .from('replies')
-      .select('id, post_id, parent_id, user_id, content, image_url, created_at, reply_count, like_count, username')
+      .select('id, post_id, parent_id, user_id, content, image_url, created_at, reply_count, like_count, username, profiles(username, display_name, avatar_url)')
 
       .eq('post_id', parent.post_id)
       .order('created_at', { ascending: false });
@@ -649,8 +651,20 @@ export default function ReplyDetailScreen() {
                   </TouchableOpacity>
                 )}
                 <View style={styles.row}>
-                  {user?.id === originalPost.user_id && profileImageUri ? (
-                    <Image source={{ uri: profileImageUri }} style={styles.avatar} />
+                  {(
+                    user?.id === originalPost.user_id
+                      ? profileImageUri
+                      : originalPost.profiles?.avatar_url
+                  ) ? (
+                    <Image
+                      source={{
+                        uri:
+                          user?.id === originalPost.user_id
+                            ? profileImageUri
+                            : originalPost.profiles?.avatar_url,
+                      }}
+                      style={styles.avatar}
+                    />
                   ) : (
                     <View style={[styles.avatar, styles.placeholder]} />
                   )}
@@ -659,6 +673,9 @@ export default function ReplyDetailScreen() {
                       {originalName} @{originalUserName}
                     </Text>
                     <Text style={styles.postContent}>{originalPost.content}</Text>
+                    {originalPost.image_url && (
+                      <Image source={{ uri: originalPost.image_url }} style={styles.postImage} />
+                    )}
                     <Text style={styles.timestamp}>{timeAgo(originalPost.created_at)}</Text>
                   </View>
                 </View>
@@ -692,7 +709,9 @@ export default function ReplyDetailScreen() {
                   a.profiles?.display_name || a.profiles?.username || a.username;
                 const ancestorUserName = a.profiles?.username || a.username;
                 const isMe = user?.id === a.user_id;
-                const avatarUri = isMe ? profileImageUri : undefined;
+                const avatarUri = isMe
+                  ? profileImageUri
+                  : a.profiles?.avatar_url || undefined;
                 return (
                 <View key={a.id} style={styles.post}>
                   <View style={styles.threadLine} pointerEvents="none" />
@@ -716,6 +735,9 @@ export default function ReplyDetailScreen() {
                         {ancestorName} @{ancestorUserName}
                       </Text>
                       <Text style={styles.postContent}>{a.content}</Text>
+                      {a.image_url && (
+                        <Image source={{ uri: a.image_url }} style={styles.postImage} />
+                      )}
                     <Text style={styles.timestamp}>{timeAgo(a.created_at)}</Text>
                   </View>
                 </View>
@@ -756,8 +778,18 @@ export default function ReplyDetailScreen() {
                 </TouchableOpacity>
               )}
               <View style={styles.row}>
-                {user?.id === parent.user_id && profileImageUri ? (
-                  <Image source={{ uri: profileImageUri }} style={styles.avatar} />
+                {(
+                  user?.id === parent.user_id ? profileImageUri : parent.profiles?.avatar_url
+                ) ? (
+                  <Image
+                    source={{
+                      uri:
+                        user?.id === parent.user_id
+                          ? profileImageUri
+                          : parent.profiles?.avatar_url,
+                    }}
+                    style={styles.avatar}
+                  />
                 ) : (
                   <View style={[styles.avatar, styles.placeholder]} />
                 )}
@@ -766,6 +798,9 @@ export default function ReplyDetailScreen() {
                     {name} @{parentUserName}
                   </Text>
                   <Text style={styles.postContent}>{parent.content}</Text>
+                  {parent.image_url && (
+                    <Image source={{ uri: parent.image_url }} style={styles.postImage} />
+                  )}
                   <Text style={styles.timestamp}>{timeAgo(parent.created_at)}</Text>
                 </View>
               </View>
@@ -803,7 +838,9 @@ export default function ReplyDetailScreen() {
           const childName = item.profiles?.display_name || item.profiles?.username || item.username;
           const childUserName = item.profiles?.username || item.username;
           const isMe = user?.id === item.user_id;
-          const avatarUri = isMe ? profileImageUri : undefined;
+          const avatarUri = isMe
+            ? profileImageUri
+            : item.profiles?.avatar_url || undefined;
           return (
             <TouchableOpacity
               onPress={() =>
