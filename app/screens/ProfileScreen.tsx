@@ -9,6 +9,7 @@ import {
   TouchableOpacity,
 } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
+import * as FileSystem from 'expo-file-system';
 import { useNavigation } from '@react-navigation/native';
 
 import { useAuth } from '../../AuthContext';
@@ -31,7 +32,9 @@ export default function ProfileScreen() {
     });
 
     if (!result.canceled && result.assets && result.assets.length > 0) {
-      setProfileImageUri(result.assets[0].uri);
+      const uri = result.assets[0].uri;
+      const base64 = await FileSystem.readAsStringAsync(uri, { encoding: 'base64' });
+      setProfileImageUri(`data:image/jpeg;base64,${base64}`);
 
     }
   };
