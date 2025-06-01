@@ -182,11 +182,36 @@ export function AuthProvider({ children }) {
   };
 
   const setProfileImageUri = async (uri) => {
-    setProfileImageUriState(uri);
+    if (!user) return;
+
     if (uri) {
-      await AsyncStorage.setItem('profile_image_uri', uri);
+      try {
+        const response = await fetch(uri);
+        const blob = await response.blob();
+        const filePath = `profile-images/${user.id}`;
+        const { error } = await supabase.storage
+          .from('profile-images')
+          .upload(filePath, blob, {
+            upsert: true,
+            contentType: blob.type || 'image/jpeg',
+          });
+        if (error) throw error;
+        const { publicURL } = supabase.storage
+          .from('profile-images')
+          .getPublicUrl(filePath);
+        await supabase
+          .from('profiles')
+          .update({ avatar_url: publicURL })
+          .eq('id', user.id);
+        setProfileImageUriState(publicURL);
+        await AsyncStorage.setItem('profile_image_uri', publicURL);
+      } catch (e) {
+        console.error('Failed to upload profile image', e);
+      }
     } else {
+      setProfileImageUriState(null);
       await AsyncStorage.removeItem('profile_image_uri');
+      await supabase.from('profiles').update({ avatar_url: null }).eq('id', user.id);
     }
   };
 
@@ -209,6 +234,10 @@ export function AuthProvider({ children }) {
           data.display_name || meta.display_name || data.username || meta.username,
       };
       setProfile(profileData);
+      if (data.avatar_url) {
+        setProfileImageUriState(data.avatar_url);
+        await AsyncStorage.setItem('profile_image_uri', data.avatar_url);
+      }
       return profileData;
     }
 

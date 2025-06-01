@@ -6,6 +6,7 @@ create table if not exists public.profiles (
   id uuid references auth.users(id) primary key,
   username text unique,
   display_name text,
+  avatar_url text,
   updated_at timestamp with time zone default timezone('utc', now())
 );
 
@@ -15,6 +16,8 @@ create policy "Allow anyone to read profiles"
   on public.profiles for select using ( true );
 create policy "Users can update their own profile"
   on public.profiles for update using ( auth.uid() = id );
+
+alter table public.profiles add column if not exists avatar_url text;
 
 -- Create posts table referencing profiles(id)
 create extension if not exists "uuid-ossp";
@@ -199,6 +202,15 @@ create policy "Users can delete their likes" on public.likes
 create policy "Anyone can read likes" on public.likes
   for select using (true);
 
+-- Allow authenticated users to upload profile pictures
+create policy "Users can upload avatar images"
+  on storage.objects for insert to authenticated
+  with check (bucket_id = 'profile-images');
+
+create policy "Users can update avatar images"
+  on storage.objects for update to authenticated
+  using (bucket_id = 'profile-images');
+
 alter table public.posts
   add column if not exists like_count integer not null default 0;
 alter table public.replies
@@ -231,3 +243,4 @@ for each row execute procedure public.increment_like_count();
 
 create trigger like_delete after delete on public.likes
 for each row execute procedure public.decrement_like_count();
+
