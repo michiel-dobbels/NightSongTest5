@@ -16,7 +16,7 @@ import { colors } from '../styles/colors';
 
 export default function ProfileScreen() {
   const navigation = useNavigation<any>();
-  const { profile, profileImageUri, setProfileImageUri } = useAuth() as any;
+  const { profile, profileImageUri, uploadAvatar } = useAuth() as any;
 
 
   const pickImage = async () => {
@@ -31,8 +31,7 @@ export default function ProfileScreen() {
     });
 
     if (!result.canceled && result.assets && result.assets.length > 0) {
-      setProfileImageUri(result.assets[0].uri);
-
+      await uploadAvatar(result.assets[0].uri);
     }
   };
 

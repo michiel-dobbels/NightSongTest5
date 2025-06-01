@@ -6,6 +6,7 @@ create table if not exists public.profiles (
   id uuid references auth.users(id) primary key,
   username text unique,
   display_name text,
+  avatar_url text,
   updated_at timestamp with time zone default timezone('utc', now())
 );
 
@@ -44,6 +45,7 @@ alter table public.posts add column if not exists reply_count integer not null d
 alter table public.posts add column if not exists image_url text;
 alter table public.replies add column if not exists reply_count integer not null default 0;
 alter table public.replies add column if not exists image_url text;
+alter table public.profiles add column if not exists avatar_url text;
 
 
 -- Create replies table referencing posts and profiles

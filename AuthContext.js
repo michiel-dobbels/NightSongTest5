@@ -60,6 +60,7 @@ export function AuthProvider({ children }) {
       username: defaultUsername,
       display_name: defaultDisplayName,
       email: authUser.email,
+      avatar_url: null,
     };
 
     setProfile(profileData);
@@ -190,6 +191,43 @@ export function AuthProvider({ children }) {
     }
   };
 
+  const uploadAvatar = async (uri) => {
+    if (!user || !uri) return { error: 'No user or uri' };
+    try {
+      const response = await fetch(uri);
+      const blob = await response.blob();
+      const ext = uri.split('.').pop();
+      const fileName = `${user.id}.${ext}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from('avatars')
+        .upload(fileName, blob, { upsert: true });
+      if (uploadError) {
+        console.error('Failed to upload avatar', uploadError);
+        return { error: uploadError };
+      }
+
+      const { data } = supabase.storage.from('avatars').getPublicUrl(fileName);
+      const publicUrl = data.publicUrl;
+
+      const { error: updateError } = await supabase
+        .from('profiles')
+        .update({ avatar_url: publicUrl })
+        .eq('id', user.id);
+
+      if (updateError) {
+        console.error('Failed to update profile with avatar', updateError);
+        return { error: updateError };
+      }
+
+      await setProfileImageUri(publicUrl);
+      return { error: null };
+    } catch (err) {
+      console.error('uploadAvatar error', err);
+      return { error: err };
+    }
+  };
+
   // 🔍 Fetch profile by ID
   const fetchProfile = async (userId) => {
     const { data, error } = await supabase
@@ -209,6 +247,10 @@ export function AuthProvider({ children }) {
           data.display_name || meta.display_name || data.username || meta.username,
       };
       setProfile(profileData);
+      if (data.avatar_url) {
+        setProfileImageUriState(data.avatar_url);
+        await AsyncStorage.setItem('profile_image_uri', data.avatar_url);
+      }
       return profileData;
     }
 
@@ -221,6 +263,7 @@ export function AuthProvider({ children }) {
     loading,
     profileImageUri,
     setProfileImageUri,
+    uploadAvatar,
     signUp,
     signIn,
     signOut,
