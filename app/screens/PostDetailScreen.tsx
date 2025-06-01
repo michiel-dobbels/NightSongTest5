@@ -52,6 +52,8 @@ interface Post {
   profiles?: {
     username: string | null;
     display_name: string | null;
+    avatar_url: string | null;
+
   } | null;
 }
 
@@ -70,6 +72,8 @@ interface Reply {
   profiles?: {
     username: string | null;
     display_name: string | null;
+    avatar_url: string | null;
+
   } | null;
 }
 
@@ -285,7 +289,7 @@ export default function PostDetailScreen() {
   const fetchReplies = async () => {
     const { data, error } = await supabase
       .from('replies')
-      .select('id, post_id, parent_id, user_id, content, image_url, created_at, reply_count, like_count, username')
+      .select('id, post_id, parent_id, user_id, content, image_url, created_at, reply_count, like_count, username, profiles(username, display_name, avatar_url)')
 
       .eq('post_id', post.id)
       .order('created_at', { ascending: false });
@@ -481,7 +485,11 @@ export default function PostDetailScreen() {
       username: profile.display_name || profile.username,
       reply_count: 0,
       like_count: 0,
-      profiles: { username: profile.username, display_name: profile.display_name },
+      profiles: {
+        username: profile.username,
+        display_name: profile.display_name,
+        avatar_url: profileImageUri || null,
+      },
     };
 
     setReplies(prev => {
@@ -596,11 +604,17 @@ export default function PostDetailScreen() {
               </TouchableOpacity>
             )}
             <View style={styles.row}>
-              {user?.id === post.user_id && profileImageUri ? (
-                <Image source={{ uri: profileImageUri }} style={styles.avatar} />
-              ) : (
-                <View style={[styles.avatar, styles.placeholder]} />
-              )}
+            {(
+              user?.id === post.user_id ? profileImageUri : post.profiles?.avatar_url
+            ) ? (
+              <Image
+                source={{ uri: user?.id === post.user_id ? profileImageUri : post.profiles?.avatar_url }}
+                style={styles.avatar}
+              />
+            ) : (
+              <View style={[styles.avatar, styles.placeholder]} />
+            )}
+
               <View style={{ flex: 1 }}>
                 <Text style={styles.username}>
                   {displayName} @{userName}
@@ -644,7 +658,10 @@ export default function PostDetailScreen() {
           const name = item.profiles?.display_name || item.profiles?.username || item.username;
           const replyUserName = item.profiles?.username || item.username;
           const isMe = user?.id === item.user_id;
-          const avatarUri = isMe ? profileImageUri : undefined;
+          const avatarUri = isMe
+            ? profileImageUri
+            : item.profiles?.avatar_url || undefined;
+
           return (
             <TouchableOpacity
               onPress={() =>

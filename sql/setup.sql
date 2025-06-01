@@ -16,6 +16,7 @@ create policy "Allow anyone to read profiles"
   on public.profiles for select using ( true );
 create policy "Users can update their own profile"
   on public.profiles for update using ( auth.uid() = id );
+alter table public.profiles add column if not exists avatar_url text;
 
 -- Create posts table referencing profiles(id)
 create extension if not exists "uuid-ossp";

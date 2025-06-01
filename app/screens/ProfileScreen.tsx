@@ -32,6 +32,7 @@ export default function ProfileScreen() {
 
     if (!result.canceled && result.assets && result.assets.length > 0) {
       await uploadAvatar(result.assets[0].uri);
+
     }
   };
 
