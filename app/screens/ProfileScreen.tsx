@@ -34,7 +34,8 @@ export default function ProfileScreen() {
     if (!result.canceled && result.assets && result.assets.length > 0) {
       const uri = result.assets[0].uri;
       const base64 = await FileSystem.readAsStringAsync(uri, { encoding: 'base64' });
-      await setProfileImageUri(`data:image/jpeg;base64,${base64}`);
+      setProfileImageUri(`data:image/jpeg;base64,${base64}`);
+
 
     }
   };
