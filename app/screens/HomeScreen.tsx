@@ -36,7 +36,8 @@ type Post = {
   profiles?: {
     username: string | null;
     display_name: string | null;
-    avatar_url?: string | null;
+    avatar_url: string | null;
+
   } | null;
 };
 
@@ -435,7 +436,10 @@ const HomeScreen = forwardRef<HomeScreenRef, HomeScreenProps>(
             item.username;
           const userName = item.profiles?.username || item.username;
           const isMe = user?.id === item.user_id;
-          const avatarUri = isMe ? profileImageUri : item.profiles?.avatar_url || undefined;
+          const avatarUri = isMe
+            ? profileImageUri
+            : item.profiles?.avatar_url || undefined;
+
           return (
             <TouchableOpacity onPress={() => navigation.navigate('PostDetail', { post: item })}>
               <View style={styles.post}>

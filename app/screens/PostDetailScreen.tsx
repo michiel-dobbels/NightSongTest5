@@ -52,7 +52,8 @@ interface Post {
   profiles?: {
     username: string | null;
     display_name: string | null;
-    avatar_url?: string | null;
+    avatar_url: string | null;
+
   } | null;
 }
 
@@ -71,7 +72,8 @@ interface Reply {
   profiles?: {
     username: string | null;
     display_name: string | null;
-    avatar_url?: string | null;
+    avatar_url: string | null;
+
   } | null;
 }
 
@@ -602,17 +604,17 @@ export default function PostDetailScreen() {
               </TouchableOpacity>
             )}
             <View style={styles.row}>
-              {(() => {
-                const postAvatarUri =
-                  post.user_id === user?.id
-                    ? profileImageUri
-                    : post.profiles?.avatar_url;
-                return postAvatarUri ? (
-                  <Image source={{ uri: postAvatarUri }} style={styles.avatar} />
-                ) : (
-                  <View style={[styles.avatar, styles.placeholder]} />
-                );
-              })()}
+            {(
+              user?.id === post.user_id ? profileImageUri : post.profiles?.avatar_url
+            ) ? (
+              <Image
+                source={{ uri: user?.id === post.user_id ? profileImageUri : post.profiles?.avatar_url }}
+                style={styles.avatar}
+              />
+            ) : (
+              <View style={[styles.avatar, styles.placeholder]} />
+            )}
+
               <View style={{ flex: 1 }}>
                 <Text style={styles.username}>
                   {displayName} @{userName}
@@ -656,7 +658,10 @@ export default function PostDetailScreen() {
           const name = item.profiles?.display_name || item.profiles?.username || item.username;
           const replyUserName = item.profiles?.username || item.username;
           const isMe = user?.id === item.user_id;
-          const avatarUri = isMe ? profileImageUri : item.profiles?.avatar_url || undefined;
+          const avatarUri = isMe
+            ? profileImageUri
+            : item.profiles?.avatar_url || undefined;
+
           return (
             <TouchableOpacity
               onPress={() =>

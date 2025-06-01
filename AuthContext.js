@@ -237,6 +237,26 @@ export function AuthProvider({ children }) {
     }
   };
 
+  const uploadAvatar = async (uri) => {
+    if (!user) return;
+    try {
+      const response = await fetch(uri);
+      const blob = await response.blob();
+      const path = `${user.id}/${Date.now()}`;
+      const { error: uploadError } = await supabase.storage
+        .from('avatars')
+        .upload(path, blob, { upsert: true });
+      if (uploadError) throw uploadError;
+      const { publicURL } = supabase.storage
+        .from('avatars')
+        .getPublicUrl(path);
+      await supabase.from('profiles').update({ avatar_url: publicURL }).eq('id', user.id);
+      await setProfileImageUri(publicURL);
+    } catch (err) {
+      console.error('Failed to upload avatar', err);
+    }
+  };
+
   // 🔍 Fetch profile by ID
   const fetchProfile = async (userId) => {
     const { data, error } = await supabase
@@ -256,10 +276,10 @@ export function AuthProvider({ children }) {
           data.display_name || meta.display_name || data.username || meta.username,
       };
       setProfile(profileData);
-      if (data.avatar_url) {
-        const key = `${PROFILE_IMAGE_KEY_PREFIX}${data.id}`;
-        setProfileImageUriState(data.avatar_url);
-        await AsyncStorage.setItem(key, data.avatar_url);
+      if (profileData.avatar_url) {
+        setProfileImageUriState(profileData.avatar_url);
+        await AsyncStorage.setItem('profile_image_uri', profileData.avatar_url);
+
       }
       return profileData;
     }
@@ -273,6 +293,7 @@ export function AuthProvider({ children }) {
     loading,
     profileImageUri,
     setProfileImageUri,
+    uploadAvatar,
     signUp,
     signIn,
     signOut,

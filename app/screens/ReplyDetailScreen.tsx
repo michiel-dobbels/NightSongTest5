@@ -54,7 +54,8 @@ interface Reply {
   profiles?: {
     username: string | null;
     display_name: string | null;
-    avatar_url?: string | null;
+    avatar_url: string | null;
+
   } | null;
 }
 
@@ -71,7 +72,8 @@ interface Post {
   profiles?: {
     username: string | null;
     display_name: string | null;
-    avatar_url?: string | null;
+    avatar_url: string | null;
+
   } | null;
 }
 
@@ -655,17 +657,24 @@ export default function ReplyDetailScreen() {
                   </TouchableOpacity>
                 )}
                 <View style={styles.row}>
-                  {(() => {
-                    const origAvatar =
-                      originalPost.user_id === user?.id
-                        ? profileImageUri
-                        : originalPost.profiles?.avatar_url;
-                    return origAvatar ? (
-                      <Image source={{ uri: origAvatar }} style={styles.avatar} />
-                    ) : (
-                      <View style={[styles.avatar, styles.placeholder]} />
-                    );
-                  })()}
+                  {(
+                    user?.id === originalPost.user_id
+                      ? profileImageUri
+                      : originalPost.profiles?.avatar_url
+                  ) ? (
+                    <Image
+                      source={{
+                        uri:
+                          user?.id === originalPost.user_id
+                            ? profileImageUri
+                            : originalPost.profiles?.avatar_url,
+                      }}
+                      style={styles.avatar}
+                    />
+                  ) : (
+                    <View style={[styles.avatar, styles.placeholder]} />
+                  )}
+
                   <View style={{ flex: 1 }}>
                     <Text style={styles.username}>
                       {originalName} @{originalUserName}
@@ -707,7 +716,10 @@ export default function ReplyDetailScreen() {
                   a.profiles?.display_name || a.profiles?.username || a.username;
                 const ancestorUserName = a.profiles?.username || a.username;
                 const isMe = user?.id === a.user_id;
-                const avatarUri = isMe ? profileImageUri : a.profiles?.avatar_url || undefined;
+                const avatarUri = isMe
+                  ? profileImageUri
+                  : a.profiles?.avatar_url || undefined;
+
                 return (
                 <View key={a.id} style={styles.post}>
                   <View style={styles.threadLine} pointerEvents="none" />
@@ -774,17 +786,22 @@ export default function ReplyDetailScreen() {
                 </TouchableOpacity>
               )}
               <View style={styles.row}>
-                {(() => {
-                  const parentAvatar =
-                    parent.user_id === user?.id
-                      ? profileImageUri
-                      : parent.profiles?.avatar_url;
-                  return parentAvatar ? (
-                    <Image source={{ uri: parentAvatar }} style={styles.avatar} />
-                  ) : (
-                    <View style={[styles.avatar, styles.placeholder]} />
-                  );
-                })()}
+                {(
+                  user?.id === parent.user_id ? profileImageUri : parent.profiles?.avatar_url
+                ) ? (
+                  <Image
+                    source={{
+                      uri:
+                        user?.id === parent.user_id
+                          ? profileImageUri
+                          : parent.profiles?.avatar_url,
+                    }}
+                    style={styles.avatar}
+                  />
+                ) : (
+                  <View style={[styles.avatar, styles.placeholder]} />
+                )}
+
                 <View style={{ flex: 1 }}>
                   <Text style={styles.username}>
                     {name} @{parentUserName}
@@ -830,7 +847,10 @@ export default function ReplyDetailScreen() {
           const childName = item.profiles?.display_name || item.profiles?.username || item.username;
           const childUserName = item.profiles?.username || item.username;
           const isMe = user?.id === item.user_id;
-          const avatarUri = isMe ? profileImageUri : item.profiles?.avatar_url || undefined;
+          const avatarUri = isMe
+            ? profileImageUri
+            : item.profiles?.avatar_url || undefined;
+
           return (
             <TouchableOpacity
               onPress={() =>
