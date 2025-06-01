@@ -196,6 +196,7 @@ export function AuthProvider({ children }) {
       }
       const { publicURL } = supabase.storage
         .from(PROFILE_IMAGE_BUCKET)
+
         .getPublicUrl(path);
       await supabase
         .from('profiles')
