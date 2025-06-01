@@ -7,8 +7,10 @@ import {
   StyleSheet,
   Image,
   TouchableOpacity,
+  Dimensions,
 } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
+import * as FileSystem from 'expo-file-system';
 import { useNavigation } from '@react-navigation/native';
 
 import { useAuth } from '../../AuthContext';
@@ -16,7 +18,13 @@ import { colors } from '../styles/colors';
 
 export default function ProfileScreen() {
   const navigation = useNavigation<any>();
-  const { profile, profileImageUri, setProfileImageUri } = useAuth() as any;
+  const {
+    profile,
+    profileImageUri,
+    setProfileImageUri,
+    bannerImageUri,
+    setBannerImageUri,
+  } = useAuth() as any;
 
 
   const pickImage = async () => {
@@ -31,8 +39,27 @@ export default function ProfileScreen() {
     });
 
     if (!result.canceled && result.assets && result.assets.length > 0) {
-      setProfileImageUri(result.assets[0].uri);
+      const uri = result.assets[0].uri;
+      const base64 = await FileSystem.readAsStringAsync(uri, { encoding: 'base64' });
+      setProfileImageUri(`data:image/jpeg;base64,${base64}`);
 
+    }
+  };
+
+  const pickBanner = async () => {
+    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (status !== 'granted') {
+      alert('Permission to access photos is required!');
+      return;
+    }
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      quality: 1,
+    });
+    if (!result.canceled && result.assets && result.assets.length > 0) {
+      const uri = result.assets[0].uri;
+      const base64 = await FileSystem.readAsStringAsync(uri, { encoding: 'base64' });
+      setBannerImageUri(`data:image/jpeg;base64,${base64}`);
     }
   };
 
@@ -40,6 +67,11 @@ export default function ProfileScreen() {
 
   return (
     <View style={styles.container}>
+      {bannerImageUri ? (
+        <Image source={{ uri: bannerImageUri }} style={styles.banner} />
+      ) : (
+        <View style={[styles.banner, styles.placeholder]} />
+      )}
       <View style={styles.backButton}>
         <Button title="Back" onPress={() => navigation.goBack()} />
       </View>
@@ -59,6 +91,9 @@ export default function ProfileScreen() {
       <TouchableOpacity onPress={pickImage} style={styles.uploadLink}>
         <Text style={styles.uploadText}>Upload Profile Picture</Text>
       </TouchableOpacity>
+      <TouchableOpacity onPress={pickBanner} style={styles.uploadLink}>
+        <Text style={styles.uploadText}>Upload Banner</Text>
+      </TouchableOpacity>
     </View>
   );
 }
@@ -76,6 +111,11 @@ const styles = StyleSheet.create({
   profileRow: {
     flexDirection: 'row',
     alignItems: 'center',
+    marginBottom: 20,
+  },
+  banner: {
+    width: '100%',
+    height: Dimensions.get('window').height * 0.25,
     marginBottom: 20,
   },
   avatar: {

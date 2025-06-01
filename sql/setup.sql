@@ -9,6 +9,9 @@ create table if not exists public.profiles (
   updated_at timestamp with time zone default timezone('utc', now())
 );
 
+-- Allow storing a persistent banner image for profiles
+alter table public.profiles add column if not exists banner_url text;
+
 -- Enable Row Level Security and define basic policies
 alter table public.profiles enable row level security;
 create policy "Allow anyone to read profiles"
