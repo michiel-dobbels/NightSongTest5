@@ -191,7 +191,11 @@ export function AuthProvider({ children }) {
         const filePath = `profile-images/${user.id}`;
         const { error } = await supabase.storage
           .from('profile-images')
-          .upload(filePath, blob, { upsert: true });
+          .upload(filePath, blob, {
+            upsert: true,
+            contentType: blob.type || 'image/jpeg',
+          });
+
         if (error) throw error;
         const { publicURL } = supabase.storage
           .from('profile-images')
