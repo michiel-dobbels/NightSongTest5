@@ -30,6 +30,7 @@ create policy "Auth users can replace profile images" on storage.objects
     bucket_id = 'profile-images' and auth.role() = 'authenticated'
   );
 
+
 -- Create posts table referencing profiles(id)
 create extension if not exists "uuid-ossp";
 create table if not exists public.posts (

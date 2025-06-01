@@ -7,6 +7,7 @@ This project uses [Supabase](https://supabase.com) for authentication and storin
    - Create a storage bucket called `profile-images` and enable public access so profile pictures can be stored. Run the updated `sql/setup.sql` to grant authenticated users permission to upload images to this bucket.
 
 
+
 3. Copy your project's URL and `anon` key into `lib/supabase.js`.
 4. Install dependencies with `npm install`.
 
