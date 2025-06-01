@@ -236,20 +236,14 @@ for each row execute procedure public.increment_like_count();
 create trigger like_delete after delete on public.likes
 for each row execute procedure public.decrement_like_count();
 
--- Public bucket for profile pictures
--- Allow authenticated users to upload and modify their images
+-- Row level security policies for profile image uploads
 alter table storage.objects enable row level security;
 
-create policy "Authenticated can upload avatars" on storage.objects
+create policy "Anyone can read profile images" on storage.objects
+  for select using (bucket_id = 'profile-images');
+
+create policy "Authenticated uploads for profile images" on storage.objects
   for insert with check (
     bucket_id = 'profile-images' and auth.role() = 'authenticated'
   );
 
-create policy "Authenticated can update avatars" on storage.objects
-  for update using (
-    bucket_id = 'profile-images' and auth.role() = 'authenticated'
-  );
-
--- Everyone can read the avatars since the bucket is public
-create policy "Anyone can read avatars" on storage.objects
-  for select using (bucket_id = 'profile-images');
