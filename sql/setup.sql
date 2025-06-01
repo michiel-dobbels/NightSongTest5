@@ -6,6 +6,8 @@ create table if not exists public.profiles (
   id uuid references auth.users(id) primary key,
   username text unique,
   display_name text,
+  image_url text,
+  banner_url text,
   updated_at timestamp with time zone default timezone('utc', now())
 );
 
@@ -39,6 +41,8 @@ create policy "Anyone can read posts" on public.posts
   for select using (true);
 
 -- Add the username column only if it doesn't exist (for older setups)
+alter table public.profiles add column if not exists image_url text;
+alter table public.profiles add column if not exists banner_url text;
 alter table public.posts add column if not exists username text;
 alter table public.posts add column if not exists reply_count integer not null default 0;
 alter table public.posts add column if not exists image_url text;
