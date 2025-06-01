@@ -183,17 +183,7 @@ export function AuthProvider({ children }) {
       const { error: uploadError } = await supabase.storage
         .from(PROFILE_IMAGE_BUCKET)
         .upload(path, blob, { upsert: true });
-      if (uploadError) {
-        if (
-          uploadError.message &&
-          uploadError.message.toLowerCase().includes('bucket not found')
-        ) {
-          console.error(
-            `Storage bucket "${PROFILE_IMAGE_BUCKET}" not found. Create it in Supabase Storage and make it public.`
-          );
-        }
-        throw uploadError;
-      }
+      if (uploadError) throw uploadError;
       const { publicURL } = supabase.storage
         .from(PROFILE_IMAGE_BUCKET)
 
