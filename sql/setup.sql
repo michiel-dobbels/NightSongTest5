@@ -19,6 +19,7 @@ create policy "Users can update their own profile"
 
 alter table public.profiles add column if not exists avatar_url text;
 
+
 -- Create posts table referencing profiles(id)
 create extension if not exists "uuid-ossp";
 create table if not exists public.posts (
