@@ -6,6 +6,7 @@ create table if not exists public.profiles (
   id uuid references auth.users(id) primary key,
   username text unique,
   display_name text,
+  avatar_url text,
   updated_at timestamp with time zone default timezone('utc', now())
 );
 
@@ -15,6 +16,18 @@ create policy "Allow anyone to read profiles"
   on public.profiles for select using ( true );
 create policy "Users can update their own profile"
   on public.profiles for update using ( auth.uid() = id );
+
+-- Allow avatar uploads to the profile-images bucket
+alter table storage.objects enable row level security;
+create policy "Authenticated users can upload avatars" on storage.objects
+  for insert with check (
+    bucket_id = 'profile-images' and auth.role() = 'authenticated'
+  );
+create policy "Anyone can read avatars" on storage.objects
+  for select using ( bucket_id = 'profile-images' );
+
+-- Ensure new avatar_url column exists on older setups
+alter table public.profiles add column if not exists avatar_url text;
 
 -- Create posts table referencing profiles(id)
 create extension if not exists "uuid-ossp";
