@@ -7,7 +7,8 @@ This project uses [Supabase](https://supabase.com) for authentication and storin
 
    The updated `sql/setup.sql` adds an `avatar_url` column to the `profiles` table. Re-run the script if your database is missing this column.
 
-3. In the **Storage** section of Supabase create a bucket named `profile-images` and make it public. Profile pictures uploaded by users are stored here.
+3. In the **Storage** section of Supabase create a bucket named `profile-images` and make it public. Profile pictures uploaded by users are stored here. If you use a different name, update `PROFILE_IMAGE_BUCKET` in `lib/supabase.js`.
+
 4. Copy your project's URL and `anon` key into `lib/supabase.js`.
 5. Install dependencies with `npm install`.
 

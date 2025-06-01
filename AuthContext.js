@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import { supabase } from './lib/supabase';
+import { supabase, PROFILE_IMAGE_BUCKET } from './lib/supabase';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const AuthContext = createContext();
@@ -181,11 +181,22 @@ export function AuthProvider({ children }) {
       const ext = uri.split('.').pop();
       const path = `${user.id}/avatar.${ext}`;
       const { error: uploadError } = await supabase.storage
-        .from('profile-images')
+        .from(PROFILE_IMAGE_BUCKET)
         .upload(path, blob, { upsert: true });
-      if (uploadError) throw uploadError;
+      if (uploadError) {
+        if (
+          uploadError.message &&
+          uploadError.message.toLowerCase().includes('bucket not found')
+        ) {
+          console.error(
+            `Storage bucket "${PROFILE_IMAGE_BUCKET}" not found. Create it in Supabase Storage and make it public.`
+          );
+        }
+        throw uploadError;
+      }
       const { publicURL } = supabase.storage
-        .from('profile-images')
+        .from(PROFILE_IMAGE_BUCKET)
+
         .getPublicUrl(path);
       await supabase
         .from('profiles')
