@@ -290,7 +290,10 @@ export default function PostDetailScreen() {
   const fetchReplies = async () => {
     const { data, error } = await supabase
       .from('replies')
-      .select('id, post_id, parent_id, user_id, content, image_url, created_at, reply_count, like_count, username, profiles(username, display_name, image_url)')
+      .select(
+        'id, post_id, parent_id, user_id, content, image_url, created_at, reply_count, like_count, username, profiles(username, display_name, image_url)'
+      )
+
 
       .eq('post_id', post.id)
       .order('created_at', { ascending: false });
@@ -605,14 +608,18 @@ export default function PostDetailScreen() {
               </TouchableOpacity>
             )}
             <View style={styles.row}>
-              {user?.id === post.user_id && profileImageUri ? (
-                <TouchableOpacity onPress={() => navigation.navigate('Profile')}>
-                  <Image source={{ uri: profileImageUri }} style={styles.avatar} />
-                </TouchableOpacity>
+              {(() => {
+                const avatarUri =
+                  user?.id === post.user_id
+                    ? profileImageUri
+                    : post.profiles?.image_url;
+                return avatarUri ? (
+                  <Image source={{ uri: avatarUri }} style={styles.avatar} />
+                ) : (
+                  <View style={[styles.avatar, styles.placeholder]} />
+                );
+              })()}
 
-              ) : (
-                <View style={[styles.avatar, styles.placeholder]} />
-              )}
               <View style={{ flex: 1 }}>
                 <Text style={styles.username}>
                   {displayName} @{userName}
@@ -656,9 +663,8 @@ export default function PostDetailScreen() {
           const name = item.profiles?.display_name || item.profiles?.username || item.username;
           const replyUserName = item.profiles?.username || item.username;
           const isMe = user?.id === item.user_id;
-          const avatarUri = isMe
-            ? profileImageUri
-            : item.profiles?.image_url || undefined;
+          const avatarUri = isMe ? profileImageUri : item.profiles?.image_url || undefined;
+
           return (
             <TouchableOpacity
               onPress={() =>

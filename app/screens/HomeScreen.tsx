@@ -435,9 +435,8 @@ const HomeScreen = forwardRef<HomeScreenRef, HomeScreenProps>(
             item.username;
           const userName = item.profiles?.username || item.username;
           const isMe = user?.id === item.user_id;
-          const avatarUri = isMe
-            ? profileImageUri
-            : item.profiles?.image_url || undefined;
+          const avatarUri = isMe ? profileImageUri : item.profiles?.image_url || undefined;
+
           return (
             <TouchableOpacity onPress={() => navigation.navigate('PostDetail', { post: item })}>
               <View style={styles.post}>
