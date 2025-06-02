@@ -612,7 +612,12 @@ export default function PostDetailScreen() {
                 onPress={() =>
                   user?.id === post.user_id
                     ? navigation.navigate('Profile')
-                    : navigation.navigate('UserProfile', { userId: post.user_id, avatarUrl: post.profiles?.image_url })
+                    : navigation.navigate('UserProfile', {
+                        userId: post.user_id,
+                        avatarUrl: post.profiles?.image_url,
+                        displayName,
+                        userName,
+                      })
                 }
               >
                 {user?.id === post.user_id && profileImageUri ? (
@@ -691,7 +696,12 @@ export default function PostDetailScreen() {
                     onPress={() =>
                       isMe
                         ? navigation.navigate('Profile')
-                        : navigation.navigate('UserProfile', { userId: item.user_id, avatarUrl: avatarUri })
+                        : navigation.navigate('UserProfile', {
+                            userId: item.user_id,
+                            avatarUrl: avatarUri,
+                            displayName: name,
+                            userName: replyUserName,
+                          })
                     }
                   >
                     {avatarUri ? (
