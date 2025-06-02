@@ -459,6 +459,7 @@ const HomeScreen = forwardRef<HomeScreenRef, HomeScreenProps>(
                             userId: item.user_id,
                             avatarUrl: avatarUri,
                             bannerUrl,
+
                             displayName,
                             userName,
                           })

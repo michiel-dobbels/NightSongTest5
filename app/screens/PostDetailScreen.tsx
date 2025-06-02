@@ -618,6 +618,7 @@ export default function PostDetailScreen() {
                         userId: post.user_id,
                         avatarUrl: post.profiles?.image_url,
                         bannerUrl: post.profiles?.banner_url,
+
                         displayName,
                         userName,
                       })
@@ -703,6 +704,7 @@ export default function PostDetailScreen() {
                             userId: item.user_id,
                             avatarUrl: avatarUri,
                             bannerUrl: item.profiles?.banner_url,
+
                             displayName: name,
                             userName: replyUserName,
                           })

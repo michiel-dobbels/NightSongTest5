@@ -19,12 +19,14 @@ export default function UserProfileScreen() {
     userId,
     avatarUrl,
     bannerUrl: initialBannerUrl,
+
     displayName: initialDisplayName,
     userName: initialUsername,
   } = route.params as {
     userId: string;
     avatarUrl?: string | null;
     bannerUrl?: string | null;
+
     displayName?: string | null;
     userName?: string | null;
   };
@@ -35,6 +37,7 @@ export default function UserProfileScreen() {
   const displayName = profile?.display_name ?? initialDisplayName ?? null;
   const username = profile?.username ?? initialUsername ?? null;
   const banner = profile?.banner_url ?? initialBannerUrl ?? null;
+
 
   useEffect(() => {
     const fetchProfile = async () => {
@@ -63,6 +66,7 @@ export default function UserProfileScreen() {
         ) : (
           <View style={[styles.banner, styles.placeholder]} />
         )}
+
         {avatarUrl ? (
           <Image source={{ uri: avatarUrl }} style={styles.avatar} />
         ) : (
