@@ -101,13 +101,20 @@ export function AuthProvider({ children }) {
 
   useEffect(() => {
     const loadImage = async () => {
-      const stored = await AsyncStorage.getItem('profile_image_uri');
+      const authUser = user ?? supabase.auth.user();
+      if (!authUser) return;
+
+      const profileKey = `profile_image_uri_${authUser.id}`;
+      const bannerKey = `banner_image_uri_${authUser.id}`;
+
+      const stored = await AsyncStorage.getItem(profileKey);
       if (stored) setProfileImageUriState(stored);
-      const bannerStored = await AsyncStorage.getItem('banner_image_uri');
+
+      const bannerStored = await AsyncStorage.getItem(bannerKey);
       if (bannerStored) setBannerImageUriState(bannerStored);
     };
     loadImage();
-  }, []);
+  }, [user]);
 
   // 🔐 Sign in
   async function signIn(email, password) {
@@ -182,33 +189,39 @@ export function AuthProvider({ children }) {
     setProfile(null);
     setProfileImageUriState(null);
     setBannerImageUriState(null);
-    await AsyncStorage.removeItem('profile_image_uri');
-    await AsyncStorage.removeItem('banner_image_uri');
   };
 
   const setProfileImageUri = async (uri) => {
     setProfileImageUriState(uri);
     const authUser = supabase.auth.user();
+    const id = authUser?.id || user?.id;
+    const key = id ? `profile_image_uri_${id}` : 'profile_image_uri';
+
     if (authUser) {
       await supabase.from('profiles').update({ image_url: uri }).eq('id', authUser.id);
     }
+
     if (uri) {
-      await AsyncStorage.setItem('profile_image_uri', uri);
+      await AsyncStorage.setItem(key, uri);
     } else {
-      await AsyncStorage.removeItem('profile_image_uri');
+      await AsyncStorage.removeItem(key);
     }
 
-    if (user) {
+    if (user && authUser !== user) {
       await supabase.from('profiles').update({ image_url: uri }).eq('id', user.id);
     }
   };
 
   const setBannerImageUri = async (uri) => {
     setBannerImageUriState(uri);
+    const authUser = supabase.auth.user();
+    const id = authUser?.id || user?.id;
+    const key = id ? `banner_image_uri_${id}` : 'banner_image_uri';
+
     if (uri) {
-      await AsyncStorage.setItem('banner_image_uri', uri);
+      await AsyncStorage.setItem(key, uri);
     } else {
-      await AsyncStorage.removeItem('banner_image_uri');
+      await AsyncStorage.removeItem(key);
     }
     if (user) {
       const { error } = await supabase
@@ -240,19 +253,23 @@ export function AuthProvider({ children }) {
       setProfile(profileData);
       // Restore the fetched profile image URL locally without touching the database
 
+      const profileKey = `profile_image_uri_${userId}`;
+      const bannerKey = `banner_image_uri_${userId}`;
+
       if (data.image_url) {
         setProfileImageUriState(data.image_url);
-        AsyncStorage.setItem('profile_image_uri', data.image_url);
+        AsyncStorage.setItem(profileKey, data.image_url);
       } else {
         setProfileImageUriState(null);
-        AsyncStorage.removeItem('profile_image_uri');
+        AsyncStorage.removeItem(profileKey);
       }
+
       if (data.banner_url) {
         setBannerImageUriState(data.banner_url);
-        AsyncStorage.setItem('banner_image_uri', data.banner_url);
+        AsyncStorage.setItem(bannerKey, data.banner_url);
       } else {
         setBannerImageUriState(null);
-        AsyncStorage.removeItem('banner_image_uri');
+        AsyncStorage.removeItem(bannerKey);
       }
 
       return profileData;
