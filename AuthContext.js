@@ -238,7 +238,7 @@ export function AuthProvider({ children }) {
           data.display_name || meta.display_name || data.username || meta.username,
       };
       setProfile(profileData);
-      // Restore the profile image from Supabase (do not update the DB again)
+      // Restore the fetched profile image URL locally without touching the database
 
       if (data.image_url) {
         setProfileImageUriState(data.image_url);
