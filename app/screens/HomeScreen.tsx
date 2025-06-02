@@ -9,6 +9,7 @@ import {
   Alert,
   TouchableOpacity,
   Image,
+  Dimensions,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
@@ -22,6 +23,8 @@ const STORAGE_KEY = 'cached_posts';
 const COUNT_STORAGE_KEY = 'cached_reply_counts';
 const LIKE_COUNT_KEY = 'cached_like_counts';
 const LIKED_KEY_PREFIX = 'cached_likes_';
+
+const SCREEN_HEIGHT = Dimensions.get('window').height;
 
 
 type Post = {
@@ -68,6 +71,7 @@ const HomeScreen = forwardRef<HomeScreenRef, HomeScreenProps>(
   const [replyCounts, setReplyCounts] = useState<{ [key: string]: number }>({});
   const [likeCounts, setLikeCounts] = useState<{ [key: string]: number }>({});
   const [likedPosts, setLikedPosts] = useState<{ [key: string]: boolean }>({});
+  const topPadding = hideInput ? SCREEN_HEIGHT * 0.2 : 0;
 
 
 
@@ -426,6 +430,7 @@ const HomeScreen = forwardRef<HomeScreenRef, HomeScreenProps>(
       )}
       
       <FlatList
+        contentContainerStyle={{ paddingTop: topPadding }}
         data={posts}
         keyExtractor={(item) => item.id}
         renderItem={({ item }) => {
