@@ -659,12 +659,10 @@ export default function ReplyDetailScreen() {
                 )}
                 <View style={styles.row}>
                   {user?.id === originalPost.user_id && profileImageUri ? (
-                    <Image source={{ uri: profileImageUri }} style={styles.avatar} />
-                  ) : originalPost.profiles?.image_url ? (
-                    <Image
-                      source={{ uri: originalPost.profiles.image_url }}
-                      style={styles.avatar}
-                    />
+                    <TouchableOpacity onPress={() => navigation.navigate('Profile')}>
+                      <Image source={{ uri: profileImageUri }} style={styles.avatar} />
+                    </TouchableOpacity>
+
                   ) : (
                     <View style={[styles.avatar, styles.placeholder]} />
                   )}
@@ -726,7 +724,13 @@ export default function ReplyDetailScreen() {
                   )}
                   <View style={styles.row}>
                     {avatarUri ? (
-                      <Image source={{ uri: avatarUri }} style={styles.avatar} />
+                      <TouchableOpacity
+                        onPress={() =>
+                          isMe && navigation.navigate('Profile')
+                        }
+                      >
+                        <Image source={{ uri: avatarUri }} style={styles.avatar} />
+                      </TouchableOpacity>
                     ) : (
                       <View style={[styles.avatar, styles.placeholder]} />
                     )}
@@ -779,12 +783,10 @@ export default function ReplyDetailScreen() {
               )}
               <View style={styles.row}>
                 {user?.id === parent.user_id && profileImageUri ? (
-                  <Image source={{ uri: profileImageUri }} style={styles.avatar} />
-                ) : parent.profiles?.image_url ? (
-                  <Image
-                    source={{ uri: parent.profiles.image_url }}
-                    style={styles.avatar}
-                  />
+                  <TouchableOpacity onPress={() => navigation.navigate('Profile')}>
+                    <Image source={{ uri: profileImageUri }} style={styles.avatar} />
+                  </TouchableOpacity>
+
                 ) : (
                   <View style={[styles.avatar, styles.placeholder]} />
                 )}
@@ -857,7 +859,13 @@ export default function ReplyDetailScreen() {
                 )}
                 <View style={styles.row}>
                   {avatarUri ? (
-                    <Image source={{ uri: avatarUri }} style={styles.avatar} />
+                    <TouchableOpacity
+                      onPress={() =>
+                        isMe && navigation.navigate('Profile')
+                      }
+                    >
+                      <Image source={{ uri: avatarUri }} style={styles.avatar} />
+                    </TouchableOpacity>
                   ) : (
                     <View style={[styles.avatar, styles.placeholder]} />
                   )}
