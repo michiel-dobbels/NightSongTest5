@@ -294,6 +294,7 @@ export default function PostDetailScreen() {
         'id, post_id, parent_id, user_id, content, image_url, created_at, reply_count, like_count, username, profiles(username, display_name, image_url)'
       )
 
+
       .eq('post_id', post.id)
       .order('created_at', { ascending: false });
     if (!error && data) {
@@ -489,6 +490,7 @@ export default function PostDetailScreen() {
       reply_count: 0,
       like_count: 0,
       profiles: { username: profile.username, display_name: profile.display_name, image_url: profileImageUri },
+
     };
 
     setReplies(prev => {
@@ -614,10 +616,12 @@ export default function PostDetailScreen() {
               >
                 {postAvatar ? (
                   <Image source={{ uri: postAvatar }} style={styles.avatar} />
+
                 ) : (
                   <View style={[styles.avatar, styles.placeholder]} />
                 )}
               </TouchableOpacity>
+
               <View style={{ flex: 1 }}>
                 <Text style={styles.username}>
                   {displayName} @{userName}
@@ -662,6 +666,7 @@ export default function PostDetailScreen() {
           const replyUserName = item.profiles?.username || item.username;
           const isMe = user?.id === item.user_id;
           const avatarUri = isMe ? profileImageUri : item.profiles?.image_url || undefined;
+
           return (
             <TouchableOpacity
               onPress={() =>
@@ -699,6 +704,7 @@ export default function PostDetailScreen() {
                       <Text style={styles.username}>
                         {name} @{replyUserName}
                       </Text>
+
                       <Text style={styles.postContent}>{item.content}</Text>
                       {item.image_url && (
                         <Image source={{ uri: item.image_url }} style={styles.postImage} />
