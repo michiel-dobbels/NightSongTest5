@@ -239,6 +239,7 @@ export function AuthProvider({ children }) {
       };
       setProfile(profileData);
       // Restore the fetched profile image URL locally without touching the database
+
       if (data.image_url) {
         setProfileImageUriState(data.image_url);
         AsyncStorage.setItem('profile_image_uri', data.image_url);
