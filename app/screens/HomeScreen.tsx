@@ -447,7 +447,13 @@ const HomeScreen = forwardRef<HomeScreenRef, HomeScreenProps>(
                 )}
                 <View style={styles.row}>
                   {avatarUri ? (
-                    <Image source={{ uri: avatarUri }} style={styles.avatar} />
+                    <TouchableOpacity
+                      onPress={() =>
+                        isMe && navigation.navigate('Profile')
+                      }
+                    >
+                      <Image source={{ uri: avatarUri }} style={styles.avatar} />
+                    </TouchableOpacity>
                   ) : (
                     <View style={[styles.avatar, styles.placeholder]} />
                   )}

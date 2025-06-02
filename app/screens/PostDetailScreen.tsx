@@ -600,7 +600,9 @@ export default function PostDetailScreen() {
             )}
             <View style={styles.row}>
               {user?.id === post.user_id && profileImageUri ? (
-                <Image source={{ uri: profileImageUri }} style={styles.avatar} />
+                <TouchableOpacity onPress={() => navigation.navigate('Profile')}>
+                  <Image source={{ uri: profileImageUri }} style={styles.avatar} />
+                </TouchableOpacity>
               ) : (
                 <View style={[styles.avatar, styles.placeholder]} />
               )}
@@ -669,7 +671,13 @@ export default function PostDetailScreen() {
                 )}
                 <View style={styles.row}>
                   {avatarUri ? (
-                    <Image source={{ uri: avatarUri }} style={styles.avatar} />
+                    <TouchableOpacity
+                      onPress={() =>
+                        isMe && navigation.navigate('Profile')
+                      }
+                    >
+                      <Image source={{ uri: avatarUri }} style={styles.avatar} />
+                    </TouchableOpacity>
                   ) : (
                     <View style={[styles.avatar, styles.placeholder]} />
                   )}
