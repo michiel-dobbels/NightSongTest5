@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, Image, Button, Dimensions } from 'react-native';
+import { View, Text, StyleSheet, Image, Button, Dimensions, ActivityIndicator } from 'react-native';
 import { useRoute, useNavigation } from '@react-navigation/native';
 import { supabase } from '../../lib/supabase';
 import { colors } from '../styles/colors';
@@ -17,20 +17,43 @@ export default function UserProfileScreen() {
   const route = useRoute<any>();
   const { userId } = route.params as { userId: string };
   const [profile, setProfile] = useState<Profile | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [notFound, setNotFound] = useState(false);
 
   useEffect(() => {
     const fetchProfile = async () => {
+      setLoading(true);
+      setNotFound(false);
       const { data } = await supabase
         .from('profiles')
         .select('id, username, display_name, image_url, banner_url')
         .eq('id', userId)
         .single();
-      if (data) setProfile(data as Profile);
+      if (data) {
+        setProfile(data as Profile);
+      } else {
+        setNotFound(true);
+      }
+      setLoading(false);
     };
     fetchProfile();
   }, [userId]);
 
-  if (!profile) return null;
+  if (loading) {
+    return (
+      <View style={[styles.container, styles.center]}>
+        <ActivityIndicator color="white" />
+      </View>
+    );
+  }
+
+  if (notFound || !profile) {
+    return (
+      <View style={[styles.container, styles.center]}>
+        <Text style={{ color: 'white' }}>Profile not found.</Text>
+      </View>
+    );
+  }
 
   return (
     <View style={styles.container}>
@@ -86,4 +109,5 @@ const styles = StyleSheet.create({
   textContainer: { marginLeft: 15 },
   username: { color: 'white', fontSize: 24, fontWeight: 'bold' },
   name: { color: 'white', fontSize: 20, marginTop: 4 },
+  center: { justifyContent: 'center', alignItems: 'center' },
 });
