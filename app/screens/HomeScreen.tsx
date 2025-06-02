@@ -36,6 +36,7 @@ type Post = {
   profiles?: {
     username: string | null;
     display_name: string | null;
+    image_url?: string | null;
   } | null;
 };
 
@@ -154,7 +155,7 @@ const HomeScreen = forwardRef<HomeScreenRef, HomeScreenProps>(
     const { data, error } = await supabase
       .from('posts')
       .select(
-        'id, content, image_url, user_id, created_at, reply_count, like_count, profiles(username, display_name)',
+        'id, content, image_url, user_id, created_at, reply_count, like_count, profiles(username, display_name, image_url)',
       )
       .order('created_at', { ascending: false });
 
@@ -210,6 +211,7 @@ const HomeScreen = forwardRef<HomeScreenRef, HomeScreenProps>(
       profiles: {
         username: profile.username,
         display_name: profile.display_name,
+        image_url: profileImageUri,
       },
     };
 
@@ -433,7 +435,9 @@ const HomeScreen = forwardRef<HomeScreenRef, HomeScreenProps>(
             item.username;
           const userName = item.profiles?.username || item.username;
           const isMe = user?.id === item.user_id;
-          const avatarUri = isMe ? profileImageUri : undefined;
+          const avatarUri = isMe
+            ? profileImageUri
+            : item.profiles?.image_url ?? undefined;
           return (
             <TouchableOpacity onPress={() => navigation.navigate('PostDetail', { post: item })}>
               <View style={styles.post}>
@@ -446,11 +450,19 @@ const HomeScreen = forwardRef<HomeScreenRef, HomeScreenProps>(
                   </TouchableOpacity>
                 )}
                 <View style={styles.row}>
-                  {avatarUri ? (
-                    <Image source={{ uri: avatarUri }} style={styles.avatar} />
-                  ) : (
-                    <View style={[styles.avatar, styles.placeholder]} />
-                  )}
+                  <TouchableOpacity
+                    onPress={() =>
+                      isMe
+                        ? navigation.navigate('Profile')
+                        : navigation.navigate('UserProfile', { userId: item.user_id })
+                    }
+                  >
+                    {avatarUri ? (
+                      <Image source={{ uri: avatarUri }} style={styles.avatar} />
+                    ) : (
+                      <View style={[styles.avatar, styles.placeholder]} />
+                    )}
+                  </TouchableOpacity>
                   <View style={{ flex: 1 }}>
                     <Text style={styles.username}>
                       {displayName} @{userName}
