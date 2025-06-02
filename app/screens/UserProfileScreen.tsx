@@ -15,7 +15,10 @@ interface Profile {
 export default function UserProfileScreen() {
   const navigation = useNavigation<any>();
   const route = useRoute<any>();
-  const { userId } = route.params as { userId: string };
+  const { userId, avatarUrl } = route.params as {
+    userId: string;
+    avatarUrl?: string | null;
+  };
   const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
@@ -51,6 +54,7 @@ export default function UserProfileScreen() {
     return (
       <View style={[styles.container, styles.center]}>
         <Text style={{ color: 'white' }}>Profile not found.</Text>
+
       </View>
     );
   }
