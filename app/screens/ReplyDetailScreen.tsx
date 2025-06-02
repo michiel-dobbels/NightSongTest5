@@ -665,7 +665,12 @@ export default function ReplyDetailScreen() {
                     onPress={() =>
                       user?.id === originalPost.user_id
                         ? navigation.navigate('Profile')
-                        : navigation.navigate('UserProfile', { userId: originalPost.user_id, avatarUrl: originalPost.profiles?.image_url })
+                        : navigation.navigate('UserProfile', {
+                            userId: originalPost.user_id,
+                            avatarUrl: originalPost.profiles?.image_url,
+                            displayName: originalName,
+                            userName: originalUserName,
+                          })
                     }
                   >
                     {user?.id === originalPost.user_id && profileImageUri ? (
@@ -735,7 +740,12 @@ export default function ReplyDetailScreen() {
                       onPress={() =>
                         isMe
                           ? navigation.navigate('Profile')
-                          : navigation.navigate('UserProfile', { userId: a.user_id, avatarUrl: avatarUri })
+                          : navigation.navigate('UserProfile', {
+                              userId: a.user_id,
+                              avatarUrl: avatarUri,
+                              displayName: ancestorName,
+                              userName: ancestorUserName,
+                            })
                       }
                     >
                       {avatarUri ? (
@@ -797,7 +807,12 @@ export default function ReplyDetailScreen() {
                   onPress={() =>
                     user?.id === parent.user_id
                       ? navigation.navigate('Profile')
-                      : navigation.navigate('UserProfile', { userId: parent.user_id, avatarUrl: parent.profiles?.image_url })
+                      : navigation.navigate('UserProfile', {
+                          userId: parent.user_id,
+                          avatarUrl: parent.profiles?.image_url,
+                          displayName: name,
+                          userName: parentUserName,
+                        })
                   }
                 >
                   {user?.id === parent.user_id && profileImageUri ? (
@@ -878,7 +893,12 @@ export default function ReplyDetailScreen() {
                     onPress={() =>
                       isMe
                         ? navigation.navigate('Profile')
-                        : navigation.navigate('UserProfile', { userId: item.user_id, avatarUrl: avatarUri })
+                        : navigation.navigate('UserProfile', {
+                            userId: item.user_id,
+                            avatarUrl: avatarUri,
+                            displayName: childName,
+                            userName: childUserName,
+                          })
                     }
                   >
                     {avatarUri ? (

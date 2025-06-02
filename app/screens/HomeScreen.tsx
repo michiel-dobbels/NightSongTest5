@@ -453,7 +453,12 @@ const HomeScreen = forwardRef<HomeScreenRef, HomeScreenProps>(
                     onPress={() =>
                       isMe
                         ? navigation.navigate('Profile')
-                        : navigation.navigate('UserProfile', { userId: item.user_id, avatarUrl: avatarUri })
+                        : navigation.navigate('UserProfile', {
+                            userId: item.user_id,
+                            avatarUrl: avatarUri,
+                            displayName,
+                            userName,
+                          })
                     }
                   >
                     {avatarUri ? (
