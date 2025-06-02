@@ -238,6 +238,14 @@ export function AuthProvider({ children }) {
           data.display_name || meta.display_name || data.username || meta.username,
       };
       setProfile(profileData);
+      // Restore the fetched profile image URL locally without touching the database
+      if (data.image_url) {
+        setProfileImageUriState(data.image_url);
+        AsyncStorage.setItem('profile_image_uri', data.image_url);
+      } else {
+        setProfileImageUriState(null);
+        AsyncStorage.removeItem('profile_image_uri');
+      }
       if (data.banner_url) {
         setBannerImageUriState(data.banner_url);
         AsyncStorage.setItem('banner_image_uri', data.banner_url);
