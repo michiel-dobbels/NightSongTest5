@@ -238,6 +238,8 @@ export function AuthProvider({ children }) {
           data.display_name || meta.display_name || data.username || meta.username,
       };
       setProfile(profileData);
+      // Restore the profile image from Supabase (do not update the DB again)
+
       if (data.image_url) {
         setProfileImageUriState(data.image_url);
         AsyncStorage.setItem('profile_image_uri', data.image_url);
