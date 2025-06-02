@@ -15,7 +15,10 @@ interface Profile {
 export default function UserProfileScreen() {
   const navigation = useNavigation<any>();
   const route = useRoute<any>();
-  const { userId } = route.params as { userId: string };
+  const { userId, avatarUrl } = route.params as {
+    userId: string;
+    avatarUrl?: string | null;
+  };
   const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
@@ -50,11 +53,16 @@ export default function UserProfileScreen() {
   if (notFound || !profile) {
     return (
       <View style={[styles.container, styles.center]}>
+        {avatarUrl ? (
+          <Image source={{ uri: avatarUrl }} style={styles.avatar} />
+        ) : (
+          <View style={[styles.avatar, styles.placeholder]} />
+        )}
+        <Text style={{ color: 'white', marginTop: 10 }}>Profile not found.</Text>
         <View style={styles.backButton}>
           <Button title="Back" onPress={() => navigation.goBack()} />
         </View>
 
-        <Text style={{ color: 'white' }}>Profile not found.</Text>
       </View>
     );
   }
