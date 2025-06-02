@@ -290,9 +290,7 @@ export default function PostDetailScreen() {
   const fetchReplies = async () => {
     const { data, error } = await supabase
       .from('replies')
-      .select(
-        'id, post_id, parent_id, user_id, content, image_url, created_at, reply_count, like_count, username, profiles(username, display_name, image_url)'
-      )
+      .select('id, post_id, parent_id, user_id, content, image_url, created_at, reply_count, like_count, username, profiles(username, display_name, image_url)')
 
 
       .eq('post_id', post.id)
@@ -583,8 +581,11 @@ export default function PostDetailScreen() {
 
   const displayName = post.profiles?.display_name || post.profiles?.username || post.username;
   const userName = post.profiles?.username || post.username;
-  const postAvatar =
-    user?.id === post.user_id ? profileImageUri : post.profiles?.image_url || undefined;
+  const isMyPost = user?.id === post.user_id;
+  const postAvatarUri = isMyPost
+    ? profileImageUri
+    : post.profiles?.image_url ?? undefined;
+
 
   return (
     <KeyboardAvoidingView
@@ -609,13 +610,14 @@ export default function PostDetailScreen() {
             <View style={styles.row}>
               <TouchableOpacity
                 onPress={() =>
-                  user?.id === post.user_id
+                  isMyPost
+
                     ? navigation.navigate('Profile')
                     : navigation.navigate('UserProfile', { userId: post.user_id })
                 }
               >
-                {postAvatar ? (
-                  <Image source={{ uri: postAvatar }} style={styles.avatar} />
+                {postAvatarUri ? (
+                  <Image source={{ uri: postAvatarUri }} style={styles.avatar} />
 
                 ) : (
                   <View style={[styles.avatar, styles.placeholder]} />
@@ -665,7 +667,9 @@ export default function PostDetailScreen() {
           const name = item.profiles?.display_name || item.profiles?.username || item.username;
           const replyUserName = item.profiles?.username || item.username;
           const isMe = user?.id === item.user_id;
-          const avatarUri = isMe ? profileImageUri : item.profiles?.image_url || undefined;
+          const avatarUri = isMe
+            ? profileImageUri
+            : item.profiles?.image_url ?? undefined;
 
           return (
             <TouchableOpacity

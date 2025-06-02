@@ -287,9 +287,7 @@ export default function ReplyDetailScreen() {
   const fetchReplies = async () => {
     const { data, error } = await supabase
       .from('replies')
-      .select(
-        'id, post_id, parent_id, user_id, content, image_url, created_at, reply_count, like_count, username, profiles(username, display_name, image_url)'
-      )
+      .select('id, post_id, parent_id, user_id, content, image_url, created_at, reply_count, like_count, username, profiles(username, display_name, image_url)')
 
 
       .eq('post_id', parent.post_id)
@@ -635,12 +633,11 @@ export default function ReplyDetailScreen() {
     : undefined;
   const originalUserName =
     originalPost?.profiles?.username || originalPost?.username;
-  const parentAvatar =
-    user?.id === parent.user_id ? profileImageUri : parent.profiles?.image_url || undefined;
-  const originalAvatar =
-    originalPost && user?.id === originalPost.user_id
-      ? profileImageUri
-      : originalPost?.profiles?.image_url || undefined;
+  const isOriginalMe = user?.id === originalPost?.user_id;
+  const originalAvatarUri = isOriginalMe
+    ? profileImageUri
+    : originalPost?.profiles?.image_url ?? undefined;
+
 
   return (
     <KeyboardAvoidingView
@@ -669,13 +666,14 @@ export default function ReplyDetailScreen() {
                 <View style={styles.row}>
                   <TouchableOpacity
                     onPress={() =>
-                      user?.id === originalPost.user_id
+                      isOriginalMe
+
                         ? navigation.navigate('Profile')
                         : navigation.navigate('UserProfile', { userId: originalPost.user_id })
                     }
                   >
-                    {originalAvatar ? (
-                      <Image source={{ uri: originalAvatar }} style={styles.avatar} />
+                    {originalAvatarUri ? (
+                      <Image source={{ uri: originalAvatarUri }} style={styles.avatar} />
 
                     ) : (
                       <View style={[styles.avatar, styles.placeholder]} />
@@ -723,7 +721,9 @@ export default function ReplyDetailScreen() {
                   a.profiles?.display_name || a.profiles?.username || a.username;
                 const ancestorUserName = a.profiles?.username || a.username;
                 const isMe = user?.id === a.user_id;
-                const avatarUri = isMe ? profileImageUri : a.profiles?.image_url || undefined;
+                const avatarUri = isMe
+                  ? profileImageUri
+                  : a.profiles?.image_url ?? undefined;
 
                 return (
                 <View key={a.id} style={styles.post}>
@@ -807,8 +807,10 @@ export default function ReplyDetailScreen() {
                       : navigation.navigate('UserProfile', { userId: parent.user_id })
                   }
                 >
-                  {parentAvatar ? (
-                    <Image source={{ uri: parentAvatar }} style={styles.avatar} />
+                  {user?.id === parent.user_id && profileImageUri ? (
+                    <Image source={{ uri: profileImageUri }} style={styles.avatar} />
+                  ) : parent.profiles?.image_url ? (
+                    <Image source={{ uri: parent.profiles.image_url }} style={styles.avatar} />
 
                   ) : (
                     <View style={[styles.avatar, styles.placeholder]} />
@@ -860,7 +862,9 @@ export default function ReplyDetailScreen() {
           const childName = item.profiles?.display_name || item.profiles?.username || item.username;
           const childUserName = item.profiles?.username || item.username;
           const isMe = user?.id === item.user_id;
-          const avatarUri = isMe ? profileImageUri : item.profiles?.image_url || undefined;
+          const avatarUri = isMe
+            ? profileImageUri
+            : item.profiles?.image_url ?? undefined;
 
           return (
             <TouchableOpacity

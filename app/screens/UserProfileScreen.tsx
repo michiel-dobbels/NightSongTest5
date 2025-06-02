@@ -1,89 +1,47 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, Image, Button, Dimensions } from 'react-native';
+import { View, Image, Text, StyleSheet, Button } from 'react-native';
 import { useRoute, useNavigation } from '@react-navigation/native';
 import { supabase } from '../../lib/supabase';
-import { colors } from '../styles/colors';
-
-interface Profile {
-  id: string;
-  username: string;
-  display_name: string | null;
-  image_url: string | null;
-  banner_url: string | null;
-}
 
 export default function UserProfileScreen() {
-  const navigation = useNavigation<any>();
   const route = useRoute<any>();
+  const navigation = useNavigation<any>();
   const { userId } = route.params as { userId: string };
-  const [profile, setProfile] = useState<Profile | null>(null);
+  const [profile, setProfile] = useState<any>(null);
+
 
   useEffect(() => {
     const fetchProfile = async () => {
       const { data } = await supabase
         .from('profiles')
-        .select('id, username, display_name, image_url, banner_url')
+        .select('username, display_name, image_url')
         .eq('id', userId)
         .single();
-      if (data) setProfile(data as Profile);
+      if (data) setProfile(data);
+
     };
     fetchProfile();
   }, [userId]);
 
-  if (!profile) return null;
-
   return (
     <View style={styles.container}>
-      {profile.banner_url ? (
-        <Image source={{ uri: profile.banner_url }} style={styles.banner} />
-      ) : (
-        <View style={[styles.banner, styles.placeholder]} />
-      )}
       <View style={styles.backButton}>
         <Button title="Back" onPress={() => navigation.goBack()} />
       </View>
-      <View style={styles.profileRow}>
-        {profile.image_url ? (
-          <Image source={{ uri: profile.image_url }} style={styles.avatar} />
-        ) : (
-          <View style={[styles.avatar, styles.placeholder]} />
-        )}
-        <View style={styles.textContainer}>
-          <Text style={styles.username}>@{profile.username}</Text>
-          {profile.display_name && <Text style={styles.name}>{profile.display_name}</Text>}
-        </View>
-      </View>
+      {profile?.image_url ? (
+        <Image source={{ uri: profile.image_url }} style={styles.avatar} />
+      ) : (
+        <View style={[styles.avatar, styles.placeholder]} />
+      )}
+
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    padding: 20,
-    backgroundColor: colors.background,
-  },
-  backButton: {
-    alignSelf: 'flex-start',
-    marginBottom: 20,
-  },
-  profileRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 20,
-  },
-  banner: {
-    width: '100%',
-    height: Dimensions.get('window').height * 0.25,
-    marginBottom: 20,
-  },
-  avatar: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-  },
-  placeholder: { backgroundColor: '#ffffff20' },
-  textContainer: { marginLeft: 15 },
-  username: { color: 'white', fontSize: 24, fontWeight: 'bold' },
-  name: { color: 'white', fontSize: 20, marginTop: 4 },
+  container: { flex: 1, backgroundColor: 'white', padding: 20 },
+  backButton: { alignSelf: 'flex-start', marginBottom: 20 },
+  avatar: { width: 80, height: 80, borderRadius: 40 },
+  placeholder: { backgroundColor: '#ccc' },
+
 });
