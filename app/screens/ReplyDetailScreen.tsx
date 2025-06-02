@@ -56,6 +56,7 @@ interface Reply {
     username: string | null;
     display_name: string | null;
     image_url?: string | null;
+    banner_url?: string | null;
   } | null;
 }
 
@@ -73,6 +74,7 @@ interface Post {
     username: string | null;
     display_name: string | null;
     image_url?: string | null;
+    banner_url?: string | null;
   } | null;
 }
 
@@ -288,7 +290,7 @@ export default function ReplyDetailScreen() {
     const { data, error } = await supabase
       .from('replies')
       .select(
-        'id, post_id, parent_id, user_id, content, image_url, created_at, reply_count, like_count, username, profiles(username, display_name, image_url)'
+        'id, post_id, parent_id, user_id, content, image_url, created_at, reply_count, like_count, username, profiles(username, display_name, image_url, banner_url)'
       )
 
 
@@ -668,6 +670,8 @@ export default function ReplyDetailScreen() {
                         : navigation.navigate('UserProfile', {
                             userId: originalPost.user_id,
                             avatarUrl: originalPost.profiles?.image_url,
+                            bannerUrl: originalPost.profiles?.banner_url,
+
                             displayName: originalName,
                             userName: originalUserName,
                           })
@@ -743,6 +747,8 @@ export default function ReplyDetailScreen() {
                           : navigation.navigate('UserProfile', {
                               userId: a.user_id,
                               avatarUrl: avatarUri,
+                              bannerUrl: a.profiles?.banner_url,
+
                               displayName: ancestorName,
                               userName: ancestorUserName,
                             })
@@ -810,6 +816,8 @@ export default function ReplyDetailScreen() {
                       : navigation.navigate('UserProfile', {
                           userId: parent.user_id,
                           avatarUrl: parent.profiles?.image_url,
+                          bannerUrl: parent.profiles?.banner_url,
+
                           displayName: name,
                           userName: parentUserName,
                         })
@@ -896,6 +904,8 @@ export default function ReplyDetailScreen() {
                         : navigation.navigate('UserProfile', {
                             userId: item.user_id,
                             avatarUrl: avatarUri,
+                            bannerUrl: item.profiles?.banner_url,
+
                             displayName: childName,
                             userName: childUserName,
                           })

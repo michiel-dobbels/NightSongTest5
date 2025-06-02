@@ -37,6 +37,7 @@ type Post = {
     username: string | null;
     display_name: string | null;
     image_url?: string | null;
+    banner_url?: string | null;
   } | null;
 };
 
@@ -155,7 +156,7 @@ const HomeScreen = forwardRef<HomeScreenRef, HomeScreenProps>(
     const { data, error } = await supabase
       .from('posts')
       .select(
-        'id, content, image_url, user_id, created_at, reply_count, like_count, profiles(username, display_name, image_url)',
+        'id, content, image_url, user_id, created_at, reply_count, like_count, profiles(username, display_name, image_url, banner_url)',
       )
       .order('created_at', { ascending: false });
 
@@ -436,6 +437,7 @@ const HomeScreen = forwardRef<HomeScreenRef, HomeScreenProps>(
           const userName = item.profiles?.username || item.username;
           const isMe = user?.id === item.user_id;
           const avatarUri = isMe ? profileImageUri : item.profiles?.image_url || undefined;
+          const bannerUrl = isMe ? undefined : item.profiles?.banner_url || undefined;
 
           return (
             <TouchableOpacity onPress={() => navigation.navigate('PostDetail', { post: item })}>
@@ -456,6 +458,8 @@ const HomeScreen = forwardRef<HomeScreenRef, HomeScreenProps>(
                         : navigation.navigate('UserProfile', {
                             userId: item.user_id,
                             avatarUrl: avatarUri,
+                            bannerUrl,
+
                             displayName,
                             userName,
                           })
