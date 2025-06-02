@@ -665,7 +665,7 @@ export default function ReplyDetailScreen() {
                     onPress={() =>
                       user?.id === originalPost.user_id
                         ? navigation.navigate('Profile')
-                        : navigation.navigate('UserProfile', { userId: originalPost.user_id })
+                        : navigation.navigate('UserProfile', { userId: originalPost.user_id, avatarUrl: originalPost.profiles?.image_url })
                     }
                   >
                     {user?.id === originalPost.user_id && profileImageUri ? (
@@ -735,7 +735,7 @@ export default function ReplyDetailScreen() {
                       onPress={() =>
                         isMe
                           ? navigation.navigate('Profile')
-                          : navigation.navigate('UserProfile', { userId: a.user_id })
+                          : navigation.navigate('UserProfile', { userId: a.user_id, avatarUrl: avatarUri })
                       }
                     >
                       {avatarUri ? (
@@ -797,7 +797,7 @@ export default function ReplyDetailScreen() {
                   onPress={() =>
                     user?.id === parent.user_id
                       ? navigation.navigate('Profile')
-                      : navigation.navigate('UserProfile', { userId: parent.user_id })
+                      : navigation.navigate('UserProfile', { userId: parent.user_id, avatarUrl: parent.profiles?.image_url })
                   }
                 >
                   {user?.id === parent.user_id && profileImageUri ? (
@@ -878,7 +878,7 @@ export default function ReplyDetailScreen() {
                     onPress={() =>
                       isMe
                         ? navigation.navigate('Profile')
-                        : navigation.navigate('UserProfile', { userId: item.user_id })
+                        : navigation.navigate('UserProfile', { userId: item.user_id, avatarUrl: avatarUri })
                     }
                   >
                     {avatarUri ? (
