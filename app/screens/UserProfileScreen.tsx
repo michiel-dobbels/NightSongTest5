@@ -52,6 +52,7 @@ export default function UserProfileScreen() {
           {profile.display_name && <Text style={styles.name}>{profile.display_name}</Text>}
         </View>
       </View>
+
     </View>
   );
 }
@@ -66,4 +67,5 @@ const styles = StyleSheet.create({
   textContainer: { marginLeft: 15 },
   username: { color: 'white', fontSize: 24, fontWeight: 'bold' },
   name: { color: 'white', fontSize: 20, marginTop: 4 },
+
 });

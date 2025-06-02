@@ -292,6 +292,7 @@ export default function PostDetailScreen() {
       .from('replies')
       .select('id, post_id, parent_id, user_id, content, image_url, created_at, reply_count, like_count, username, profiles(username, display_name, image_url)')
 
+
       .eq('post_id', post.id)
       .order('created_at', { ascending: false });
     if (!error && data) {
@@ -491,6 +492,7 @@ export default function PostDetailScreen() {
         display_name: profile.display_name,
         image_url: profileImageUri,
       },
+
     };
 
     setReplies(prev => {
@@ -583,6 +585,11 @@ export default function PostDetailScreen() {
 
   const displayName = post.profiles?.display_name || post.profiles?.username || post.username;
   const userName = post.profiles?.username || post.username;
+  const isMyPost = user?.id === post.user_id;
+  const postAvatarUri = isMyPost
+    ? profileImageUri
+    : post.profiles?.image_url ?? undefined;
+
 
   return (
     <KeyboardAvoidingView
@@ -608,6 +615,7 @@ export default function PostDetailScreen() {
               <TouchableOpacity
                 onPress={() =>
                   post.user_id === user?.id
+
                     ? navigation.navigate('Profile')
                     : navigation.navigate('UserProfile', { userId: post.user_id })
                 }
@@ -619,10 +627,12 @@ export default function PostDetailScreen() {
                     source={{ uri: post.profiles.image_url }}
                     style={styles.avatar}
                   />
+
                 ) : (
                   <View style={[styles.avatar, styles.placeholder]} />
                 )}
               </TouchableOpacity>
+
               <View style={{ flex: 1 }}>
                 <Text style={styles.username}>
                   {displayName} @{userName}
@@ -676,6 +686,7 @@ export default function PostDetailScreen() {
               navigation.navigate('UserProfile', { userId: item.user_id });
             }
           };
+
           return (
             <TouchableOpacity
               onPress={() =>
@@ -697,6 +708,7 @@ export default function PostDetailScreen() {
                 )}
                 <View style={styles.row}>
                   <TouchableOpacity onPress={onAvatarPress}>
+
                     {avatarUri ? (
                       <Image source={{ uri: avatarUri }} style={styles.avatar} />
                     ) : (
@@ -704,9 +716,11 @@ export default function PostDetailScreen() {
                     )}
                   </TouchableOpacity>
                   <View style={{ flex: 1 }}>
+
                       <Text style={styles.username}>
                         {name} @{replyUserName}
                       </Text>
+
                       <Text style={styles.postContent}>{item.content}</Text>
                       {item.image_url && (
                         <Image source={{ uri: item.image_url }} style={styles.postImage} />

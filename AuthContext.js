@@ -218,12 +218,21 @@ export function AuthProvider({ children }) {
     const id = authUser?.id || user?.id;
     const key = id ? `banner_image_uri_${id}` : 'banner_image_uri';
 
+    if (authUser) {
+      const { error } = await supabase
+        .from('profiles')
+        .update({ banner_url: uri })
+        .eq('id', authUser.id);
+      if (error) console.error('Failed to update banner_url:', error);
+    }
+
     if (uri) {
       await AsyncStorage.setItem(key, uri);
     } else {
       await AsyncStorage.removeItem(key);
     }
-    if (user) {
+
+    if (user && authUser !== user) {
       const { error } = await supabase
         .from('profiles')
         .update({ banner_url: uri })
