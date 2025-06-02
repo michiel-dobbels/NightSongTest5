@@ -62,6 +62,7 @@ export default function UserProfileScreen() {
         <View style={styles.backButton}>
           <Button title="Back" onPress={() => navigation.goBack()} />
         </View>
+
       </View>
     );
   }
