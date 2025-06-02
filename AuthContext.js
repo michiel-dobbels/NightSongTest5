@@ -218,12 +218,21 @@ export function AuthProvider({ children }) {
     const id = authUser?.id || user?.id;
     const key = id ? `banner_image_uri_${id}` : 'banner_image_uri';
 
+    if (authUser) {
+      const { error } = await supabase
+        .from('profiles')
+        .update({ banner_url: uri })
+        .eq('id', authUser.id);
+      if (error) console.error('Failed to update banner_url:', error);
+    }
+
     if (uri) {
       await AsyncStorage.setItem(key, uri);
     } else {
       await AsyncStorage.removeItem(key);
     }
-    if (user) {
+
+    if (user && authUser !== user) {
       const { error } = await supabase
         .from('profiles')
         .update({ banner_url: uri })
@@ -260,16 +269,26 @@ export function AuthProvider({ children }) {
         setProfileImageUriState(data.image_url);
         AsyncStorage.setItem(profileKey, data.image_url);
       } else {
-        setProfileImageUriState(null);
-        AsyncStorage.removeItem(profileKey);
+        // Fall back to any locally stored value if the database column is empty
+        const storedProfile = await AsyncStorage.getItem(profileKey);
+        if (storedProfile) {
+          setProfileImageUriState(storedProfile);
+        } else {
+          setProfileImageUriState(null);
+        }
       }
 
       if (data.banner_url) {
         setBannerImageUriState(data.banner_url);
         AsyncStorage.setItem(bannerKey, data.banner_url);
       } else {
-        setBannerImageUriState(null);
-        AsyncStorage.removeItem(bannerKey);
+        // Similarly restore any stored banner if Supabase doesn't have one
+        const storedBanner = await AsyncStorage.getItem(bannerKey);
+        if (storedBanner) {
+          setBannerImageUriState(storedBanner);
+        } else {
+          setBannerImageUriState(null);
+        }
       }
 
       return profileData;
