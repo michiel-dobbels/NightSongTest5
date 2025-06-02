@@ -294,6 +294,7 @@ export default function PostDetailScreen() {
         'id, post_id, parent_id, user_id, content, image_url, created_at, reply_count, like_count, username, profiles(username, display_name, image_url)'
       )
 
+
       .eq('post_id', post.id)
       .order('created_at', { ascending: false });
     if (!error && data) {
@@ -618,6 +619,7 @@ export default function PostDetailScreen() {
                   <View style={[styles.avatar, styles.placeholder]} />
                 );
               })()}
+
               <View style={{ flex: 1 }}>
                 <Text style={styles.username}>
                   {displayName} @{userName}
@@ -662,6 +664,7 @@ export default function PostDetailScreen() {
           const replyUserName = item.profiles?.username || item.username;
           const isMe = user?.id === item.user_id;
           const avatarUri = isMe ? profileImageUri : item.profiles?.image_url || undefined;
+
           return (
             <TouchableOpacity
               onPress={() =>
@@ -683,7 +686,13 @@ export default function PostDetailScreen() {
                 )}
                 <View style={styles.row}>
                   {avatarUri ? (
-                    <Image source={{ uri: avatarUri }} style={styles.avatar} />
+                    <TouchableOpacity
+                      onPress={() =>
+                        isMe && navigation.navigate('Profile')
+                      }
+                    >
+                      <Image source={{ uri: avatarUri }} style={styles.avatar} />
+                    </TouchableOpacity>
                   ) : (
                     <View style={[styles.avatar, styles.placeholder]} />
                   )}

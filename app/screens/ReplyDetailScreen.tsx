@@ -291,6 +291,7 @@ export default function ReplyDetailScreen() {
         'id, post_id, parent_id, user_id, content, image_url, created_at, reply_count, like_count, username, profiles(username, display_name, image_url)'
       )
 
+
       .eq('post_id', parent.post_id)
       .order('created_at', { ascending: false });
     if (!error && data) {
@@ -671,6 +672,7 @@ export default function ReplyDetailScreen() {
                       <View style={[styles.avatar, styles.placeholder]} />
                     );
                   })()}
+
                   <View style={{ flex: 1 }}>
                     <Text style={styles.username}>
                       {originalName} @{originalUserName}
@@ -713,6 +715,7 @@ export default function ReplyDetailScreen() {
                 const ancestorUserName = a.profiles?.username || a.username;
                 const isMe = user?.id === a.user_id;
                 const avatarUri = isMe ? profileImageUri : a.profiles?.image_url || undefined;
+
                 return (
                 <View key={a.id} style={styles.post}>
                   <View style={styles.threadLine} pointerEvents="none" />
@@ -727,7 +730,13 @@ export default function ReplyDetailScreen() {
                   )}
                   <View style={styles.row}>
                     {avatarUri ? (
-                      <Image source={{ uri: avatarUri }} style={styles.avatar} />
+                      <TouchableOpacity
+                        onPress={() =>
+                          isMe && navigation.navigate('Profile')
+                        }
+                      >
+                        <Image source={{ uri: avatarUri }} style={styles.avatar} />
+                      </TouchableOpacity>
                     ) : (
                       <View style={[styles.avatar, styles.placeholder]} />
                     )}
@@ -790,6 +799,7 @@ export default function ReplyDetailScreen() {
                     <View style={[styles.avatar, styles.placeholder]} />
                   );
                 })()}
+
                 <View style={{ flex: 1 }}>
                   <Text style={styles.username}>
                     {name} @{parentUserName}
@@ -836,6 +846,7 @@ export default function ReplyDetailScreen() {
           const childUserName = item.profiles?.username || item.username;
           const isMe = user?.id === item.user_id;
           const avatarUri = isMe ? profileImageUri : item.profiles?.image_url || undefined;
+
           return (
             <TouchableOpacity
               onPress={() =>
@@ -857,7 +868,13 @@ export default function ReplyDetailScreen() {
                 )}
                 <View style={styles.row}>
                   {avatarUri ? (
-                    <Image source={{ uri: avatarUri }} style={styles.avatar} />
+                    <TouchableOpacity
+                      onPress={() =>
+                        isMe && navigation.navigate('Profile')
+                      }
+                    >
+                      <Image source={{ uri: avatarUri }} style={styles.avatar} />
+                    </TouchableOpacity>
                   ) : (
                     <View style={[styles.avatar, styles.placeholder]} />
                   )}

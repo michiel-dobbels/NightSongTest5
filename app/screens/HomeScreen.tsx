@@ -436,6 +436,7 @@ const HomeScreen = forwardRef<HomeScreenRef, HomeScreenProps>(
           const userName = item.profiles?.username || item.username;
           const isMe = user?.id === item.user_id;
           const avatarUri = isMe ? profileImageUri : item.profiles?.image_url || undefined;
+
           return (
             <TouchableOpacity onPress={() => navigation.navigate('PostDetail', { post: item })}>
               <View style={styles.post}>
@@ -449,7 +450,13 @@ const HomeScreen = forwardRef<HomeScreenRef, HomeScreenProps>(
                 )}
                 <View style={styles.row}>
                   {avatarUri ? (
-                    <Image source={{ uri: avatarUri }} style={styles.avatar} />
+                    <TouchableOpacity
+                      onPress={() =>
+                        isMe && navigation.navigate('Profile')
+                      }
+                    >
+                      <Image source={{ uri: avatarUri }} style={styles.avatar} />
+                    </TouchableOpacity>
                   ) : (
                     <View style={[styles.avatar, styles.placeholder]} />
                   )}
