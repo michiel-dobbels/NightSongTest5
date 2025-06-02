@@ -599,11 +599,19 @@ export default function PostDetailScreen() {
               </TouchableOpacity>
             )}
             <View style={styles.row}>
-              {user?.id === post.user_id && profileImageUri ? (
-                <Image source={{ uri: profileImageUri }} style={styles.avatar} />
-              ) : (
-                <View style={[styles.avatar, styles.placeholder]} />
-              )}
+              <TouchableOpacity
+                onPress={() =>
+                  user?.id === post.user_id
+                    ? navigation.navigate('Profile')
+                    : navigation.navigate('UserProfile', { userId: post.user_id })
+                }
+              >
+                {user?.id === post.user_id && profileImageUri ? (
+                  <Image source={{ uri: profileImageUri }} style={styles.avatar} />
+                ) : (
+                  <View style={[styles.avatar, styles.placeholder]} />
+                )}
+              </TouchableOpacity>
               <View style={{ flex: 1 }}>
                 <Text style={styles.username}>
                   {displayName} @{userName}
@@ -668,15 +676,23 @@ export default function PostDetailScreen() {
                   </TouchableOpacity>
                 )}
                 <View style={styles.row}>
-                  {avatarUri ? (
-                    <Image source={{ uri: avatarUri }} style={styles.avatar} />
-                  ) : (
-                    <View style={[styles.avatar, styles.placeholder]} />
-                  )}
-                    <View style={{ flex: 1 }}>
-                      <Text style={styles.username}>
-                        {name} @{replyUserName}
-                      </Text>
+                  <TouchableOpacity
+                    onPress={() =>
+                      isMe
+                        ? navigation.navigate('Profile')
+                        : navigation.navigate('UserProfile', { userId: item.user_id })
+                    }
+                  >
+                    {avatarUri ? (
+                      <Image source={{ uri: avatarUri }} style={styles.avatar} />
+                    ) : (
+                      <View style={[styles.avatar, styles.placeholder]} />
+                    )}
+                  </TouchableOpacity>
+                  <View style={{ flex: 1 }}>
+                    <Text style={styles.username}>
+                      {name} @{replyUserName}
+                    </Text>
                       <Text style={styles.postContent}>{item.content}</Text>
                       {item.image_url && (
                         <Image source={{ uri: item.image_url }} style={styles.postImage} />
