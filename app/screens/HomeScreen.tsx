@@ -458,7 +458,6 @@ const HomeScreen = forwardRef<HomeScreenRef, HomeScreenProps>(
                         : navigation.navigate('UserProfile', {
                             userId: item.user_id,
                             avatarUrl: avatarUri,
-                            bannerUrl,
 
                             displayName,
                             userName,

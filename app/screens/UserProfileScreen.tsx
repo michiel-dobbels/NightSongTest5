@@ -18,14 +18,12 @@ export default function UserProfileScreen() {
   const {
     userId,
     avatarUrl,
-    bannerUrl: initialBannerUrl,
 
     displayName: initialDisplayName,
     userName: initialUsername,
   } = route.params as {
     userId: string;
     avatarUrl?: string | null;
-    bannerUrl?: string | null;
 
     displayName?: string | null;
     userName?: string | null;
@@ -36,7 +34,6 @@ export default function UserProfileScreen() {
 
   const displayName = profile?.display_name ?? initialDisplayName ?? null;
   const username = profile?.username ?? initialUsername ?? null;
-  const banner = profile?.banner_url ?? initialBannerUrl ?? null;
 
 
   useEffect(() => {
@@ -61,14 +58,12 @@ export default function UserProfileScreen() {
   if (loading) {
     return (
       <View style={[styles.container, styles.center]}>
-        {banner ? (
-          <Image source={{ uri: banner }} style={styles.banner} />
-        ) : (
-          <View style={[styles.banner, styles.placeholder]} />
-        )}
+        {profile?.image_url || avatarUrl ? (
+          <Image
+            source={{ uri: profile?.image_url || avatarUrl! }}
+            style={styles.avatar}
+          />
 
-        {avatarUrl ? (
-          <Image source={{ uri: avatarUrl }} style={styles.avatar} />
         ) : (
           <View style={[styles.avatar, styles.placeholder]} />
         )}
@@ -82,13 +77,12 @@ export default function UserProfileScreen() {
   if (notFound || !profile) {
     return (
       <View style={[styles.container, styles.center]}>
-        {banner ? (
-          <Image source={{ uri: banner }} style={styles.banner} />
-        ) : (
-          <View style={[styles.banner, styles.placeholder]} />
-        )}
-        {avatarUrl ? (
-          <Image source={{ uri: avatarUrl }} style={styles.avatar} />
+        {profile?.image_url || avatarUrl ? (
+          <Image
+            source={{ uri: profile?.image_url || avatarUrl! }}
+            style={styles.avatar}
+          />
+
         ) : (
           <View style={[styles.avatar, styles.placeholder]} />
         )}
@@ -114,8 +108,11 @@ export default function UserProfileScreen() {
         <Button title="Back" onPress={() => navigation.goBack()} />
       </View>
       <View style={styles.profileRow}>
-        {profile.image_url ? (
-          <Image source={{ uri: profile.image_url }} style={styles.avatar} />
+        {profile.image_url || avatarUrl ? (
+          <Image
+            source={{ uri: profile.image_url || avatarUrl! }}
+            style={styles.avatar}
+          />
         ) : (
           <View style={[styles.avatar, styles.placeholder]} />
         )}

@@ -670,7 +670,6 @@ export default function ReplyDetailScreen() {
                         : navigation.navigate('UserProfile', {
                             userId: originalPost.user_id,
                             avatarUrl: originalPost.profiles?.image_url,
-                            bannerUrl: originalPost.profiles?.banner_url,
 
                             displayName: originalName,
                             userName: originalUserName,
@@ -747,7 +746,6 @@ export default function ReplyDetailScreen() {
                           : navigation.navigate('UserProfile', {
                               userId: a.user_id,
                               avatarUrl: avatarUri,
-                              bannerUrl: a.profiles?.banner_url,
 
                               displayName: ancestorName,
                               userName: ancestorUserName,
@@ -816,7 +814,6 @@ export default function ReplyDetailScreen() {
                       : navigation.navigate('UserProfile', {
                           userId: parent.user_id,
                           avatarUrl: parent.profiles?.image_url,
-                          bannerUrl: parent.profiles?.banner_url,
 
                           displayName: name,
                           userName: parentUserName,
@@ -904,7 +901,6 @@ export default function ReplyDetailScreen() {
                         : navigation.navigate('UserProfile', {
                             userId: item.user_id,
                             avatarUrl: avatarUri,
-                            bannerUrl: item.profiles?.banner_url,
 
                             displayName: childName,
                             userName: childUserName,
