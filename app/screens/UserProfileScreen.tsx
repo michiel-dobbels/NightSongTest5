@@ -50,6 +50,10 @@ export default function UserProfileScreen() {
   if (notFound || !profile) {
     return (
       <View style={[styles.container, styles.center]}>
+        <View style={styles.backButton}>
+          <Button title="Back" onPress={() => navigation.goBack()} />
+        </View>
+
         <Text style={{ color: 'white' }}>Profile not found.</Text>
       </View>
     );
