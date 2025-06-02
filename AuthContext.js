@@ -260,16 +260,26 @@ export function AuthProvider({ children }) {
         setProfileImageUriState(data.image_url);
         AsyncStorage.setItem(profileKey, data.image_url);
       } else {
-        setProfileImageUriState(null);
-        AsyncStorage.removeItem(profileKey);
+        // Fall back to any locally stored value if the database column is empty
+        const storedProfile = await AsyncStorage.getItem(profileKey);
+        if (storedProfile) {
+          setProfileImageUriState(storedProfile);
+        } else {
+          setProfileImageUriState(null);
+        }
       }
 
       if (data.banner_url) {
         setBannerImageUriState(data.banner_url);
         AsyncStorage.setItem(bannerKey, data.banner_url);
       } else {
-        setBannerImageUriState(null);
-        AsyncStorage.removeItem(bannerKey);
+        // Similarly restore any stored banner if Supabase doesn't have one
+        const storedBanner = await AsyncStorage.getItem(bannerKey);
+        if (storedBanner) {
+          setBannerImageUriState(storedBanner);
+        } else {
+          setBannerImageUriState(null);
+        }
       }
 
       return profileData;
