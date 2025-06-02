@@ -635,6 +635,12 @@ export default function ReplyDetailScreen() {
     : undefined;
   const originalUserName =
     originalPost?.profiles?.username || originalPost?.username;
+  const parentAvatar =
+    user?.id === parent.user_id ? profileImageUri : parent.profiles?.image_url || undefined;
+  const originalAvatar =
+    originalPost && user?.id === originalPost.user_id
+      ? profileImageUri
+      : originalPost?.profiles?.image_url || undefined;
 
   return (
     <KeyboardAvoidingView
@@ -668,8 +674,9 @@ export default function ReplyDetailScreen() {
                         : navigation.navigate('UserProfile', { userId: originalPost.user_id })
                     }
                   >
-                    {user?.id === originalPost.user_id && profileImageUri ? (
-                      <Image source={{ uri: profileImageUri }} style={styles.avatar} />
+                    {originalAvatar ? (
+                      <Image source={{ uri: originalAvatar }} style={styles.avatar} />
+
                     ) : (
                       <View style={[styles.avatar, styles.placeholder]} />
                     )}
@@ -800,8 +807,9 @@ export default function ReplyDetailScreen() {
                       : navigation.navigate('UserProfile', { userId: parent.user_id })
                   }
                 >
-                  {user?.id === parent.user_id && profileImageUri ? (
-                    <Image source={{ uri: profileImageUri }} style={styles.avatar} />
+                  {parentAvatar ? (
+                    <Image source={{ uri: parentAvatar }} style={styles.avatar} />
+
                   ) : (
                     <View style={[styles.avatar, styles.placeholder]} />
                   )}

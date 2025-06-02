@@ -489,11 +489,8 @@ export default function PostDetailScreen() {
       username: profile.display_name || profile.username,
       reply_count: 0,
       like_count: 0,
-      profiles: {
-        username: profile.username,
-        display_name: profile.display_name,
-        image_url: profileImageUri,
-      },
+      profiles: { username: profile.username, display_name: profile.display_name, image_url: profileImageUri },
+
     };
 
     setReplies(prev => {
@@ -586,6 +583,8 @@ export default function PostDetailScreen() {
 
   const displayName = post.profiles?.display_name || post.profiles?.username || post.username;
   const userName = post.profiles?.username || post.username;
+  const postAvatar =
+    user?.id === post.user_id ? profileImageUri : post.profiles?.image_url || undefined;
 
   return (
     <KeyboardAvoidingView
@@ -615,8 +614,9 @@ export default function PostDetailScreen() {
                     : navigation.navigate('UserProfile', { userId: post.user_id })
                 }
               >
-                {user?.id === post.user_id && profileImageUri ? (
-                  <Image source={{ uri: profileImageUri }} style={styles.avatar} />
+                {postAvatar ? (
+                  <Image source={{ uri: postAvatar }} style={styles.avatar} />
+
                 ) : (
                   <View style={[styles.avatar, styles.placeholder]} />
                 )}
@@ -700,10 +700,10 @@ export default function PostDetailScreen() {
                       <View style={[styles.avatar, styles.placeholder]} />
                     )}
                   </TouchableOpacity>
-                  <View style={{ flex: 1 }}>
-                    <Text style={styles.username}>
-                      {name} @{replyUserName}
-                    </Text>
+                    <View style={{ flex: 1 }}>
+                      <Text style={styles.username}>
+                        {name} @{replyUserName}
+                      </Text>
 
                       <Text style={styles.postContent}>{item.content}</Text>
                       {item.image_url && (
