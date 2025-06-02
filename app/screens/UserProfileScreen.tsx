@@ -9,6 +9,7 @@ export default function UserProfileScreen() {
   const { userId } = route.params as { userId: string };
   const [profile, setProfile] = useState<any>(null);
 
+
   useEffect(() => {
     const fetchProfile = async () => {
       const { data } = await supabase
@@ -17,6 +18,7 @@ export default function UserProfileScreen() {
         .eq('id', userId)
         .single();
       if (data) setProfile(data);
+
     };
     fetchProfile();
   }, [userId]);
@@ -31,6 +33,7 @@ export default function UserProfileScreen() {
       ) : (
         <View style={[styles.avatar, styles.placeholder]} />
       )}
+
     </View>
   );
 }
@@ -40,4 +43,5 @@ const styles = StyleSheet.create({
   backButton: { alignSelf: 'flex-start', marginBottom: 20 },
   avatar: { width: 80, height: 80, borderRadius: 40 },
   placeholder: { backgroundColor: '#ccc' },
+
 });
