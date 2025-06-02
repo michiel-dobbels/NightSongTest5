@@ -427,6 +427,7 @@ const HomeScreen = forwardRef<HomeScreenRef, HomeScreenProps>(
       
       <FlatList
         data={posts}
+        contentContainerStyle={{ paddingTop: hideInput ? 12 : 0 }}
         keyExtractor={(item) => item.id}
         renderItem={({ item }) => {
           const displayName =

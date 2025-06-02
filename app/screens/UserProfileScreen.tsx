@@ -53,15 +53,7 @@ export default function UserProfileScreen() {
   if (notFound || !profile) {
     return (
       <View style={[styles.container, styles.center]}>
-        {avatarUrl ? (
-          <Image source={{ uri: avatarUrl }} style={styles.avatar} />
-        ) : (
-          <View style={[styles.avatar, styles.placeholder]} />
-        )}
-        <Text style={{ color: 'white', marginTop: 10 }}>Profile not found.</Text>
-        <View style={styles.backButton}>
-          <Button title="Back" onPress={() => navigation.goBack()} />
-        </View>
+        <Text style={{ color: 'white' }}>Profile not found.</Text>
 
       </View>
     );
