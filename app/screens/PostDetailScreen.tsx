@@ -54,6 +54,7 @@ interface Post {
     username: string | null;
     display_name: string | null;
     image_url?: string | null;
+    banner_url?: string | null;
   } | null;
 }
 
@@ -73,6 +74,7 @@ interface Reply {
     username: string | null;
     display_name: string | null;
     image_url?: string | null;
+    banner_url?: string | null;
   } | null;
 }
 
@@ -291,7 +293,7 @@ export default function PostDetailScreen() {
     const { data, error } = await supabase
       .from('replies')
       .select(
-        'id, post_id, parent_id, user_id, content, image_url, created_at, reply_count, like_count, username, profiles(username, display_name, image_url)'
+        'id, post_id, parent_id, user_id, content, image_url, created_at, reply_count, like_count, username, profiles(username, display_name, image_url, banner_url)'
       )
 
 
@@ -615,6 +617,7 @@ export default function PostDetailScreen() {
                     : navigation.navigate('UserProfile', {
                         userId: post.user_id,
                         avatarUrl: post.profiles?.image_url,
+
                         displayName,
                         userName,
                       })
@@ -699,6 +702,7 @@ export default function PostDetailScreen() {
                         : navigation.navigate('UserProfile', {
                             userId: item.user_id,
                             avatarUrl: avatarUri,
+
                             displayName: name,
                             userName: replyUserName,
                           })
