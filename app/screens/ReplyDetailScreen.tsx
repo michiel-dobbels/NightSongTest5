@@ -661,17 +661,19 @@ export default function ReplyDetailScreen() {
                   </TouchableOpacity>
                 )}
                 <View style={styles.row}>
-                  {(() => {
-                    const avatarUri =
+                  <TouchableOpacity
+                    onPress={() =>
                       user?.id === originalPost.user_id
-                        ? profileImageUri
-                        : originalPost.profiles?.image_url;
-                    return avatarUri ? (
-                      <Image source={{ uri: avatarUri }} style={styles.avatar} />
+                        ? navigation.navigate('Profile')
+                        : navigation.navigate('UserProfile', { userId: originalPost.user_id })
+                    }
+                  >
+                    {user?.id === originalPost.user_id && profileImageUri ? (
+                      <Image source={{ uri: profileImageUri }} style={styles.avatar} />
                     ) : (
                       <View style={[styles.avatar, styles.placeholder]} />
-                    );
-                  })()}
+                    )}
+                  </TouchableOpacity>
 
                   <View style={{ flex: 1 }}>
                     <Text style={styles.username}>
@@ -729,17 +731,20 @@ export default function ReplyDetailScreen() {
                     </TouchableOpacity>
                   )}
                   <View style={styles.row}>
-                    {avatarUri ? (
-                      <TouchableOpacity
-                        onPress={() =>
-                          isMe && navigation.navigate('Profile')
-                        }
-                      >
+                    <TouchableOpacity
+                      onPress={() =>
+                        isMe
+                          ? navigation.navigate('Profile')
+                          : navigation.navigate('UserProfile', { userId: a.user_id })
+                      }
+                    >
+                      {avatarUri ? (
                         <Image source={{ uri: avatarUri }} style={styles.avatar} />
-                      </TouchableOpacity>
-                    ) : (
-                      <View style={[styles.avatar, styles.placeholder]} />
-                    )}
+                      ) : (
+                        <View style={[styles.avatar, styles.placeholder]} />
+                      )}
+                    </TouchableOpacity>
+
                     <View style={{ flex: 1 }}>
                       <Text style={styles.username}>
                         {ancestorName} @{ancestorUserName}
@@ -788,17 +793,19 @@ export default function ReplyDetailScreen() {
                 </TouchableOpacity>
               )}
               <View style={styles.row}>
-                {(() => {
-                  const avatarUri =
+                <TouchableOpacity
+                  onPress={() =>
                     user?.id === parent.user_id
-                      ? profileImageUri
-                      : parent.profiles?.image_url;
-                  return avatarUri ? (
-                    <Image source={{ uri: avatarUri }} style={styles.avatar} />
+                      ? navigation.navigate('Profile')
+                      : navigation.navigate('UserProfile', { userId: parent.user_id })
+                  }
+                >
+                  {user?.id === parent.user_id && profileImageUri ? (
+                    <Image source={{ uri: profileImageUri }} style={styles.avatar} />
                   ) : (
                     <View style={[styles.avatar, styles.placeholder]} />
-                  );
-                })()}
+                  )}
+                </TouchableOpacity>
 
                 <View style={{ flex: 1 }}>
                   <Text style={styles.username}>
@@ -867,17 +874,20 @@ export default function ReplyDetailScreen() {
                   </TouchableOpacity>
                 )}
                 <View style={styles.row}>
-                  {avatarUri ? (
-                    <TouchableOpacity
-                      onPress={() =>
-                        isMe && navigation.navigate('Profile')
-                      }
-                    >
+                  <TouchableOpacity
+                    onPress={() =>
+                      isMe
+                        ? navigation.navigate('Profile')
+                        : navigation.navigate('UserProfile', { userId: item.user_id })
+                    }
+                  >
+                    {avatarUri ? (
                       <Image source={{ uri: avatarUri }} style={styles.avatar} />
-                    </TouchableOpacity>
-                  ) : (
-                    <View style={[styles.avatar, styles.placeholder]} />
-                  )}
+                    ) : (
+                      <View style={[styles.avatar, styles.placeholder]} />
+                    )}
+                  </TouchableOpacity>
+
                   <View style={{ flex: 1 }}>
                     <Text style={styles.username}>
                       {childName} @{childUserName}
