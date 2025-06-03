@@ -686,14 +686,18 @@ export default function ReplyDetailScreen() {
                   </TouchableOpacity>
 
                   <View style={{ flex: 1 }}>
-                    <Text style={styles.username}>
-                      {originalName} @{originalUserName}
-                    </Text>
+                    <View style={styles.headerRow}>
+                      <Text style={styles.username}>
+                        {originalName} @{originalUserName}
+                      </Text>
+                      <Text style={[styles.timestamp, styles.timestampMargin]}>
+                        {timeAgo(originalPost.created_at)}
+                      </Text>
+                    </View>
                     <Text style={styles.postContent}>{originalPost.content}</Text>
                     {originalPost.image_url && (
                       <Image source={{ uri: originalPost.image_url }} style={styles.postImage} />
                     )}
-                    <Text style={styles.timestamp}>{timeAgo(originalPost.created_at)}</Text>
                   </View>
                 </View>
                 <View style={styles.replyCountContainer}>
@@ -763,14 +767,18 @@ export default function ReplyDetailScreen() {
                     </TouchableOpacity>
 
                     <View style={{ flex: 1 }}>
+                    <View style={styles.headerRow}>
                       <Text style={styles.username}>
                         {ancestorName} @{ancestorUserName}
                       </Text>
-                      <Text style={styles.postContent}>{a.content}</Text>
-                      {a.image_url && (
-                        <Image source={{ uri: a.image_url }} style={styles.postImage} />
-                      )}
-                    <Text style={styles.timestamp}>{timeAgo(a.created_at)}</Text>
+                      <Text style={[styles.timestamp, styles.timestampMargin]}>
+                        {timeAgo(a.created_at)}
+                      </Text>
+                    </View>
+                    <Text style={styles.postContent}>{a.content}</Text>
+                    {a.image_url && (
+                      <Image source={{ uri: a.image_url }} style={styles.postImage} />
+                    )}
                   </View>
                 </View>
                 <View style={styles.replyCountContainer}>
@@ -832,14 +840,18 @@ export default function ReplyDetailScreen() {
                 </TouchableOpacity>
 
                 <View style={{ flex: 1 }}>
-                  <Text style={styles.username}>
-                    {name} @{parentUserName}
-                  </Text>
+                  <View style={styles.headerRow}>
+                    <Text style={styles.username}>
+                      {name} @{parentUserName}
+                    </Text>
+                    <Text style={[styles.timestamp, styles.timestampMargin]}>
+                      {timeAgo(parent.created_at)}
+                    </Text>
+                  </View>
                   <Text style={styles.postContent}>{parent.content}</Text>
                   {parent.image_url && (
                     <Image source={{ uri: parent.image_url }} style={styles.postImage} />
                   )}
-                  <Text style={styles.timestamp}>{timeAgo(parent.created_at)}</Text>
                 </View>
               </View>
           <View style={styles.replyCountContainer}>
@@ -920,14 +932,18 @@ export default function ReplyDetailScreen() {
                   </TouchableOpacity>
 
                   <View style={{ flex: 1 }}>
-                    <Text style={styles.username}>
-                      {childName} @{childUserName}
-                    </Text>
+                    <View style={styles.headerRow}>
+                      <Text style={styles.username}>
+                        {childName} @{childUserName}
+                      </Text>
+                      <Text style={[styles.timestamp, styles.timestampMargin]}>
+                        {timeAgo(item.created_at)}
+                      </Text>
+                    </View>
                     <Text style={styles.postContent}>{item.content}</Text>
                     {item.image_url && (
                       <Image source={{ uri: item.image_url }} style={styles.postImage} />
                     )}
-                    <Text style={styles.timestamp}>{timeAgo(item.created_at)}</Text>
                   </View>
                 </View>
                 <View style={styles.replyCountContainer}>
@@ -1031,10 +1047,14 @@ const styles = StyleSheet.create({
   postContent: { color: 'white' },
   username: { fontWeight: 'bold', color: 'white' },
   timestamp: { fontSize: 10, color: 'gray' },
+  headerRow: { flexDirection: 'row', alignItems: 'center' },
+  timestampMargin: { marginLeft: 6 },
   replyCountContainer: {
     position: 'absolute',
     bottom: 6,
-    left: 10,
+    // Align with the left edge of the post content (text/image)
+    // Avatar width (32) + margin (8) + container padding (10)
+    left: 50,
     flexDirection: 'row',
     alignItems: 'center',
   },
