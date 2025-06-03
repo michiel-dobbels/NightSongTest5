@@ -22,6 +22,7 @@ const STORAGE_KEY = 'cached_posts';
 const COUNT_STORAGE_KEY = 'cached_reply_counts';
 const LIKE_COUNT_KEY = 'cached_like_counts';
 const LIKED_KEY_PREFIX = 'cached_likes_';
+const PAGE_SIZE = 10;
 
 
 type Post = {
@@ -37,6 +38,7 @@ type Post = {
     username: string | null;
     display_name: string | null;
     image_url?: string | null;
+    banner_url?: string | null;
   } | null;
 };
 
@@ -62,7 +64,7 @@ interface HomeScreenProps {
 const HomeScreen = forwardRef<HomeScreenRef, HomeScreenProps>(
   ({ hideInput }, ref) => {
     const navigation = useNavigation<any>();
-  const { user, profile, profileImageUri } = useAuth() as any;
+  const { user, profile, profileImageUri, bannerImageUri } = useAuth() as any;
   const [postText, setPostText] = useState('');
   const [posts, setPosts] = useState<Post[]>([]);
   const [replyCounts, setReplyCounts] = useState<{ [key: string]: number }>({});
@@ -155,18 +157,19 @@ const HomeScreen = forwardRef<HomeScreenRef, HomeScreenProps>(
     const { data, error } = await supabase
       .from('posts')
       .select(
-        'id, content, image_url, user_id, created_at, reply_count, like_count, profiles(username, display_name, image_url)',
+        'id, content, image_url, user_id, created_at, reply_count, like_count, profiles(username, display_name, image_url, banner_url)',
       )
-      .order('created_at', { ascending: false });
+      .order('created_at', { ascending: false })
+      .range(0, PAGE_SIZE - 1);
 
     if (!error && data) {
+      const replyEntries = (data as any[]).map(p => [p.id, p.reply_count ?? 0]);
+      const likeEntries = (data as any[]).map(p => [p.id, p.like_count ?? 0]);
       setPosts(data as Post[]);
       AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(data));
-      const replyEntries = (data as any[]).map(p => [p.id, p.reply_count ?? 0]);
       const replyCountsMap = Object.fromEntries(replyEntries);
       setReplyCounts(replyCountsMap);
       AsyncStorage.setItem(COUNT_STORAGE_KEY, JSON.stringify(replyCountsMap));
-      const likeEntries = (data as any[]).map(p => [p.id, p.like_count ?? 0]);
       const likeMap = Object.fromEntries(likeEntries);
       setLikeCounts(likeMap);
       AsyncStorage.setItem(LIKE_COUNT_KEY, JSON.stringify(likeMap));
@@ -193,6 +196,7 @@ const HomeScreen = forwardRef<HomeScreenRef, HomeScreenProps>(
     }
   };
 
+
   const createPost = async (text: string, imageUri?: string) => {
     if (!text.trim() && !imageUri) return;
 
@@ -212,6 +216,7 @@ const HomeScreen = forwardRef<HomeScreenRef, HomeScreenProps>(
         username: profile.username,
         display_name: profile.display_name,
         image_url: profileImageUri,
+        banner_url: bannerImageUri,
       },
     };
 
@@ -453,7 +458,13 @@ const HomeScreen = forwardRef<HomeScreenRef, HomeScreenProps>(
                     onPress={() =>
                       isMe
                         ? navigation.navigate('Profile')
-                        : navigation.navigate('UserProfile', { userId: item.user_id, avatarUrl: avatarUri })
+                        : navigation.navigate('UserProfile', {
+                            userId: item.user_id,
+                            avatarUrl: avatarUri,
+                            bannerUrl: item.profiles?.banner_url,
+                            displayName,
+                            userName,
+                          })
                     }
                   >
                     {avatarUri ? (
