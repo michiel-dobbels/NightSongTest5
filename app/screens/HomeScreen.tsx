@@ -1,8 +1,14 @@
-import React, { useEffect, useState, forwardRef, useImperativeHandle } from 'react';
+import React, {
+  useEffect,
+  useState,
+  forwardRef,
+  useImperativeHandle,
+} from 'react';
 import {
   View,
   TextInput,
   Button,
+  ActivityIndicator,
   FlatList,
   Text,
   StyleSheet,
@@ -22,6 +28,7 @@ const STORAGE_KEY = 'cached_posts';
 const COUNT_STORAGE_KEY = 'cached_reply_counts';
 const LIKE_COUNT_KEY = 'cached_like_counts';
 const LIKED_KEY_PREFIX = 'cached_likes_';
+const PAGE_SIZE = 10;
 
 
 type Post = {
@@ -37,6 +44,7 @@ type Post = {
     username: string | null;
     display_name: string | null;
     image_url?: string | null;
+    banner_url?: string | null;
   } | null;
 };
 
@@ -62,12 +70,15 @@ interface HomeScreenProps {
 const HomeScreen = forwardRef<HomeScreenRef, HomeScreenProps>(
   ({ hideInput }, ref) => {
     const navigation = useNavigation<any>();
-  const { user, profile, profileImageUri } = useAuth() as any;
+  const { user, profile, profileImageUri, bannerImageUri } = useAuth() as any;
   const [postText, setPostText] = useState('');
   const [posts, setPosts] = useState<Post[]>([]);
   const [replyCounts, setReplyCounts] = useState<{ [key: string]: number }>({});
   const [likeCounts, setLikeCounts] = useState<{ [key: string]: number }>({});
   const [likedPosts, setLikedPosts] = useState<{ [key: string]: boolean }>({});
+  const [page, setPage] = useState(0);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [hasMore, setHasMore] = useState(true);
 
 
 
@@ -83,24 +94,17 @@ const HomeScreen = forwardRef<HomeScreenRef, HomeScreenProps>(
   };
 
   const handleDeletePost = async (id: string) => {
-    setPosts(prev => {
-      const updated = prev.filter(p => p.id !== id);
-      AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
-      return updated;
-    });
+    setPosts(prev => prev.filter(p => p.id !== id));
     setReplyCounts(prev => {
       const { [id]: _removed, ...rest } = prev;
-      AsyncStorage.setItem(COUNT_STORAGE_KEY, JSON.stringify(rest));
       return rest;
     });
     setLikeCounts(prev => {
       const { [id]: _removed, ...rest } = prev;
-      AsyncStorage.setItem(LIKE_COUNT_KEY, JSON.stringify(rest));
       return rest;
     });
     setLikedPosts(prev => {
       const { [id]: _omit, ...rest } = prev;
-      AsyncStorage.setItem(`${LIKED_KEY_PREFIX}${user?.id}`, JSON.stringify(rest));
       return rest;
     });
     await supabase.from('posts').delete().eq('id', id);
@@ -113,31 +117,17 @@ const HomeScreen = forwardRef<HomeScreenRef, HomeScreenProps>(
       .eq('id', id)
       .single();
     if (data) {
-      setLikeCounts(prev => {
-        const counts = { ...prev, [id]: data.like_count ?? 0 };
-
-        AsyncStorage.setItem(LIKE_COUNT_KEY, JSON.stringify(counts));
-        return counts;
-      });
+      setLikeCounts(prev => ({ ...prev, [id]: data.like_count ?? 0 }));
     }
   };
 
   const toggleLike = async (id: string) => {
     if (!user) return;
     const liked = likedPosts[id];
-    setLikedPosts(prev => {
-      const updated = { ...prev, [id]: !liked };
-      AsyncStorage.setItem(
-        `${LIKED_KEY_PREFIX}${user.id}`,
-        JSON.stringify(updated),
-      );
-      return updated;
-    });
+    setLikedPosts(prev => ({ ...prev, [id]: !liked }));
     setLikeCounts(prev => {
       const count = (prev[id] || 0) + (liked ? -1 : 1);
-      const counts = { ...prev, [id]: count };
-      AsyncStorage.setItem(LIKE_COUNT_KEY, JSON.stringify(counts));
-      return counts;
+      return { ...prev, [id]: count };
     });
     if (liked) {
       await supabase.from('likes').delete().match({ user_id: user.id, post_id: id });
@@ -151,25 +141,27 @@ const HomeScreen = forwardRef<HomeScreenRef, HomeScreenProps>(
 
 
 
-  const fetchPosts = async () => {
+  const fetchPosts = async (pageNum = 0) => {
+    const from = pageNum * PAGE_SIZE;
+    const to = from + PAGE_SIZE - 1;
     const { data, error } = await supabase
       .from('posts')
       .select(
-        'id, content, image_url, user_id, created_at, reply_count, like_count, profiles(username, display_name, image_url)',
+        'id, content, image_url, user_id, created_at, reply_count, like_count, profiles(username, display_name, image_url, banner_url)',
       )
-      .order('created_at', { ascending: false });
+      .order('created_at', { ascending: false })
+      .range(from, to);
 
     if (!error && data) {
-      setPosts(data as Post[]);
-      AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(data));
       const replyEntries = (data as any[]).map(p => [p.id, p.reply_count ?? 0]);
-      const replyCountsMap = Object.fromEntries(replyEntries);
-      setReplyCounts(replyCountsMap);
-      AsyncStorage.setItem(COUNT_STORAGE_KEY, JSON.stringify(replyCountsMap));
       const likeEntries = (data as any[]).map(p => [p.id, p.like_count ?? 0]);
-      const likeMap = Object.fromEntries(likeEntries);
-      setLikeCounts(likeMap);
-      AsyncStorage.setItem(LIKE_COUNT_KEY, JSON.stringify(likeMap));
+      const newPosts = data as Post[];
+      setPosts(prev =>
+        pageNum === 0 ? newPosts : [...prev, ...newPosts],
+      );
+      setReplyCounts(prev => ({ ...prev, ...Object.fromEntries(replyEntries) }));
+      setLikeCounts(prev => ({ ...prev, ...Object.fromEntries(likeEntries) }));
+      if (newPosts.length < PAGE_SIZE) setHasMore(false);
 
       if (user) {
         const { data: likedData } = await supabase
@@ -183,15 +175,12 @@ const HomeScreen = forwardRef<HomeScreenRef, HomeScreenProps>(
             if (l.post_id) likedObj[l.post_id] = true;
           });
           setLikedPosts(likedObj);
-          AsyncStorage.setItem(
-            `${LIKED_KEY_PREFIX}${user.id}`,
-            JSON.stringify(likedObj),
-          );
         }
 
       }
     }
   };
+
 
   const createPost = async (text: string, imageUri?: string) => {
     if (!text.trim() && !imageUri) return;
@@ -212,25 +201,14 @@ const HomeScreen = forwardRef<HomeScreenRef, HomeScreenProps>(
         username: profile.username,
         display_name: profile.display_name,
         image_url: profileImageUri,
+        banner_url: bannerImageUri,
       },
     };
 
     // Show the post immediately
-    setPosts((prev) => {
-      const updated = [newPost, ...prev];
-      AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
-      return updated;
-    });
-    setReplyCounts(prev => {
-      const counts = { ...prev, [newPost.id]: 0 };
-      AsyncStorage.setItem(COUNT_STORAGE_KEY, JSON.stringify(counts));
-      return counts;
-    });
-    setLikeCounts(prev => {
-      const counts = { ...prev, [newPost.id]: 0 };
-      AsyncStorage.setItem(LIKE_COUNT_KEY, JSON.stringify(counts));
-      return counts;
-    });
+    setPosts(prev => [newPost, ...prev].slice(0, PAGE_SIZE * (page + 1)));
+    setReplyCounts(prev => ({ ...prev, [newPost.id]: 0 }));
+    setLikeCounts(prev => ({ ...prev, [newPost.id]: 0 }));
 
     if (!hideInput) {
       setPostText('');
@@ -260,54 +238,48 @@ const HomeScreen = forwardRef<HomeScreenRef, HomeScreenProps>(
     if (!error) {
       if (data) {
         // Update the optimistic post with the real data from Supabase
-        setPosts((prev) => {
-          const updated = prev.map((p) =>
-            p.id === newPost.id
-              ? { ...p, id: data.id, created_at: data.created_at, reply_count: 0 }
-              : p
-          );
-          AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
-          return updated;
-        });
+        setPosts(prev =>
+          prev
+            .map(p =>
+              p.id === newPost.id
+                ? { ...p, id: data.id, created_at: data.created_at, reply_count: 0 }
+                : p,
+            )
+            .slice(0, PAGE_SIZE * (page + 1)),
+        );
         setReplyCounts(prev => {
           const { [newPost.id]: tempCount, ...rest } = prev;
-          const counts = { ...rest, [data.id]: tempCount };
-          AsyncStorage.setItem(COUNT_STORAGE_KEY, JSON.stringify(counts));
-          return counts;
+          return { ...rest, [data.id]: tempCount };
         });
         setLikeCounts(prev => {
           const temp = prev[newPost.id] ?? 0;
           const { [newPost.id]: _omit, ...rest } = prev;
-          const counts = { ...rest, [data.id]: temp };
-          AsyncStorage.setItem(LIKE_COUNT_KEY, JSON.stringify(counts));
-          return counts;
+          return { ...rest, [data.id]: temp };
         });
         setLikeCounts(prev => {
           const { [newPost.id]: tempLike, ...rest } = prev;
-          const counts = { ...rest, [data.id]: tempLike ?? 0 };
-          AsyncStorage.setItem(LIKE_COUNT_KEY, JSON.stringify(counts));
-          return counts;
+          return { ...rest, [data.id]: tempLike ?? 0 };
         });
       }
 
       // Refresh from the server in the background to stay in sync
-      fetchPosts();
+      setPage(0);
+      setHasMore(true);
+      fetchPosts(0);
 
     } else {
       // Remove the optimistic post if it failed to persist
-      setPosts((prev) => {
-        const updated = prev.filter((p) => p.id !== newPost.id);
-        AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
-        return updated;
-      });
+      setPosts(prev =>
+        prev
+          .filter(p => p.id !== newPost.id)
+          .slice(0, PAGE_SIZE * (page + 1)),
+      );
       setReplyCounts(prev => {
         const { [newPost.id]: _omit, ...rest } = prev;
-        AsyncStorage.setItem(COUNT_STORAGE_KEY, JSON.stringify(rest));
         return rest;
       });
       setLikeCounts(prev => {
         const { [newPost.id]: _omit, ...rest } = prev;
-        AsyncStorage.setItem(LIKE_COUNT_KEY, JSON.stringify(rest));
         return rest;
       });
 
@@ -319,6 +291,15 @@ const HomeScreen = forwardRef<HomeScreenRef, HomeScreenProps>(
 
   const handlePost = () => createPost(postText);
 
+  const handleLoadMore = async () => {
+    if (loadingMore || !hasMore) return;
+    setLoadingMore(true);
+    const nextPage = page + 1;
+    await fetchPosts(nextPage);
+    setPage(nextPage);
+    setLoadingMore(false);
+  };
+
   useImperativeHandle(ref, () => ({
     createPost,
   }));
@@ -329,7 +310,7 @@ const HomeScreen = forwardRef<HomeScreenRef, HomeScreenProps>(
       if (stored) {
         try {
           const cached = JSON.parse(stored);
-          setPosts(cached);
+          setPosts(cached.slice(0, PAGE_SIZE));
           const entries = cached.map((p: any) => [p.id, p.reply_count ?? 0]);
           setReplyCounts(Object.fromEntries(entries));
           const likeEntries = cached.map((p: any) => [p.id, p.like_count ?? 0]);
@@ -367,7 +348,9 @@ const HomeScreen = forwardRef<HomeScreenRef, HomeScreenProps>(
         }
       }
 
-      fetchPosts();
+      setPage(0);
+      setHasMore(true);
+      fetchPosts(0);
     };
 
     loadCached();
@@ -405,9 +388,32 @@ const HomeScreen = forwardRef<HomeScreenRef, HomeScreenProps>(
         }
       };
       syncCounts();
-      fetchPosts();
+      setPage(0);
+      setHasMore(true);
+      fetchPosts(0);
     }, []),
   );
+
+  useEffect(() => {
+    AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(posts));
+  }, [posts]);
+
+  useEffect(() => {
+    AsyncStorage.setItem(COUNT_STORAGE_KEY, JSON.stringify(replyCounts));
+  }, [replyCounts]);
+
+  useEffect(() => {
+    AsyncStorage.setItem(LIKE_COUNT_KEY, JSON.stringify(likeCounts));
+  }, [likeCounts]);
+
+  useEffect(() => {
+    if (user) {
+      AsyncStorage.setItem(
+        `${LIKED_KEY_PREFIX}${user.id}`,
+        JSON.stringify(likedPosts),
+      );
+    }
+  }, [likedPosts, user]);
 
   return (
     
@@ -453,7 +459,13 @@ const HomeScreen = forwardRef<HomeScreenRef, HomeScreenProps>(
                     onPress={() =>
                       isMe
                         ? navigation.navigate('Profile')
-                        : navigation.navigate('UserProfile', { userId: item.user_id, avatarUrl: avatarUri })
+                        : navigation.navigate('UserProfile', {
+                            userId: item.user_id,
+                            avatarUrl: avatarUri,
+                            bannerUrl: item.profiles?.banner_url,
+                            displayName,
+                            userName,
+                          })
                     }
                   >
                     {avatarUri ? (
@@ -501,6 +513,15 @@ const HomeScreen = forwardRef<HomeScreenRef, HomeScreenProps>(
             </TouchableOpacity>
           );
         }}
+        ListFooterComponent={
+          hasMore ? (
+            loadingMore ? (
+              <ActivityIndicator style={{ marginVertical: 16 }} />
+            ) : (
+              <Button title="Load More" onPress={handleLoadMore} />
+            )
+          ) : null
+        }
       />
     </View>
   );
@@ -545,7 +566,7 @@ const styles = StyleSheet.create({
   replyCountContainer: {
     position: 'absolute',
     bottom: 6,
-    left: 10,
+    left: 50,
     flexDirection: 'row',
     alignItems: 'center',
   },
