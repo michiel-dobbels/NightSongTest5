@@ -10,7 +10,7 @@ import {
   Dimensions,
 } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
-import * as FileSystem from 'expo-file-system';
+import { uploadImageAsync } from '../../lib/storage';
 import { useNavigation } from '@react-navigation/native';
 
 import { useAuth } from '../../AuthContext';
@@ -40,10 +40,10 @@ export default function ProfileScreen() {
 
     if (!result.canceled && result.assets && result.assets.length > 0) {
       const uri = result.assets[0].uri;
-      const base64 = await FileSystem.readAsStringAsync(uri, { encoding: 'base64' });
-      setProfileImageUri(`data:image/jpeg;base64,${base64}`);
-
-
+      const url = await uploadImageAsync(uri, 'avatars');
+      if (url) {
+        setProfileImageUri(url);
+      }
     }
   };
 
@@ -59,8 +59,10 @@ export default function ProfileScreen() {
     });
     if (!result.canceled && result.assets && result.assets.length > 0) {
       const uri = result.assets[0].uri;
-      const base64 = await FileSystem.readAsStringAsync(uri, { encoding: 'base64' });
-      setBannerImageUri(`data:image/jpeg;base64,${base64}`);
+      const url = await uploadImageAsync(uri, 'banners');
+      if (url) {
+        setBannerImageUri(url);
+      }
     }
   };
 
