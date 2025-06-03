@@ -18,12 +18,14 @@ export default function UserProfileScreen() {
   const {
     userId,
     avatarUrl,
+    bannerUrl,
 
     displayName: initialDisplayName,
     userName: initialUsername,
   } = route.params as {
     userId: string;
     avatarUrl?: string | null;
+    bannerUrl?: string | null;
 
     displayName?: string | null;
     userName?: string | null;
@@ -58,6 +60,15 @@ export default function UserProfileScreen() {
   if (loading) {
     return (
       <View style={[styles.container, styles.center]}>
+        {profile?.banner_url || bannerUrl ? (
+          <Image
+            source={{ uri: profile?.banner_url || bannerUrl! }}
+            style={styles.banner}
+          />
+        ) : (
+          <View style={[styles.banner, styles.placeholder]} />
+        )}
+
         {profile?.image_url || avatarUrl ? (
           <Image
             source={{ uri: profile?.image_url || avatarUrl! }}
@@ -77,6 +88,15 @@ export default function UserProfileScreen() {
   if (notFound || !profile) {
     return (
       <View style={[styles.container, styles.center]}>
+        {profile?.banner_url || bannerUrl ? (
+          <Image
+            source={{ uri: profile?.banner_url || bannerUrl! }}
+            style={styles.banner}
+          />
+        ) : (
+          <View style={[styles.banner, styles.placeholder]} />
+        )}
+
         {profile?.image_url || avatarUrl ? (
           <Image
             source={{ uri: profile?.image_url || avatarUrl! }}
@@ -99,8 +119,12 @@ export default function UserProfileScreen() {
 
   return (
     <View style={styles.container}>
-      {banner ? (
-        <Image source={{ uri: banner }} style={styles.banner} />
+      {profile.banner_url || bannerUrl ? (
+        <Image
+          source={{ uri: profile.banner_url || bannerUrl! }}
+          style={styles.banner}
+        />
+
       ) : (
         <View style={[styles.banner, styles.placeholder]} />
       )}

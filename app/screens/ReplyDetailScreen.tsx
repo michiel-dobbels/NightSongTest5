@@ -81,7 +81,7 @@ interface Post {
 export default function ReplyDetailScreen() {
   const route = useRoute<any>();
   const navigation = useNavigation<any>();
-  const { user, profile, profileImageUri } = useAuth() as any;
+  const { user, profile, profileImageUri, bannerImageUri } = useAuth() as any;
   const parent = route.params.reply as Reply;
   const originalPost = route.params.originalPost as Post | undefined;
   const ancestors = (route.params.ancestors as Reply[]) || [];
@@ -534,6 +534,7 @@ export default function ReplyDetailScreen() {
         username: profile.username,
         display_name: profile.display_name,
         image_url: profileImageUri,
+        banner_url: bannerImageUri,
       },
     };
 
@@ -670,6 +671,7 @@ export default function ReplyDetailScreen() {
                         : navigation.navigate('UserProfile', {
                             userId: originalPost.user_id,
                             avatarUrl: originalPost.profiles?.image_url,
+                            bannerUrl: originalPost.profiles?.banner_url,
 
                             displayName: originalName,
                             userName: originalUserName,
@@ -746,6 +748,7 @@ export default function ReplyDetailScreen() {
                           : navigation.navigate('UserProfile', {
                               userId: a.user_id,
                               avatarUrl: avatarUri,
+                              bannerUrl: a.profiles?.banner_url,
 
                               displayName: ancestorName,
                               userName: ancestorUserName,
@@ -814,6 +817,7 @@ export default function ReplyDetailScreen() {
                       : navigation.navigate('UserProfile', {
                           userId: parent.user_id,
                           avatarUrl: parent.profiles?.image_url,
+                          bannerUrl: parent.profiles?.banner_url,
 
                           displayName: name,
                           userName: parentUserName,
@@ -901,6 +905,7 @@ export default function ReplyDetailScreen() {
                         : navigation.navigate('UserProfile', {
                             userId: item.user_id,
                             avatarUrl: avatarUri,
+                            bannerUrl: item.profiles?.banner_url,
 
                             displayName: childName,
                             userName: childUserName,

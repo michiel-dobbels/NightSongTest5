@@ -81,7 +81,7 @@ interface Reply {
 export default function PostDetailScreen() {
   const route = useRoute<any>();
   const navigation = useNavigation<any>();
-  const { user, profile, profileImageUri } = useAuth() as any;
+  const { user, profile, profileImageUri, bannerImageUri } = useAuth() as any;
   const post = route.params.post as Post;
 
   const STORAGE_KEY = `${REPLY_STORAGE_PREFIX}${post.id}`;
@@ -495,6 +495,7 @@ export default function PostDetailScreen() {
         username: profile.username,
         display_name: profile.display_name,
         image_url: profileImageUri,
+        banner_url: bannerImageUri,
       },
     };
 
@@ -617,6 +618,7 @@ export default function PostDetailScreen() {
                     : navigation.navigate('UserProfile', {
                         userId: post.user_id,
                         avatarUrl: post.profiles?.image_url,
+                        bannerUrl: post.profiles?.banner_url,
 
                         displayName,
                         userName,
@@ -702,6 +704,7 @@ export default function PostDetailScreen() {
                         : navigation.navigate('UserProfile', {
                             userId: item.user_id,
                             avatarUrl: avatarUri,
+                            bannerUrl: item.profiles?.banner_url,
 
                             displayName: name,
                             userName: replyUserName,

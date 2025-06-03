@@ -65,7 +65,7 @@ interface HomeScreenProps {
 const HomeScreen = forwardRef<HomeScreenRef, HomeScreenProps>(
   ({ hideInput }, ref) => {
     const navigation = useNavigation<any>();
-  const { user, profile, profileImageUri } = useAuth() as any;
+  const { user, profile, profileImageUri, bannerImageUri } = useAuth() as any;
   const [postText, setPostText] = useState('');
   const [posts, setPosts] = useState<Post[]>([]);
   const [replyCounts, setReplyCounts] = useState<{ [key: string]: number }>({});
@@ -237,6 +237,7 @@ const HomeScreen = forwardRef<HomeScreenRef, HomeScreenProps>(
         username: profile.username,
         display_name: profile.display_name,
         image_url: profileImageUri,
+        banner_url: bannerImageUri,
       },
     };
 
@@ -494,6 +495,7 @@ const HomeScreen = forwardRef<HomeScreenRef, HomeScreenProps>(
                         : navigation.navigate('UserProfile', {
                             userId: item.user_id,
                             avatarUrl: avatarUri,
+                            bannerUrl: item.profiles?.banner_url,
 
                             displayName,
                             userName,
