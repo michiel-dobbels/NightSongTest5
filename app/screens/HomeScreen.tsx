@@ -218,6 +218,13 @@ const HomeScreen = forwardRef<HomeScreenRef, HomeScreenProps>(
     }
   };
 
+  const handleLoadMore = () => {
+    if (!loadingMore && hasMore) {
+      setLoadingMore(true);
+      fetchPosts(posts.length, true).finally(() => setLoadingMore(false));
+    }
+  };
+
   const createPost = async (text: string, imageUri?: string) => {
     if (!text.trim() && !imageUri) return;
 
@@ -454,16 +461,14 @@ const HomeScreen = forwardRef<HomeScreenRef, HomeScreenProps>(
       <FlatList
         data={posts}
         keyExtractor={(item) => item.id}
-        onEndReached={() => {
-          if (!loadingMore && hasMore) {
-            setLoadingMore(true);
-            fetchPosts(posts.length, true).finally(() => setLoadingMore(false));
-          }
-        }}
-        onEndReachedThreshold={0.5}
         ListFooterComponent={
-          loadingMore ? (
-            <ActivityIndicator color="white" style={{ marginVertical: 10 }} />
+          hasMore ? (
+            loadingMore ? (
+              <ActivityIndicator color="white" style={{ marginVertical: 10 }} />
+            ) : (
+              <Button title="Load More" onPress={handleLoadMore} />
+            )
+
           ) : null
         }
         renderItem={({ item }) => {
