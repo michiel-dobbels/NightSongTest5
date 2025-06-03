@@ -9,6 +9,7 @@ import {
   Alert,
   TouchableOpacity,
   Image,
+  ActivityIndicator,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
@@ -22,6 +23,7 @@ const STORAGE_KEY = 'cached_posts';
 const COUNT_STORAGE_KEY = 'cached_reply_counts';
 const LIKE_COUNT_KEY = 'cached_like_counts';
 const LIKED_KEY_PREFIX = 'cached_likes_';
+const PAGE_SIZE = 10;
 
 
 type Post = {
@@ -37,6 +39,7 @@ type Post = {
     username: string | null;
     display_name: string | null;
     image_url?: string | null;
+    banner_url?: string | null;
   } | null;
 };
 
@@ -62,12 +65,14 @@ interface HomeScreenProps {
 const HomeScreen = forwardRef<HomeScreenRef, HomeScreenProps>(
   ({ hideInput }, ref) => {
     const navigation = useNavigation<any>();
-  const { user, profile, profileImageUri } = useAuth() as any;
+  const { user, profile, profileImageUri, bannerImageUri } = useAuth() as any;
   const [postText, setPostText] = useState('');
   const [posts, setPosts] = useState<Post[]>([]);
   const [replyCounts, setReplyCounts] = useState<{ [key: string]: number }>({});
   const [likeCounts, setLikeCounts] = useState<{ [key: string]: number }>({});
   const [likedPosts, setLikedPosts] = useState<{ [key: string]: boolean }>({});
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [hasMore, setHasMore] = useState(true);
 
 
 
@@ -151,25 +156,45 @@ const HomeScreen = forwardRef<HomeScreenRef, HomeScreenProps>(
 
 
 
-  const fetchPosts = async () => {
+  const fetchPosts = async (offset = 0, append = false) => {
     const { data, error } = await supabase
       .from('posts')
       .select(
-        'id, content, image_url, user_id, created_at, reply_count, like_count, profiles(username, display_name, image_url)',
+        'id, content, image_url, user_id, created_at, reply_count, like_count, profiles(username, display_name, image_url, banner_url)',
       )
-      .order('created_at', { ascending: false });
+      .order('created_at', { ascending: false })
+      .range(offset, offset + PAGE_SIZE - 1);
 
     if (!error && data) {
-      setPosts(data as Post[]);
-      AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+      setHasMore(data.length === PAGE_SIZE);
       const replyEntries = (data as any[]).map(p => [p.id, p.reply_count ?? 0]);
-      const replyCountsMap = Object.fromEntries(replyEntries);
-      setReplyCounts(replyCountsMap);
-      AsyncStorage.setItem(COUNT_STORAGE_KEY, JSON.stringify(replyCountsMap));
       const likeEntries = (data as any[]).map(p => [p.id, p.like_count ?? 0]);
-      const likeMap = Object.fromEntries(likeEntries);
-      setLikeCounts(likeMap);
-      AsyncStorage.setItem(LIKE_COUNT_KEY, JSON.stringify(likeMap));
+      if (append) {
+        setPosts(prev => {
+          const updated = [...prev, ...(data as Post[])];
+          AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
+          return updated;
+        });
+        setReplyCounts(prev => {
+          const counts = { ...prev, ...Object.fromEntries(replyEntries) };
+          AsyncStorage.setItem(COUNT_STORAGE_KEY, JSON.stringify(counts));
+          return counts;
+        });
+        setLikeCounts(prev => {
+          const counts = { ...prev, ...Object.fromEntries(likeEntries) };
+          AsyncStorage.setItem(LIKE_COUNT_KEY, JSON.stringify(counts));
+          return counts;
+        });
+      } else {
+        setPosts(data as Post[]);
+        AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+        const replyCountsMap = Object.fromEntries(replyEntries);
+        setReplyCounts(replyCountsMap);
+        AsyncStorage.setItem(COUNT_STORAGE_KEY, JSON.stringify(replyCountsMap));
+        const likeMap = Object.fromEntries(likeEntries);
+        setLikeCounts(likeMap);
+        AsyncStorage.setItem(LIKE_COUNT_KEY, JSON.stringify(likeMap));
+      }
 
       if (user) {
         const { data: likedData } = await supabase
@@ -193,6 +218,13 @@ const HomeScreen = forwardRef<HomeScreenRef, HomeScreenProps>(
     }
   };
 
+  const handleLoadMore = () => {
+    if (!loadingMore && hasMore) {
+      setLoadingMore(true);
+      fetchPosts(posts.length, true).finally(() => setLoadingMore(false));
+    }
+  };
+
   const createPost = async (text: string, imageUri?: string) => {
     if (!text.trim() && !imageUri) return;
 
@@ -212,6 +244,7 @@ const HomeScreen = forwardRef<HomeScreenRef, HomeScreenProps>(
         username: profile.username,
         display_name: profile.display_name,
         image_url: profileImageUri,
+        banner_url: bannerImageUri,
       },
     };
 
@@ -291,7 +324,7 @@ const HomeScreen = forwardRef<HomeScreenRef, HomeScreenProps>(
       }
 
       // Refresh from the server in the background to stay in sync
-      fetchPosts();
+      fetchPosts(0);
 
     } else {
       // Remove the optimistic post if it failed to persist
@@ -367,7 +400,7 @@ const HomeScreen = forwardRef<HomeScreenRef, HomeScreenProps>(
         }
       }
 
-      fetchPosts();
+      fetchPosts(0);
     };
 
     loadCached();
@@ -405,7 +438,7 @@ const HomeScreen = forwardRef<HomeScreenRef, HomeScreenProps>(
         }
       };
       syncCounts();
-      fetchPosts();
+      fetchPosts(0);
     }, []),
   );
 
@@ -428,6 +461,15 @@ const HomeScreen = forwardRef<HomeScreenRef, HomeScreenProps>(
       <FlatList
         data={posts}
         keyExtractor={(item) => item.id}
+        ListFooterComponent={
+          hasMore ? (
+            loadingMore ? (
+              <ActivityIndicator color="white" style={{ marginVertical: 10 }} />
+            ) : (
+              <Button title="Load More" onPress={handleLoadMore} />
+            )
+          ) : null
+        }
         renderItem={({ item }) => {
           const displayName =
             item.profiles?.display_name ||
@@ -453,7 +495,13 @@ const HomeScreen = forwardRef<HomeScreenRef, HomeScreenProps>(
                     onPress={() =>
                       isMe
                         ? navigation.navigate('Profile')
-                        : navigation.navigate('UserProfile', { userId: item.user_id, avatarUrl: avatarUri })
+                        : navigation.navigate('UserProfile', {
+                            userId: item.user_id,
+                            avatarUrl: avatarUri,
+                            bannerUrl: item.profiles?.banner_url,
+                            displayName,
+                            userName,
+                          })
                     }
                   >
                     {avatarUri ? (
