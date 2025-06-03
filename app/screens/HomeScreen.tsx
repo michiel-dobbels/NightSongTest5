@@ -168,8 +168,10 @@ const HomeScreen = forwardRef<HomeScreenRef, HomeScreenProps>(
     if (!error && data) {
       const replyEntries = (data as any[]).map(p => [p.id, p.reply_count ?? 0]);
       const likeEntries = (data as any[]).map(p => [p.id, p.like_count ?? 0]);
-      setPosts(data as Post[]);
-      AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+      const slice = (data as Post[]).slice(0, PAGE_SIZE);
+      setPosts(slice);
+      AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(slice));
+
       const replyCountsMap = Object.fromEntries(replyEntries);
       setReplyCounts(replyCountsMap);
       AsyncStorage.setItem(COUNT_STORAGE_KEY, JSON.stringify(replyCountsMap));
@@ -227,7 +229,7 @@ const HomeScreen = forwardRef<HomeScreenRef, HomeScreenProps>(
 
     // Show the post immediately
     setPosts((prev) => {
-      const updated = [newPost, ...prev];
+      const updated = [newPost, ...prev].slice(0, PAGE_SIZE);
       AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
       return updated;
     });
@@ -271,11 +273,13 @@ const HomeScreen = forwardRef<HomeScreenRef, HomeScreenProps>(
       if (data) {
         // Update the optimistic post with the real data from Supabase
         setPosts((prev) => {
-          const updated = prev.map((p) =>
-            p.id === newPost.id
-              ? { ...p, id: data.id, created_at: data.created_at, reply_count: 0 }
-              : p
-          );
+          const updated = prev
+            .map((p) =>
+              p.id === newPost.id
+                ? { ...p, id: data.id, created_at: data.created_at, reply_count: 0 }
+                : p
+            )
+            .slice(0, PAGE_SIZE);
           AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
           return updated;
         });
@@ -306,7 +310,7 @@ const HomeScreen = forwardRef<HomeScreenRef, HomeScreenProps>(
     } else {
       // Remove the optimistic post if it failed to persist
       setPosts((prev) => {
-        const updated = prev.filter((p) => p.id !== newPost.id);
+        const updated = prev.filter((p) => p.id !== newPost.id).slice(0, PAGE_SIZE);
         AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
         return updated;
       });
@@ -339,7 +343,7 @@ const HomeScreen = forwardRef<HomeScreenRef, HomeScreenProps>(
       if (stored) {
         try {
           const cached = JSON.parse(stored);
-          setPosts(cached);
+          setPosts(cached.slice(0, PAGE_SIZE));
           const entries = cached.map((p: any) => [p.id, p.reply_count ?? 0]);
           setReplyCounts(Object.fromEntries(entries));
           const likeEntries = cached.map((p: any) => [p.id, p.like_count ?? 0]);
