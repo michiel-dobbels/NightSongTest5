@@ -722,16 +722,20 @@ export default function PostDetailScreen() {
                     )}
                   </TouchableOpacity>
                   <View style={{ flex: 1 }}>
-                    <Text style={styles.username}>
-                      {name} @{replyUserName}
-                    </Text>
-
-                      <Text style={styles.postContent}>{item.content}</Text>
-                      {item.image_url && (
-                        <Image source={{ uri: item.image_url }} style={styles.postImage} />
-                      )}
-                      <Text style={styles.timestamp}>{timeAgo(item.created_at)}</Text>
+                    <View style={styles.headerRow}>
+                      <Text style={styles.username}>
+                        {name} @{replyUserName}
+                      </Text>
+                      <Text style={[styles.timestamp, styles.timestampMargin]}>
+                        {timeAgo(item.created_at)}
+                      </Text>
                     </View>
+
+                    <Text style={styles.postContent}>{item.content}</Text>
+                    {item.image_url && (
+                      <Image source={{ uri: item.image_url }} style={styles.postImage} />
+                    )}
+                  </View>
                   </View>
                   <View style={styles.replyCountContainer}>
                     <Ionicons
