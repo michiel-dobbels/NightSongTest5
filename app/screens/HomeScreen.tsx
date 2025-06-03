@@ -487,14 +487,18 @@ const HomeScreen = forwardRef<HomeScreenRef, HomeScreenProps>(
                   </TouchableOpacity>
 
                   <View style={{ flex: 1 }}>
-                    <Text style={styles.username}>
-                      {displayName} @{userName}
-                    </Text>
+                    <View style={styles.headerRow}>
+                      <Text style={styles.username}>
+                        {displayName} @{userName}
+                      </Text>
+                      <Text style={[styles.timestamp, styles.timestampMargin]}>
+                        {timeAgo(item.created_at)}
+                      </Text>
+                    </View>
                     <Text style={styles.postContent}>{item.content}</Text>
                     {item.image_url && (
                       <Image source={{ uri: item.image_url }} style={styles.postImage} />
                     )}
-                    <Text style={styles.timestamp}>{timeAgo(item.created_at)}</Text>
                   </View>
                 </View>
                 <View style={styles.replyCountContainer}>
@@ -565,10 +569,14 @@ const styles = StyleSheet.create({
   postContent: { color: 'white' },
   username: { fontWeight: 'bold', color: 'white' },
   timestamp: { fontSize: 10, color: 'gray' },
+  headerRow: { flexDirection: 'row', alignItems: 'center' },
+  timestampMargin: { marginLeft: 6 },
   replyCountContainer: {
     position: 'absolute',
     bottom: 6,
-    left: 10,
+    // Align with the left edge of the post content (text/image)
+    // Avatar width (32) + margin (8) + container padding (10)
+    left: 50,
     flexDirection: 'row',
     alignItems: 'center',
   },
