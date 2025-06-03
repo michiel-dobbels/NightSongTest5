@@ -9,6 +9,7 @@ import {
   Alert,
   TouchableOpacity,
   Image,
+  ActivityIndicator,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
@@ -70,6 +71,8 @@ const HomeScreen = forwardRef<HomeScreenRef, HomeScreenProps>(
   const [replyCounts, setReplyCounts] = useState<{ [key: string]: number }>({});
   const [likeCounts, setLikeCounts] = useState<{ [key: string]: number }>({});
   const [likedPosts, setLikedPosts] = useState<{ [key: string]: boolean }>({});
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [hasMore, setHasMore] = useState(true);
 
 
 
@@ -153,7 +156,7 @@ const HomeScreen = forwardRef<HomeScreenRef, HomeScreenProps>(
 
 
 
-  const fetchPosts = async () => {
+  const fetchPosts = async (offset = 0, append = false) => {
     const { data, error } = await supabase
       .from('posts')
       .select(
@@ -168,12 +171,14 @@ const HomeScreen = forwardRef<HomeScreenRef, HomeScreenProps>(
       const slice = (data as Post[]).slice(0, PAGE_SIZE);
       setPosts(slice);
       AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(slice));
+
       const replyCountsMap = Object.fromEntries(replyEntries);
       setReplyCounts(replyCountsMap);
       AsyncStorage.setItem(COUNT_STORAGE_KEY, JSON.stringify(replyCountsMap));
       const likeMap = Object.fromEntries(likeEntries);
       setLikeCounts(likeMap);
       AsyncStorage.setItem(LIKE_COUNT_KEY, JSON.stringify(likeMap));
+
 
       if (user) {
         const { data: likedData } = await supabase
@@ -196,6 +201,7 @@ const HomeScreen = forwardRef<HomeScreenRef, HomeScreenProps>(
       }
     }
   };
+
 
 
   const createPost = async (text: string, imageUri?: string) => {
@@ -299,7 +305,7 @@ const HomeScreen = forwardRef<HomeScreenRef, HomeScreenProps>(
       }
 
       // Refresh from the server in the background to stay in sync
-      fetchPosts();
+      fetchPosts(0);
 
     } else {
       // Remove the optimistic post if it failed to persist
@@ -375,7 +381,7 @@ const HomeScreen = forwardRef<HomeScreenRef, HomeScreenProps>(
         }
       }
 
-      fetchPosts();
+      fetchPosts(0);
     };
 
     loadCached();
@@ -413,7 +419,7 @@ const HomeScreen = forwardRef<HomeScreenRef, HomeScreenProps>(
         }
       };
       syncCounts();
-      fetchPosts();
+      fetchPosts(0);
     }, []),
   );
 
@@ -436,6 +442,16 @@ const HomeScreen = forwardRef<HomeScreenRef, HomeScreenProps>(
       <FlatList
         data={posts}
         keyExtractor={(item) => item.id}
+        ListFooterComponent={
+          hasMore ? (
+            loadingMore ? (
+              <ActivityIndicator color="white" style={{ marginVertical: 10 }} />
+            ) : (
+              <Button title="Load More" onPress={handleLoadMore} />
+            )
+
+          ) : null
+        }
         renderItem={({ item }) => {
           const displayName =
             item.profiles?.display_name ||
@@ -444,6 +460,7 @@ const HomeScreen = forwardRef<HomeScreenRef, HomeScreenProps>(
           const userName = item.profiles?.username || item.username;
           const isMe = user?.id === item.user_id;
           const avatarUri = isMe ? profileImageUri : item.profiles?.image_url || undefined;
+          const bannerUrl = isMe ? undefined : item.profiles?.banner_url || undefined;
 
           return (
             <TouchableOpacity onPress={() => navigation.navigate('PostDetail', { post: item })}>
@@ -465,6 +482,7 @@ const HomeScreen = forwardRef<HomeScreenRef, HomeScreenProps>(
                             userId: item.user_id,
                             avatarUrl: avatarUri,
                             bannerUrl: item.profiles?.banner_url,
+
                             displayName,
                             userName,
                           })
