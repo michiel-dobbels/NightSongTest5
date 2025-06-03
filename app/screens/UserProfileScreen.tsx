@@ -15,13 +15,25 @@ interface Profile {
 export default function UserProfileScreen() {
   const navigation = useNavigation<any>();
   const route = useRoute<any>();
-  const { userId, avatarUrl } = route.params as {
+  const {
+    userId,
+    avatarUrl,
+    bannerUrl,
+    displayName: initialDisplayName,
+    userName: initialUsername,
+  } = route.params as {
     userId: string;
     avatarUrl?: string | null;
+    bannerUrl?: string | null;
+    displayName?: string | null;
+    userName?: string | null;
   };
   const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
+
+  const displayName = profile?.display_name ?? initialDisplayName ?? null;
+  const username = profile?.username ?? initialUsername ?? null;
 
   useEffect(() => {
     const fetchProfile = async () => {
@@ -45,7 +57,25 @@ export default function UserProfileScreen() {
   if (loading) {
     return (
       <View style={[styles.container, styles.center]}>
-        <ActivityIndicator color="white" />
+        {profile?.banner_url || bannerUrl ? (
+          <Image
+            source={{ uri: profile?.banner_url || bannerUrl! }}
+            style={styles.banner}
+          />
+        ) : (
+          <View style={[styles.banner, styles.placeholder]} />
+        )}
+        {profile?.image_url || avatarUrl ? (
+          <Image
+            source={{ uri: profile?.image_url || avatarUrl! }}
+            style={styles.avatar}
+          />
+        ) : (
+          <View style={[styles.avatar, styles.placeholder]} />
+        )}
+        {displayName && <Text style={styles.name}>{displayName}</Text>}
+        {username && <Text style={styles.username}>@{username}</Text>}
+        <ActivityIndicator color="white" style={{ marginTop: 10 }} />
       </View>
     );
   }
@@ -53,11 +83,24 @@ export default function UserProfileScreen() {
   if (notFound || !profile) {
     return (
       <View style={[styles.container, styles.center]}>
-        {avatarUrl ? (
-          <Image source={{ uri: avatarUrl }} style={styles.avatar} />
+        {profile?.banner_url || bannerUrl ? (
+          <Image
+            source={{ uri: profile?.banner_url || bannerUrl! }}
+            style={styles.banner}
+          />
+        ) : (
+          <View style={[styles.banner, styles.placeholder]} />
+        )}
+        {profile?.image_url || avatarUrl ? (
+          <Image
+            source={{ uri: profile?.image_url || avatarUrl! }}
+            style={styles.avatar}
+          />
         ) : (
           <View style={[styles.avatar, styles.placeholder]} />
         )}
+        {displayName && <Text style={styles.name}>{displayName}</Text>}
+        {username && <Text style={styles.username}>@{username}</Text>}
         <Text style={{ color: 'white', marginTop: 10 }}>Profile not found.</Text>
         <View style={styles.backButton}>
           <Button title="Back" onPress={() => navigation.goBack()} />
@@ -69,8 +112,11 @@ export default function UserProfileScreen() {
 
   return (
     <View style={styles.container}>
-      {profile.banner_url ? (
-        <Image source={{ uri: profile.banner_url }} style={styles.banner} />
+      {profile.banner_url || bannerUrl ? (
+        <Image
+          source={{ uri: profile.banner_url || bannerUrl! }}
+          style={styles.banner}
+        />
       ) : (
         <View style={[styles.banner, styles.placeholder]} />
       )}
@@ -78,14 +124,17 @@ export default function UserProfileScreen() {
         <Button title="Back" onPress={() => navigation.goBack()} />
       </View>
       <View style={styles.profileRow}>
-        {profile.image_url ? (
-          <Image source={{ uri: profile.image_url }} style={styles.avatar} />
+        {profile.image_url || avatarUrl ? (
+          <Image
+            source={{ uri: profile.image_url || avatarUrl! }}
+            style={styles.avatar}
+          />
         ) : (
           <View style={[styles.avatar, styles.placeholder]} />
         )}
         <View style={styles.textContainer}>
-          <Text style={styles.username}>@{profile.username}</Text>
-          {profile.display_name && <Text style={styles.name}>{profile.display_name}</Text>}
+          {displayName && <Text style={styles.name}>{displayName}</Text>}
+          {username && <Text style={styles.username}>@{username}</Text>}
         </View>
       </View>
     </View>
