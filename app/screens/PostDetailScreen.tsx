@@ -818,6 +818,8 @@ const styles = StyleSheet.create({
     backgroundColor: '#ffffff10',
     borderRadius: 0,
     padding: 10,
+    // add extra space at the bottom so action icons don't overlap content
+    paddingBottom: 30,
     marginTop: 0,
     borderBottomColor: 'gray',
     borderBottomWidth: StyleSheet.hairlineWidth,
