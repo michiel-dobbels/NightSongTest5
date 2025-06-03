@@ -568,7 +568,9 @@ const styles = StyleSheet.create({
   replyCountContainer: {
     position: 'absolute',
     bottom: 6,
-    left: 10,
+    // Align with the left edge of the post content (text/image)
+    // Avatar width (32) + margin (8) + container padding (10)
+    left: 50,
     flexDirection: 'row',
     alignItems: 'center',
   },
