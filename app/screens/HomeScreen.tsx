@@ -163,38 +163,20 @@ const HomeScreen = forwardRef<HomeScreenRef, HomeScreenProps>(
         'id, content, image_url, user_id, created_at, reply_count, like_count, profiles(username, display_name, image_url, banner_url)',
       )
       .order('created_at', { ascending: false })
-      .range(offset, offset + PAGE_SIZE - 1);
+      .range(0, PAGE_SIZE - 1);
 
     if (!error && data) {
-      setHasMore(data.length === PAGE_SIZE);
       const replyEntries = (data as any[]).map(p => [p.id, p.reply_count ?? 0]);
       const likeEntries = (data as any[]).map(p => [p.id, p.like_count ?? 0]);
-      if (append) {
-        setPosts(prev => {
-          const updated = [...prev, ...(data as Post[])];
-          AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
-          return updated;
-        });
-        setReplyCounts(prev => {
-          const counts = { ...prev, ...Object.fromEntries(replyEntries) };
-          AsyncStorage.setItem(COUNT_STORAGE_KEY, JSON.stringify(counts));
-          return counts;
-        });
-        setLikeCounts(prev => {
-          const counts = { ...prev, ...Object.fromEntries(likeEntries) };
-          AsyncStorage.setItem(LIKE_COUNT_KEY, JSON.stringify(counts));
-          return counts;
-        });
-      } else {
-        setPosts(data as Post[]);
-        AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(data));
-        const replyCountsMap = Object.fromEntries(replyEntries);
-        setReplyCounts(replyCountsMap);
-        AsyncStorage.setItem(COUNT_STORAGE_KEY, JSON.stringify(replyCountsMap));
-        const likeMap = Object.fromEntries(likeEntries);
-        setLikeCounts(likeMap);
-        AsyncStorage.setItem(LIKE_COUNT_KEY, JSON.stringify(likeMap));
-      }
+      setPosts(data as Post[]);
+      AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+      const replyCountsMap = Object.fromEntries(replyEntries);
+      setReplyCounts(replyCountsMap);
+      AsyncStorage.setItem(COUNT_STORAGE_KEY, JSON.stringify(replyCountsMap));
+      const likeMap = Object.fromEntries(likeEntries);
+      setLikeCounts(likeMap);
+      AsyncStorage.setItem(LIKE_COUNT_KEY, JSON.stringify(likeMap));
+
 
       if (user) {
         const { data: likedData } = await supabase
@@ -218,12 +200,7 @@ const HomeScreen = forwardRef<HomeScreenRef, HomeScreenProps>(
     }
   };
 
-  const handleLoadMore = () => {
-    if (!loadingMore && hasMore) {
-      setLoadingMore(true);
-      fetchPosts(posts.length, true).finally(() => setLoadingMore(false));
-    }
-  };
+
 
   const createPost = async (text: string, imageUri?: string) => {
     if (!text.trim() && !imageUri) return;

@@ -37,7 +37,6 @@ export default function UserProfileScreen() {
   const displayName = profile?.display_name ?? initialDisplayName ?? null;
   const username = profile?.username ?? initialUsername ?? null;
 
-
   useEffect(() => {
     const fetchProfile = async () => {
       setLoading(true);
