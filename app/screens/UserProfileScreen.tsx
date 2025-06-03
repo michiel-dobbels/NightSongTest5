@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, Image, Button, Dimensions, ActivityIndicator } 
 import { useRoute, useNavigation } from '@react-navigation/native';
 import { supabase } from '../../lib/supabase';
 import { colors } from '../styles/colors';
+import { useFollowCounts } from '../hooks/useFollowCounts';
 
 interface Profile {
   id: string;
@@ -36,6 +37,7 @@ export default function UserProfileScreen() {
 
   const displayName = profile?.display_name ?? initialDisplayName ?? null;
   const username = profile?.username ?? initialUsername ?? null;
+  const { followers, following } = useFollowCounts(userId);
 
   useEffect(() => {
     const fetchProfile = async () => {
@@ -144,6 +146,10 @@ export default function UserProfileScreen() {
           {username && <Text style={styles.username}>@{username}</Text>}
         </View>
       </View>
+      <View style={styles.statsRow}>
+        <Text style={styles.statsText}>{followers ?? 0} Followers</Text>
+        <Text style={styles.statsText}>{following ?? 0} Following</Text>
+      </View>
     </View>
   );
 }
@@ -178,4 +184,6 @@ const styles = StyleSheet.create({
   username: { color: 'white', fontSize: 24, fontWeight: 'bold' },
   name: { color: 'white', fontSize: 20, marginTop: 4 },
   center: { justifyContent: 'center', alignItems: 'center' },
+  statsRow: { flexDirection: 'row', marginLeft: 15, marginBottom: 20 },
+  statsText: { color: 'white', marginRight: 15 },
 });
