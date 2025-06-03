@@ -5,9 +5,11 @@ import { useAuth } from '../../AuthContext';
 
 interface FollowButtonProps {
   targetUserId: string;
+  onToggle?: (isFollowing: boolean) => void;
 }
 
-export default function FollowButton({ targetUserId }: FollowButtonProps) {
+export default function FollowButton({ targetUserId, onToggle }: FollowButtonProps) {
+
   const { user } = useAuth() as any;
   const [following, setFollowing] = useState<boolean | null>(null);
 
@@ -40,14 +42,24 @@ export default function FollowButton({ targetUserId }: FollowButtonProps) {
         .from('follows')
         .delete()
         .match({ follower_id: user.id, following_id: targetUserId });
-      if (!error) setFollowing(false);
-      else console.error('Failed to unfollow', error);
+      if (!error) {
+        setFollowing(false);
+        onToggle?.(false);
+      } else {
+        console.error('Failed to unfollow', error);
+      }
+
     } else {
       const { error } = await supabase
         .from('follows')
         .insert({ follower_id: user.id, following_id: targetUserId });
-      if (!error) setFollowing(true);
-      else console.error('Failed to follow', error);
+      if (!error) {
+        setFollowing(true);
+        onToggle?.(true);
+      } else {
+        console.error('Failed to follow', error);
+      }
+
     }
   };
 
