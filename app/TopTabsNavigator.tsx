@@ -31,7 +31,7 @@ import HomeScreen, { HomeScreenRef } from './screens/HomeScreen';
 import { supabase } from '../lib/supabase';
 import { colors } from './styles/colors';
 import * as ImagePicker from 'expo-image-picker';
-import * as FileSystem from 'expo-file-system';
+import { uploadImageAsync } from '../lib/storage';
 
 
 function FollowingScreen() {
@@ -106,8 +106,8 @@ export default function TopTabsNavigator() {
     });
     if (!result.canceled) {
       const uri = result.assets[0].uri;
-      const base64 = await FileSystem.readAsStringAsync(uri, { encoding: 'base64' });
-      setModalImage(`data:image/jpeg;base64,${base64}`);
+      const url = await uploadImageAsync(uri, 'posts');
+      if (url) setModalImage(url);
     }
   };
 

@@ -88,24 +88,17 @@ const HomeScreen = forwardRef<HomeScreenRef, HomeScreenProps>(
   };
 
   const handleDeletePost = async (id: string) => {
-    setPosts(prev => {
-      const updated = prev.filter(p => p.id !== id);
-      AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
-      return updated;
-    });
+    setPosts(prev => prev.filter(p => p.id !== id));
     setReplyCounts(prev => {
       const { [id]: _removed, ...rest } = prev;
-      AsyncStorage.setItem(COUNT_STORAGE_KEY, JSON.stringify(rest));
       return rest;
     });
     setLikeCounts(prev => {
       const { [id]: _removed, ...rest } = prev;
-      AsyncStorage.setItem(LIKE_COUNT_KEY, JSON.stringify(rest));
       return rest;
     });
     setLikedPosts(prev => {
       const { [id]: _omit, ...rest } = prev;
-      AsyncStorage.setItem(`${LIKED_KEY_PREFIX}${user?.id}`, JSON.stringify(rest));
       return rest;
     });
     await supabase.from('posts').delete().eq('id', id);
@@ -118,31 +111,17 @@ const HomeScreen = forwardRef<HomeScreenRef, HomeScreenProps>(
       .eq('id', id)
       .single();
     if (data) {
-      setLikeCounts(prev => {
-        const counts = { ...prev, [id]: data.like_count ?? 0 };
-
-        AsyncStorage.setItem(LIKE_COUNT_KEY, JSON.stringify(counts));
-        return counts;
-      });
+      setLikeCounts(prev => ({ ...prev, [id]: data.like_count ?? 0 }));
     }
   };
 
   const toggleLike = async (id: string) => {
     if (!user) return;
     const liked = likedPosts[id];
-    setLikedPosts(prev => {
-      const updated = { ...prev, [id]: !liked };
-      AsyncStorage.setItem(
-        `${LIKED_KEY_PREFIX}${user.id}`,
-        JSON.stringify(updated),
-      );
-      return updated;
-    });
+    setLikedPosts(prev => ({ ...prev, [id]: !liked }));
     setLikeCounts(prev => {
       const count = (prev[id] || 0) + (liked ? -1 : 1);
-      const counts = { ...prev, [id]: count };
-      AsyncStorage.setItem(LIKE_COUNT_KEY, JSON.stringify(counts));
-      return counts;
+      return { ...prev, [id]: count };
     });
     if (liked) {
       await supabase.from('likes').delete().match({ user_id: user.id, post_id: id });
@@ -170,14 +149,11 @@ const HomeScreen = forwardRef<HomeScreenRef, HomeScreenProps>(
       const likeEntries = (data as any[]).map(p => [p.id, p.like_count ?? 0]);
       const slice = (data as Post[]).slice(0, PAGE_SIZE);
       setPosts(slice);
-      AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(slice));
-
       const replyCountsMap = Object.fromEntries(replyEntries);
       setReplyCounts(replyCountsMap);
-      AsyncStorage.setItem(COUNT_STORAGE_KEY, JSON.stringify(replyCountsMap));
+
       const likeMap = Object.fromEntries(likeEntries);
       setLikeCounts(likeMap);
-      AsyncStorage.setItem(LIKE_COUNT_KEY, JSON.stringify(likeMap));
 
 
       if (user) {
@@ -192,10 +168,6 @@ const HomeScreen = forwardRef<HomeScreenRef, HomeScreenProps>(
             if (l.post_id) likedObj[l.post_id] = true;
           });
           setLikedPosts(likedObj);
-          AsyncStorage.setItem(
-            `${LIKED_KEY_PREFIX}${user.id}`,
-            JSON.stringify(likedObj),
-          );
         }
 
       }
@@ -228,21 +200,10 @@ const HomeScreen = forwardRef<HomeScreenRef, HomeScreenProps>(
     };
 
     // Show the post immediately
-    setPosts((prev) => {
-      const updated = [newPost, ...prev].slice(0, PAGE_SIZE);
-      AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
-      return updated;
-    });
-    setReplyCounts(prev => {
-      const counts = { ...prev, [newPost.id]: 0 };
-      AsyncStorage.setItem(COUNT_STORAGE_KEY, JSON.stringify(counts));
-      return counts;
-    });
-    setLikeCounts(prev => {
-      const counts = { ...prev, [newPost.id]: 0 };
-      AsyncStorage.setItem(LIKE_COUNT_KEY, JSON.stringify(counts));
-      return counts;
-    });
+    setPosts(prev => [newPost, ...prev].slice(0, PAGE_SIZE));
+    setReplyCounts(prev => ({ ...prev, [newPost.id]: 0 }));
+    setLikeCounts(prev => ({ ...prev, [newPost.id]: 0 }));
+
 
     if (!hideInput) {
       setPostText('');
@@ -272,35 +233,28 @@ const HomeScreen = forwardRef<HomeScreenRef, HomeScreenProps>(
     if (!error) {
       if (data) {
         // Update the optimistic post with the real data from Supabase
-        setPosts((prev) => {
-          const updated = prev
-            .map((p) =>
+        setPosts(prev =>
+          prev
+            .map(p =>
               p.id === newPost.id
                 ? { ...p, id: data.id, created_at: data.created_at, reply_count: 0 }
-                : p
+                : p,
             )
-            .slice(0, PAGE_SIZE);
-          AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
-          return updated;
-        });
+            .slice(0, PAGE_SIZE),
+        );
+
         setReplyCounts(prev => {
           const { [newPost.id]: tempCount, ...rest } = prev;
-          const counts = { ...rest, [data.id]: tempCount };
-          AsyncStorage.setItem(COUNT_STORAGE_KEY, JSON.stringify(counts));
-          return counts;
+          return { ...rest, [data.id]: tempCount };
         });
         setLikeCounts(prev => {
           const temp = prev[newPost.id] ?? 0;
           const { [newPost.id]: _omit, ...rest } = prev;
-          const counts = { ...rest, [data.id]: temp };
-          AsyncStorage.setItem(LIKE_COUNT_KEY, JSON.stringify(counts));
-          return counts;
+          return { ...rest, [data.id]: temp };
         });
         setLikeCounts(prev => {
           const { [newPost.id]: tempLike, ...rest } = prev;
-          const counts = { ...rest, [data.id]: tempLike ?? 0 };
-          AsyncStorage.setItem(LIKE_COUNT_KEY, JSON.stringify(counts));
-          return counts;
+          return { ...rest, [data.id]: tempLike ?? 0 };
         });
       }
 
@@ -309,19 +263,14 @@ const HomeScreen = forwardRef<HomeScreenRef, HomeScreenProps>(
 
     } else {
       // Remove the optimistic post if it failed to persist
-      setPosts((prev) => {
-        const updated = prev.filter((p) => p.id !== newPost.id).slice(0, PAGE_SIZE);
-        AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
-        return updated;
-      });
+      setPosts(prev => prev.filter(p => p.id !== newPost.id).slice(0, PAGE_SIZE));
+
       setReplyCounts(prev => {
         const { [newPost.id]: _omit, ...rest } = prev;
-        AsyncStorage.setItem(COUNT_STORAGE_KEY, JSON.stringify(rest));
         return rest;
       });
       setLikeCounts(prev => {
         const { [newPost.id]: _omit, ...rest } = prev;
-        AsyncStorage.setItem(LIKE_COUNT_KEY, JSON.stringify(rest));
         return rest;
       });
 
@@ -422,6 +371,27 @@ const HomeScreen = forwardRef<HomeScreenRef, HomeScreenProps>(
       fetchPosts(0);
     }, []),
   );
+
+  useEffect(() => {
+    AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(posts));
+  }, [posts]);
+
+  useEffect(() => {
+    AsyncStorage.setItem(COUNT_STORAGE_KEY, JSON.stringify(replyCounts));
+  }, [replyCounts]);
+
+  useEffect(() => {
+    AsyncStorage.setItem(LIKE_COUNT_KEY, JSON.stringify(likeCounts));
+  }, [likeCounts]);
+
+  useEffect(() => {
+    if (user) {
+      AsyncStorage.setItem(
+        `${LIKED_KEY_PREFIX}${user.id}`,
+        JSON.stringify(likedPosts),
+      );
+    }
+  }, [likedPosts, user]);
 
   return (
     
