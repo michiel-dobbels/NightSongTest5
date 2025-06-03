@@ -652,7 +652,7 @@ export default function ReplyDetailScreen() {
         ListHeaderComponent={() => (
           <>
               {originalPost && (
-                <View style={[styles.post, styles.highlightPost]}>
+                <View style={[styles.post, styles.highlightPost, styles.longReply]}>
                   <View style={styles.threadLine} pointerEvents="none" />
                   {user?.id === originalPost.user_id && (
                     <TouchableOpacity
@@ -733,7 +733,7 @@ export default function ReplyDetailScreen() {
                 const avatarUri = isMe ? profileImageUri : a.profiles?.image_url || undefined;
 
                 return (
-                <View key={a.id} style={styles.post}>
+                <View key={a.id} style={[styles.post, styles.longReply]}>
                   <View style={styles.threadLine} pointerEvents="none" />
 
                   {isMe && (
@@ -900,7 +900,7 @@ export default function ReplyDetailScreen() {
                 })
               }
             >
-              <View style={styles.reply}>
+              <View style={[styles.reply, styles.longReply]}>
                 {isMe && (
                   <TouchableOpacity
                     onPress={() => confirmDeleteReply(item.id)}
