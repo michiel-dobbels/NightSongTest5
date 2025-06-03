@@ -800,7 +800,7 @@ export default function ReplyDetailScreen() {
             );
           })}
 
-            <View style={styles.post}>
+            <View style={[styles.post, styles.longReply]}>
               {user?.id === parent.user_id && (
                 <TouchableOpacity
                   onPress={() => confirmDeleteReply(parent.id)}
@@ -1009,6 +1009,10 @@ const styles = StyleSheet.create({
     borderBottomWidth: StyleSheet.hairlineWidth,
 
     position: 'relative',
+  },
+  longReply: {
+    // add extra space at the bottom so action icons don't overlap content
+    paddingBottom: 30,
   },
   threadLine: {
     position: 'absolute',
