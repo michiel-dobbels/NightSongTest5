@@ -633,14 +633,18 @@ export default function PostDetailScreen() {
               </TouchableOpacity>
 
               <View style={{ flex: 1 }}>
-                <Text style={styles.username}>
-                  {displayName} @{userName}
-                </Text>
+                <View style={styles.headerRow}>
+                  <Text style={styles.username}>
+                    {displayName} @{userName}
+                  </Text>
+                  <Text style={[styles.timestamp, styles.timestampMargin]}>
+                    {timeAgo(post.created_at)}
+                  </Text>
+                </View>
                 <Text style={styles.postContent}>{post.content}</Text>
                 {post.image_url && (
                   <Image source={{ uri: post.image_url }} style={styles.postImage} />
                 )}
-                <Text style={styles.timestamp}>{timeAgo(post.created_at)}</Text>
               </View>
             </View>
             <View style={styles.replyCountContainer}>
@@ -718,16 +722,20 @@ export default function PostDetailScreen() {
                     )}
                   </TouchableOpacity>
                   <View style={{ flex: 1 }}>
-                    <Text style={styles.username}>
-                      {name} @{replyUserName}
-                    </Text>
-
-                      <Text style={styles.postContent}>{item.content}</Text>
-                      {item.image_url && (
-                        <Image source={{ uri: item.image_url }} style={styles.postImage} />
-                      )}
-                      <Text style={styles.timestamp}>{timeAgo(item.created_at)}</Text>
+                    <View style={styles.headerRow}>
+                      <Text style={styles.username}>
+                        {name} @{replyUserName}
+                      </Text>
+                      <Text style={[styles.timestamp, styles.timestampMargin]}>
+                        {timeAgo(item.created_at)}
+                      </Text>
                     </View>
+
+                    <Text style={styles.postContent}>{item.content}</Text>
+                    {item.image_url && (
+                      <Image source={{ uri: item.image_url }} style={styles.postImage} />
+                    )}
+                  </View>
                   </View>
                   <View style={styles.replyCountContainer}>
                     <Ionicons
@@ -790,6 +798,8 @@ const styles = StyleSheet.create({
     backgroundColor: '#ffffff10',
     borderRadius: 0,
     padding: 10,
+    // add extra space at the bottom so action icons don't overlap content
+    paddingBottom: 30,
     marginBottom: 0,
     borderBottomColor: 'gray',
     borderBottomWidth: StyleSheet.hairlineWidth,
@@ -808,6 +818,8 @@ const styles = StyleSheet.create({
     backgroundColor: '#ffffff10',
     borderRadius: 0,
     padding: 10,
+    // add extra space at the bottom so action icons don't overlap content
+    paddingBottom: 30,
     marginTop: 0,
     borderBottomColor: 'gray',
     borderBottomWidth: StyleSheet.hairlineWidth,
@@ -817,10 +829,14 @@ const styles = StyleSheet.create({
   postContent: { color: 'white' },
   username: { fontWeight: 'bold', color: 'white' },
   timestamp: { fontSize: 10, color: 'gray' },
+  headerRow: { flexDirection: 'row', alignItems: 'center' },
+  timestampMargin: { marginLeft: 6 },
   replyCountContainer: {
     position: 'absolute',
     bottom: 6,
-    left: 10,
+    // Align with the left edge of the post content (text/image)
+    // Avatar width (32) + margin (8) + container padding (10)
+    left: 50,
     flexDirection: 'row',
     alignItems: 'center',
   },
