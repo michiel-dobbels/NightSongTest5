@@ -19,12 +19,14 @@ export default function UserProfileScreen() {
     userId,
     avatarUrl,
     bannerUrl,
+
     displayName: initialDisplayName,
     userName: initialUsername,
   } = route.params as {
     userId: string;
     avatarUrl?: string | null;
     bannerUrl?: string | null;
+
     displayName?: string | null;
     userName?: string | null;
   };
@@ -65,11 +67,13 @@ export default function UserProfileScreen() {
         ) : (
           <View style={[styles.banner, styles.placeholder]} />
         )}
+
         {profile?.image_url || avatarUrl ? (
           <Image
             source={{ uri: profile?.image_url || avatarUrl! }}
             style={styles.avatar}
           />
+
         ) : (
           <View style={[styles.avatar, styles.placeholder]} />
         )}
@@ -91,11 +95,14 @@ export default function UserProfileScreen() {
         ) : (
           <View style={[styles.banner, styles.placeholder]} />
         )}
+
+
         {profile?.image_url || avatarUrl ? (
           <Image
             source={{ uri: profile?.image_url || avatarUrl! }}
             style={styles.avatar}
           />
+
         ) : (
           <View style={[styles.avatar, styles.placeholder]} />
         )}
@@ -117,6 +124,7 @@ export default function UserProfileScreen() {
           source={{ uri: profile.banner_url || bannerUrl! }}
           style={styles.banner}
         />
+
       ) : (
         <View style={[styles.banner, styles.placeholder]} />
       )}

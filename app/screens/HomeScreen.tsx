@@ -15,6 +15,7 @@ import {
   Alert,
   TouchableOpacity,
   Image,
+  ActivityIndicator,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
@@ -77,6 +78,7 @@ const HomeScreen = forwardRef<HomeScreenRef, HomeScreenProps>(
   const [likeCounts, setLikeCounts] = useState<{ [key: string]: number }>({});
   const [likedPosts, setLikedPosts] = useState<{ [key: string]: boolean }>({});
   const [page, setPage] = useState(0);
+
   const [loadingMore, setLoadingMore] = useState(false);
   const [hasMore, setHasMore] = useState(true);
 
@@ -144,6 +146,7 @@ const HomeScreen = forwardRef<HomeScreenRef, HomeScreenProps>(
   const fetchPosts = async (pageNum = 0) => {
     const from = pageNum * PAGE_SIZE;
     const to = from + PAGE_SIZE - 1;
+
     const { data, error } = await supabase
       .from('posts')
       .select(
@@ -151,6 +154,7 @@ const HomeScreen = forwardRef<HomeScreenRef, HomeScreenProps>(
       )
       .order('created_at', { ascending: false })
       .range(from, to);
+
 
     if (!error && data) {
       const replyEntries = (data as any[]).map(p => [p.id, p.reply_count ?? 0]);
@@ -162,6 +166,7 @@ const HomeScreen = forwardRef<HomeScreenRef, HomeScreenProps>(
       setReplyCounts(prev => ({ ...prev, ...Object.fromEntries(replyEntries) }));
       setLikeCounts(prev => ({ ...prev, ...Object.fromEntries(likeEntries) }));
       if (newPosts.length < PAGE_SIZE) setHasMore(false);
+
 
       if (user) {
         const { data: likedData } = await supabase
@@ -180,6 +185,7 @@ const HomeScreen = forwardRef<HomeScreenRef, HomeScreenProps>(
       }
     }
   };
+
 
 
   const createPost = async (text: string, imageUri?: string) => {
@@ -209,6 +215,7 @@ const HomeScreen = forwardRef<HomeScreenRef, HomeScreenProps>(
     setPosts(prev => [newPost, ...prev].slice(0, PAGE_SIZE * (page + 1)));
     setReplyCounts(prev => ({ ...prev, [newPost.id]: 0 }));
     setLikeCounts(prev => ({ ...prev, [newPost.id]: 0 }));
+
 
     if (!hideInput) {
       setPostText('');
@@ -247,6 +254,7 @@ const HomeScreen = forwardRef<HomeScreenRef, HomeScreenProps>(
             )
             .slice(0, PAGE_SIZE * (page + 1)),
         );
+
         setReplyCounts(prev => {
           const { [newPost.id]: tempCount, ...rest } = prev;
           return { ...rest, [data.id]: tempCount };
@@ -265,6 +273,7 @@ const HomeScreen = forwardRef<HomeScreenRef, HomeScreenProps>(
       // Refresh from the server in the background to stay in sync
       setPage(0);
       setHasMore(true);
+
       fetchPosts(0);
 
     } else {
@@ -274,6 +283,7 @@ const HomeScreen = forwardRef<HomeScreenRef, HomeScreenProps>(
           .filter(p => p.id !== newPost.id)
           .slice(0, PAGE_SIZE * (page + 1)),
       );
+
       setReplyCounts(prev => {
         const { [newPost.id]: _omit, ...rest } = prev;
         return rest;
@@ -350,6 +360,7 @@ const HomeScreen = forwardRef<HomeScreenRef, HomeScreenProps>(
 
       setPage(0);
       setHasMore(true);
+
       fetchPosts(0);
     };
 
@@ -390,6 +401,7 @@ const HomeScreen = forwardRef<HomeScreenRef, HomeScreenProps>(
       syncCounts();
       setPage(0);
       setHasMore(true);
+
       fetchPosts(0);
     }, []),
   );
@@ -434,6 +446,16 @@ const HomeScreen = forwardRef<HomeScreenRef, HomeScreenProps>(
       <FlatList
         data={posts}
         keyExtractor={(item) => item.id}
+        ListFooterComponent={
+          hasMore ? (
+            loadingMore ? (
+              <ActivityIndicator color="white" style={{ marginVertical: 10 }} />
+            ) : (
+              <Button title="Load More" onPress={handleLoadMore} />
+            )
+
+          ) : null
+        }
         renderItem={({ item }) => {
           const displayName =
             item.profiles?.display_name ||
@@ -442,6 +464,7 @@ const HomeScreen = forwardRef<HomeScreenRef, HomeScreenProps>(
           const userName = item.profiles?.username || item.username;
           const isMe = user?.id === item.user_id;
           const avatarUri = isMe ? profileImageUri : item.profiles?.image_url || undefined;
+          const bannerUrl = isMe ? undefined : item.profiles?.banner_url || undefined;
 
           return (
             <TouchableOpacity onPress={() => navigation.navigate('PostDetail', { post: item })}>
@@ -463,6 +486,7 @@ const HomeScreen = forwardRef<HomeScreenRef, HomeScreenProps>(
                             userId: item.user_id,
                             avatarUrl: avatarUri,
                             bannerUrl: item.profiles?.banner_url,
+
                             displayName,
                             userName,
                           })
