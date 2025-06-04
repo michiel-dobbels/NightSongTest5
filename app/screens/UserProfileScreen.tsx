@@ -139,6 +139,7 @@ export default function UserProfileScreen() {
             <FollowButton targetUserId={userId} onToggle={refresh} />
           </View>
         )}
+
         <View style={styles.statsRow}>
           <Text style={styles.statsText}>{followers ?? 0} Followers</Text>
           <Text style={styles.statsText}>{following ?? 0} Following</Text>
@@ -176,6 +177,7 @@ export default function UserProfileScreen() {
             <FollowButton targetUserId={userId} onToggle={refresh} />
           </View>
         )}
+
         <View style={styles.statsRow}>
           <Text style={styles.statsText}>{followers ?? 0} Followers</Text>
           <Text style={styles.statsText}>{following ?? 0} Following</Text>
