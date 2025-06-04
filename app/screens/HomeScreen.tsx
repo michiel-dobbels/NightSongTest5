@@ -502,11 +502,11 @@ const HomeScreen = forwardRef<HomeScreenRef, HomeScreenProps>(
                 <View style={styles.replyCountContainer}>
                   <Ionicons
                     name="chatbubble-outline"
-                    size={12}
+                    size={18}
                     color="#66538f"
                     style={{ marginRight: 2 }}
                   />
-                  <Text style={styles.replyCount}>{replyCounts[item.id] || 0}</Text>
+                  <Text style={styles.replyCountLarge}>{replyCounts[item.id] || 0}</Text>
                 </View>
                 <TouchableOpacity
                   style={styles.likeContainer}
@@ -581,6 +581,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   replyCount: { fontSize: 10, color: 'gray' },
+  replyCountLarge: { fontSize: 15, color: 'gray' },
   likeContainer: {
     position: 'absolute',
     bottom: 6,
