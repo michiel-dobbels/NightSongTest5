@@ -208,6 +208,7 @@ export default function UserProfileScreen() {
         <Text style={styles.statsText}>{followers ?? 0} Followers</Text>
         <Text style={styles.statsText}>{following ?? 0} Following</Text>
       </View>
+
       <Text style={styles.sectionTitle}>Following</Text>
       <FlatList
         data={followingProfiles}
