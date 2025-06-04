@@ -557,7 +557,7 @@ const styles = StyleSheet.create({
     position: 'relative',
   },
   row: { flexDirection: 'row', alignItems: 'flex-start' },
-  avatar: { width: 32, height: 32, borderRadius: 16, marginRight: 8 },
+  avatar: { width: 48, height: 48, borderRadius: 24, marginRight: 8 },
   placeholder: { backgroundColor: '#555' },
   deleteButton: {
     position: 'absolute',
@@ -574,8 +574,8 @@ const styles = StyleSheet.create({
     position: 'absolute',
     bottom: 6,
     // Align with the left edge of the post content (text/image)
-    // Avatar width (32) + margin (8) + container padding (10)
-    left: 50,
+    // Avatar width (48) + margin (8) + container padding (10)
+    left: 66,
     flexDirection: 'row',
     alignItems: 'center',
   },
