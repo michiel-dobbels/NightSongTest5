@@ -134,6 +134,12 @@ export default function UserProfileScreen() {
         )}
         {displayName && <Text style={styles.name}>{displayName}</Text>}
         {username && <Text style={styles.username}>@{username}</Text>}
+        {user && user.id !== userId && (
+          <View style={{ marginTop: 10 }}>
+            <FollowButton targetUserId={userId} onToggle={refresh} />
+          </View>
+        )}
+
         <View style={styles.statsRow}>
           <Text style={styles.statsText}>{followers ?? 0} Followers</Text>
           <Text style={styles.statsText}>{following ?? 0} Following</Text>
@@ -166,6 +172,12 @@ export default function UserProfileScreen() {
         )}
         {displayName && <Text style={styles.name}>{displayName}</Text>}
         {username && <Text style={styles.username}>@{username}</Text>}
+        {user && user.id !== userId && (
+          <View style={{ marginTop: 10 }}>
+            <FollowButton targetUserId={userId} onToggle={refresh} />
+          </View>
+        )}
+
         <View style={styles.statsRow}>
           <Text style={styles.statsText}>{followers ?? 0} Followers</Text>
           <Text style={styles.statsText}>{following ?? 0} Following</Text>
