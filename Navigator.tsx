@@ -6,6 +6,7 @@ import PostDetailScreen from './app/screens/PostDetailScreen';
 import ReplyDetailScreen from './app/screens/ReplyDetailScreen';
 import ProfileScreen from './app/screens/ProfileScreen';
 import UserProfileScreen from './app/screens/UserProfileScreen';
+import FollowListScreen from './app/screens/FollowListScreen';
 import { useAuth } from './AuthContext';
 
 const Stack = createNativeStackNavigator();
@@ -24,6 +25,7 @@ export default function Navigator() {
           <Stack.Screen name="ReplyDetail" component={ReplyDetailScreen} />
           <Stack.Screen name="Profile" component={ProfileScreen} />
           <Stack.Screen name="UserProfile" component={UserProfileScreen} />
+          <Stack.Screen name="FollowList" component={FollowListScreen} />
         </>
       ) : (
         <Stack.Screen name="Auth" component={AuthPage} />

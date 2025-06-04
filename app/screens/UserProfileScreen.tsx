@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, Image, Button, Dimensions, ActivityIndicator, FlatList } from 'react-native';
+import { View, Text, StyleSheet, Image, Button, Dimensions, ActivityIndicator, FlatList, TouchableOpacity } from 'react-native';
 import { useRoute, useNavigation } from '@react-navigation/native';
 import { supabase } from '../../lib/supabase';
 import { colors } from '../styles/colors';
@@ -11,7 +11,7 @@ import FollowButton from '../components/FollowButton';
 interface Profile {
   id: string;
   username: string;
-  display_name: string | null;
+  name: string | null;
   image_url: string | null;
   banner_url: string | null;
 }
@@ -24,15 +24,15 @@ export default function UserProfileScreen() {
     avatarUrl,
     bannerUrl,
 
-    displayName: initialDisplayName,
-    userName: initialUsername,
+    name: initialName,
+    username: initialUsername,
   } = route.params as {
     userId: string;
     avatarUrl?: string | null;
     bannerUrl?: string | null;
 
-    displayName?: string | null;
-    userName?: string | null;
+    name?: string | null;
+    username?: string | null;
   };
   const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
@@ -41,7 +41,7 @@ export default function UserProfileScreen() {
 
   const { user } = useAuth() as any;
 
-  const displayName = profile?.display_name ?? initialDisplayName ?? null;
+  const name = profile?.name ?? initialName ?? null;
   const username = profile?.username ?? initialUsername ?? null;
   const { followers, following, refresh } = useFollowCounts(userId);
 
@@ -50,13 +50,37 @@ export default function UserProfileScreen() {
     const fetchProfile = async () => {
       setLoading(true);
       setNotFound(false);
-      const { data } = await supabase
+      let { data, error } = await supabase
         .from('profiles')
-        .select('id, username, display_name, image_url, banner_url')
+        .select('id, username, name, avatar_url, banner_url')
         .eq('id', userId)
         .single();
+
+      if (error?.code === '42703') {
+        const retry = await supabase
+          .from('profiles')
+          .select('id, username, display_name, image_url, banner_url')
+          .eq('id', userId)
+          .single();
+        data = retry.data as any;
+        error = retry.error;
+      }
+
       if (data) {
-        setProfile(data as Profile);
+        setProfile({
+          id: data.id,
+          username: data.username,
+          name:
+            (data as any).name ??
+            (data as any).display_name ??
+            (data as any).full_name ??
+            null,
+          image_url:
+            (data as any).avatar_url ??
+            (data as any).image_url ??
+            null,
+          banner_url: data.banner_url,
+        });
       } else {
         setNotFound(true);
       }
@@ -84,10 +108,19 @@ export default function UserProfileScreen() {
         return;
       }
 
-      const { data: profileData, error: profileError } = await supabase
+      let { data: profileData, error: profileError } = await supabase
         .from('profiles')
         .select('id, username, image_url')
         .in('id', ids);
+
+      if (profileError?.code === '42703') {
+        const retry = await supabase
+          .from('profiles')
+          .select('id, username, avatar_url')
+          .in('id', ids);
+        profileData = retry.data;
+        profileError = retry.error;
+      }
 
       if (profileError) {
         console.error('Failed to fetch profiles', profileError);
@@ -98,7 +131,7 @@ export default function UserProfileScreen() {
         const formatted = profileData.map(p => ({
           id: p.id,
           username: p.username,
-          avatar_url: p.image_url,
+          avatar_url: (p as any).image_url ?? (p as any).avatar_url,
         }));
         setFollowingProfiles(formatted);
       }
@@ -132,8 +165,35 @@ export default function UserProfileScreen() {
         ) : (
           <View style={[styles.avatar, styles.placeholder]} />
         )}
-        {displayName && <Text style={styles.name}>{displayName}</Text>}
+        {name && <Text style={styles.name}>{name}</Text>}
         {username && <Text style={styles.username}>@{username}</Text>}
+        {user && user.id !== userId && (
+          <View style={{ marginTop: 10 }}>
+            <FollowButton targetUserId={userId} onToggle={refresh} />
+          </View>
+        )}
+        <View style={styles.statsRow}>
+          <TouchableOpacity
+            onPress={() =>
+              navigation.navigate('FollowList', {
+                userId,
+                mode: 'followers',
+              })
+            }
+          >
+            <Text style={styles.statsText}>{followers ?? 0} Followers</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            onPress={() =>
+              navigation.navigate('FollowList', {
+                userId,
+                mode: 'following',
+              })
+            }
+          >
+            <Text style={styles.statsText}>{following ?? 0} Following</Text>
+          </TouchableOpacity>
+        </View>
         <ActivityIndicator color="white" style={{ marginTop: 10 }} />
       </View>
     );
@@ -160,8 +220,35 @@ export default function UserProfileScreen() {
         ) : (
           <View style={[styles.avatar, styles.placeholder]} />
         )}
-        {displayName && <Text style={styles.name}>{displayName}</Text>}
+        {name && <Text style={styles.name}>{name}</Text>}
         {username && <Text style={styles.username}>@{username}</Text>}
+        {user && user.id !== userId && (
+          <View style={{ marginTop: 10 }}>
+            <FollowButton targetUserId={userId} onToggle={refresh} />
+          </View>
+        )}
+        <View style={styles.statsRow}>
+          <TouchableOpacity
+            onPress={() =>
+              navigation.navigate('FollowList', {
+                userId,
+                mode: 'followers',
+              })
+            }
+          >
+            <Text style={styles.statsText}>{followers ?? 0} Followers</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            onPress={() =>
+              navigation.navigate('FollowList', {
+                userId,
+                mode: 'following',
+              })
+            }
+          >
+            <Text style={styles.statsText}>{following ?? 0} Following</Text>
+          </TouchableOpacity>
+        </View>
         <Text style={{ color: 'white', marginTop: 10 }}>Profile not found.</Text>
         <View style={styles.backButton}>
           <Button title="Back" onPress={() => navigation.goBack()} />
@@ -195,7 +282,7 @@ export default function UserProfileScreen() {
           <View style={[styles.avatar, styles.placeholder]} />
         )}
         <View style={styles.textContainer}>
-          {displayName && <Text style={styles.name}>{displayName}</Text>}
+          {name && <Text style={styles.name}>{name}</Text>}
           {username && <Text style={styles.username}>@{username}</Text>}
         </View>
         {user && user.id !== userId && (
@@ -205,8 +292,26 @@ export default function UserProfileScreen() {
         )}
       </View>
       <View style={styles.statsRow}>
-        <Text style={styles.statsText}>{followers ?? 0} Followers</Text>
-        <Text style={styles.statsText}>{following ?? 0} Following</Text>
+        <TouchableOpacity
+          onPress={() =>
+            navigation.navigate('FollowList', {
+              userId,
+              mode: 'followers',
+            })
+          }
+        >
+          <Text style={styles.statsText}>{followers ?? 0} Followers</Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          onPress={() =>
+            navigation.navigate('FollowList', {
+              userId,
+              mode: 'following',
+            })
+          }
+        >
+          <Text style={styles.statsText}>{following ?? 0} Following</Text>
+        </TouchableOpacity>
       </View>
 
       <Text style={styles.sectionTitle}>Following</Text>

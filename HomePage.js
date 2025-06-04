@@ -15,7 +15,7 @@ export default function HomePage() {
     }
   }, [profile]);
 
-  const displayName = profile?.display_name || profile?.username;
+  const displayName = profile?.name || profile?.username;
 
 
   return (

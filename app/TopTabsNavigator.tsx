@@ -118,7 +118,7 @@ export default function TopTabsNavigator() {
       {
         content: postText,
         user_id: user.id,
-        username: profile.display_name || profile.username,
+        username: profile.name || profile.username,
       },
     ]);
 
@@ -133,7 +133,7 @@ export default function TopTabsNavigator() {
     setModalVisible(false);
   };
 
-  const displayName = profile?.display_name || profile?.username;
+  const displayName = profile?.name || profile?.username;
   const welcomeText = displayName
     ? `Welcome @${displayName}`
     : user?.email
