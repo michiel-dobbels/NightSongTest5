@@ -21,6 +21,7 @@ export async function getFollowersProfiles(userId: string): Promise<FollowerProf
   if (ids.length === 0) return [];
 
   let { data: profiles, error: profileError } = await supabase
+
     .from('profiles')
     .select('username, display_name, image_url')
     .in('id', ids);
@@ -34,6 +35,7 @@ export async function getFollowersProfiles(userId: string): Promise<FollowerProf
     profileError = retry.error;
   }
 
+
   if (profileError) {
     console.error('Failed to fetch profiles', profileError);
     throw profileError;
@@ -43,5 +45,6 @@ export async function getFollowersProfiles(userId: string): Promise<FollowerProf
     username: p.username ?? null,
     full_name: (p as any).display_name ?? (p as any).full_name ?? null,
     avatar_url: (p as any).image_url ?? (p as any).avatar_url ?? null,
+
   }));
 }

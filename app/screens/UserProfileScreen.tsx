@@ -186,6 +186,7 @@ export default function UserProfileScreen() {
           >
             <Text style={styles.statsText}>{following ?? 0} Following</Text>
           </TouchableOpacity>
+
         </View>
         <ActivityIndicator color="white" style={{ marginTop: 10 }} />
       </View>
@@ -241,6 +242,7 @@ export default function UserProfileScreen() {
           >
             <Text style={styles.statsText}>{following ?? 0} Following</Text>
           </TouchableOpacity>
+
         </View>
         <Text style={{ color: 'white', marginTop: 10 }}>Profile not found.</Text>
         <View style={styles.backButton}>
