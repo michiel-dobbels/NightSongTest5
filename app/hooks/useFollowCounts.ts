@@ -47,4 +47,5 @@ export function useFollowCounts(userId: string | null) {
   }, [userId]);
 
   return { followers, following, refresh: fetchCounts };
+
 }

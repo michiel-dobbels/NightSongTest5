@@ -1,11 +1,13 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { View, Text, StyleSheet, Image, Button, Dimensions, ActivityIndicator, FlatList } from 'react-native';
 import { useRoute, useNavigation, useFocusEffect } from '@react-navigation/native';
+
 import { supabase } from '../../lib/supabase';
 import { colors } from '../styles/colors';
 import { useFollowCounts } from '../hooks/useFollowCounts';
 import { useAuth } from '../../AuthContext';
 import FollowButton from '../components/FollowButton';
+
 
 interface Profile {
   id: string;
@@ -60,6 +62,7 @@ export default function UserProfileScreen() {
     setLoading(false);
   }, [userId]);
 
+
   useEffect(() => {
     fetchProfile();
   }, [fetchProfile]);
@@ -112,6 +115,7 @@ export default function UserProfileScreen() {
       fetchFollowing();
     }, [fetchProfile, fetchFollowing, refresh]),
   );
+
 
   if (loading) {
     return (
@@ -210,6 +214,7 @@ export default function UserProfileScreen() {
         <Text style={styles.statsText}>{followers ?? 0} Followers</Text>
         <Text style={styles.statsText}>{following ?? 0} Following</Text>
       </View>
+
       <Text style={styles.sectionTitle}>Following</Text>
       <FlatList
         data={followingProfiles}
@@ -225,6 +230,7 @@ export default function UserProfileScreen() {
           </View>
         )}
       />
+
     </View>
   );
 }
@@ -265,4 +271,5 @@ const styles = StyleSheet.create({
   followingRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 12 },
   followingAvatar: { width: 40, height: 40, borderRadius: 20, marginRight: 12 },
   followingUsername: { color: 'white', fontSize: 16 },
+
 });
