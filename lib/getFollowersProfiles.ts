@@ -3,6 +3,7 @@ import { supabase } from './supabase';
 export interface FollowerProfile {
   username: string | null;
   name: string | null;
+
   avatar_url: string | null;
 }
 
@@ -23,12 +24,14 @@ export async function getFollowersProfiles(userId: string): Promise<FollowerProf
   let { data: profiles, error: profileError } = await supabase
     .from('profiles')
     .select('username, name, avatar_url')
+
     .in('id', ids);
 
   if (profileError?.code === '42703') {
     const retry = await supabase
       .from('profiles')
       .select('username, display_name, image_url')
+
       .in('id', ids);
     profiles = retry.data;
     profileError = retry.error;
@@ -50,5 +53,6 @@ export async function getFollowersProfiles(userId: string): Promise<FollowerProf
       (p as any).avatar_url ??
       (p as any).image_url ??
       null,
+
   }));
 }

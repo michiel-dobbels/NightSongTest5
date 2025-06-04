@@ -3,6 +3,7 @@ import { supabase } from './supabase';
 export interface FollowingProfile {
   username: string | null;
   name: string | null;
+
   avatar_url: string | null;
 }
 
@@ -25,16 +26,19 @@ export async function getFollowingProfiles(userId: string): Promise<FollowingPro
   let { data: profiles, error: profileError } = await supabase
     .from('profiles')
     .select('username, name, avatar_url')
+
     .in('id', ids);
 
   if (profileError?.code === '42703') {
     const retry = await supabase
       .from('profiles')
       .select('username, display_name, image_url')
+
       .in('id', ids);
     profiles = retry.data;
     profileError = retry.error;
   }
+
 
   if (profileError) {
     console.error('Failed to fetch profiles', profileError);
@@ -52,5 +56,6 @@ export async function getFollowingProfiles(userId: string): Promise<FollowingPro
       (p as any).avatar_url ??
       (p as any).image_url ??
       null,
+
   }));
 }

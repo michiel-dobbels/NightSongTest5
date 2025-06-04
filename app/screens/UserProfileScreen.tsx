@@ -60,6 +60,7 @@ export default function UserProfileScreen() {
         const retry = await supabase
           .from('profiles')
           .select('id, username, display_name, image_url, banner_url')
+
           .eq('id', userId)
           .single();
         data = retry.data as any;
@@ -79,6 +80,7 @@ export default function UserProfileScreen() {
             (data as any).avatar_url ??
             (data as any).image_url ??
             null,
+
           banner_url: data.banner_url,
         });
       } else {
@@ -193,6 +195,7 @@ export default function UserProfileScreen() {
           >
             <Text style={styles.statsText}>{following ?? 0} Following</Text>
           </TouchableOpacity>
+
         </View>
         <ActivityIndicator color="white" style={{ marginTop: 10 }} />
       </View>
@@ -248,6 +251,7 @@ export default function UserProfileScreen() {
           >
             <Text style={styles.statsText}>{following ?? 0} Following</Text>
           </TouchableOpacity>
+
         </View>
         <Text style={{ color: 'white', marginTop: 10 }}>Profile not found.</Text>
         <View style={styles.backButton}>
