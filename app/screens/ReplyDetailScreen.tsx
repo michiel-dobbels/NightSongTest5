@@ -702,11 +702,11 @@ export default function ReplyDetailScreen() {
                 <View style={styles.replyCountContainer}>
                   <Ionicons
                     name="chatbubble-outline"
-                    size={12}
+                    size={18}
                     color="#66538f"
                     style={{ marginRight: 2 }}
                   />
-                  <Text style={styles.replyCount}>{replyCounts[originalPost.id] || 0}</Text>
+                  <Text style={styles.replyCountLarge}>{replyCounts[originalPost.id] || 0}</Text>
                 </View>
                 <TouchableOpacity
                   style={styles.likeContainer}
@@ -715,11 +715,11 @@ export default function ReplyDetailScreen() {
                   <Ionicons
                     name={likedItems[originalPost.id] ? 'heart' : 'heart-outline'}
 
-                    size={12}
+                    size={18}
                     color="red"
                     style={{ marginRight: 2 }}
                   />
-                  <Text style={styles.replyCount}>{likeCounts[originalPost.id] || 0}</Text>
+                  <Text style={styles.likeCountLarge}>{likeCounts[originalPost.id] || 0}</Text>
                 </TouchableOpacity>
 
               </View>
@@ -783,11 +783,11 @@ export default function ReplyDetailScreen() {
                 <View style={styles.replyCountContainer}>
                   <Ionicons
                     name="chatbubble-outline"
-                    size={12}
+                    size={18}
                     color="#66538f"
                     style={{ marginRight: 2 }}
                   />
-                  <Text style={styles.replyCount}>{replyCounts[a.id] || 0}</Text>
+                  <Text style={styles.replyCountLarge}>{replyCounts[a.id] || 0}</Text>
                 </View>
                 <TouchableOpacity
                   style={styles.likeContainer}
@@ -796,11 +796,11 @@ export default function ReplyDetailScreen() {
                   <Ionicons
                     name={likedItems[a.id] ? 'heart' : 'heart-outline'}
 
-                    size={12}
+                    size={18}
                     color="red"
                     style={{ marginRight: 2 }}
                   />
-                  <Text style={styles.replyCount}>{likeCounts[a.id] || 0}</Text>
+                  <Text style={styles.likeCountLarge}>{likeCounts[a.id] || 0}</Text>
                 </TouchableOpacity>
 
               </View>
@@ -856,11 +856,11 @@ export default function ReplyDetailScreen() {
           <View style={styles.replyCountContainer}>
             <Ionicons
               name="chatbubble-outline"
-              size={12}
+              size={18}
               color="#66538f"
               style={{ marginRight: 2 }}
             />
-            <Text style={styles.replyCount}>{replyCounts[parent.id] || 0}</Text>
+            <Text style={styles.replyCountLarge}>{replyCounts[parent.id] || 0}</Text>
           </View>
           <TouchableOpacity
             style={styles.likeContainer}
@@ -869,11 +869,11 @@ export default function ReplyDetailScreen() {
             <Ionicons
               name={likedItems[parent.id] ? 'heart' : 'heart-outline'}
 
-              size={12}
+              size={18}
               color="red"
               style={{ marginRight: 2 }}
             />
-            <Text style={styles.replyCount}>{likeCounts[parent.id] || 0}</Text>
+            <Text style={styles.likeCountLarge}>{likeCounts[parent.id] || 0}</Text>
           </TouchableOpacity>
 
           </View>
@@ -948,11 +948,11 @@ export default function ReplyDetailScreen() {
                 <View style={styles.replyCountContainer}>
                   <Ionicons
                     name="chatbubble-outline"
-                    size={12}
+                    size={18}
                     color="#66538f"
                     style={{ marginRight: 2 }}
                   />
-                  <Text style={styles.replyCount}>{replyCounts[item.id] || 0}</Text>
+                  <Text style={styles.replyCountLarge}>{replyCounts[item.id] || 0}</Text>
                 </View>
                 <TouchableOpacity
                   style={styles.likeContainer}
@@ -961,11 +961,11 @@ export default function ReplyDetailScreen() {
                   <Ionicons
                     name={likedItems[item.id] ? 'heart' : 'heart-outline'}
 
-                    size={12}
+                    size={18}
                     color="red"
                     style={{ marginRight: 2 }}
                   />
-                  <Text style={styles.replyCount}>{likeCounts[item.id] || 0}</Text>
+                  <Text style={styles.likeCountLarge}>{likeCounts[item.id] || 0}</Text>
                 </TouchableOpacity>
 
               </View>
@@ -1013,7 +1013,7 @@ const styles = StyleSheet.create({
     position: 'relative',
   },
   row: { flexDirection: 'row', alignItems: 'flex-start' },
-  avatar: { width: 32, height: 32, borderRadius: 16, marginRight: 8 },
+  avatar: { width: 48, height: 48, borderRadius: 24, marginRight: 8 },
   placeholder: { backgroundColor: '#555' },
   reply: {
     backgroundColor: '#ffffff10',
@@ -1052,12 +1052,14 @@ const styles = StyleSheet.create({
     position: 'absolute',
     bottom: 6,
     // Align with the left edge of the post content (text/image)
-    // Avatar width (32) + margin (8) + container padding (10)
-    left: 50,
+    // Avatar width (48) + margin (8) + container padding (10)
+    left: 66,
     flexDirection: 'row',
     alignItems: 'center',
   },
   replyCount: { fontSize: 10, color: 'gray' },
+  replyCountLarge: { fontSize: 15, color: 'gray' },
+  likeCountLarge: { fontSize: 15, color: 'gray' },
   likeContainer: {
     position: 'absolute',
     bottom: 6,
