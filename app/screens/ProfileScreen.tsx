@@ -14,6 +14,7 @@ import * as FileSystem from 'expo-file-system';
 import { useNavigation } from '@react-navigation/native';
 
 import { useAuth } from '../../AuthContext';
+import { useFollowCounts } from '../hooks/useFollowCounts';
 import { colors } from '../styles/colors';
 
 export default function ProfileScreen() {
@@ -25,6 +26,8 @@ export default function ProfileScreen() {
     bannerImageUri,
     setBannerImageUri,
   } = useAuth() as any;
+
+  const { followers, following } = useFollowCounts(profile?.id ?? null);
 
 
   const pickImage = async () => {
@@ -89,6 +92,10 @@ export default function ProfileScreen() {
           )}
         </View>
       </View>
+      <View style={styles.statsRow}>
+        <Text style={styles.statsText}>{followers ?? 0} Followers</Text>
+        <Text style={styles.statsText}>{following ?? 0} Following</Text>
+      </View>
       <TouchableOpacity onPress={pickImage} style={styles.uploadLink}>
         <Text style={styles.uploadText}>Upload Profile Picture</Text>
       </TouchableOpacity>
@@ -148,5 +155,7 @@ const styles = StyleSheet.create({
     alignSelf: 'flex-start',
   },
   uploadText: { color: 'white' },
+  statsRow: { flexDirection: 'row', marginLeft: 15, marginBottom: 20 },
+  statsText: { color: 'white', marginRight: 15 },
 
 });
