@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useState, useCallback } from 'react';
 import { View, Text, StyleSheet, Image, Button, Dimensions, ActivityIndicator, FlatList } from 'react-native';
 import { useRoute, useNavigation, useFocusEffect } from '@react-navigation/native';
 
@@ -63,9 +63,6 @@ export default function UserProfileScreen() {
   }, [userId]);
 
 
-  useEffect(() => {
-    fetchProfile();
-  }, [fetchProfile]);
 
   const fetchFollowing = useCallback(async () => {
     const { data: followData, error: followError } = await supabase
@@ -104,9 +101,6 @@ export default function UserProfileScreen() {
     }
   }, [userId]);
 
-  useEffect(() => {
-    fetchFollowing();
-  }, [fetchFollowing]);
 
   useFocusEffect(
     useCallback(() => {
