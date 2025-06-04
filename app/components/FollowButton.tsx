@@ -9,6 +9,7 @@ interface FollowButtonProps {
 }
 
 export default function FollowButton({ targetUserId, onToggle }: FollowButtonProps) {
+
   const { user } = useAuth() as any;
   const [following, setFollowing] = useState<boolean | null>(null);
 
@@ -47,6 +48,7 @@ export default function FollowButton({ targetUserId, onToggle }: FollowButtonPro
       } else {
         console.error('Failed to unfollow', error);
       }
+
     } else {
       const { error } = await supabase
         .from('follows')
@@ -57,6 +59,7 @@ export default function FollowButton({ targetUserId, onToggle }: FollowButtonPro
       } else {
         console.error('Failed to follow', error);
       }
+
     }
   };
 

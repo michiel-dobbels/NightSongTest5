@@ -35,6 +35,7 @@ export function useFollowCounts(userId: string | null) {
     }
   };
 
+
   useEffect(() => {
     if (!userId) {
       setFollowers(null);
@@ -47,4 +48,5 @@ export function useFollowCounts(userId: string | null) {
   }, [userId]);
 
   return { followers, following, refresh: fetchCounts };
+
 }

@@ -7,6 +7,7 @@ import { useFollowCounts } from '../hooks/useFollowCounts';
 import { useAuth } from '../../AuthContext';
 import FollowButton from '../components/FollowButton';
 
+
 interface Profile {
   id: string;
   username: string;
@@ -43,6 +44,7 @@ export default function UserProfileScreen() {
   const displayName = profile?.display_name ?? initialDisplayName ?? null;
   const username = profile?.username ?? initialUsername ?? null;
   const { followers, following, refresh } = useFollowCounts(userId);
+
 
   useEffect(() => {
     const fetchProfile = async () => {
@@ -206,6 +208,7 @@ export default function UserProfileScreen() {
         <Text style={styles.statsText}>{followers ?? 0} Followers</Text>
         <Text style={styles.statsText}>{following ?? 0} Following</Text>
       </View>
+
       <Text style={styles.sectionTitle}>Following</Text>
       <FlatList
         data={followingProfiles}
@@ -221,6 +224,7 @@ export default function UserProfileScreen() {
           </View>
         )}
       />
+
     </View>
   );
 }
@@ -261,4 +265,5 @@ const styles = StyleSheet.create({
   followingRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 12 },
   followingAvatar: { width: 40, height: 40, borderRadius: 20, marginRight: 12 },
   followingUsername: { color: 'white', fontSize: 16 },
+
 });
