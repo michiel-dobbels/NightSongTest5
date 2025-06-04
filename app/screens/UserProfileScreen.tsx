@@ -11,7 +11,7 @@ import FollowButton from '../components/FollowButton';
 interface Profile {
   id: string;
   username: string;
-  display_name: string | null;
+  name: string | null;
   image_url: string | null;
   banner_url: string | null;
 }
@@ -24,15 +24,15 @@ export default function UserProfileScreen() {
     avatarUrl,
     bannerUrl,
 
-    displayName: initialDisplayName,
-    userName: initialUsername,
+    name: initialName,
+    username: initialUsername,
   } = route.params as {
     userId: string;
     avatarUrl?: string | null;
     bannerUrl?: string | null;
 
-    displayName?: string | null;
-    userName?: string | null;
+    name?: string | null;
+    username?: string | null;
   };
   const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
@@ -41,7 +41,7 @@ export default function UserProfileScreen() {
 
   const { user } = useAuth() as any;
 
-  const displayName = profile?.display_name ?? initialDisplayName ?? null;
+  const name = profile?.name ?? initialName ?? null;
   const username = profile?.username ?? initialUsername ?? null;
   const { followers, following, refresh } = useFollowCounts(userId);
 
@@ -52,14 +52,15 @@ export default function UserProfileScreen() {
       setNotFound(false);
       let { data, error } = await supabase
         .from('profiles')
-        .select('id, username, display_name, image_url, banner_url')
+        .select('id, username, name, avatar_url, banner_url')
         .eq('id', userId)
         .single();
 
       if (error?.code === '42703') {
         const retry = await supabase
           .from('profiles')
-          .select('id, username, full_name, avatar_url, banner_url')
+          .select('id, username, display_name, image_url, banner_url')
+
           .eq('id', userId)
           .single();
         data = retry.data as any;
@@ -70,8 +71,16 @@ export default function UserProfileScreen() {
         setProfile({
           id: data.id,
           username: data.username,
-          display_name: (data as any).display_name ?? (data as any).full_name ?? null,
-          image_url: (data as any).image_url ?? (data as any).avatar_url ?? null,
+          name:
+            (data as any).name ??
+            (data as any).display_name ??
+            (data as any).full_name ??
+            null,
+          image_url:
+            (data as any).avatar_url ??
+            (data as any).image_url ??
+            null,
+
           banner_url: data.banner_url,
         });
       } else {
@@ -158,7 +167,7 @@ export default function UserProfileScreen() {
         ) : (
           <View style={[styles.avatar, styles.placeholder]} />
         )}
-        {displayName && <Text style={styles.name}>{displayName}</Text>}
+        {name && <Text style={styles.name}>{name}</Text>}
         {username && <Text style={styles.username}>@{username}</Text>}
         {user && user.id !== userId && (
           <View style={{ marginTop: 10 }}>
@@ -214,7 +223,7 @@ export default function UserProfileScreen() {
         ) : (
           <View style={[styles.avatar, styles.placeholder]} />
         )}
-        {displayName && <Text style={styles.name}>{displayName}</Text>}
+        {name && <Text style={styles.name}>{name}</Text>}
         {username && <Text style={styles.username}>@{username}</Text>}
         {user && user.id !== userId && (
           <View style={{ marginTop: 10 }}>
@@ -277,7 +286,7 @@ export default function UserProfileScreen() {
           <View style={[styles.avatar, styles.placeholder]} />
         )}
         <View style={styles.textContainer}>
-          {displayName && <Text style={styles.name}>{displayName}</Text>}
+          {name && <Text style={styles.name}>{name}</Text>}
           {username && <Text style={styles.username}>@{username}</Text>}
         </View>
         {user && user.id !== userId && (

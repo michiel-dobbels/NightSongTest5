@@ -54,7 +54,7 @@ interface Reply {
 
   profiles?: {
     username: string | null;
-    display_name: string | null;
+    name: string | null;
     image_url?: string | null;
     banner_url?: string | null;
   } | null;
@@ -72,7 +72,7 @@ interface Post {
 
   profiles?: {
     username: string | null;
-    display_name: string | null;
+    name: string | null;
     image_url?: string | null;
     banner_url?: string | null;
   } | null;
@@ -290,7 +290,7 @@ export default function ReplyDetailScreen() {
     const { data, error } = await supabase
       .from('replies')
       .select(
-        'id, post_id, parent_id, user_id, content, image_url, created_at, reply_count, like_count, username, profiles(username, display_name, image_url, banner_url)'
+        'id, post_id, parent_id, user_id, content, image_url, created_at, reply_count, like_count, username, profiles(username, name, image_url, banner_url)'
       )
 
 
@@ -528,11 +528,11 @@ export default function ReplyDetailScreen() {
       image_url: replyImage ?? undefined,
       created_at: new Date().toISOString(),
       reply_count: 0,
-      username: profile.display_name || profile.username,
+      username: profile.name || profile.username,
       like_count: 0,
       profiles: {
         username: profile.username,
-        display_name: profile.display_name,
+        name: profile.name,
         image_url: profileImageUri,
         banner_url: bannerImageUri,
       },
@@ -572,7 +572,7 @@ export default function ReplyDetailScreen() {
           user_id: user.id,
           content: replyText,
           image_url: replyImage,
-          username: profile.display_name || profile.username,
+          username: profile.name || profile.username,
         },
       ])
       .select()
@@ -628,11 +628,10 @@ export default function ReplyDetailScreen() {
   };
 
   const name =
-    parent.profiles?.display_name || parent.profiles?.username || parent.username;
+    parent.profiles?.name || parent.profiles?.username || parent.username;
   const parentUserName = parent.profiles?.username || parent.username;
   const originalName = originalPost
-    ?
-        originalPost.profiles?.display_name ||
+    ? originalPost.profiles?.name ||
         originalPost.profiles?.username ||
         originalPost.username
     : undefined;
@@ -673,8 +672,8 @@ export default function ReplyDetailScreen() {
                             avatarUrl: originalPost.profiles?.image_url,
                             bannerUrl: originalPost.profiles?.banner_url,
 
-                            displayName: originalName,
-                            userName: originalUserName,
+                            name: originalName,
+                            username: originalUserName,
                           })
                     }
                   >
@@ -727,7 +726,7 @@ export default function ReplyDetailScreen() {
             )}
               {ancestors.map(a => {
                 const ancestorName =
-                  a.profiles?.display_name || a.profiles?.username || a.username;
+                  a.profiles?.name || a.profiles?.username || a.username;
                 const ancestorUserName = a.profiles?.username || a.username;
                 const isMe = user?.id === a.user_id;
                 const avatarUri = isMe ? profileImageUri : a.profiles?.image_url || undefined;
@@ -754,8 +753,8 @@ export default function ReplyDetailScreen() {
                               avatarUrl: avatarUri,
                               bannerUrl: a.profiles?.banner_url,
 
-                              displayName: ancestorName,
-                              userName: ancestorUserName,
+                              name: ancestorName,
+                              username: ancestorUserName,
                             })
                       }
                     >
@@ -827,8 +826,8 @@ export default function ReplyDetailScreen() {
                           avatarUrl: parent.profiles?.image_url,
                           bannerUrl: parent.profiles?.banner_url,
 
-                          displayName: name,
-                          userName: parentUserName,
+                          name,
+                          username: parentUserName,
                         })
                   }
                 >
@@ -885,7 +884,7 @@ export default function ReplyDetailScreen() {
         keyExtractor={item => item.id}
 
         renderItem={({ item }) => {
-          const childName = item.profiles?.display_name || item.profiles?.username || item.username;
+          const childName = item.profiles?.name || item.profiles?.username || item.username;
           const childUserName = item.profiles?.username || item.username;
           const isMe = user?.id === item.user_id;
           const avatarUri = isMe ? profileImageUri : item.profiles?.image_url || undefined;
@@ -919,8 +918,8 @@ export default function ReplyDetailScreen() {
                             avatarUrl: avatarUri,
                             bannerUrl: item.profiles?.banner_url,
 
-                            displayName: childName,
-                            userName: childUserName,
+                            name: childName,
+                            username: childUserName,
                           })
                     }
                   >

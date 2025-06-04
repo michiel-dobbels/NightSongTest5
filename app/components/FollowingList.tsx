@@ -4,7 +4,8 @@ import { colors } from '../styles/colors';
 
 export interface FollowingUser {
   username: string | null;
-  full_name: string | null;
+  name: string | null;
+
   avatar_url: string | null;
 }
 
@@ -21,7 +22,8 @@ export default function FollowingList({ users }: FollowingListProps) {
         <View style={[styles.avatar, styles.placeholder]} />
       )}
       <View>
-        {item.full_name && <Text style={styles.fullName}>{item.full_name}</Text>}
+        {item.name && <Text style={styles.fullName}>{item.name}</Text>}
+
         {item.username && (
           <Text style={styles.username}>@{item.username}</Text>
         )}

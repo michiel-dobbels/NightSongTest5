@@ -52,7 +52,7 @@ interface Post {
   like_count?: number;
   profiles?: {
     username: string | null;
-    display_name: string | null;
+    name: string | null;
     image_url?: string | null;
     banner_url?: string | null;
   } | null;
@@ -72,7 +72,7 @@ interface Reply {
   like_count?: number;
   profiles?: {
     username: string | null;
-    display_name: string | null;
+    name: string | null;
     image_url?: string | null;
     banner_url?: string | null;
   } | null;
@@ -293,7 +293,7 @@ export default function PostDetailScreen() {
     const { data, error } = await supabase
       .from('replies')
       .select(
-        'id, post_id, parent_id, user_id, content, image_url, created_at, reply_count, like_count, username, profiles(username, display_name, image_url, banner_url)'
+        'id, post_id, parent_id, user_id, content, image_url, created_at, reply_count, like_count, username, profiles(username, name, image_url, banner_url)'
       )
 
 
@@ -488,12 +488,12 @@ export default function PostDetailScreen() {
       content: replyText,
       image_url: replyImage ?? undefined,
       created_at: new Date().toISOString(),
-      username: profile.display_name || profile.username,
+      username: profile.name || profile.username,
       reply_count: 0,
       like_count: 0,
       profiles: {
         username: profile.username,
-        display_name: profile.display_name,
+        name: profile.name,
         image_url: profileImageUri,
         banner_url: bannerImageUri,
       },
@@ -534,7 +534,7 @@ export default function PostDetailScreen() {
             user_id: user.id,
             content: replyText,
             image_url: replyImage,
-            username: profile.display_name || profile.username,
+            username: profile.name || profile.username,
           },
         ])
         .select()
@@ -587,7 +587,7 @@ export default function PostDetailScreen() {
     }
   };
 
-  const displayName = post.profiles?.display_name || post.profiles?.username || post.username;
+  const displayName = post.profiles?.name || post.profiles?.username || post.username;
   const userName = post.profiles?.username || post.username;
 
   return (
@@ -620,8 +620,8 @@ export default function PostDetailScreen() {
                         avatarUrl: post.profiles?.image_url,
                         bannerUrl: post.profiles?.banner_url,
 
-                        displayName,
-                        userName,
+                        name: displayName,
+                        username: userName,
                       })
                 }
               >
@@ -676,7 +676,7 @@ export default function PostDetailScreen() {
         data={replies}
         keyExtractor={item => item.id}
           renderItem={({ item }) => {
-          const name = item.profiles?.display_name || item.profiles?.username || item.username;
+          const name = item.profiles?.name || item.profiles?.username || item.username;
           const replyUserName = item.profiles?.username || item.username;
           const isMe = user?.id === item.user_id;
           const avatarUri = isMe ? profileImageUri : item.profiles?.image_url || undefined;
@@ -710,8 +710,8 @@ export default function PostDetailScreen() {
                             avatarUrl: avatarUri,
                             bannerUrl: item.profiles?.banner_url,
 
-                            displayName: name,
-                            userName: replyUserName,
+                            name,
+                            username: replyUserName,
                           })
                     }
                   >

@@ -24,8 +24,8 @@ export function AuthProvider({ children }) {
     const defaultUsername =
       authUser.user_metadata?.username ||
       (authUser.email ? authUser.email.split('@')[0] : 'anonymous');
-    const defaultDisplayName =
-      authUser.user_metadata?.display_name ||
+    const defaultName =
+      authUser.user_metadata?.name ||
       defaultUsername;
 
 
@@ -37,13 +37,13 @@ export function AuthProvider({ children }) {
         {
           id: authUser.id,
           username: defaultUsername,
-          display_name: defaultDisplayName,
+          name: defaultName,
         },
         { onConflict: 'id' }
       );
 
     if (error?.code === 'PGRST204') {
-      // Retry without the display_name column if the schema cache doesn't know it
+      // Retry without the name column if the schema cache doesn't know it
       const retry = await supabase
         .from('profiles')
         .upsert(
@@ -59,7 +59,7 @@ export function AuthProvider({ children }) {
     const profileData = {
       id: authUser.id,
       username: defaultUsername,
-      display_name: defaultDisplayName,
+      name: defaultName,
       email: authUser.email,
     };
 
@@ -135,8 +135,8 @@ export function AuthProvider({ children }) {
   }
 
   // 🔐 Sign up
-  const signUp = async (email, password, username, displayName) => {
-    if (!username || !displayName) {
+  const signUp = async (email, password, username, name) => {
+    if (!username || !name) {
       return { error: { message: 'Username and name are required' } };
 
     }
@@ -144,7 +144,7 @@ export function AuthProvider({ children }) {
 
     const { user: newUser, session, error } = await supabase.auth.signUp(
       { email, password },
-      { data: { username, display_name: displayName } }
+      { data: { username, name } }
 
     );
 
@@ -256,8 +256,7 @@ export function AuthProvider({ children }) {
         ...data,
         email: authUser?.email,
         username: data.username || meta.username || authUser?.email?.split('@')[0],
-        display_name:
-          data.display_name || meta.display_name || data.username || meta.username,
+        name: data.name || meta.name || data.username || meta.username,
       };
       setProfile(profileData);
       // Restore the fetched profile image URL locally without touching the database

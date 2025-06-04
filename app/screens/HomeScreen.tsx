@@ -37,7 +37,7 @@ type Post = {
   like_count?: number;
   profiles?: {
     username: string | null;
-    display_name: string | null;
+    name: string | null;
     image_url?: string | null;
     banner_url?: string | null;
   } | null;
@@ -160,7 +160,7 @@ const HomeScreen = forwardRef<HomeScreenRef, HomeScreenProps>(
     const { data, error } = await supabase
       .from('posts')
       .select(
-        'id, content, image_url, user_id, created_at, reply_count, like_count, profiles(username, display_name, image_url, banner_url)',
+        'id, content, image_url, user_id, created_at, reply_count, like_count, profiles(username, name, image_url, banner_url)',
       )
       .order('created_at', { ascending: false })
       .range(0, PAGE_SIZE - 1);
@@ -214,14 +214,14 @@ const HomeScreen = forwardRef<HomeScreenRef, HomeScreenProps>(
       id: `temp-${Date.now()}`,
       content: text,
       image_url: imageUri,
-      username: profile.display_name || profile.username,
+      username: profile.name || profile.username,
       user_id: user.id,
       created_at: new Date().toISOString(),
       reply_count: 0,
       like_count: 0,
       profiles: {
         username: profile.username,
-        display_name: profile.display_name,
+        name: profile.name,
         image_url: profileImageUri,
         banner_url: bannerImageUri,
       },
@@ -255,7 +255,7 @@ const HomeScreen = forwardRef<HomeScreenRef, HomeScreenProps>(
         {
           content: text,
           user_id: user.id,
-          username: profile.display_name || profile.username,
+          username: profile.name || profile.username,
           image_url: imageUri,
         },
       ])
@@ -445,9 +445,7 @@ const HomeScreen = forwardRef<HomeScreenRef, HomeScreenProps>(
         
         renderItem={({ item }) => {
           const displayName =
-            item.profiles?.display_name ||
-            item.profiles?.username ||
-            item.username;
+            item.profiles?.name || item.profiles?.username || item.username;
           const userName = item.profiles?.username || item.username;
           const isMe = user?.id === item.user_id;
           const avatarUri = isMe ? profileImageUri : item.profiles?.image_url || undefined;
@@ -474,8 +472,8 @@ const HomeScreen = forwardRef<HomeScreenRef, HomeScreenProps>(
                             avatarUrl: avatarUri,
                             bannerUrl: item.profiles?.banner_url,
 
-                            displayName,
-                            userName,
+                            name: displayName,
+                            username: userName,
                           })
                     }
                   >
