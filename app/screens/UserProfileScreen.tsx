@@ -1,6 +1,7 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { View, Text, StyleSheet, Image, Button, Dimensions, ActivityIndicator, FlatList } from 'react-native';
-import { useRoute, useNavigation } from '@react-navigation/native';
+import { useRoute, useNavigation, useFocusEffect } from '@react-navigation/native';
+
 import { supabase } from '../../lib/supabase';
 import { colors } from '../styles/colors';
 import { useFollowCounts } from '../hooks/useFollowCounts';
@@ -45,71 +46,76 @@ export default function UserProfileScreen() {
   const username = profile?.username ?? initialUsername ?? null;
   const { followers, following, refresh } = useFollowCounts(userId);
 
+  const fetchProfile = useCallback(async () => {
+    setLoading(true);
+    setNotFound(false);
+    const { data } = await supabase
+      .from('profiles')
+      .select('id, username, display_name, image_url, banner_url')
+      .eq('id', userId)
+      .single();
+    if (data) {
+      setProfile(data as Profile);
+    } else {
+      setNotFound(true);
+    }
+    setLoading(false);
+  }, [userId]);
+
 
   useEffect(() => {
-    const fetchProfile = async () => {
-      setLoading(true);
-      setNotFound(false);
-      const { data } = await supabase
-        .from('profiles')
-        .select('id, username, display_name, image_url, banner_url')
-        .eq('id', userId)
-        .single();
-      if (data) {
-        setProfile(data as Profile);
-      } else {
-        setNotFound(true);
-      }
-      setLoading(false);
-    };
     fetchProfile();
+  }, [fetchProfile]);
+
+  const fetchFollowing = useCallback(async () => {
+    const { data: followData, error: followError } = await supabase
+      .from('follows')
+      .select('following_id')
+      .eq('follower_id', userId);
+
+    if (followError) {
+      console.error('Failed to fetch following list', followError);
+      return;
+    }
+
+    const ids = (followData ?? []).map(f => f.following_id);
+    if (ids.length === 0) {
+      setFollowingProfiles([]);
+      return;
+    }
+
+    const { data: profileData, error: profileError } = await supabase
+      .from('profiles')
+      .select('id, username, image_url')
+      .in('id', ids);
+
+    if (profileError) {
+      console.error('Failed to fetch profiles', profileError);
+      return;
+    }
+
+    if (profileData) {
+      const formatted = profileData.map(p => ({
+        id: p.id,
+        username: p.username,
+        avatar_url: p.image_url,
+      }));
+      setFollowingProfiles(formatted);
+    }
   }, [userId]);
 
   useEffect(() => {
-    let isMounted = true;
-    const fetchFollowing = async () => {
-      const { data: followData, error: followError } = await supabase
-        .from('follows')
-        .select('following_id')
-        .eq('follower_id', userId);
-
-      if (followError) {
-        console.error('Failed to fetch following list', followError);
-        return;
-      }
-
-      const ids = (followData ?? []).map(f => f.following_id);
-      if (ids.length === 0) {
-        if (isMounted) setFollowingProfiles([]);
-        return;
-      }
-
-      const { data: profileData, error: profileError } = await supabase
-        .from('profiles')
-        .select('id, username, image_url')
-        .in('id', ids);
-
-      if (profileError) {
-        console.error('Failed to fetch profiles', profileError);
-        return;
-      }
-
-      if (isMounted && profileData) {
-        const formatted = profileData.map(p => ({
-          id: p.id,
-          username: p.username,
-          avatar_url: p.image_url,
-        }));
-        setFollowingProfiles(formatted);
-      }
-    };
-
     fetchFollowing();
+  }, [fetchFollowing]);
 
-    return () => {
-      isMounted = false;
-    };
-  }, [userId]);
+  useFocusEffect(
+    useCallback(() => {
+      fetchProfile();
+      refresh();
+      fetchFollowing();
+    }, [fetchProfile, fetchFollowing, refresh]),
+  );
+
 
   if (loading) {
     return (

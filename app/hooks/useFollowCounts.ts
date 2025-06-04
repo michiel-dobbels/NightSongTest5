@@ -35,7 +35,6 @@ export function useFollowCounts(userId: string | null) {
     }
   };
 
-
   useEffect(() => {
     if (!userId) {
       setFollowers(null);
