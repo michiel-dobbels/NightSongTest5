@@ -93,8 +93,26 @@ export default function ProfileScreen() {
         </View>
       </View>
       <View style={styles.statsRow}>
-        <Text style={styles.statsText}>{followers ?? 0} Followers</Text>
-        <Text style={styles.statsText}>{following ?? 0} Following</Text>
+        <TouchableOpacity
+          onPress={() =>
+            navigation.navigate('FollowList', {
+              userId: profile.id,
+              mode: 'followers',
+            })
+          }
+        >
+          <Text style={styles.statsText}>{followers ?? 0} Followers</Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          onPress={() =>
+            navigation.navigate('FollowList', {
+              userId: profile.id,
+              mode: 'following',
+            })
+          }
+        >
+          <Text style={styles.statsText}>{following ?? 0} Following</Text>
+        </TouchableOpacity>
       </View>
       <TouchableOpacity onPress={pickImage} style={styles.uploadLink}>
         <Text style={styles.uploadText}>Upload Profile Picture</Text>
