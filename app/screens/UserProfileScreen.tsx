@@ -50,13 +50,30 @@ export default function UserProfileScreen() {
     const fetchProfile = async () => {
       setLoading(true);
       setNotFound(false);
-      const { data } = await supabase
+      let { data, error } = await supabase
         .from('profiles')
         .select('id, username, display_name, image_url, banner_url')
         .eq('id', userId)
         .single();
+
+      if (error?.code === '42703') {
+        const retry = await supabase
+          .from('profiles')
+          .select('id, username, full_name, avatar_url, banner_url')
+          .eq('id', userId)
+          .single();
+        data = retry.data as any;
+        error = retry.error;
+      }
+
       if (data) {
-        setProfile(data as Profile);
+        setProfile({
+          id: data.id,
+          username: data.username,
+          display_name: (data as any).display_name ?? (data as any).full_name ?? null,
+          image_url: (data as any).image_url ?? (data as any).avatar_url ?? null,
+          banner_url: data.banner_url,
+        });
       } else {
         setNotFound(true);
       }
@@ -84,10 +101,19 @@ export default function UserProfileScreen() {
         return;
       }
 
-      const { data: profileData, error: profileError } = await supabase
+      let { data: profileData, error: profileError } = await supabase
         .from('profiles')
         .select('id, username, image_url')
         .in('id', ids);
+
+      if (profileError?.code === '42703') {
+        const retry = await supabase
+          .from('profiles')
+          .select('id, username, avatar_url')
+          .in('id', ids);
+        profileData = retry.data;
+        profileError = retry.error;
+      }
 
       if (profileError) {
         console.error('Failed to fetch profiles', profileError);
@@ -98,7 +124,7 @@ export default function UserProfileScreen() {
         const formatted = profileData.map(p => ({
           id: p.id,
           username: p.username,
-          avatar_url: p.image_url,
+          avatar_url: (p as any).image_url ?? (p as any).avatar_url,
         }));
         setFollowingProfiles(formatted);
       }
