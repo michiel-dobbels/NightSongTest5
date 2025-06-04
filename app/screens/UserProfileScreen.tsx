@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, Image, Button, Dimensions, ActivityIndicator, FlatList } from 'react-native';
+import { View, Text, StyleSheet, Image, Button, Dimensions, ActivityIndicator, FlatList, TouchableOpacity } from 'react-native';
 import { useRoute, useNavigation } from '@react-navigation/native';
 import { supabase } from '../../lib/supabase';
 import { colors } from '../styles/colors';
@@ -139,10 +139,28 @@ export default function UserProfileScreen() {
             <FollowButton targetUserId={userId} onToggle={refresh} />
           </View>
         )}
-
         <View style={styles.statsRow}>
-          <Text style={styles.statsText}>{followers ?? 0} Followers</Text>
-          <Text style={styles.statsText}>{following ?? 0} Following</Text>
+          <TouchableOpacity
+            onPress={() =>
+              navigation.navigate('FollowList', {
+                userId,
+                mode: 'followers',
+              })
+            }
+          >
+            <Text style={styles.statsText}>{followers ?? 0} Followers</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            onPress={() =>
+              navigation.navigate('FollowList', {
+                userId,
+                mode: 'following',
+              })
+            }
+          >
+            <Text style={styles.statsText}>{following ?? 0} Following</Text>
+          </TouchableOpacity>
+
         </View>
         <ActivityIndicator color="white" style={{ marginTop: 10 }} />
       </View>
@@ -177,10 +195,28 @@ export default function UserProfileScreen() {
             <FollowButton targetUserId={userId} onToggle={refresh} />
           </View>
         )}
-
         <View style={styles.statsRow}>
-          <Text style={styles.statsText}>{followers ?? 0} Followers</Text>
-          <Text style={styles.statsText}>{following ?? 0} Following</Text>
+          <TouchableOpacity
+            onPress={() =>
+              navigation.navigate('FollowList', {
+                userId,
+                mode: 'followers',
+              })
+            }
+          >
+            <Text style={styles.statsText}>{followers ?? 0} Followers</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            onPress={() =>
+              navigation.navigate('FollowList', {
+                userId,
+                mode: 'following',
+              })
+            }
+          >
+            <Text style={styles.statsText}>{following ?? 0} Following</Text>
+          </TouchableOpacity>
+
         </View>
         <Text style={{ color: 'white', marginTop: 10 }}>Profile not found.</Text>
         <View style={styles.backButton}>
@@ -225,8 +261,26 @@ export default function UserProfileScreen() {
         )}
       </View>
       <View style={styles.statsRow}>
-        <Text style={styles.statsText}>{followers ?? 0} Followers</Text>
-        <Text style={styles.statsText}>{following ?? 0} Following</Text>
+        <TouchableOpacity
+          onPress={() =>
+            navigation.navigate('FollowList', {
+              userId,
+              mode: 'followers',
+            })
+          }
+        >
+          <Text style={styles.statsText}>{followers ?? 0} Followers</Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          onPress={() =>
+            navigation.navigate('FollowList', {
+              userId,
+              mode: 'following',
+            })
+          }
+        >
+          <Text style={styles.statsText}>{following ?? 0} Following</Text>
+        </TouchableOpacity>
       </View>
 
       <Text style={styles.sectionTitle}>Following</Text>
