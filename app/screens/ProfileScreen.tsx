@@ -14,12 +14,12 @@ import * as ImagePicker from 'expo-image-picker';
 import * as FileSystem from 'expo-file-system';
 import { useNavigation } from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { Ionicons } from '@expo/vector-icons';
 
 import { useAuth } from '../../AuthContext';
 import { useFollowCounts } from '../hooks/useFollowCounts';
 import { colors } from '../styles/colors';
 import { supabase } from '../../lib/supabase';
+import PostCard from '../components/PostCard';
 
 export default function ProfileScreen() {
   const navigation = useNavigation<any>();
@@ -213,110 +213,41 @@ export default function ProfileScreen() {
       </TouchableOpacity>
 
       {latestPost && (
-        <TouchableOpacity
+        <PostCard
+          post={latestPost}
+          replyCount={replyCounts[latestPost.id] || 0}
+          likeCount={likeCounts[latestPost.id] || 0}
+          liked={!!likedPosts[latestPost.id]}
+          avatarUri={
+            latestPost.user_id === profile.id
+              ? profileImageUri
+              : latestPost.profiles?.image_url || undefined
+          }
           onPress={() => navigation.navigate('PostDetail', { post: latestPost })}
-        >
-          <View style={styles.postContainer}>
-            <View style={styles.postRow}>
-              <TouchableOpacity
-                onPress={() =>
-                  latestPost.user_id === profile.id
-                    ? navigation.navigate('Profile')
-                    : navigation.navigate('UserProfile', {
-                        userId: latestPost.user_id,
-                        avatarUrl:
-                          latestPost.user_id === profile.id
-                            ? profileImageUri
-                            : latestPost.profiles?.image_url || undefined,
-                        bannerUrl:
-                          latestPost.user_id === profile.id
-                            ? undefined
-                            : latestPost.profiles?.banner_url || undefined,
-                        name:
-                          latestPost.profiles?.name ||
-                          latestPost.profiles?.username ||
-                          latestPost.username,
-                        username:
-                          latestPost.profiles?.username || latestPost.username,
-                      })
-                }
-              >
-                {latestPost.user_id === profile.id ? (
-                  profileImageUri ? (
-                    <Image
-                      source={{ uri: profileImageUri }}
-                      style={styles.postAvatar}
-                    />
-                  ) : (
-                    <View style={[styles.postAvatar, styles.postPlaceholder]} />
-                  )
-                ) : latestPost.profiles?.image_url ? (
-                  <Image
-                    source={{ uri: latestPost.profiles.image_url }}
-                    style={styles.postAvatar}
-                  />
-                ) : (
-                  <View style={[styles.postAvatar, styles.postPlaceholder]} />
-                )}
-              </TouchableOpacity>
-              <View style={{ flex: 1 }}>
-                <View style={styles.postHeaderRow}>
-                  <Text style={styles.postUsername}>
-                    {latestPost.profiles?.name ||
-                      latestPost.profiles?.username ||
-                      latestPost.username}{' '}
-                    @{
-                      latestPost.profiles?.username || latestPost.username || ''
-                    }
-                  </Text>
-                  <Text style={[styles.postTimestamp, styles.timestampMargin]}>
-                    {timeAgo(latestPost.created_at)}
-                  </Text>
-                </View>
-                <Text style={styles.postContent}>{latestPost.content}</Text>
-                {latestPost.image_url && (
-                  <Image
-                    source={{ uri: latestPost.image_url }}
-                    style={styles.postImage}
-                  />
-                )}
-              </View>
-            </View>
-            <TouchableOpacity
-              style={styles.replyCountContainer}
-              onPress={() => navigation.navigate('PostDetail', { post: latestPost })}
-            >
-              <Ionicons
-                name="chatbubble-outline"
-                size={18}
-                color="#66538f"
-                style={{ marginRight: 2 }}
-              />
-              <Text style={styles.replyCountLarge}>
-                {replyCounts[latestPost.id] || 0}
-              </Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={styles.likeContainer}
-              onPress={() => toggleLike(latestPost.id)}
-            >
-              <Ionicons
-                name={likedPosts[latestPost.id] ? 'heart' : 'heart-outline'}
-                size={18}
-                color="red"
-                style={{ marginRight: 2 }}
-              />
-              <Text
-                style={[
-                  styles.likeCountLarge,
-                  likedPosts[latestPost.id] && styles.likedLikeCount,
-                ]}
-              >
-                {likeCounts[latestPost.id] || 0}
-              </Text>
-            </TouchableOpacity>
-          </View>
-        </TouchableOpacity>
+          onReplyPress={() => navigation.navigate('PostDetail', { post: latestPost })}
+          onToggleLike={() => toggleLike(latestPost.id)}
+          onUserPress={() =>
+            latestPost.user_id === profile.id
+              ? navigation.navigate('Profile')
+              : navigation.navigate('UserProfile', {
+                  userId: latestPost.user_id,
+                  avatarUrl:
+                    latestPost.user_id === profile.id
+                      ? profileImageUri
+                      : latestPost.profiles?.image_url || undefined,
+                  bannerUrl:
+                    latestPost.user_id === profile.id
+                      ? undefined
+                      : latestPost.profiles?.banner_url || undefined,
+                  name:
+                    latestPost.profiles?.name ||
+                    latestPost.profiles?.username ||
+                    latestPost.username,
+                  username:
+                    latestPost.profiles?.username || latestPost.username,
+                })
+          }
+        />
       )}
     </View>
   );
@@ -373,48 +304,5 @@ const styles = StyleSheet.create({
   uploadText: { color: 'white' },
   statsRow: { flexDirection: 'row', marginLeft: 15, marginBottom: 20 },
   statsText: { color: 'white', marginRight: 15 },
-
-  postContainer: {
-    backgroundColor: '#ffffff10',
-    borderRadius: 0,
-    padding: 10,
-    paddingBottom: 30,
-    marginTop: 20,
-    borderBottomColor: 'gray',
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    position: 'relative',
-  },
-  postRow: { flexDirection: 'row', alignItems: 'flex-start' },
-  postAvatar: { width: 48, height: 48, borderRadius: 24, marginRight: 8 },
-  postPlaceholder: { backgroundColor: '#555' },
-  postHeaderRow: { flexDirection: 'row', alignItems: 'center' },
-  postUsername: { fontWeight: 'bold', color: 'white' },
-  postTimestamp: { fontSize: 10, color: 'gray' },
-  timestampMargin: { marginLeft: 6 },
-  postContent: { color: 'white' },
-  replyCountContainer: {
-    position: 'absolute',
-    bottom: 6,
-    left: 66,
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  replyCountLarge: { fontSize: 15, color: 'gray' },
-  likeCountLarge: { fontSize: 15, color: 'gray' },
-  likedLikeCount: { color: 'red' },
-  likeContainer: {
-    position: 'absolute',
-    bottom: 6,
-    left: '50%',
-    transform: [{ translateX: -6 }],
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  postImage: {
-    width: '100%',
-    height: 200,
-    borderRadius: 6,
-    marginTop: 8,
-  },
 
 });

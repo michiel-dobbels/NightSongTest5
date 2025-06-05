@@ -16,13 +16,13 @@ import {
 } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 import * as FileSystem from 'expo-file-system';
-import { Ionicons } from '@expo/vector-icons';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { useCallback } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../AuthContext';
 import { colors } from '../styles/colors';
+import PostCard from '../components/PostCard';
 
 const STORAGE_KEY = 'cached_posts';
 const COUNT_STORAGE_KEY = 'cached_reply_counts';
@@ -584,96 +584,33 @@ const HomeScreen = forwardRef<HomeScreenRef, HomeScreenProps>(
         keyExtractor={(item) => item.id}
         
         renderItem={({ item }) => {
-          const displayName =
-            item.profiles?.name || item.profiles?.username || item.username;
-          const userName = item.profiles?.username || item.username;
           const isMe = user?.id === item.user_id;
           const avatarUri = isMe ? profileImageUri : item.profiles?.image_url || undefined;
-          const bannerUrl = isMe ? undefined : item.profiles?.banner_url || undefined;
 
           return (
-            <TouchableOpacity onPress={() => navigation.navigate('PostDetail', { post: item })}>
-              <View style={styles.post}>
-                {isMe && (
-                  <TouchableOpacity
-                    onPress={() => confirmDeletePost(item.id)}
-                    style={styles.deleteButton}
-                  >
-                    <Text style={{ color: 'white' }}>X</Text>
-                  </TouchableOpacity>
-                )}
-                <View style={styles.row}>
-                  <TouchableOpacity
-                    onPress={() =>
-                      isMe
-                        ? navigation.navigate('Profile')
-                        : navigation.navigate('UserProfile', {
-                            userId: item.user_id,
-                            avatarUrl: avatarUri,
-                            bannerUrl: item.profiles?.banner_url,
-
-                            name: displayName,
-                            username: userName,
-                          })
-                    }
-                  >
-                    {avatarUri ? (
-                      <Image source={{ uri: avatarUri }} style={styles.avatar} />
-                    ) : (
-                      <View style={[styles.avatar, styles.placeholder]} />
-                    )}
-                  </TouchableOpacity>
-
-                  <View style={{ flex: 1 }}>
-                    <View style={styles.headerRow}>
-                      <Text style={styles.username}>
-                        {displayName} @{userName}
-                      </Text>
-                      <Text style={[styles.timestamp, styles.timestampMargin]}>
-                        {timeAgo(item.created_at)}
-                      </Text>
-                    </View>
-                    <Text style={styles.postContent}>{item.content}</Text>
-                    {item.image_url && (
-                      <Image source={{ uri: item.image_url }} style={styles.postImage} />
-                    )}
-                  </View>
-                </View>
-                <TouchableOpacity
-                  style={styles.replyCountContainer}
-                  onPress={() => openReplyModal(item.id)}
-                >
-                  <Ionicons
-                    name="chatbubble-outline"
-                    size={18}
-                    color="#66538f"
-                    style={{ marginRight: 2 }}
-                  />
-                  <Text style={styles.replyCountLarge}>{replyCounts[item.id] || 0}</Text>
-                </TouchableOpacity>
-
-                <TouchableOpacity
-                  style={styles.likeContainer}
-                  onPress={() => toggleLike(item.id)}
-                >
-                  <Ionicons
-                    name={likedPosts[item.id] ? 'heart' : 'heart-outline'}
-                    size={18}
-                    color="red"
-                    style={{ marginRight: 2 }}
-                  />
-                  <Text
-                    style={[
-                      styles.likeCountLarge,
-                      likedPosts[item.id] && styles.likedLikeCount,
-                    ]}
-                  >
-                    {likeCounts[item.id] || 0}
-                  </Text>
-                </TouchableOpacity>
-
-              </View>
-            </TouchableOpacity>
+            <PostCard
+              post={item}
+              replyCount={replyCounts[item.id] || 0}
+              likeCount={likeCounts[item.id] || 0}
+              liked={!!likedPosts[item.id]}
+              avatarUri={avatarUri}
+              showDelete={isMe}
+              onPress={() => navigation.navigate('PostDetail', { post: item })}
+              onDelete={() => confirmDeletePost(item.id)}
+              onReplyPress={() => openReplyModal(item.id)}
+              onToggleLike={() => toggleLike(item.id)}
+              onUserPress={() =>
+                isMe
+                  ? navigation.navigate('Profile')
+                  : navigation.navigate('UserProfile', {
+                      userId: item.user_id,
+                      avatarUrl: avatarUri,
+                      bannerUrl: item.profiles?.banner_url,
+                      name: item.profiles?.name || item.profiles?.username || item.username,
+                      username: item.profiles?.username || item.username,
+                    })
+              }
+            />
           );
         }}
       />
