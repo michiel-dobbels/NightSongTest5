@@ -9,10 +9,12 @@ import {
   TouchableOpacity,
   Dimensions,
   Alert,
+  FlatList,
 } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 import * as FileSystem from 'expo-file-system';
 import { useNavigation } from '@react-navigation/native';
+
 
 import { useAuth } from '../../AuthContext';
 import { useFollowCounts } from '../hooks/useFollowCounts';
@@ -114,6 +116,7 @@ export default function ProfileScreen() {
         .eq('user_id', profile.id)
         .order('created_at', { ascending: false })
         .limit(1);
+
 
       if (!error && data) {
         const list = data as Post[];
@@ -256,6 +259,7 @@ export default function ProfileScreen() {
           onUserPress={() => navigation.navigate('Profile')}
         />
       )}
+
     </View>
   );
 }
