@@ -677,6 +677,18 @@ const HomeScreen = forwardRef<HomeScreenRef, HomeScreenProps>(
           );
         }}
       />
+      {user && (
+        <View style={styles.textListContainer}>
+          <Text style={styles.postsHeader}>Posts</Text>
+          <FlatList
+            data={posts.filter(p => p.user_id === user.id)}
+            keyExtractor={(item) => item.id}
+            renderItem={({ item }) => (
+              <Text style={styles.postTextItem}>{item.content}</Text>
+            )}
+          />
+        </View>
+      )}
       <Modal visible={replyModalVisible} animationType="slide" transparent>
         <KeyboardAvoidingView
           behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
@@ -791,6 +803,19 @@ const styles = StyleSheet.create({
     height: 200,
     borderRadius: 6,
     marginTop: 8,
+  },
+  textListContainer: {
+    marginTop: 20,
+    paddingHorizontal: 16,
+  },
+  postsHeader: {
+    color: 'white',
+    fontSize: 18,
+    marginBottom: 10,
+  },
+  postTextItem: {
+    color: 'white',
+    marginBottom: 8,
   },
 
 });
