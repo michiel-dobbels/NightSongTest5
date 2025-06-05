@@ -240,6 +240,7 @@ const HomeScreen = forwardRef<HomeScreenRef, HomeScreenProps>(
       return counts;
     });
 
+
     setReplyText('');
     setReplyImage(null);
 
@@ -290,6 +291,7 @@ const HomeScreen = forwardRef<HomeScreenRef, HomeScreenProps>(
         // be visible, so just log the error instead of alerting.
         console.error('Reply failed', error.message);
       }
+
   };
 
 
@@ -610,6 +612,7 @@ const HomeScreen = forwardRef<HomeScreenRef, HomeScreenProps>(
               onToggleLike={() => toggleLike(item.id)}
               onDelete={isMe ? () => confirmDeletePost(item.id) : undefined}
             />
+
           );
         }}
       />
@@ -654,6 +657,7 @@ const styles = StyleSheet.create({
     borderRadius: 6,
     marginBottom: 10,
   },
+
   modalOverlay: {
     flex: 1,
     backgroundColor: 'rgba(0,0,0,0.5)',
