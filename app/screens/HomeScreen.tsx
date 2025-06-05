@@ -28,6 +28,7 @@ const STORAGE_KEY = 'cached_posts';
 const COUNT_STORAGE_KEY = 'cached_reply_counts';
 const LIKE_COUNT_KEY = 'cached_like_counts';
 const LIKED_KEY_PREFIX = 'cached_likes_';
+const REPLY_STORAGE_PREFIX = 'cached_replies_';
 const PAGE_SIZE = 10;
 
 
@@ -198,32 +199,97 @@ const HomeScreen = forwardRef<HomeScreenRef, HomeScreenProps>(
 
     setReplyModalVisible(false);
 
-    setReplyCounts(prev => {
-      const counts = { ...prev, [activePostId]: (prev[activePostId] || 0) + 1 };
-      AsyncStorage.setItem(COUNT_STORAGE_KEY, JSON.stringify(counts));
-      return counts;
-    });
-
-    const { error } = await supabase.from('replies').insert({
+    const newReply = {
+      id: `temp-${Date.now()}`,
       post_id: activePostId,
       parent_id: null,
       user_id: user.id,
       content: replyText,
-      image_url: replyImage,
+      image_url: replyImage ?? undefined,
+      created_at: new Date().toISOString(),
       username: profile.name || profile.username,
+      reply_count: 0,
+      like_count: 0,
+      profiles: {
+        username: profile.username,
+        name: profile.name,
+        image_url: profileImageUri,
+        banner_url: bannerImageUri,
+      },
+    } as const;
+
+    const storageKey = `${REPLY_STORAGE_PREFIX}${activePostId}`;
+    try {
+      const stored = await AsyncStorage.getItem(storageKey);
+      const cached = stored ? JSON.parse(stored) : [];
+      const updated = [newReply, ...cached];
+      await AsyncStorage.setItem(storageKey, JSON.stringify(updated));
+    } catch (e) {
+      console.error('Failed to cache reply', e);
+    }
+
+    setReplyCounts(prev => {
+      const counts = { ...prev, [activePostId]: (prev[activePostId] || 0) + 1, [newReply.id]: 0 };
+      AsyncStorage.setItem(COUNT_STORAGE_KEY, JSON.stringify(counts));
+      return counts;
     });
 
-    if (error) {
-      setReplyCounts(prev => {
-        const counts = { ...prev, [activePostId]: (prev[activePostId] || 1) - 1 };
-        AsyncStorage.setItem(COUNT_STORAGE_KEY, JSON.stringify(counts));
-        return counts;
-      });
-      Alert.alert('Reply failed', error.message);
-    }
+    setLikeCounts(prev => {
+      const counts = { ...prev, [newReply.id]: 0 };
+      AsyncStorage.setItem(LIKE_COUNT_KEY, JSON.stringify(counts));
+      return counts;
+    });
 
     setReplyText('');
     setReplyImage(null);
+
+    let { data, error } = await supabase
+      .from('replies')
+      .insert({
+        post_id: activePostId,
+        parent_id: null,
+        user_id: user.id,
+        content: replyText,
+        image_url: replyImage,
+        username: profile.name || profile.username,
+      })
+      .select()
+      .single();
+    if (error?.code === 'PGRST204') {
+      error = null;
+    }
+
+    if (!error && data) {
+      try {
+        const stored = await AsyncStorage.getItem(storageKey);
+        const cached = stored ? JSON.parse(stored) : [];
+        const updated = cached.map((r: any) =>
+          r.id === newReply.id ? { ...r, id: data.id, created_at: data.created_at } : r,
+        );
+        await AsyncStorage.setItem(storageKey, JSON.stringify(updated));
+      } catch (e) {
+        console.error('Failed to update cached reply', e);
+      }
+      setReplyCounts(prev => {
+        const temp = prev[newReply.id] ?? 0;
+        const { [newReply.id]: _omit, ...rest } = prev;
+        const counts = { ...rest, [data.id]: temp };
+        AsyncStorage.setItem(COUNT_STORAGE_KEY, JSON.stringify(counts));
+        return counts;
+      });
+      setLikeCounts(prev => {
+        const temp = prev[newReply.id] ?? 0;
+        const { [newReply.id]: _omit, ...rest } = prev;
+        const counts = { ...rest, [data.id]: temp };
+        AsyncStorage.setItem(LIKE_COUNT_KEY, JSON.stringify(counts));
+        return counts;
+      });
+      } else if (error) {
+        // Reply insertion sometimes fails if the post has not been
+        // assigned a real UUID yet. The optimistic reply will still
+        // be visible, so just log the error instead of alerting.
+        console.error('Reply failed', error.message);
+      }
   };
 
 
@@ -595,7 +661,14 @@ const HomeScreen = forwardRef<HomeScreenRef, HomeScreenProps>(
                     color="red"
                     style={{ marginRight: 2 }}
                   />
-                  <Text style={styles.likeCountLarge}>{likeCounts[item.id] || 0}</Text>
+                  <Text
+                    style={[
+                      styles.likeCountLarge,
+                      likedPosts[item.id] && styles.likedLikeCount,
+                    ]}
+                  >
+                    {likeCounts[item.id] || 0}
+                  </Text>
                 </TouchableOpacity>
 
               </View>
@@ -682,6 +755,7 @@ const styles = StyleSheet.create({
   replyCount: { fontSize: 10, color: 'gray' },
   replyCountLarge: { fontSize: 15, color: 'gray' },
   likeCountLarge: { fontSize: 15, color: 'gray' },
+  likedLikeCount: { color: 'red' },
 
   likeContainer: {
     position: 'absolute',
