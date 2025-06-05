@@ -15,6 +15,7 @@ import * as ImagePicker from 'expo-image-picker';
 import * as FileSystem from 'expo-file-system';
 import { useNavigation } from '@react-navigation/native';
 
+
 import { useAuth } from '../../AuthContext';
 import { useFollowCounts } from '../hooks/useFollowCounts';
 import { colors } from '../styles/colors';
@@ -261,6 +262,7 @@ export default function ProfileScreen() {
         )}
         style={{ marginTop: 20 }}
       />
+
     </View>
   );
 }
