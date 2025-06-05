@@ -662,7 +662,14 @@ const HomeScreen = forwardRef<HomeScreenRef, HomeScreenProps>(
                     color="red"
                     style={{ marginRight: 2 }}
                   />
-                  <Text style={styles.likeCountLarge}>{likeCounts[item.id] || 0}</Text>
+                  <Text
+                    style={[
+                      styles.likeCountLarge,
+                      likedPosts[item.id] && styles.likedLikeCount,
+                    ]}
+                  >
+                    {likeCounts[item.id] || 0}
+                  </Text>
                 </TouchableOpacity>
 
               </View>
@@ -749,6 +756,7 @@ const styles = StyleSheet.create({
   replyCount: { fontSize: 10, color: 'gray' },
   replyCountLarge: { fontSize: 15, color: 'gray' },
   likeCountLarge: { fontSize: 15, color: 'gray' },
+  likedLikeCount: { color: 'red' },
 
   likeContainer: {
     position: 'absolute',
