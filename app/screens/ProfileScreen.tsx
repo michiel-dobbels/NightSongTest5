@@ -114,7 +114,9 @@ export default function ProfileScreen() {
           'id, content, image_url, user_id, created_at, reply_count, like_count, profiles(username, name, image_url, banner_url)'
         )
         .eq('user_id', profile.id)
-        .order('created_at', { ascending: false });
+        .order('created_at', { ascending: false })
+        .limit(1);
+
 
       if (!error && data) {
         const list = data as Post[];
@@ -242,26 +244,21 @@ export default function ProfileScreen() {
         <Text style={styles.uploadText}>Upload Banner</Text>
       </TouchableOpacity>
 
-      <FlatList
-        data={posts}
-        keyExtractor={item => item.id}
-        renderItem={({ item }) => (
-          <PostCard
-            post={item}
-            replyCount={replyCounts[item.id] || 0}
-            likeCount={likeCounts[item.id] || 0}
-            liked={!!likedPosts[item.id]}
-            avatarUri={profileImageUri}
-            showDelete={item.user_id === profile.id}
-            onPress={() => navigation.navigate('PostDetail', { post: item })}
-            onDelete={() => confirmDeletePost(item.id)}
-            onReplyPress={() => navigation.navigate('PostDetail', { post: item })}
-            onToggleLike={() => toggleLike(item.id)}
-            onUserPress={() => navigation.navigate('Profile')}
-          />
-        )}
-        style={{ marginTop: 20 }}
-      />
+      {posts[0] && (
+        <PostCard
+          post={posts[0]}
+          replyCount={replyCounts[posts[0].id] || 0}
+          likeCount={likeCounts[posts[0].id] || 0}
+          liked={!!likedPosts[posts[0].id]}
+          avatarUri={profileImageUri}
+          showDelete={posts[0].user_id === profile.id}
+          onPress={() => navigation.navigate('PostDetail', { post: posts[0] })}
+          onDelete={() => confirmDeletePost(posts[0].id)}
+          onReplyPress={() => navigation.navigate('PostDetail', { post: posts[0] })}
+          onToggleLike={() => toggleLike(posts[0].id)}
+          onUserPress={() => navigation.navigate('Profile')}
+        />
+      )}
 
     </View>
   );
