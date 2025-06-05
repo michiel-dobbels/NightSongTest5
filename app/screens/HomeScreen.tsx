@@ -582,6 +582,7 @@ const styles = StyleSheet.create({
   replyCount: { fontSize: 10, color: 'gray' },
   replyCountLarge: { fontSize: 15, color: 'gray' },
   likeCountLarge: { fontSize: 15, color: 'gray' },
+
   likeContainer: {
     position: 'absolute',
     bottom: 6,
