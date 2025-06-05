@@ -290,6 +290,7 @@ const HomeScreen = forwardRef<HomeScreenRef, HomeScreenProps>(
         // be visible, so just log the error instead of alerting.
         console.error('Reply failed', error.message);
       }
+
   };
 
 
