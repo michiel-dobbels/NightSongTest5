@@ -667,7 +667,14 @@ export default function PostDetailScreen() {
                 color="red"
                 style={{ marginRight: 2 }}
               />
-              <Text style={styles.likeCountLarge}>{likeCounts[post.id] || 0}</Text>
+              <Text
+                style={[
+                  styles.likeCountLarge,
+                  likedItems[post.id] && styles.likedLikeCount,
+                ]}
+              >
+                {likeCounts[post.id] || 0}
+              </Text>
             </TouchableOpacity>
 
           </View>
@@ -757,7 +764,14 @@ export default function PostDetailScreen() {
                       color="red"
                       style={{ marginRight: 2 }}
                     />
-                    <Text style={styles.likeCountLarge}>{likeCounts[item.id] || 0}</Text>
+                    <Text
+                      style={[
+                        styles.likeCountLarge,
+                        likedItems[item.id] && styles.likedLikeCount,
+                      ]}
+                    >
+                      {likeCounts[item.id] || 0}
+                    </Text>
                   </TouchableOpacity>
 
                 </View>
@@ -843,6 +857,7 @@ const styles = StyleSheet.create({
   replyCount: { fontSize: 10, color: 'gray' },
   replyCountLarge: { fontSize: 15, color: 'gray' },
   likeCountLarge: { fontSize: 15, color: 'gray' },
+  likedLikeCount: { color: 'red' },
   likeContainer: {
     position: 'absolute',
     bottom: 6,

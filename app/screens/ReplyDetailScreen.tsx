@@ -719,7 +719,14 @@ export default function ReplyDetailScreen() {
                     color="red"
                     style={{ marginRight: 2 }}
                   />
-                  <Text style={styles.likeCountLarge}>{likeCounts[originalPost.id] || 0}</Text>
+                  <Text
+                    style={[
+                      styles.likeCountLarge,
+                      likedItems[originalPost.id] && styles.likedLikeCount,
+                    ]}
+                  >
+                    {likeCounts[originalPost.id] || 0}
+                  </Text>
                 </TouchableOpacity>
 
               </View>
@@ -800,7 +807,14 @@ export default function ReplyDetailScreen() {
                     color="red"
                     style={{ marginRight: 2 }}
                   />
-                  <Text style={styles.likeCountLarge}>{likeCounts[a.id] || 0}</Text>
+                  <Text
+                    style={[
+                      styles.likeCountLarge,
+                      likedItems[a.id] && styles.likedLikeCount,
+                    ]}
+                  >
+                    {likeCounts[a.id] || 0}
+                  </Text>
                 </TouchableOpacity>
 
               </View>
@@ -873,7 +887,14 @@ export default function ReplyDetailScreen() {
               color="red"
               style={{ marginRight: 2 }}
             />
-            <Text style={styles.likeCountLarge}>{likeCounts[parent.id] || 0}</Text>
+            <Text
+              style={[
+                styles.likeCountLarge,
+                likedItems[parent.id] && styles.likedLikeCount,
+              ]}
+            >
+              {likeCounts[parent.id] || 0}
+            </Text>
           </TouchableOpacity>
 
           </View>
@@ -965,7 +986,14 @@ export default function ReplyDetailScreen() {
                     color="red"
                     style={{ marginRight: 2 }}
                   />
-                  <Text style={styles.likeCountLarge}>{likeCounts[item.id] || 0}</Text>
+                  <Text
+                    style={[
+                      styles.likeCountLarge,
+                      likedItems[item.id] && styles.likedLikeCount,
+                    ]}
+                  >
+                    {likeCounts[item.id] || 0}
+                  </Text>
                 </TouchableOpacity>
 
               </View>
@@ -1060,6 +1088,7 @@ const styles = StyleSheet.create({
   replyCount: { fontSize: 10, color: 'gray' },
   replyCountLarge: { fontSize: 15, color: 'gray' },
   likeCountLarge: { fontSize: 15, color: 'gray' },
+  likedLikeCount: { color: 'red' },
   likeContainer: {
     position: 'absolute',
     bottom: 6,
