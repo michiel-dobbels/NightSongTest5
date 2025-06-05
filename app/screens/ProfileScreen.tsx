@@ -12,6 +12,7 @@ import {
 import * as ImagePicker from 'expo-image-picker';
 import * as FileSystem from 'expo-file-system';
 import { useNavigation } from '@react-navigation/native';
+import { createMaterialTopTabNavigator } from '@react-navigation/material-top-tabs';
 
 import { useAuth } from '../../AuthContext';
 import { colors } from '../styles/colors';
@@ -20,6 +21,8 @@ import { supabase } from '../../lib/supabase';
 import { FlatList } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import { useCallback, useState } from 'react';
+
+const Tab = createMaterialTopTabNavigator();
 
 export default function ProfileScreen() {
   const navigation = useNavigation<any>();
@@ -139,6 +142,33 @@ export default function ProfileScreen() {
 
   if (!profile) return null;
 
+  const PostsTab = () => (
+    <FlatList
+      data={posts}
+      keyExtractor={item => item.id}
+      renderItem={({ item }) => (
+        <PostCard
+          post={item}
+          replyCount={replyCounts[item.id] || 0}
+          likeCount={likeCounts[item.id] || 0}
+          liked={likedPosts[item.id]}
+          isMe
+          avatarUri={profileImageUri}
+          onPress={() => navigation.navigate('PostDetail', { post: item })}
+          onAvatarPress={() => navigation.navigate('Profile')}
+          onToggleLike={() => toggleLike(item.id)}
+          onReplyPress={() => navigation.navigate('PostDetail', { post: item })}
+        />
+      )}
+    />
+  );
+
+  const RepliesTab = () => (
+    <View style={styles.centerPlaceholder}>
+      <Text style={{ color: 'white' }}>Replies go here</Text>
+    </View>
+  );
+
   return (
     <View style={styles.container}>
       {bannerImageUri ? (
@@ -168,24 +198,16 @@ export default function ProfileScreen() {
       <TouchableOpacity onPress={pickBanner} style={styles.uploadLink}>
         <Text style={styles.uploadText}>Upload Banner</Text>
       </TouchableOpacity>
-      <FlatList
-        data={posts}
-        keyExtractor={item => item.id}
-        renderItem={({ item }) => (
-          <PostCard
-            post={item}
-            replyCount={replyCounts[item.id] || 0}
-            likeCount={likeCounts[item.id] || 0}
-            liked={likedPosts[item.id]}
-            isMe
-            avatarUri={profileImageUri}
-            onPress={() => navigation.navigate('PostDetail', { post: item })}
-            onAvatarPress={() => navigation.navigate('Profile')}
-            onToggleLike={() => toggleLike(item.id)}
-            onReplyPress={() => navigation.navigate('PostDetail', { post: item })}
-          />
-        )}
-      />
+      <Tab.Navigator
+        screenOptions={{
+          tabBarStyle: { backgroundColor: 'transparent', marginTop: 0 },
+          tabBarLabelStyle: { color: 'white', fontWeight: 'bold' },
+          tabBarIndicatorStyle: { backgroundColor: '#7814db' },
+        }}
+      >
+        <Tab.Screen name="Posts" component={PostsTab} />
+        <Tab.Screen name="Replies" component={RepliesTab} />
+      </Tab.Navigator>
     </View>
   );
 }
@@ -239,5 +261,10 @@ const styles = StyleSheet.create({
     alignSelf: 'flex-start',
   },
   uploadText: { color: 'white' },
+  centerPlaceholder: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
 
 });
