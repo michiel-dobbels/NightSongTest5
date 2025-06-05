@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 
 import {
   View,
@@ -6,6 +6,7 @@ import {
   Button,
   StyleSheet,
   Image,
+  FlatList,
   TouchableOpacity,
   Dimensions,
 } from 'react-native';
@@ -14,9 +15,11 @@ import * as FileSystem from 'expo-file-system';
 import { useNavigation } from '@react-navigation/native';
 import { createMaterialTopTabNavigator } from '@react-navigation/material-top-tabs';
 
+
 import { useAuth } from '../../AuthContext';
 import { useFollowCounts } from '../hooks/useFollowCounts';
 import { colors } from '../styles/colors';
+import { supabase } from '../../lib/supabase';
 
 export default function ProfileScreen() {
   const navigation = useNavigation<any>();
@@ -32,11 +35,38 @@ export default function ProfileScreen() {
 
   const Tab = createMaterialTopTabNavigator();
 
-  const PostsTab = () => (
-    <View style={styles.tabContainer}>
-      <Text style={{ color: 'white' }}>Posts tab</Text>
-    </View>
-  );
+  const PostsTab = () => {
+    const { user } = useAuth() as any;
+
+    type Post = { id: string; content: string };
+
+    const [posts, setPosts] = useState<Post[]>([]);
+
+    useEffect(() => {
+      if (!user) return;
+      const load = async () => {
+        const { data } = await supabase
+          .from('posts')
+          .select('id, content')
+          .eq('user_id', user.id)
+          .order('created_at', { ascending: false });
+        if (data) setPosts(data as Post[]);
+      };
+      load();
+    }, [user]);
+
+    return (
+      <View style={{ flex: 1 }}>
+        <FlatList
+          data={posts}
+          keyExtractor={item => item.id}
+          renderItem={({ item }) => (
+            <Text style={{ color: 'white', paddingVertical: 8 }}>{item.content}</Text>
+          )}
+        />
+      </View>
+    );
+  };
 
   const RepliesTab = () => (
     <View style={styles.tabContainer}>
@@ -129,17 +159,6 @@ export default function ProfileScreen() {
           <Text style={styles.statsText}>{following ?? 0} Following</Text>
         </TouchableOpacity>
       </View>
-      <Tab.Navigator
-        screenOptions={{
-          tabBarStyle: { backgroundColor: 'transparent', marginTop: 0 },
-          tabBarLabelStyle: { color: 'white', fontWeight: 'bold' },
-          tabBarIndicatorStyle: { backgroundColor: '#7814db' },
-        }}
-        style={{ flex: 1 }}
-      >
-        <Tab.Screen name="Posts" component={PostsTab} />
-        <Tab.Screen name="Replies" component={RepliesTab} />
-      </Tab.Navigator>
       <TouchableOpacity onPress={pickImage} style={styles.uploadLink}>
         <Text style={styles.uploadText}>Upload Profile Picture</Text>
       </TouchableOpacity>
@@ -218,4 +237,88 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
 
+});
+
+const postStyles = StyleSheet.create({
+  container: {
+    flex: 1,
+    paddingHorizontal: 0,
+    paddingBottom: 0,
+    paddingTop: 0,
+    backgroundColor: colors.background,
+  },
+  input: {
+    backgroundColor: 'white',
+    padding: 10,
+    borderRadius: 6,
+    marginBottom: 10,
+  },
+  post: {
+    backgroundColor: '#ffffff10',
+    borderRadius: 0,
+    padding: 10,
+    paddingBottom: 30,
+    marginBottom: 0,
+    borderBottomColor: 'gray',
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    position: 'relative',
+  },
+  row: { flexDirection: 'row', alignItems: 'flex-start' },
+  avatar: { width: 48, height: 48, borderRadius: 24, marginRight: 8 },
+  placeholder: { backgroundColor: '#555' },
+  deleteButton: {
+    position: 'absolute',
+    right: 6,
+    top: 6,
+    padding: 4,
+  },
+  postContent: { color: 'white' },
+  username: { fontWeight: 'bold', color: 'white' },
+  timestamp: { fontSize: 10, color: 'gray' },
+  headerRow: { flexDirection: 'row', alignItems: 'center' },
+  timestampMargin: { marginLeft: 6 },
+  replyCountContainer: {
+    position: 'absolute',
+    bottom: 6,
+    left: 66,
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  replyCountLarge: { fontSize: 15, color: 'gray' },
+  likeCountLarge: { fontSize: 15, color: 'gray' },
+  likedLikeCount: { color: 'red' },
+  likeContainer: {
+    position: 'absolute',
+    bottom: 6,
+    left: '50%',
+    transform: [{ translateX: -6 }],
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'flex-end',
+  },
+  modalContent: {
+    backgroundColor: colors.background,
+    padding: 20,
+  },
+  preview: {
+    width: '100%',
+    height: 200,
+    borderRadius: 6,
+    marginBottom: 10,
+  },
+  buttonRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 10,
+  },
+  postImage: {
+    width: '100%',
+    height: 200,
+    borderRadius: 6,
+    marginTop: 8,
+  },
 });
