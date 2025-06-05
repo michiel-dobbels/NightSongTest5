@@ -9,11 +9,12 @@ import {
   TouchableOpacity,
   Dimensions,
   Alert,
+  FlatList,
 } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 import * as FileSystem from 'expo-file-system';
 import { useNavigation } from '@react-navigation/native';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+
 
 import { useAuth } from '../../AuthContext';
 import { useFollowCounts } from '../hooks/useFollowCounts';
@@ -50,21 +51,11 @@ export default function ProfileScreen() {
     } | null;
   };
 
-  const [latestPost, setLatestPost] = useState<Post | null>(null);
   const [replyCounts, setReplyCounts] = useState<{ [key: string]: number }>({});
   const [likeCounts, setLikeCounts] = useState<{ [key: string]: number }>({});
   const [likedPosts, setLikedPosts] = useState<{ [key: string]: boolean }>({});
+  const [posts, setPosts] = useState<Post[]>([]);
 
-  function timeAgo(dateString: string): string {
-    const diff = Date.now() - new Date(dateString).getTime();
-    const minutes = Math.floor(diff / (1000 * 60));
-    if (minutes < 1) return 'just now';
-    if (minutes < 60) return `${minutes}m ago`;
-    const hours = Math.floor(minutes / 60);
-    if (hours < 24) return `${hours}h ago`;
-    const days = Math.floor(hours / 24);
-    return `${days}d ago`;
-  }
 
   const refreshLikeCount = async (id: string) => {
     const { data } = await supabase
@@ -90,34 +81,73 @@ export default function ProfileScreen() {
     await refreshLikeCount(id);
   };
 
+  const handleDeletePost = async (id: string) => {
+    setPosts(prev => prev.filter(p => p.id !== id));
+    setReplyCounts(prev => {
+      const { [id]: _omit, ...rest } = prev;
+      return rest;
+    });
+    setLikeCounts(prev => {
+      const { [id]: _omit, ...rest } = prev;
+      return rest;
+    });
+    setLikedPosts(prev => {
+      const { [id]: _omit, ...rest } = prev;
+      return rest;
+    });
+    await supabase.from('posts').delete().eq('id', id);
+  };
+
+  const confirmDeletePost = (id: string) => {
+    Alert.alert('Delete Post', 'Are you sure you want to delete this post?', [
+      { text: 'Cancel', style: 'cancel' },
+      { text: 'Delete', style: 'destructive', onPress: () => handleDeletePost(id) },
+    ]);
+  };
+
   useEffect(() => {
-    const fetchLatest = async () => {
+    const fetchPosts = async () => {
+      if (!profile) return;
       const { data, error } = await supabase
         .from('posts')
         .select(
-          'id, content, image_url, user_id, created_at, reply_count, like_count, profiles(username, name, image_url, banner_url)',
+          'id, content, image_url, user_id, created_at, reply_count, like_count, profiles(username, name, image_url, banner_url)'
         )
-        .order('created_at', { ascending: false })
-        .limit(1);
+        .eq('user_id', profile.id)
+        .order('created_at', { ascending: false });
 
-      if (!error && data && data.length > 0) {
-        const p = data[0] as Post;
-        setLatestPost(p);
-        setReplyCounts({ [p.id]: p.reply_count ?? 0 });
-        setLikeCounts({ [p.id]: p.like_count ?? 0 });
-        if (profile) {
-          const { data: likedData } = await supabase
-            .from('likes')
-            .select('post_id')
-            .eq('user_id', profile.id)
-            .eq('post_id', p.id);
-          if (likedData && likedData.length > 0) {
-            setLikedPosts({ [p.id]: true });
-          }
+      if (!error && data) {
+        const list = data as Post[];
+        setPosts(list);
+        setReplyCounts(prev => {
+          const counts = { ...prev };
+          list.forEach(p => {
+            counts[p.id] = p.reply_count ?? 0;
+          });
+          return counts;
+        });
+        setLikeCounts(prev => {
+          const counts = { ...prev };
+          list.forEach(p => {
+            counts[p.id] = p.like_count ?? 0;
+          });
+          return counts;
+        });
+        const { data: likedData } = await supabase
+          .from('likes')
+          .select('post_id')
+          .eq('user_id', profile.id)
+          .in('post_id', list.map(p => p.id));
+        if (likedData) {
+          const likedObj: { [key: string]: boolean } = {};
+          likedData.forEach(l => {
+            if (l.post_id) likedObj[l.post_id] = true;
+          });
+          setLikedPosts(prev => ({ ...prev, ...likedObj }));
         }
       }
     };
-    fetchLatest();
+    fetchPosts();
   }, [profile?.id]);
 
 
@@ -212,43 +242,27 @@ export default function ProfileScreen() {
         <Text style={styles.uploadText}>Upload Banner</Text>
       </TouchableOpacity>
 
-      {latestPost && (
-        <PostCard
-          post={latestPost}
-          replyCount={replyCounts[latestPost.id] || 0}
-          likeCount={likeCounts[latestPost.id] || 0}
-          liked={!!likedPosts[latestPost.id]}
-          avatarUri={
-            latestPost.user_id === profile.id
-              ? profileImageUri
-              : latestPost.profiles?.image_url || undefined
-          }
-          onPress={() => navigation.navigate('PostDetail', { post: latestPost })}
-          onReplyPress={() => navigation.navigate('PostDetail', { post: latestPost })}
-          onToggleLike={() => toggleLike(latestPost.id)}
-          onUserPress={() =>
-            latestPost.user_id === profile.id
-              ? navigation.navigate('Profile')
-              : navigation.navigate('UserProfile', {
-                  userId: latestPost.user_id,
-                  avatarUrl:
-                    latestPost.user_id === profile.id
-                      ? profileImageUri
-                      : latestPost.profiles?.image_url || undefined,
-                  bannerUrl:
-                    latestPost.user_id === profile.id
-                      ? undefined
-                      : latestPost.profiles?.banner_url || undefined,
-                  name:
-                    latestPost.profiles?.name ||
-                    latestPost.profiles?.username ||
-                    latestPost.username,
-                  username:
-                    latestPost.profiles?.username || latestPost.username,
-                })
-          }
-        />
-      )}
+      <FlatList
+        data={posts}
+        keyExtractor={item => item.id}
+        renderItem={({ item }) => (
+          <PostCard
+            post={item}
+            replyCount={replyCounts[item.id] || 0}
+            likeCount={likeCounts[item.id] || 0}
+            liked={!!likedPosts[item.id]}
+            avatarUri={profileImageUri}
+            showDelete={item.user_id === profile.id}
+            onPress={() => navigation.navigate('PostDetail', { post: item })}
+            onDelete={() => confirmDeletePost(item.id)}
+            onReplyPress={() => navigation.navigate('PostDetail', { post: item })}
+            onToggleLike={() => toggleLike(item.id)}
+            onUserPress={() => navigation.navigate('Profile')}
+          />
+        )}
+        style={{ marginTop: 20 }}
+      />
+
     </View>
   );
 }

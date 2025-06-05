@@ -9,7 +9,6 @@ import {
   Alert,
   TouchableOpacity,
   Image,
-  ActivityIndicator,
   Modal,
   KeyboardAvoidingView,
   Platform,
@@ -49,16 +48,6 @@ type Post = {
   } | null;
 };
 
-function timeAgo(dateString: string): string {
-  const diff = Date.now() - new Date(dateString).getTime();
-  const minutes = Math.floor(diff / (1000 * 60));
-  if (minutes < 1) return 'just now';
-  if (minutes < 60) return `${minutes}m ago`;
-  const hours = Math.floor(minutes / 60);
-  if (hours < 24) return `${hours}h ago`;
-  const days = Math.floor(hours / 24);
-  return `${days}d ago`;
-}
 
 export interface HomeScreenRef {
   createPost: (text: string, imageUri?: string) => Promise<void>;
@@ -691,9 +680,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   replyCount: { fontSize: 10, color: 'gray' },
-  replyCountLarge: { fontSize: 15, color: 'gray' },
-  likeCountLarge: { fontSize: 15, color: 'gray' },
-  likedLikeCount: { color: 'red' },
 
   likeContainer: {
     position: 'absolute',
@@ -722,12 +708,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     marginBottom: 10,
-  },
-  postImage: {
-    width: '100%',
-    height: 200,
-    borderRadius: 6,
-    marginTop: 8,
   },
 
 });
