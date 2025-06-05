@@ -10,7 +10,12 @@ import {
   TouchableOpacity,
   Image,
   ActivityIndicator,
+  Modal,
+  KeyboardAvoidingView,
+  Platform,
 } from 'react-native';
+import * as ImagePicker from 'expo-image-picker';
+import * as FileSystem from 'expo-file-system';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { useCallback } from 'react';
@@ -73,6 +78,10 @@ const HomeScreen = forwardRef<HomeScreenRef, HomeScreenProps>(
   const [likedPosts, setLikedPosts] = useState<{ [key: string]: boolean }>({});
   const [loadingMore, setLoadingMore] = useState(false);
   const [hasMore, setHasMore] = useState(true);
+  const [replyModalVisible, setReplyModalVisible] = useState(false);
+  const [activePostId, setActivePostId] = useState<string | null>(null);
+  const [replyText, setReplyText] = useState('');
+  const [replyImage, setReplyImage] = useState<string | null>(null);
 
 
 
@@ -151,6 +160,73 @@ const HomeScreen = forwardRef<HomeScreenRef, HomeScreenProps>(
 
     }
     await refreshLikeCount(id);
+  };
+
+  const openReplyModal = (postId: string) => {
+    if (postId.startsWith('temp-')) {
+      Alert.alert('Please wait', 'Your post is still uploading.');
+      return;
+    }
+    setActivePostId(postId);
+    setReplyText('');
+    setReplyImage(null);
+    setReplyModalVisible(true);
+  };
+
+  const pickReplyImage = async () => {
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: true,
+      quality: 0.8,
+    });
+    if (!result.canceled) {
+      const uri = result.assets[0].uri;
+      const base64 = await FileSystem.readAsStringAsync(uri, {
+        encoding: 'base64',
+      });
+      setReplyImage(`data:image/jpeg;base64,${base64}`);
+    }
+  };
+
+  const handleReplySubmit = async () => {
+    if (
+      !activePostId ||
+      activePostId.startsWith('temp-') ||
+      (!replyText.trim() && !replyImage) ||
+      !user
+    ) {
+      setReplyModalVisible(false);
+      return;
+    }
+
+    setReplyModalVisible(false);
+
+    setReplyCounts(prev => {
+      const counts = { ...prev, [activePostId]: (prev[activePostId] || 0) + 1 };
+      AsyncStorage.setItem(COUNT_STORAGE_KEY, JSON.stringify(counts));
+      return counts;
+    });
+
+    const { error } = await supabase.from('replies').insert({
+      post_id: activePostId,
+      parent_id: null,
+      user_id: user.id,
+      content: replyText,
+      image_url: replyImage,
+      username: profile.name || profile.username,
+    });
+
+    if (error) {
+      setReplyCounts(prev => {
+        const counts = { ...prev, [activePostId]: (prev[activePostId] || 1) - 1 };
+        AsyncStorage.setItem(COUNT_STORAGE_KEY, JSON.stringify(counts));
+        return counts;
+      });
+      Alert.alert('Reply failed', error.message);
+    }
+
+    setReplyText('');
+    setReplyImage(null);
   };
 
 
@@ -499,27 +575,29 @@ const HomeScreen = forwardRef<HomeScreenRef, HomeScreenProps>(
                     )}
                   </View>
                 </View>
-                <View style={styles.replyCountContainer}>
+                <TouchableOpacity
+                  style={styles.replyCountContainer}
+                  onPress={() => openReplyModal(item.id)}
+                >
                   <Ionicons
                     name="chatbubble-outline"
-                    size={12}
+                    size={18}
                     color="#66538f"
                     style={{ marginRight: 2 }}
                   />
-                  <Text style={styles.replyCount}>{replyCounts[item.id] || 0}</Text>
-                </View>
+                  <Text style={styles.replyCountLarge}>{replyCounts[item.id] || 0}</Text>
+                </TouchableOpacity>
                 <TouchableOpacity
                   style={styles.likeContainer}
                   onPress={() => toggleLike(item.id)}
                 >
                   <Ionicons
                     name={likedPosts[item.id] ? 'heart' : 'heart-outline'}
-
-                    size={12}
+                    size={18}
                     color="red"
                     style={{ marginRight: 2 }}
                   />
-                  <Text style={styles.replyCount}>{likeCounts[item.id] || 0}</Text>
+                  <Text style={styles.likeCountLarge}>{likeCounts[item.id] || 0}</Text>
                 </TouchableOpacity>
 
               </View>
@@ -527,6 +605,29 @@ const HomeScreen = forwardRef<HomeScreenRef, HomeScreenProps>(
           );
         }}
       />
+      <Modal visible={replyModalVisible} animationType="slide" transparent>
+        <KeyboardAvoidingView
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          style={styles.modalOverlay}
+        >
+          <View style={styles.modalContent}>
+            <TextInput
+              placeholder="Write a reply"
+              value={replyText}
+              onChangeText={setReplyText}
+              style={styles.input}
+              multiline
+            />
+            {replyImage && (
+              <Image source={{ uri: replyImage }} style={styles.preview} />
+            )}
+            <View style={styles.buttonRow}>
+              <Button title="Add Image" onPress={pickReplyImage} />
+              <Button title="Post" onPress={handleReplySubmit} />
+            </View>
+          </View>
+        </KeyboardAvoidingView>
+      </Modal>
     </View>
   );
 });
@@ -558,7 +659,7 @@ const styles = StyleSheet.create({
     position: 'relative',
   },
   row: { flexDirection: 'row', alignItems: 'flex-start' },
-  avatar: { width: 32, height: 32, borderRadius: 16, marginRight: 8 },
+  avatar: { width: 48, height: 48, borderRadius: 24, marginRight: 8 },
   placeholder: { backgroundColor: '#555' },
   deleteButton: {
     position: 'absolute',
@@ -575,12 +676,14 @@ const styles = StyleSheet.create({
     position: 'absolute',
     bottom: 6,
     // Align with the left edge of the post content (text/image)
-    // Avatar width (32) + margin (8) + container padding (10)
-    left: 50,
+    // Avatar width (48) + margin (8) + container padding (10)
+    left: 66,
     flexDirection: 'row',
     alignItems: 'center',
   },
   replyCount: { fontSize: 10, color: 'gray' },
+  replyCountLarge: { fontSize: 15, color: 'gray' },
+  likeCountLarge: { fontSize: 15, color: 'gray' },
   likeContainer: {
     position: 'absolute',
     bottom: 6,
@@ -588,6 +691,26 @@ const styles = StyleSheet.create({
     transform: [{ translateX: -6 }],
     flexDirection: 'row',
     alignItems: 'center',
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'flex-end',
+  },
+  modalContent: {
+    backgroundColor: colors.background,
+    padding: 20,
+  },
+  preview: {
+    width: '100%',
+    height: 200,
+    borderRadius: 6,
+    marginBottom: 10,
+  },
+  buttonRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 10,
   },
   postImage: {
     width: '100%',
