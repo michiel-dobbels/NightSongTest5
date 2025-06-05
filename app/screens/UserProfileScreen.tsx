@@ -1,11 +1,11 @@
-import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, Image, Button, Dimensions, ActivityIndicator, FlatList, TouchableOpacity } from 'react-native';
-import { useRoute, useNavigation } from '@react-navigation/native';
+import React, { useEffect, useState, useCallback } from 'react';
+import { View, Text, StyleSheet, Image, Button, Dimensions, FlatList, ActivityIndicator } from 'react-native';
+import { useRoute, useNavigation, useFocusEffect } from '@react-navigation/native';
 import { supabase } from '../../lib/supabase';
 import { colors } from '../styles/colors';
-import { useFollowCounts } from '../hooks/useFollowCounts';
 import { useAuth } from '../../AuthContext';
 import FollowButton from '../components/FollowButton';
+import PostCard, { Post } from '../components/PostCard';
 
 
 interface Profile {
@@ -37,19 +37,78 @@ export default function UserProfileScreen() {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
-  const [followingProfiles, setFollowingProfiles] =
-    useState<{
-      id: string;
-      username: string | null;
-      name: string | null;
-      avatar_url: string | null;
-    }[]>([]);
 
   const { user } = useAuth() as any;
 
+  const [posts, setPosts] = useState<Post[]>([]);
+  const [replyCounts, setReplyCounts] = useState<{ [key: string]: number }>({});
+  const [likeCounts, setLikeCounts] = useState<{ [key: string]: number }>({});
+  const [likedPosts, setLikedPosts] = useState<{ [key: string]: boolean }>({});
+
   const name = profile?.name ?? initialName ?? null;
   const username = profile?.username ?? initialUsername ?? null;
-  const { followers, following, refresh } = useFollowCounts(userId);
+
+  const fetchPosts = useCallback(async () => {
+    const targetId = profile?.id ?? userId;
+    const { data } = await supabase
+      .from('posts')
+      .select(
+        'id, content, image_url, user_id, created_at, reply_count, like_count, profiles(username, name, image_url, banner_url)'
+      )
+      .eq('user_id', targetId)
+      .order('created_at', { ascending: false });
+    if (data) {
+      setPosts(data as Post[]);
+      const replyMap = Object.fromEntries(
+        (data as any[]).map(p => [p.id, p.reply_count ?? 0])
+      );
+      setReplyCounts(replyMap);
+      const likeMap = Object.fromEntries(
+        (data as any[]).map(p => [p.id, p.like_count ?? 0])
+      );
+      setLikeCounts(likeMap);
+      if (user) {
+        const { data: likedData } = await supabase
+          .from('likes')
+          .select('post_id')
+          .eq('user_id', user.id)
+          .is('reply_id', null);
+        if (likedData) {
+          const likedObj: { [key: string]: boolean } = {};
+          likedData.forEach(l => {
+            if (l.post_id) likedObj[l.post_id] = true;
+          });
+          setLikedPosts(likedObj);
+        }
+      }
+    }
+  }, [profile, userId, user]);
+
+  const toggleLike = async (id: string) => {
+    if (!user) return;
+    const liked = likedPosts[id];
+    setLikedPosts(prev => ({ ...prev, [id]: !liked }));
+    setLikeCounts(prev => ({ ...prev, [id]: (prev[id] || 0) + (liked ? -1 : 1) }));
+    if (liked) {
+      await supabase.from('likes').delete().match({ user_id: user.id, post_id: id });
+    } else {
+      await supabase.from('likes').insert({ user_id: user.id, post_id: id });
+    }
+    const { data } = await supabase
+      .from('posts')
+      .select('like_count')
+      .eq('id', id)
+      .single();
+    if (data) {
+      setLikeCounts(prev => ({ ...prev, [id]: data.like_count ?? 0 }));
+    }
+  };
+
+  useFocusEffect(
+    useCallback(() => {
+      fetchPosts();
+    }, [fetchPosts])
+  );
 
 
   useEffect(() => {
@@ -97,65 +156,6 @@ export default function UserProfileScreen() {
     fetchProfile();
   }, [userId]);
 
-  useEffect(() => {
-    let isMounted = true;
-    const fetchFollowing = async () => {
-      const { data: followData, error: followError } = await supabase
-        .from('follows')
-        .select('following_id')
-        .eq('follower_id', userId);
-
-      if (followError) {
-        console.error('Failed to fetch following list', followError);
-        return;
-      }
-
-      const ids = (followData ?? []).map(f => f.following_id);
-      if (ids.length === 0) {
-        if (isMounted) setFollowingProfiles([]);
-        return;
-      }
-
-      let { data: profileData, error: profileError } = await supabase
-        .from('profiles')
-        .select('id, username, name, image_url')
-        .in('id', ids);
-
-      if (profileError?.code === '42703') {
-        const retry = await supabase
-          .from('profiles')
-          .select('id, username, display_name, avatar_url')
-          .in('id', ids);
-        profileData = retry.data;
-        profileError = retry.error;
-      }
-
-      if (profileError) {
-        console.error('Failed to fetch profiles', profileError);
-        return;
-      }
-
-      if (isMounted && profileData) {
-        const formatted = profileData.map(p => ({
-          id: p.id,
-          username: p.username,
-          name:
-            (p as any).name ??
-            (p as any).display_name ??
-            (p as any).full_name ??
-            null,
-          avatar_url: (p as any).image_url ?? (p as any).avatar_url,
-        }));
-        setFollowingProfiles(formatted);
-      }
-    };
-
-    fetchFollowing();
-
-    return () => {
-      isMounted = false;
-    };
-  }, [userId]);
 
   if (loading) {
     return (
@@ -182,32 +182,9 @@ export default function UserProfileScreen() {
         {username && <Text style={styles.username}>@{username}</Text>}
         {user && user.id !== userId && (
           <View style={{ marginTop: 10 }}>
-            <FollowButton targetUserId={userId} onToggle={refresh} />
+            <FollowButton targetUserId={userId} />
           </View>
         )}
-        <View style={styles.statsRow}>
-          <TouchableOpacity
-            onPress={() =>
-              navigation.navigate('FollowList', {
-                userId,
-                mode: 'followers',
-              })
-            }
-          >
-            <Text style={styles.statsText}>{followers ?? 0} Followers</Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            onPress={() =>
-              navigation.navigate('FollowList', {
-                userId,
-                mode: 'following',
-              })
-            }
-          >
-            <Text style={styles.statsText}>{following ?? 0} Following</Text>
-          </TouchableOpacity>
-
-        </View>
         <ActivityIndicator color="white" style={{ marginTop: 10 }} />
       </View>
     );
@@ -238,32 +215,10 @@ export default function UserProfileScreen() {
         {username && <Text style={styles.username}>@{username}</Text>}
         {user && user.id !== userId && (
           <View style={{ marginTop: 10 }}>
-            <FollowButton targetUserId={userId} onToggle={refresh} />
+            <FollowButton targetUserId={userId} />
           </View>
         )}
-        <View style={styles.statsRow}>
-          <TouchableOpacity
-            onPress={() =>
-              navigation.navigate('FollowList', {
-                userId,
-                mode: 'followers',
-              })
-            }
-          >
-            <Text style={styles.statsText}>{followers ?? 0} Followers</Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            onPress={() =>
-              navigation.navigate('FollowList', {
-                userId,
-                mode: 'following',
-              })
-            }
-          >
-            <Text style={styles.statsText}>{following ?? 0} Following</Text>
-          </TouchableOpacity>
-
-        </View>
+        
         <Text style={{ color: 'white', marginTop: 10 }}>Profile not found.</Text>
         <View style={styles.backButton}>
           <Button title="Back" onPress={() => navigation.goBack()} />
@@ -302,49 +257,34 @@ export default function UserProfileScreen() {
         </View>
         {user && user.id !== userId && (
           <View style={{ marginLeft: 10 }}>
-            <FollowButton targetUserId={userId} onToggle={refresh} />
+            <FollowButton targetUserId={userId} />
           </View>
         )}
       </View>
-      <View style={styles.statsRow}>
-        <TouchableOpacity
-          onPress={() =>
-            navigation.navigate('FollowList', {
-              userId,
-              mode: 'followers',
-            })
-          }
-        >
-          <Text style={styles.statsText}>{followers ?? 0} Followers</Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          onPress={() =>
-            navigation.navigate('FollowList', {
-              userId,
-              mode: 'following',
-            })
-          }
-        >
-          <Text style={styles.statsText}>{following ?? 0} Following</Text>
-        </TouchableOpacity>
-      </View>
-
-      <Text style={styles.sectionTitle}>Following</Text>
       <FlatList
-        data={followingProfiles}
+        data={posts}
         keyExtractor={item => item.id}
         renderItem={({ item }) => (
-          <View style={styles.followingRow}>
-            {item.avatar_url ? (
-              <Image source={{ uri: item.avatar_url }} style={styles.followingAvatar} />
-            ) : (
-              <View style={[styles.followingAvatar, styles.placeholder]} />
-            )}
-            <View>
-              {item.name && <Text style={styles.followingName}>{item.name}</Text>}
-              <Text style={styles.followingUsername}>{item.username}</Text>
-            </View>
-          </View>
+          <PostCard
+            post={item}
+            replyCount={replyCounts[item.id] || 0}
+            likeCount={likeCounts[item.id] || 0}
+            liked={likedPosts[item.id]}
+            isMe={user?.id === item.user_id}
+            avatarUri={item.profiles?.image_url || avatarUrl}
+            onPress={() => navigation.navigate('PostDetail', { post: item })}
+            onAvatarPress={() =>
+              navigation.navigate('UserProfile', {
+                userId: item.user_id,
+                avatarUrl: item.profiles?.image_url || avatarUrl,
+                bannerUrl: item.profiles?.banner_url,
+                name: item.profiles?.name || item.profiles?.username || item.username,
+                username: item.profiles?.username || item.username,
+              })
+            }
+            onToggleLike={() => toggleLike(item.id)}
+            onReplyPress={() => navigation.navigate('PostDetail', { post: item })}
+          />
         )}
       />
 
@@ -382,12 +322,6 @@ const styles = StyleSheet.create({
   username: { color: 'white', fontSize: 24, fontWeight: 'bold' },
   name: { color: 'white', fontSize: 20, marginTop: 4 },
   center: { justifyContent: 'center', alignItems: 'center' },
-  statsRow: { flexDirection: 'row', marginLeft: 15, marginBottom: 20 },
-  statsText: { color: 'white', marginRight: 15 },
-  sectionTitle: { color: 'white', fontSize: 18, marginBottom: 10 },
-  followingRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 12 },
-  followingAvatar: { width: 40, height: 40, borderRadius: 20, marginRight: 12 },
-  followingName: { color: 'white', fontSize: 16, fontWeight: 'bold' },
-  followingUsername: { color: 'white', fontSize: 16 },
+  
 
 });
