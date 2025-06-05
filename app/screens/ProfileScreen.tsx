@@ -129,17 +129,6 @@ export default function ProfileScreen() {
           <Text style={styles.statsText}>{following ?? 0} Following</Text>
         </TouchableOpacity>
       </View>
-      <Tab.Navigator
-        screenOptions={{
-          tabBarStyle: { backgroundColor: 'transparent', marginTop: 0 },
-          tabBarLabelStyle: { color: 'white', fontWeight: 'bold' },
-          tabBarIndicatorStyle: { backgroundColor: '#7814db' },
-        }}
-        style={{ flex: 1 }}
-      >
-        <Tab.Screen name="Posts" component={PostsTab} />
-        <Tab.Screen name="Replies" component={RepliesTab} />
-      </Tab.Navigator>
       <TouchableOpacity onPress={pickImage} style={styles.uploadLink}>
         <Text style={styles.uploadText}>Upload Profile Picture</Text>
       </TouchableOpacity>
