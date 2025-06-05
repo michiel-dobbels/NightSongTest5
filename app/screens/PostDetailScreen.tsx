@@ -22,6 +22,9 @@ import { useRoute, useNavigation, useFocusEffect } from '@react-navigation/nativ
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../AuthContext';
 import { colors } from '../styles/colors';
+import PostCard from '../components/PostCard';
+import { Post } from '../types/Post';
+import { timeAgo } from '../utils/timeAgo';
 
 const REPLY_STORAGE_PREFIX = 'cached_replies_';
 const COUNT_STORAGE_KEY = 'cached_reply_counts';
@@ -29,34 +32,6 @@ const LIKE_COUNT_KEY = 'cached_like_counts';
 const LIKED_KEY_PREFIX = 'cached_likes_';
 
 
-function timeAgo(dateString: string): string {
-  const diff = Date.now() - new Date(dateString).getTime();
-  const minutes = Math.floor(diff / (1000 * 60));
-  if (minutes < 1) return 'just now';
-  if (minutes < 60) return `${minutes}m ago`;
-  const hours = Math.floor(minutes / 60);
-  if (hours < 24) return `${hours}h ago`;
-  const days = Math.floor(hours / 24);
-  return `${days}d ago`;
-}
-
-interface Post {
-  id: string;
-  content: string;
-  image_url?: string;
-  user_id: string;
-  created_at: string;
-
-  username?: string;
-  reply_count?: number;
-  like_count?: number;
-  profiles?: {
-    username: string | null;
-    name: string | null;
-    image_url?: string | null;
-    banner_url?: string | null;
-  } | null;
-}
 
 interface Reply {
   id: string;
@@ -600,85 +575,41 @@ export default function PostDetailScreen() {
         <Button title="Return" onPress={() => navigation.goBack()} />
       </View>
       <FlatList
-        ListHeaderComponent={() => (
-          <View style={[styles.post, styles.highlightPost]}>
-            {user?.id === post.user_id && (
-              <TouchableOpacity
-                onPress={() => confirmDeletePost(post.id)}
-                style={styles.deleteButton}
-              >
-                <Text style={{ color: 'white' }}>X</Text>
-              </TouchableOpacity>
-            )}
-            <View style={styles.row}>
-              <TouchableOpacity
-                onPress={() =>
-                  user?.id === post.user_id
-                    ? navigation.navigate('Profile')
-                    : navigation.navigate('UserProfile', {
-                        userId: post.user_id,
-                        avatarUrl: post.profiles?.image_url,
-                        bannerUrl: post.profiles?.banner_url,
+        ListHeaderComponent={() => {
+          const isMe = user?.id === post.user_id;
+          const avatarUri = isMe ? profileImageUri : post.profiles?.image_url || undefined;
 
-                        name: displayName,
-                        username: userName,
-                      })
-                }
-              >
-                {user?.id === post.user_id && profileImageUri ? (
-                  <Image source={{ uri: profileImageUri }} style={styles.avatar} />
-                ) : (
-                  <View style={[styles.avatar, styles.placeholder]} />
-                )}
-              </TouchableOpacity>
+          const handleAvatarPress = () => {
+            if (isMe) {
+              navigation.navigate('Profile');
+            } else {
+              navigation.navigate('UserProfile', {
+                userId: post.user_id,
+                avatarUrl: avatarUri,
+                bannerUrl: post.profiles?.banner_url,
+                name: displayName,
+                username: userName,
+              });
+            }
+          };
 
-              <View style={{ flex: 1 }}>
-                <View style={styles.headerRow}>
-                  <Text style={styles.username}>
-                    {displayName} @{userName}
-                  </Text>
-                  <Text style={[styles.timestamp, styles.timestampMargin]}>
-                    {timeAgo(post.created_at)}
-                  </Text>
-                </View>
-                <Text style={styles.postContent}>{post.content}</Text>
-                {post.image_url && (
-                  <Image source={{ uri: post.image_url }} style={styles.postImage} />
-                )}
-              </View>
-            </View>
-            <View style={styles.replyCountContainer}>
-              <Ionicons
-                name="chatbubble-outline"
-                size={18}
-                color="#66538f"
-                style={{ marginRight: 2 }}
-              />
-              <Text style={styles.replyCountLarge}>{replyCounts[post.id] || 0}</Text>
-            </View>
-            <TouchableOpacity
-              style={styles.likeContainer}
-              onPress={() => toggleLike(post.id, true)}
-            >
-              <Ionicons
-                name={likedItems[post.id] ? 'heart' : 'heart-outline'}
-
-                size={18}
-                color="red"
-                style={{ marginRight: 2 }}
-              />
-              <Text
-                style={[
-                  styles.likeCountLarge,
-                  likedItems[post.id] && styles.likedLikeCount,
-                ]}
-              >
-                {likeCounts[post.id] || 0}
-              </Text>
-            </TouchableOpacity>
-
-          </View>
-        )}
+          return (
+            <PostCard
+              style={styles.highlightPost}
+              post={post}
+              isCurrentUser={isMe}
+              avatarUri={avatarUri}
+              onPress={() => {}}
+              onPressAvatar={handleAvatarPress}
+              onDelete={() => confirmDeletePost(post.id)}
+              onReply={() => {}}
+              onLike={() => toggleLike(post.id, true)}
+              liked={likedItems[post.id]}
+              likeCount={likeCounts[post.id] || 0}
+              replyCount={replyCounts[post.id] || 0}
+            />
+          );
+        }}
         contentContainerStyle={{ paddingBottom: 100 }}
         data={replies}
         keyExtractor={item => item.id}
