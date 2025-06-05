@@ -37,7 +37,13 @@ export default function UserProfileScreen() {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
-  const [followingProfiles, setFollowingProfiles] = useState<{ id: string; username: string | null; avatar_url: string | null }[]>([]);
+  const [followingProfiles, setFollowingProfiles] =
+    useState<{
+      id: string;
+      username: string | null;
+      name: string | null;
+      avatar_url: string | null;
+    }[]>([]);
 
   const { user } = useAuth() as any;
 
@@ -112,13 +118,13 @@ export default function UserProfileScreen() {
 
       let { data: profileData, error: profileError } = await supabase
         .from('profiles')
-        .select('id, username, image_url')
+        .select('id, username, name, image_url')
         .in('id', ids);
 
       if (profileError?.code === '42703') {
         const retry = await supabase
           .from('profiles')
-          .select('id, username, avatar_url')
+          .select('id, username, display_name, avatar_url')
           .in('id', ids);
         profileData = retry.data;
         profileError = retry.error;
@@ -133,6 +139,11 @@ export default function UserProfileScreen() {
         const formatted = profileData.map(p => ({
           id: p.id,
           username: p.username,
+          name:
+            (p as any).name ??
+            (p as any).display_name ??
+            (p as any).full_name ??
+            null,
           avatar_url: (p as any).image_url ?? (p as any).avatar_url,
         }));
         setFollowingProfiles(formatted);
@@ -329,7 +340,10 @@ export default function UserProfileScreen() {
             ) : (
               <View style={[styles.followingAvatar, styles.placeholder]} />
             )}
-            <Text style={styles.followingUsername}>{item.username}</Text>
+            <View>
+              {item.name && <Text style={styles.followingName}>{item.name}</Text>}
+              <Text style={styles.followingUsername}>{item.username}</Text>
+            </View>
           </View>
         )}
       />
@@ -373,6 +387,7 @@ const styles = StyleSheet.create({
   sectionTitle: { color: 'white', fontSize: 18, marginBottom: 10 },
   followingRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 12 },
   followingAvatar: { width: 40, height: 40, borderRadius: 20, marginRight: 12 },
+  followingName: { color: 'white', fontSize: 16, fontWeight: 'bold' },
   followingUsername: { color: 'white', fontSize: 16 },
 
 });
