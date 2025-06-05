@@ -12,10 +12,17 @@ import {
 import * as ImagePicker from 'expo-image-picker';
 import * as FileSystem from 'expo-file-system';
 import { useNavigation } from '@react-navigation/native';
+import { createMaterialTopTabNavigator } from '@react-navigation/material-top-tabs';
 
 import { useAuth } from '../../AuthContext';
-import { useFollowCounts } from '../hooks/useFollowCounts';
 import { colors } from '../styles/colors';
+import PostCard, { Post } from '../components/PostCard';
+import { supabase } from '../../lib/supabase';
+import { FlatList } from 'react-native';
+import { useFocusEffect } from '@react-navigation/native';
+import { useCallback, useState } from 'react';
+
+const Tab = createMaterialTopTabNavigator();
 
 export default function ProfileScreen() {
   const navigation = useNavigation<any>();
@@ -27,7 +34,73 @@ export default function ProfileScreen() {
     setBannerImageUri,
   } = useAuth() as any;
 
-  const { followers, following } = useFollowCounts(profile?.id ?? null);
+  const [posts, setPosts] = useState<Post[]>([]);
+  const [replyCounts, setReplyCounts] = useState<{ [key: string]: number }>({});
+  const [likeCounts, setLikeCounts] = useState<{ [key: string]: number }>({});
+  const [likedPosts, setLikedPosts] = useState<{ [key: string]: boolean }>({});
+
+  const fetchPosts = useCallback(async () => {
+    if (!profile) return;
+    const { data } = await supabase
+      .from('posts')
+      .select(
+        'id, content, image_url, user_id, created_at, reply_count, like_count, profiles(username, name, image_url, banner_url)'
+      )
+      .eq('user_id', profile.id)
+      .order('created_at', { ascending: false });
+    if (data) {
+      setPosts(data as Post[]);
+      const replyMap = Object.fromEntries(
+        (data as any[]).map(p => [p.id, p.reply_count ?? 0])
+      );
+      setReplyCounts(replyMap);
+      const likeMap = Object.fromEntries(
+        (data as any[]).map(p => [p.id, p.like_count ?? 0])
+      );
+      setLikeCounts(likeMap);
+      if (profile.id) {
+        const { data: likedData } = await supabase
+          .from('likes')
+          .select('post_id')
+          .eq('user_id', profile.id)
+          .is('reply_id', null);
+        if (likedData) {
+          const likedObj: { [key: string]: boolean } = {};
+          likedData.forEach(l => {
+            if (l.post_id) likedObj[l.post_id] = true;
+          });
+          setLikedPosts(likedObj);
+        }
+      }
+    }
+  }, [profile]);
+
+  const toggleLike = async (id: string) => {
+    if (!profile) return;
+    const liked = likedPosts[id];
+    setLikedPosts(prev => ({ ...prev, [id]: !liked }));
+    setLikeCounts(prev => ({ ...prev, [id]: (prev[id] || 0) + (liked ? -1 : 1) }));
+    if (liked) {
+      await supabase.from('likes').delete().match({ user_id: profile.id, post_id: id });
+    } else {
+      await supabase.from('likes').insert({ user_id: profile.id, post_id: id });
+    }
+    const { data } = await supabase
+      .from('posts')
+      .select('like_count')
+      .eq('id', id)
+      .single();
+    if (data) {
+      setLikeCounts(prev => ({ ...prev, [id]: data.like_count ?? 0 }));
+    }
+  };
+
+  useFocusEffect(
+    useCallback(() => {
+      fetchPosts();
+    }, [fetchPosts])
+  );
+
 
 
   const pickImage = async () => {
@@ -69,6 +142,33 @@ export default function ProfileScreen() {
 
   if (!profile) return null;
 
+  const PostsTab = () => (
+    <FlatList
+      data={posts}
+      keyExtractor={item => item.id}
+      renderItem={({ item }) => (
+        <PostCard
+          post={item}
+          replyCount={replyCounts[item.id] || 0}
+          likeCount={likeCounts[item.id] || 0}
+          liked={likedPosts[item.id]}
+          isMe
+          avatarUri={profileImageUri}
+          onPress={() => navigation.navigate('PostDetail', { post: item })}
+          onAvatarPress={() => navigation.navigate('Profile')}
+          onToggleLike={() => toggleLike(item.id)}
+          onReplyPress={() => navigation.navigate('PostDetail', { post: item })}
+        />
+      )}
+    />
+  );
+
+  const RepliesTab = () => (
+    <View style={styles.centerPlaceholder}>
+      <Text style={{ color: 'white' }}>Replies go here</Text>
+    </View>
+  );
+
   return (
     <View style={styles.container}>
       {bannerImageUri ? (
@@ -92,34 +192,22 @@ export default function ProfileScreen() {
           )}
         </View>
       </View>
-      <View style={styles.statsRow}>
-        <TouchableOpacity
-          onPress={() =>
-            navigation.navigate('FollowList', {
-              userId: profile.id,
-              mode: 'followers',
-            })
-          }
-        >
-          <Text style={styles.statsText}>{followers ?? 0} Followers</Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          onPress={() =>
-            navigation.navigate('FollowList', {
-              userId: profile.id,
-              mode: 'following',
-            })
-          }
-        >
-          <Text style={styles.statsText}>{following ?? 0} Following</Text>
-        </TouchableOpacity>
-      </View>
       <TouchableOpacity onPress={pickImage} style={styles.uploadLink}>
         <Text style={styles.uploadText}>Upload Profile Picture</Text>
       </TouchableOpacity>
       <TouchableOpacity onPress={pickBanner} style={styles.uploadLink}>
         <Text style={styles.uploadText}>Upload Banner</Text>
       </TouchableOpacity>
+      <Tab.Navigator
+        screenOptions={{
+          tabBarStyle: { backgroundColor: 'transparent', marginTop: 0 },
+          tabBarLabelStyle: { color: 'white', fontWeight: 'bold' },
+          tabBarIndicatorStyle: { backgroundColor: '#7814db' },
+        }}
+      >
+        <Tab.Screen name="Posts" component={PostsTab} />
+        <Tab.Screen name="Replies" component={RepliesTab} />
+      </Tab.Navigator>
     </View>
   );
 }
@@ -173,7 +261,10 @@ const styles = StyleSheet.create({
     alignSelf: 'flex-start',
   },
   uploadText: { color: 'white' },
-  statsRow: { flexDirection: 'row', marginLeft: 15, marginBottom: 20 },
-  statsText: { color: 'white', marginRight: 15 },
+  centerPlaceholder: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
 
 });
