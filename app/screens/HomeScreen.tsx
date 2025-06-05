@@ -502,11 +502,11 @@ const HomeScreen = forwardRef<HomeScreenRef, HomeScreenProps>(
                 <View style={styles.replyCountContainer}>
                   <Ionicons
                     name="chatbubble-outline"
-                    size={12}
+                    size={18}
                     color="#66538f"
                     style={{ marginRight: 2 }}
                   />
-                  <Text style={styles.replyCount}>{replyCounts[item.id] || 0}</Text>
+                  <Text style={styles.replyCountLarge}>{replyCounts[item.id] || 0}</Text>
                 </View>
                 <TouchableOpacity
                   style={styles.likeContainer}
@@ -514,12 +514,11 @@ const HomeScreen = forwardRef<HomeScreenRef, HomeScreenProps>(
                 >
                   <Ionicons
                     name={likedPosts[item.id] ? 'heart' : 'heart-outline'}
-
-                    size={12}
+                    size={18}
                     color="red"
                     style={{ marginRight: 2 }}
                   />
-                  <Text style={styles.replyCount}>{likeCounts[item.id] || 0}</Text>
+                  <Text style={styles.likeCountLarge}>{likeCounts[item.id] || 0}</Text>
                 </TouchableOpacity>
 
               </View>
@@ -558,7 +557,7 @@ const styles = StyleSheet.create({
     position: 'relative',
   },
   row: { flexDirection: 'row', alignItems: 'flex-start' },
-  avatar: { width: 32, height: 32, borderRadius: 16, marginRight: 8 },
+  avatar: { width: 48, height: 48, borderRadius: 24, marginRight: 8 },
   placeholder: { backgroundColor: '#555' },
   deleteButton: {
     position: 'absolute',
@@ -575,12 +574,14 @@ const styles = StyleSheet.create({
     position: 'absolute',
     bottom: 6,
     // Align with the left edge of the post content (text/image)
-    // Avatar width (32) + margin (8) + container padding (10)
-    left: 50,
+    // Avatar width (48) + margin (8) + container padding (10)
+    left: 66,
     flexDirection: 'row',
     alignItems: 'center',
   },
   replyCount: { fontSize: 10, color: 'gray' },
+  replyCountLarge: { fontSize: 15, color: 'gray' },
+  likeCountLarge: { fontSize: 15, color: 'gray' },
   likeContainer: {
     position: 'absolute',
     bottom: 6,
