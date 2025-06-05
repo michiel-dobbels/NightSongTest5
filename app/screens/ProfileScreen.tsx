@@ -12,6 +12,7 @@ import {
 import * as ImagePicker from 'expo-image-picker';
 import * as FileSystem from 'expo-file-system';
 import { useNavigation } from '@react-navigation/native';
+import { createMaterialTopTabNavigator } from '@react-navigation/material-top-tabs';
 
 import { useAuth } from '../../AuthContext';
 import { useFollowCounts } from '../hooks/useFollowCounts';
@@ -28,6 +29,20 @@ export default function ProfileScreen() {
   } = useAuth() as any;
 
   const { followers, following } = useFollowCounts(profile?.id ?? null);
+
+  const Tab = createMaterialTopTabNavigator();
+
+  const PostsTab = () => (
+    <View style={styles.tabContainer}>
+      <Text style={{ color: 'white' }}>Posts tab</Text>
+    </View>
+  );
+
+  const RepliesTab = () => (
+    <View style={styles.tabContainer}>
+      <Text style={{ color: 'white' }}>Replies tab</Text>
+    </View>
+  );
 
 
   const pickImage = async () => {
@@ -120,6 +135,17 @@ export default function ProfileScreen() {
       <TouchableOpacity onPress={pickBanner} style={styles.uploadLink}>
         <Text style={styles.uploadText}>Upload Banner</Text>
       </TouchableOpacity>
+      <Tab.Navigator
+        screenOptions={{
+          tabBarStyle: { backgroundColor: 'transparent', marginTop: 0 },
+          tabBarLabelStyle: { color: 'white', fontWeight: 'bold' },
+          tabBarIndicatorStyle: { backgroundColor: '#7814db' },
+        }}
+        style={{ flex: 1 }}
+      >
+        <Tab.Screen name="Posts" component={PostsTab} />
+        <Tab.Screen name="Replies" component={RepliesTab} />
+      </Tab.Navigator>
     </View>
   );
 }
@@ -175,5 +201,10 @@ const styles = StyleSheet.create({
   uploadText: { color: 'white' },
   statsRow: { flexDirection: 'row', marginLeft: 15, marginBottom: 20 },
   statsText: { color: 'white', marginRight: 15 },
+  tabContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
 
 });
