@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { View, StyleSheet, Button, Dimensions } from 'react-native';
+
 import { useRoute, useNavigation } from '@react-navigation/native';
 import { colors } from '../styles/colors';
 import FollowingList, { FollowingUser } from '../components/FollowingList';
@@ -43,6 +44,7 @@ export default function FollowListScreen() {
       <View style={styles.listContainer}>
         <FollowingList users={profiles} />
       </View>
+
     </View>
   );
 }
@@ -60,4 +62,5 @@ const styles = StyleSheet.create({
   listContainer: {
     marginTop: Dimensions.get('window').height * 0.1,
   },
+
 });

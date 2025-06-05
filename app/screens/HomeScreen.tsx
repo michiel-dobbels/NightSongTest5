@@ -167,6 +167,7 @@ const HomeScreen = forwardRef<HomeScreenRef, HomeScreenProps>(
       Alert.alert('Please wait', 'Your post is still uploading.');
       return;
     }
+
     setActivePostId(postId);
     setReplyText('');
     setReplyImage(null);
@@ -195,6 +196,7 @@ const HomeScreen = forwardRef<HomeScreenRef, HomeScreenProps>(
       (!replyText.trim() && !replyImage) ||
       !user
     ) {
+
       setReplyModalVisible(false);
       return;
     }
@@ -587,6 +589,7 @@ const HomeScreen = forwardRef<HomeScreenRef, HomeScreenProps>(
                   />
                   <Text style={styles.replyCountLarge}>{replyCounts[item.id] || 0}</Text>
                 </TouchableOpacity>
+
                 <TouchableOpacity
                   style={styles.likeContainer}
                   onPress={() => toggleLike(item.id)}
@@ -684,6 +687,7 @@ const styles = StyleSheet.create({
   replyCount: { fontSize: 10, color: 'gray' },
   replyCountLarge: { fontSize: 15, color: 'gray' },
   likeCountLarge: { fontSize: 15, color: 'gray' },
+
   likeContainer: {
     position: 'absolute',
     bottom: 6,
