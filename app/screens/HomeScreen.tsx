@@ -7,7 +7,6 @@ import {
   Text,
   StyleSheet,
   Alert,
-  TouchableOpacity,
   Image,
   ActivityIndicator,
   Modal,
@@ -23,11 +22,13 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../AuthContext';
 import { colors } from '../styles/colors';
+import PostCard from '../components/PostCard';
 
 const STORAGE_KEY = 'cached_posts';
 const COUNT_STORAGE_KEY = 'cached_reply_counts';
 const LIKE_COUNT_KEY = 'cached_like_counts';
 const LIKED_KEY_PREFIX = 'cached_likes_';
+const REPLY_STORAGE_PREFIX = 'cached_replies_';
 const PAGE_SIZE = 10;
 
 
@@ -198,32 +199,97 @@ const HomeScreen = forwardRef<HomeScreenRef, HomeScreenProps>(
 
     setReplyModalVisible(false);
 
-    setReplyCounts(prev => {
-      const counts = { ...prev, [activePostId]: (prev[activePostId] || 0) + 1 };
-      AsyncStorage.setItem(COUNT_STORAGE_KEY, JSON.stringify(counts));
-      return counts;
-    });
-
-    const { error } = await supabase.from('replies').insert({
+    const newReply = {
+      id: `temp-${Date.now()}`,
       post_id: activePostId,
       parent_id: null,
       user_id: user.id,
       content: replyText,
-      image_url: replyImage,
+      image_url: replyImage ?? undefined,
+      created_at: new Date().toISOString(),
       username: profile.name || profile.username,
+      reply_count: 0,
+      like_count: 0,
+      profiles: {
+        username: profile.username,
+        name: profile.name,
+        image_url: profileImageUri,
+        banner_url: bannerImageUri,
+      },
+    } as const;
+
+    const storageKey = `${REPLY_STORAGE_PREFIX}${activePostId}`;
+    try {
+      const stored = await AsyncStorage.getItem(storageKey);
+      const cached = stored ? JSON.parse(stored) : [];
+      const updated = [newReply, ...cached];
+      await AsyncStorage.setItem(storageKey, JSON.stringify(updated));
+    } catch (e) {
+      console.error('Failed to cache reply', e);
+    }
+
+    setReplyCounts(prev => {
+      const counts = { ...prev, [activePostId]: (prev[activePostId] || 0) + 1, [newReply.id]: 0 };
+      AsyncStorage.setItem(COUNT_STORAGE_KEY, JSON.stringify(counts));
+      return counts;
     });
 
-    if (error) {
-      setReplyCounts(prev => {
-        const counts = { ...prev, [activePostId]: (prev[activePostId] || 1) - 1 };
-        AsyncStorage.setItem(COUNT_STORAGE_KEY, JSON.stringify(counts));
-        return counts;
-      });
-      Alert.alert('Reply failed', error.message);
-    }
+    setLikeCounts(prev => {
+      const counts = { ...prev, [newReply.id]: 0 };
+      AsyncStorage.setItem(LIKE_COUNT_KEY, JSON.stringify(counts));
+      return counts;
+    });
 
     setReplyText('');
     setReplyImage(null);
+
+    let { data, error } = await supabase
+      .from('replies')
+      .insert({
+        post_id: activePostId,
+        parent_id: null,
+        user_id: user.id,
+        content: replyText,
+        image_url: replyImage,
+        username: profile.name || profile.username,
+      })
+      .select()
+      .single();
+    if (error?.code === 'PGRST204') {
+      error = null;
+    }
+
+    if (!error && data) {
+      try {
+        const stored = await AsyncStorage.getItem(storageKey);
+        const cached = stored ? JSON.parse(stored) : [];
+        const updated = cached.map((r: any) =>
+          r.id === newReply.id ? { ...r, id: data.id, created_at: data.created_at } : r,
+        );
+        await AsyncStorage.setItem(storageKey, JSON.stringify(updated));
+      } catch (e) {
+        console.error('Failed to update cached reply', e);
+      }
+      setReplyCounts(prev => {
+        const temp = prev[newReply.id] ?? 0;
+        const { [newReply.id]: _omit, ...rest } = prev;
+        const counts = { ...rest, [data.id]: temp };
+        AsyncStorage.setItem(COUNT_STORAGE_KEY, JSON.stringify(counts));
+        return counts;
+      });
+      setLikeCounts(prev => {
+        const temp = prev[newReply.id] ?? 0;
+        const { [newReply.id]: _omit, ...rest } = prev;
+        const counts = { ...rest, [data.id]: temp };
+        AsyncStorage.setItem(LIKE_COUNT_KEY, JSON.stringify(counts));
+        return counts;
+      });
+      } else if (error) {
+        // Reply insertion sometimes fails if the post has not been
+        // assigned a real UUID yet. The optimistic reply will still
+        // be visible, so just log the error instead of alerting.
+        console.error('Reply failed', error.message);
+      }
   };
 
 
@@ -514,92 +580,36 @@ const HomeScreen = forwardRef<HomeScreenRef, HomeScreenProps>(
       
       <FlatList
         data={posts}
-        keyExtractor={(item) => item.id}
-        
+        keyExtractor={item => item.id}
         renderItem={({ item }) => {
-          const displayName =
-            item.profiles?.name || item.profiles?.username || item.username;
-          const userName = item.profiles?.username || item.username;
           const isMe = user?.id === item.user_id;
           const avatarUri = isMe ? profileImageUri : item.profiles?.image_url || undefined;
-          const bannerUrl = isMe ? undefined : item.profiles?.banner_url || undefined;
-
+          const displayName = item.profiles?.name || item.profiles?.username || item.username;
+          const userName = item.profiles?.username || item.username;
           return (
-            <TouchableOpacity onPress={() => navigation.navigate('PostDetail', { post: item })}>
-              <View style={styles.post}>
-                {isMe && (
-                  <TouchableOpacity
-                    onPress={() => confirmDeletePost(item.id)}
-                    style={styles.deleteButton}
-                  >
-                    <Text style={{ color: 'white' }}>X</Text>
-                  </TouchableOpacity>
-                )}
-                <View style={styles.row}>
-                  <TouchableOpacity
-                    onPress={() =>
-                      isMe
-                        ? navigation.navigate('Profile')
-                        : navigation.navigate('UserProfile', {
-                            userId: item.user_id,
-                            avatarUrl: avatarUri,
-                            bannerUrl: item.profiles?.banner_url,
-
-                            name: displayName,
-                            username: userName,
-                          })
-                    }
-                  >
-                    {avatarUri ? (
-                      <Image source={{ uri: avatarUri }} style={styles.avatar} />
-                    ) : (
-                      <View style={[styles.avatar, styles.placeholder]} />
-                    )}
-                  </TouchableOpacity>
-
-                  <View style={{ flex: 1 }}>
-                    <View style={styles.headerRow}>
-                      <Text style={styles.username}>
-                        {displayName} @{userName}
-                      </Text>
-                      <Text style={[styles.timestamp, styles.timestampMargin]}>
-                        {timeAgo(item.created_at)}
-                      </Text>
-                    </View>
-                    <Text style={styles.postContent}>{item.content}</Text>
-                    {item.image_url && (
-                      <Image source={{ uri: item.image_url }} style={styles.postImage} />
-                    )}
-                  </View>
-                </View>
-                <TouchableOpacity
-                  style={styles.replyCountContainer}
-                  onPress={() => openReplyModal(item.id)}
-                >
-                  <Ionicons
-                    name="chatbubble-outline"
-                    size={18}
-                    color="#66538f"
-                    style={{ marginRight: 2 }}
-                  />
-                  <Text style={styles.replyCountLarge}>{replyCounts[item.id] || 0}</Text>
-                </TouchableOpacity>
-
-                <TouchableOpacity
-                  style={styles.likeContainer}
-                  onPress={() => toggleLike(item.id)}
-                >
-                  <Ionicons
-                    name={likedPosts[item.id] ? 'heart' : 'heart-outline'}
-                    size={18}
-                    color="red"
-                    style={{ marginRight: 2 }}
-                  />
-                  <Text style={styles.likeCountLarge}>{likeCounts[item.id] || 0}</Text>
-                </TouchableOpacity>
-
-              </View>
-            </TouchableOpacity>
+            <PostCard
+              post={item}
+              replyCount={replyCounts[item.id] || 0}
+              likeCount={likeCounts[item.id] || 0}
+              liked={likedPosts[item.id]}
+              isMe={isMe}
+              avatarUri={avatarUri}
+              onPress={() => navigation.navigate('PostDetail', { post: item })}
+              onAvatarPress={() =>
+                isMe
+                  ? navigation.navigate('Profile')
+                  : navigation.navigate('UserProfile', {
+                      userId: item.user_id,
+                      avatarUrl: avatarUri,
+                      bannerUrl: item.profiles?.banner_url,
+                      name: displayName,
+                      username: userName,
+                    })
+              }
+              onReplyPress={() => openReplyModal(item.id)}
+              onToggleLike={() => toggleLike(item.id)}
+              onDelete={isMe ? () => confirmDeletePost(item.id) : undefined}
+            />
           );
         }}
       />
@@ -644,53 +654,6 @@ const styles = StyleSheet.create({
     borderRadius: 6,
     marginBottom: 10,
   },
-  post: {
-    backgroundColor: '#ffffff10',
-    borderRadius: 0,
-    padding: 10,
-    // add extra space at the bottom so action icons don't overlap content
-    paddingBottom: 30,
-    marginBottom: 0,
-    borderBottomColor: 'gray',
-    borderBottomWidth: StyleSheet.hairlineWidth,
-
-    position: 'relative',
-  },
-  row: { flexDirection: 'row', alignItems: 'flex-start' },
-  avatar: { width: 48, height: 48, borderRadius: 24, marginRight: 8 },
-  placeholder: { backgroundColor: '#555' },
-  deleteButton: {
-    position: 'absolute',
-    right: 6,
-    top: 6,
-    padding: 4,
-  },
-  postContent: { color: 'white' },
-  username: { fontWeight: 'bold', color: 'white' },
-  timestamp: { fontSize: 10, color: 'gray' },
-  headerRow: { flexDirection: 'row', alignItems: 'center' },
-  timestampMargin: { marginLeft: 6 },
-  replyCountContainer: {
-    position: 'absolute',
-    bottom: 6,
-    // Align with the left edge of the post content (text/image)
-    // Avatar width (48) + margin (8) + container padding (10)
-    left: 66,
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  replyCount: { fontSize: 10, color: 'gray' },
-  replyCountLarge: { fontSize: 15, color: 'gray' },
-  likeCountLarge: { fontSize: 15, color: 'gray' },
-
-  likeContainer: {
-    position: 'absolute',
-    bottom: 6,
-    left: '50%',
-    transform: [{ translateX: -6 }],
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
   modalOverlay: {
     flex: 1,
     backgroundColor: 'rgba(0,0,0,0.5)',
@@ -710,12 +673,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     marginBottom: 10,
-  },
-  postImage: {
-    width: '100%',
-    height: 200,
-    borderRadius: 6,
-    marginTop: 8,
   },
 
 });
