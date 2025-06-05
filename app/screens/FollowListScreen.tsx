@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { View, StyleSheet, Button } from 'react-native';
+import { View, StyleSheet, Button, Dimensions } from 'react-native';
 import { useRoute, useNavigation } from '@react-navigation/native';
 import { colors } from '../styles/colors';
 import FollowingList, { FollowingUser } from '../components/FollowingList';
@@ -40,7 +40,9 @@ export default function FollowListScreen() {
       <View style={styles.backButton}>
         <Button title="Back" onPress={() => navigation.goBack()} />
       </View>
-      <FollowingList users={profiles} />
+      <View style={styles.listContainer}>
+        <FollowingList users={profiles} />
+      </View>
     </View>
   );
 }
@@ -52,6 +54,10 @@ const styles = StyleSheet.create({
   },
   backButton: {
     alignSelf: 'flex-start',
+    marginTop: Dimensions.get('window').height * 0.1,
     marginBottom: 20,
+  },
+  listContainer: {
+    marginTop: Dimensions.get('window').height * 0.1,
   },
 });
