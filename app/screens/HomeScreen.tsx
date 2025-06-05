@@ -163,6 +163,11 @@ const HomeScreen = forwardRef<HomeScreenRef, HomeScreenProps>(
   };
 
   const openReplyModal = (postId: string) => {
+    if (postId.startsWith('temp-')) {
+      Alert.alert('Please wait', 'Your post is still uploading.');
+      return;
+    }
+
     setActivePostId(postId);
     setReplyText('');
     setReplyImage(null);
@@ -185,7 +190,13 @@ const HomeScreen = forwardRef<HomeScreenRef, HomeScreenProps>(
   };
 
   const handleReplySubmit = async () => {
-    if (!activePostId || (!replyText.trim() && !replyImage) || !user) {
+    if (
+      !activePostId ||
+      activePostId.startsWith('temp-') ||
+      (!replyText.trim() && !replyImage) ||
+      !user
+    ) {
+
       setReplyModalVisible(false);
       return;
     }
