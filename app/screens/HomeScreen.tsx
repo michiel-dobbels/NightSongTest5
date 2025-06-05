@@ -284,9 +284,13 @@ const HomeScreen = forwardRef<HomeScreenRef, HomeScreenProps>(
         AsyncStorage.setItem(LIKE_COUNT_KEY, JSON.stringify(counts));
         return counts;
       });
-    } else if (error) {
-      Alert.alert('Reply failed', error.message);
-    }
+      } else if (error) {
+        // Reply insertion sometimes fails if the post has not been
+        // assigned a real UUID yet. The optimistic reply will still
+        // be visible, so just log the error instead of alerting.
+        console.error('Reply failed', error.message);
+      }
+
   };
 
 
