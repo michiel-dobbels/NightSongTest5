@@ -180,20 +180,25 @@ export default function ProfileScreen() {
 
       ListHeaderComponent={renderHeader}
       keyExtractor={item => item.id}
-      renderItem={({ item }) => (
-        <PostCard
-          post={item}
-          isMe={true}
-          avatarUri={profileImageUri || undefined}
-          displayName={profile.name || profile.username}
-          userName={profile.username}
-          onPress={() => navigation.navigate('PostDetail', { post: item })}
-          onAvatarPress={() => {}}
-          onReplyPress={() => navigation.navigate('PostDetail', { post: item })}
-          rounded
-        />
+      renderItem={({ item }) => {
+        const count = replyCounts[item.id];
+        const postWithCount = { ...item, reply_count: count ?? item.reply_count };
 
-      )}
+        return (
+          <PostCard
+            post={postWithCount}
+            isMe={true}
+            avatarUri={profileImageUri || undefined}
+            displayName={profile.name || profile.username}
+            userName={profile.username}
+            onPress={() => navigation.navigate('PostDetail', { post: item })}
+            onAvatarPress={() => {}}
+            onReplyPress={() => navigation.navigate('PostDetail', { post: item })}
+            rounded
+          />
+        );
+
+      }}
     />
   );
 }
