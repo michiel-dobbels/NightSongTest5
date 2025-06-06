@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useCallback } from 'react';
 
 import {
   View,
@@ -8,14 +8,16 @@ import {
   Image,
   TouchableOpacity,
   Dimensions,
+  FlatList,
 } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 import * as FileSystem from 'expo-file-system';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useFocusEffect } from '@react-navigation/native';
 
 import { useAuth } from '../../AuthContext';
 import { useFollowCounts } from '../hooks/useFollowCounts';
 import { colors } from '../styles/colors';
+
 
 export default function ProfileScreen() {
   const navigation = useNavigation<any>();
@@ -28,6 +30,14 @@ export default function ProfileScreen() {
   } = useAuth() as any;
 
   const { followers, following } = useFollowCounts(profile?.id ?? null);
+
+  const { myPosts, fetchMyPosts } = useAuth() as any;
+
+  useFocusEffect(
+    useCallback(() => {
+      fetchMyPosts();
+    }, [fetchMyPosts]),
+  );
 
 
   const pickImage = async () => {
@@ -69,8 +79,8 @@ export default function ProfileScreen() {
 
   if (!profile) return null;
 
-  return (
-    <View style={styles.container}>
+  const renderHeader = () => (
+    <View>
       {bannerImageUri ? (
         <Image source={{ uri: bannerImageUri }} style={styles.banner} />
       ) : (
@@ -87,9 +97,7 @@ export default function ProfileScreen() {
         )}
         <View style={styles.textContainer}>
           <Text style={styles.username}>@{profile.username}</Text>
-          {profile.name && (
-            <Text style={styles.name}>{profile.name}</Text>
-          )}
+          {profile.name && <Text style={styles.name}>{profile.name}</Text>}
         </View>
       </View>
       <View style={styles.statsRow}>
@@ -122,13 +130,30 @@ export default function ProfileScreen() {
       </TouchableOpacity>
     </View>
   );
+
+  return (
+    <FlatList
+      style={styles.container}
+      contentContainerStyle={styles.contentContainer}
+      data={myPosts}
+      ListHeaderComponent={renderHeader}
+      keyExtractor={item => item.id}
+      renderItem={({ item }) => (
+        <View style={styles.postItem}>
+          <Text style={styles.postContent}>{item.content}</Text>
+        </View>
+      )}
+    />
+  );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    padding: 20,
     backgroundColor: colors.background,
+  },
+  contentContainer: {
+    padding: 20,
   },
   backButton: {
     alignSelf: 'flex-start',
@@ -175,5 +200,12 @@ const styles = StyleSheet.create({
   uploadText: { color: 'white' },
   statsRow: { flexDirection: 'row', marginLeft: 15, marginBottom: 20 },
   statsText: { color: 'white', marginRight: 15 },
+  postItem: {
+    backgroundColor: '#ffffff10',
+    padding: 10,
+    borderRadius: 6,
+    marginBottom: 10,
+  },
+  postContent: { color: 'white' },
 
 });
