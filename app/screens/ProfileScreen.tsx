@@ -1,4 +1,4 @@
-import React, { useCallback } from 'react';
+import React, { useCallback, useState } from 'react';
 
 
 import {
@@ -11,17 +11,20 @@ import {
   Dimensions,
   FlatList,
 } from 'react-native';
+import { Ionicons } from "@expo/vector-icons";
+import PostCard from '../components/PostCard';
 import * as ImagePicker from 'expo-image-picker';
 import * as FileSystem from 'expo-file-system';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 import { useAuth } from '../../AuthContext';
 import { useFollowCounts } from '../hooks/useFollowCounts';
 import { colors } from '../styles/colors';
+
 import { supabase } from '../../lib/supabase';
 
-
-
+const COUNT_STORAGE_KEY = 'cached_reply_counts';
 
 
 
@@ -52,10 +55,23 @@ export default function ProfileScreen() {
     fetchMyPosts,
   } = useAuth() as any;
 
+  const [replyCounts, setReplyCounts] = useState<{ [key: string]: number }>({});
+
   const { followers, following } = useFollowCounts(profile?.id ?? null);
 
   useFocusEffect(
     useCallback(() => {
+      const loadCounts = async () => {
+        const stored = await AsyncStorage.getItem(COUNT_STORAGE_KEY);
+        if (stored) {
+          try {
+            setReplyCounts(JSON.parse(stored));
+          } catch (e) {
+            console.error('Failed to parse cached counts', e);
+          }
+        }
+      };
+      loadCounts();
       fetchMyPosts();
     }, [fetchMyPosts]),
   );
@@ -102,7 +118,7 @@ export default function ProfileScreen() {
   if (!profile) return null;
 
   const renderHeader = () => (
-    <View>
+    <View style={styles.headerContainer}>
       {bannerImageUri ? (
         <Image source={{ uri: bannerImageUri }} style={styles.banner} />
       ) : (
@@ -151,16 +167,7 @@ export default function ProfileScreen() {
         <Text style={styles.uploadText}>Upload Banner</Text>
       </TouchableOpacity>
 
-      <FlatList
-        data={posts}
-        keyExtractor={(item) => item.id}
-        renderItem={({ item }) => (
-          <View style={styles.postItem}>
-            <Text style={styles.postContent}>{item.content}</Text>
-          </View>
-        )}
-        style={{ marginTop: 20 }}
-      />
+      {/* Removed duplicate post list */}
     </View>
   );
 
@@ -173,29 +180,15 @@ export default function ProfileScreen() {
       ListHeaderComponent={renderHeader}
       keyExtractor={item => item.id}
       renderItem={({ item }) => (
-        <View style={styles.postItem}>
-          <View style={styles.row}>
-            {profileImageUri ? (
-              <Image source={{ uri: profileImageUri }} style={styles.postAvatar} />
-            ) : (
-              <View style={[styles.postAvatar, styles.placeholder]} />
-            )}
-            <View style={{ flex: 1 }}>
-              <View style={styles.headerRow}>
-                <Text style={styles.postUsername}>
-                  {profile.name || profile.username} @{profile.username}
-                </Text>
-                {item.created_at && (
-                  <Text style={[styles.timestamp, styles.timestampMargin]}>
-                    {timeAgo(item.created_at)}
-                  </Text>
-                )}
-              </View>
-              <Text style={styles.postContent}>{item.content}</Text>
-            </View>
-          </View>
-
-        </View>
+        <PostCard
+          post={item}
+          isMe={true}
+          avatarUri={profileImageUri || undefined}
+          displayName={profile.name || profile.username}
+          userName={profile.username}
+          onPress={() => navigation.navigate('PostDetail', { post: item })}
+          onAvatarPress={() => {}}
+        />
       )}
     />
   );
@@ -207,7 +200,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.background,
   },
   contentContainer: {
-    padding: 20,
+    padding: 0,
   },
   backButton: {
     alignSelf: 'flex-start',
@@ -256,9 +249,13 @@ const styles = StyleSheet.create({
   statsText: { color: 'white', marginRight: 15 },
   postItem: {
     backgroundColor: '#ffffff10',
+    borderRadius: 0,
     padding: 10,
-    borderRadius: 6,
-    marginBottom: 10,
+    paddingBottom: 30,
+    marginBottom: 0,
+    borderBottomColor: 'gray',
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    position: 'relative',
   },
   postContent: { color: 'white' },
   postUsername: { fontWeight: 'bold', color: 'white' },
@@ -267,6 +264,17 @@ const styles = StyleSheet.create({
   headerRow: { flexDirection: 'row', alignItems: 'center' },
   timestamp: { fontSize: 10, color: 'gray' },
   timestampMargin: { marginLeft: 6 },
+  replyCountContainer: {
+    position: "absolute",
+    bottom: 6,
+    left: 66,
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  replyCountLarge: { fontSize: 15, color: "gray" },
+  headerContainer: {
+    padding: 20,
+  },
 
 
 });
