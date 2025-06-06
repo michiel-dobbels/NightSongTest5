@@ -21,6 +21,7 @@ import { colors } from '../styles/colors';
 import { supabase } from '../../lib/supabase';
 
 
+
 export default function ProfileScreen() {
   const navigation = useNavigation<any>();
   const {

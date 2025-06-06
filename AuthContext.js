@@ -96,7 +96,11 @@ export function AuthProvider({ children }) {
     });
 
     return () => {
-      listener?.subscription.unsubscribe();
+      if (listener?.subscription) {
+        listener.subscription.unsubscribe();
+      } else {
+        listener?.unsubscribe?.();
+      }
     };
   }, []);
 
