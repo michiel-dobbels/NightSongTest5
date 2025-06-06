@@ -270,6 +270,7 @@ export function AuthProvider({ children }) {
     setMyPosts(prev => prev.map(p => (p.id === tempId ? { ...p, ...updated } : p)));
   };
 
+
   // 🔍 Fetch profile by ID
   const fetchProfile = async (userId) => {
     const { data, error } = await supabase
@@ -337,6 +338,7 @@ export function AuthProvider({ children }) {
     fetchMyPosts,
     addPost,
     updatePost,
+
     signUp,
     signIn,
     signOut,
