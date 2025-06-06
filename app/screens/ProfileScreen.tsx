@@ -165,9 +165,8 @@ export default function ProfileScreen() {
       keyExtractor={item => item.id}
       renderItem={({ item }) => (
         <TouchableOpacity
-          onPress={() =>
-            navigation.navigate('PostDetail', { post: item, fromProfile: true })
-          }
+          onPress={() => navigation.navigate('PostDetail', { post: item })}
+
         >
           <View style={styles.postItem}>
             <View style={styles.row}>
