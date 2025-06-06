@@ -7,9 +7,23 @@ import { Post } from '../types/Post';
 
 interface PostListProps {
   posts: Post[];
+  onLike?: (id: string) => void;
+  onReply?: (id: string) => void;
+  onDelete?: (id: string) => void;
+  likeCounts?: Record<string, number>;
+  replyCounts?: Record<string, number>;
+  likedPosts?: Record<string, boolean>;
 }
 
-export default function PostList({ posts }: PostListProps) {
+export default function PostList({
+  posts,
+  onLike,
+  onReply,
+  onDelete,
+  likeCounts,
+  replyCounts,
+  likedPosts,
+}: PostListProps) {
   const navigation = useNavigation<any>();
   const { user, profile } = useAuth() as any;
 
@@ -41,11 +55,16 @@ export default function PostList({ posts }: PostListProps) {
                 });
               }
             }}
-            onDelete={() => {}}
-            onReply={() => {}}
-            onLike={() => {}}
-            likeCount={item.like_count || 0}
-            replyCount={item.reply_count || 0}
+            onDelete={onDelete ? () => onDelete(item.id) : undefined}
+            onReply={onReply ? () => onReply(item.id) : undefined}
+            onLike={onLike ? () => onLike(item.id) : undefined}
+            likeCount={
+              likeCounts ? likeCounts[item.id] ?? item.like_count ?? 0 : item.like_count ?? 0
+            }
+            replyCount={
+              replyCounts ? replyCounts[item.id] ?? item.reply_count ?? 0 : item.reply_count ?? 0
+            }
+            liked={likedPosts ? likedPosts[item.id] ?? false : false}
           />
         );
       }}

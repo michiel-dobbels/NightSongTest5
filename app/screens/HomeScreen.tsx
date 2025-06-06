@@ -3,7 +3,6 @@ import {
   View,
   TextInput,
   Button,
-  FlatList,
   Text,
   StyleSheet,
   Alert,
@@ -23,9 +22,8 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../AuthContext';
 import { colors } from '../styles/colors';
-import PostCard from '../components/PostCard';
+import PostList from '../components/PostList';
 import { Post } from '../types/Post';
-import { timeAgo } from '../utils/timeAgo';
 
 const STORAGE_KEY = 'cached_posts';
 const COUNT_STORAGE_KEY = 'cached_reply_counts';
@@ -556,47 +554,14 @@ const HomeScreen = forwardRef<HomeScreenRef, HomeScreenProps>(
         </>
       )}
       
-      <FlatList
-        data={posts}
-        keyExtractor={(item) => item.id}
-        
-        renderItem={({ item }) => {
-          const displayName =
-            item.profiles?.name || item.profiles?.username || item.username;
-          const userName = item.profiles?.username || item.username;
-          const isMe = user?.id === item.user_id;
-          const avatarUri = isMe ? profileImageUri : item.profiles?.image_url || undefined;
-
-          const handleAvatarPress = () => {
-            if (isMe) {
-              navigation.navigate('Profile');
-            } else {
-              navigation.navigate('UserProfile', {
-                userId: item.user_id,
-                avatarUrl: avatarUri,
-                bannerUrl: item.profiles?.banner_url,
-                name: displayName,
-                username: userName,
-              });
-            }
-          };
-
-          return (
-            <PostCard
-              post={item}
-              isCurrentUser={isMe}
-              avatarUri={avatarUri}
-              onPress={() => navigation.navigate('PostDetail', { post: item })}
-              onPressAvatar={handleAvatarPress}
-              onDelete={() => confirmDeletePost(item.id)}
-              onReply={() => openReplyModal(item.id)}
-              onLike={() => toggleLike(item.id)}
-              liked={likedPosts[item.id]}
-              likeCount={likeCounts[item.id] || 0}
-              replyCount={replyCounts[item.id] || 0}
-            />
-          );
-        }}
+      <PostList
+        posts={posts}
+        onDelete={confirmDeletePost}
+        onReply={openReplyModal}
+        onLike={toggleLike}
+        likedPosts={likedPosts}
+        likeCounts={likeCounts}
+        replyCounts={replyCounts}
       />
       <Modal visible={replyModalVisible} animationType="slide" transparent>
         <KeyboardAvoidingView
