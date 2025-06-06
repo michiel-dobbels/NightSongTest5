@@ -151,16 +151,7 @@ export default function ProfileScreen() {
         <Text style={styles.uploadText}>Upload Banner</Text>
       </TouchableOpacity>
 
-      <FlatList
-        data={posts}
-        keyExtractor={(item) => item.id}
-        renderItem={({ item }) => (
-          <View style={styles.postItem}>
-            <Text style={styles.postContent}>{item.content}</Text>
-          </View>
-        )}
-        style={{ marginTop: 20 }}
-      />
+      {/* Removed duplicate post list */}
     </View>
   );
 
@@ -173,29 +164,34 @@ export default function ProfileScreen() {
       ListHeaderComponent={renderHeader}
       keyExtractor={item => item.id}
       renderItem={({ item }) => (
-        <View style={styles.postItem}>
-          <View style={styles.row}>
-            {profileImageUri ? (
-              <Image source={{ uri: profileImageUri }} style={styles.postAvatar} />
-            ) : (
-              <View style={[styles.postAvatar, styles.placeholder]} />
-            )}
-            <View style={{ flex: 1 }}>
-              <View style={styles.headerRow}>
-                <Text style={styles.postUsername}>
-                  {profile.name || profile.username} @{profile.username}
-                </Text>
-                {item.created_at && (
-                  <Text style={[styles.timestamp, styles.timestampMargin]}>
-                    {timeAgo(item.created_at)}
+        <TouchableOpacity
+          onPress={() =>
+            navigation.navigate('PostDetail', { post: item, fromProfile: true })
+          }
+        >
+          <View style={styles.postItem}>
+            <View style={styles.row}>
+              {profileImageUri ? (
+                <Image source={{ uri: profileImageUri }} style={styles.postAvatar} />
+              ) : (
+                <View style={[styles.postAvatar, styles.placeholder]} />
+              )}
+              <View style={{ flex: 1 }}>
+                <View style={styles.headerRow}>
+                  <Text style={styles.postUsername}>
+                    {profile.name || profile.username} @{profile.username}
                   </Text>
-                )}
+                  {item.created_at && (
+                    <Text style={[styles.timestamp, styles.timestampMargin]}>
+                      {timeAgo(item.created_at)}
+                    </Text>
+                  )}
+                </View>
+                <Text style={styles.postContent}>{item.content}</Text>
               </View>
-              <Text style={styles.postContent}>{item.content}</Text>
             </View>
           </View>
-
-        </View>
+        </TouchableOpacity>
       )}
     />
   );
