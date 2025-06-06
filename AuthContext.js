@@ -10,6 +10,7 @@ export function AuthProvider({ children }) {
   const [loading, setLoading] = useState(true);
   const [profileImageUri, setProfileImageUriState] = useState(null);
   const [bannerImageUri, setBannerImageUriState] = useState(null);
+  const [myPosts, setMyPosts] = useState([]);
 
   // Helper ensures a profile exists for the given user so posts can
   // reference it without foreign-key errors
@@ -95,7 +96,11 @@ export function AuthProvider({ children }) {
     });
 
     return () => {
-      listener?.subscription.unsubscribe();
+      if (listener?.subscription) {
+        listener.subscription.unsubscribe();
+      } else {
+        listener?.unsubscribe?.();
+      }
     };
   }, []);
 
@@ -114,6 +119,7 @@ export function AuthProvider({ children }) {
       if (bannerStored) setBannerImageUriState(bannerStored);
     };
     loadImage();
+    fetchMyPosts();
   }, [user]);
 
   // 🔐 Sign in
@@ -189,6 +195,7 @@ export function AuthProvider({ children }) {
     setProfile(null);
     setProfileImageUriState(null);
     setBannerImageUriState(null);
+    setMyPosts([]);
   };
 
   const setProfileImageUri = async (uri) => {
@@ -239,6 +246,28 @@ export function AuthProvider({ children }) {
         .eq('id', user.id);
       if (error) console.error('Failed to update banner_url:', error);
     }
+  };
+
+  const fetchMyPosts = async () => {
+    const id = user?.id;
+    if (!id) {
+      setMyPosts([]);
+      return;
+    }
+    const { data, error } = await supabase
+      .from('posts')
+      .select('id, content')
+      .eq('user_id', id)
+      .order('created_at', { ascending: false });
+    if (!error && data) setMyPosts(data);
+  };
+
+  const addPost = (post) => {
+    setMyPosts((prev) => [post, ...prev]);
+  };
+
+  const updatePost = (tempId, updated) => {
+    setMyPosts(prev => prev.map(p => (p.id === tempId ? { ...p, ...updated } : p)));
   };
 
   // 🔍 Fetch profile by ID
@@ -304,6 +333,10 @@ export function AuthProvider({ children }) {
     setProfileImageUri,
     bannerImageUri,
     setBannerImageUri,
+    myPosts,
+    fetchMyPosts,
+    addPost,
+    updatePost,
     signUp,
     signIn,
     signOut,
