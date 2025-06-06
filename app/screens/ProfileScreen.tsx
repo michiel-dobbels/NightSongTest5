@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 
 import {
   View,
@@ -16,6 +16,9 @@ import { useNavigation } from '@react-navigation/native';
 import { useAuth } from '../../AuthContext';
 import { useFollowCounts } from '../hooks/useFollowCounts';
 import { colors } from '../styles/colors';
+import { supabase } from '../../lib/supabase';
+import PostList from '../components/PostList';
+import { Post } from '../types/Post';
 
 export default function ProfileScreen() {
   const navigation = useNavigation<any>();
@@ -28,6 +31,24 @@ export default function ProfileScreen() {
   } = useAuth() as any;
 
   const { followers, following } = useFollowCounts(profile?.id ?? null);
+  const [posts, setPosts] = useState<Post[]>([]);
+
+  useEffect(() => {
+    const fetchPosts = async () => {
+      if (!profile?.id) return;
+      const { data, error } = await supabase
+        .from('posts')
+        .select(
+          'id, content, image_url, user_id, created_at, reply_count, like_count, profiles(username, name, image_url, banner_url)'
+        )
+        .eq('user_id', profile.id)
+        .order('created_at', { ascending: false });
+      if (!error && data) {
+        setPosts(data as any);
+      }
+    };
+    fetchPosts();
+  }, [profile?.id]);
 
 
   const pickImage = async () => {
@@ -120,6 +141,9 @@ export default function ProfileScreen() {
       <TouchableOpacity onPress={pickBanner} style={styles.uploadLink}>
         <Text style={styles.uploadText}>Upload Banner</Text>
       </TouchableOpacity>
+
+      <Text style={styles.sectionTitle}>Posts</Text>
+      <PostList posts={posts} />
     </View>
   );
 }
@@ -175,5 +199,6 @@ const styles = StyleSheet.create({
   uploadText: { color: 'white' },
   statsRow: { flexDirection: 'row', marginLeft: 15, marginBottom: 20 },
   statsText: { color: 'white', marginRight: 15 },
+  sectionTitle: { color: 'white', fontSize: 18, marginBottom: 10 },
 
 });

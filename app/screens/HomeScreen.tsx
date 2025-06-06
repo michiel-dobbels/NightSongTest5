@@ -276,6 +276,7 @@ const HomeScreen = forwardRef<HomeScreenRef, HomeScreenProps>(
       .select(
         'id, content, image_url, user_id, created_at, reply_count, like_count, profiles(username, name, image_url, banner_url)',
       )
+      .eq('username', 'Michiel')
       .order('created_at', { ascending: false })
       .range(0, PAGE_SIZE - 1);
 
@@ -341,22 +342,24 @@ const HomeScreen = forwardRef<HomeScreenRef, HomeScreenProps>(
       },
     };
 
-    // Show the post immediately
-    setPosts((prev) => {
-      const updated = [newPost, ...prev].slice(0, PAGE_SIZE);
-      AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
-      return updated;
-    });
-    setReplyCounts(prev => {
-      const counts = { ...prev, [newPost.id]: 0 };
-      AsyncStorage.setItem(COUNT_STORAGE_KEY, JSON.stringify(counts));
-      return counts;
-    });
-    setLikeCounts(prev => {
-      const counts = { ...prev, [newPost.id]: 0 };
-      AsyncStorage.setItem(LIKE_COUNT_KEY, JSON.stringify(counts));
-      return counts;
-    });
+    // Show the post immediately if it belongs to @Michiel
+    if (newPost.username === 'Michiel') {
+      setPosts(prev => {
+        const updated = [newPost, ...prev].slice(0, PAGE_SIZE);
+        AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
+        return updated;
+      });
+      setReplyCounts(prev => {
+        const counts = { ...prev, [newPost.id]: 0 };
+        AsyncStorage.setItem(COUNT_STORAGE_KEY, JSON.stringify(counts));
+        return counts;
+      });
+      setLikeCounts(prev => {
+        const counts = { ...prev, [newPost.id]: 0 };
+        AsyncStorage.setItem(LIKE_COUNT_KEY, JSON.stringify(counts));
+        return counts;
+      });
+    }
 
     if (!hideInput) {
       setPostText('');
@@ -456,7 +459,7 @@ const HomeScreen = forwardRef<HomeScreenRef, HomeScreenProps>(
       const stored = await AsyncStorage.getItem(STORAGE_KEY);
       if (stored) {
         try {
-          const cached = JSON.parse(stored);
+          const cached = JSON.parse(stored).filter((p: any) => p.username === 'Michiel');
           setPosts(cached.slice(0, PAGE_SIZE));
           const entries = cached.map((p: any) => [p.id, p.reply_count ?? 0]);
           setReplyCounts(Object.fromEntries(entries));
