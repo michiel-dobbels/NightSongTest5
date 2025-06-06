@@ -257,6 +257,7 @@ export function AuthProvider({ children }) {
     const { data, error } = await supabase
       .from('posts')
       .select('id, content, created_at')
+
       .eq('user_id', id)
       .order('created_at', { ascending: false });
     if (!error && data) {
@@ -265,6 +266,7 @@ export function AuthProvider({ children }) {
         return [...temps, ...data];
       });
     }
+
   };
 
   const addPost = (post) => {
@@ -274,6 +276,7 @@ export function AuthProvider({ children }) {
   const updatePost = (tempId, updated) => {
     setMyPosts(prev => prev.map(p => (p.id === tempId ? { ...p, ...updated } : p)));
   };
+
 
   // 🔍 Fetch profile by ID
   const fetchProfile = async (userId) => {
@@ -342,6 +345,7 @@ export function AuthProvider({ children }) {
     fetchMyPosts,
     addPost,
     updatePost,
+
     signUp,
     signIn,
     signOut,

@@ -1,5 +1,6 @@
 import React, { useCallback } from 'react';
 
+
 import {
   View,
   Text,
@@ -17,6 +18,12 @@ import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { useAuth } from '../../AuthContext';
 import { useFollowCounts } from '../hooks/useFollowCounts';
 import { colors } from '../styles/colors';
+import { supabase } from '../../lib/supabase';
+
+
+
+
+
 
 function timeAgo(dateString: string): string {
   const diff = Date.now() - new Date(dateString).getTime();
@@ -48,6 +55,14 @@ export default function ProfileScreen() {
     useCallback(() => {
       fetchMyPosts();
     }, [fetchMyPosts]),
+  );
+
+
+  useFocusEffect(
+    useCallback(() => {
+      fetchMyPosts();
+    }, [fetchMyPosts]),
+
   );
 
 
@@ -139,6 +154,17 @@ export default function ProfileScreen() {
       <TouchableOpacity onPress={pickBanner} style={styles.uploadLink}>
         <Text style={styles.uploadText}>Upload Banner</Text>
       </TouchableOpacity>
+
+      <FlatList
+        data={posts}
+        keyExtractor={(item) => item.id}
+        renderItem={({ item }) => (
+          <View style={styles.postItem}>
+            <Text style={styles.postContent}>{item.content}</Text>
+          </View>
+        )}
+        style={{ marginTop: 20 }}
+      />
     </View>
   );
 
@@ -147,6 +173,7 @@ export default function ProfileScreen() {
       style={styles.container}
       contentContainerStyle={styles.contentContainer}
       data={posts}
+
       ListHeaderComponent={renderHeader}
       keyExtractor={item => item.id}
       renderItem={({ item }) => (
@@ -171,6 +198,7 @@ export default function ProfileScreen() {
               <Text style={styles.postContent}>{item.content}</Text>
             </View>
           </View>
+
         </View>
       )}
     />
@@ -243,5 +271,6 @@ const styles = StyleSheet.create({
   headerRow: { flexDirection: 'row', alignItems: 'center' },
   timestamp: { fontSize: 10, color: 'gray' },
   timestampMargin: { marginLeft: 6 },
+
 
 });
