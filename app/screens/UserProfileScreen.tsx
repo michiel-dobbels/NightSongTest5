@@ -368,7 +368,9 @@ export default function UserProfileScreen() {
         )}
       />
 
-      <Text style={styles.sectionTitle}>Posts</Text>
+      <TouchableOpacity onPress={() => navigation.navigate('UserPosts', { userId })}>
+        <Text style={styles.sectionTitle}>Posts</Text>
+      </TouchableOpacity>
       <FlatList
         data={posts}
         keyExtractor={item => item.id}
