@@ -373,6 +373,7 @@ export default function UserProfileScreen() {
       </TouchableOpacity>
       <PostList posts={posts} />
 
+
     </View>
   );
 }

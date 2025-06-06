@@ -4,6 +4,7 @@ import { useRoute, useNavigation } from '@react-navigation/native';
 import { supabase } from '../../lib/supabase';
 import { colors } from '../styles/colors';
 import PostList from '../components/PostList';
+
 import { Post } from '../types/Post';
 import { useAuth } from '../../AuthContext';
 
@@ -58,6 +59,7 @@ export default function UserPostsScreen() {
     fetchProfile();
   }, [userId]);
 
+
   useEffect(() => {
     const fetchPosts = async () => {
       const { data, error } = await supabase
@@ -99,6 +101,7 @@ export default function UserPostsScreen() {
     return () => {
       supabase.removeSubscription(subscription as any);
     };
+
   }, [userId]);
 
   return (
@@ -125,6 +128,7 @@ export default function UserPostsScreen() {
         </View>
       </View>
       <PostList posts={posts} />
+
     </View>
   );
 }
@@ -154,4 +158,5 @@ const styles = StyleSheet.create({
   textContainer: { marginLeft: 15 },
   username: { color: 'white', fontSize: 24, fontWeight: 'bold' },
   name: { color: 'white', fontSize: 20, marginTop: 4 },
+
 });
