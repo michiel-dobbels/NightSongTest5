@@ -71,7 +71,8 @@ interface HomeScreenProps {
 const HomeScreen = forwardRef<HomeScreenRef, HomeScreenProps>(
   ({ hideInput }, ref) => {
     const navigation = useNavigation<any>();
-  const { user, profile, profileImageUri, bannerImageUri, addPost } =
+  const { user, profile, profileImageUri, bannerImageUri, addPost, updatePost } =
+
     useAuth() as any;
   const [postText, setPostText] = useState('');
   const [posts, setPosts] = useState<Post[]>([]);
@@ -385,6 +386,10 @@ const HomeScreen = forwardRef<HomeScreenRef, HomeScreenProps>(
       return counts;
     });
 
+    if (!imageUri) {
+      addPost({ id: newPost.id, content: text });
+    }
+
     if (!hideInput) {
       setPostText('');
     }
@@ -425,7 +430,8 @@ const HomeScreen = forwardRef<HomeScreenRef, HomeScreenProps>(
           return updated;
         });
         if (!imageUri) {
-          addPost({ id: data.id, content: data.content });
+          updatePost(newPost.id, { id: data.id, content: data.content });
+
         }
         setReplyCounts(prev => {
           const { [newPost.id]: tempCount, ...rest } = prev;
