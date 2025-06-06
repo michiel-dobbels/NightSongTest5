@@ -151,16 +151,7 @@ export default function ProfileScreen() {
         <Text style={styles.uploadText}>Upload Banner</Text>
       </TouchableOpacity>
 
-      <FlatList
-        data={posts}
-        keyExtractor={(item) => item.id}
-        renderItem={({ item }) => (
-          <View style={styles.postItem}>
-            <Text style={styles.postContent}>{item.content}</Text>
-          </View>
-        )}
-        style={{ marginTop: 20 }}
-      />
+      {/* Removed duplicate post list */}
     </View>
   );
 
