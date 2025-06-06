@@ -102,7 +102,7 @@ export default function ProfileScreen() {
   if (!profile) return null;
 
   const renderHeader = () => (
-    <View>
+    <View style={styles.headerContainer}>
       {bannerImageUri ? (
         <Image source={{ uri: bannerImageUri }} style={styles.banner} />
       ) : (
@@ -202,7 +202,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.background,
   },
   contentContainer: {
-    padding: 20,
+    padding: 0,
   },
   backButton: {
     alignSelf: 'flex-start',
@@ -251,9 +251,13 @@ const styles = StyleSheet.create({
   statsText: { color: 'white', marginRight: 15 },
   postItem: {
     backgroundColor: '#ffffff10',
+    borderRadius: 0,
     padding: 10,
-    borderRadius: 6,
-    marginBottom: 10,
+    paddingBottom: 30,
+    marginBottom: 0,
+    borderBottomColor: 'gray',
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    position: 'relative',
   },
   postContent: { color: 'white' },
   postUsername: { fontWeight: 'bold', color: 'white' },
@@ -262,6 +266,9 @@ const styles = StyleSheet.create({
   headerRow: { flexDirection: 'row', alignItems: 'center' },
   timestamp: { fontSize: 10, color: 'gray' },
   timestampMargin: { marginLeft: 6 },
+  headerContainer: {
+    padding: 20,
+  },
 
 
 });
