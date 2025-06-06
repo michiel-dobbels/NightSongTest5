@@ -6,6 +6,7 @@ import { colors } from '../styles/colors';
 import { useFollowCounts } from '../hooks/useFollowCounts';
 import { useAuth } from '../../AuthContext';
 import FollowButton from '../components/FollowButton';
+
 import { Post } from '../types/Post';
 
 
@@ -377,6 +378,7 @@ export default function UserProfileScreen() {
           <Text style={styles.postItem}>{item.content}</Text>
         )}
       />
+
 
     </View>
   );
