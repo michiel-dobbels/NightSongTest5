@@ -193,8 +193,8 @@ export default function ProfileScreen() {
             <View style={styles.replyCountContainer}>
               <Ionicons name="chatbubble-outline" size={18} color="#66538f" style={{ marginRight: 2 }} />
               <Text style={styles.replyCountLarge}>{item.reply_count || 0}</Text>
-
             </View>
+
           </View>
         </TouchableOpacity>
       )}
