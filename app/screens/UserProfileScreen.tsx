@@ -6,7 +6,7 @@ import { colors } from '../styles/colors';
 import { useFollowCounts } from '../hooks/useFollowCounts';
 import { useAuth } from '../../AuthContext';
 import FollowButton from '../components/FollowButton';
-import PostList from '../components/PostList';
+
 import { Post } from '../types/Post';
 
 
@@ -371,7 +371,13 @@ export default function UserProfileScreen() {
       <TouchableOpacity onPress={() => navigation.navigate('UserPosts', { userId })}>
         <Text style={styles.sectionTitle}>Posts</Text>
       </TouchableOpacity>
-      <PostList posts={posts} />
+      <FlatList
+        data={posts}
+        keyExtractor={item => item.id}
+        renderItem={({ item }) => (
+          <Text style={styles.postItem}>{item.content}</Text>
+        )}
+      />
 
 
     </View>
@@ -415,5 +421,11 @@ const styles = StyleSheet.create({
   followingAvatar: { width: 40, height: 40, borderRadius: 20, marginRight: 12 },
   followingName: { color: 'white', fontSize: 16, fontWeight: 'bold' },
   followingUsername: { color: 'white', fontSize: 16 },
+  postItem: {
+    color: 'white',
+    paddingVertical: 8,
+    borderBottomColor: '#ffffff20',
+    borderBottomWidth: StyleSheet.hairlineWidth,
+  },
 
 });
