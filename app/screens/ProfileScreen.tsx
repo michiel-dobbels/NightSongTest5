@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useCallback } from 'react';
 
 import {
   View,
@@ -8,14 +8,16 @@ import {
   Image,
   TouchableOpacity,
   Dimensions,
+  FlatList,
 } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 import * as FileSystem from 'expo-file-system';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useFocusEffect } from '@react-navigation/native';
 
 import { useAuth } from '../../AuthContext';
 import { useFollowCounts } from '../hooks/useFollowCounts';
 import { colors } from '../styles/colors';
+import { supabase } from '../../lib/supabase';
 
 export default function ProfileScreen() {
   const navigation = useNavigation<any>();
@@ -28,6 +30,26 @@ export default function ProfileScreen() {
   } = useAuth() as any;
 
   const { followers, following } = useFollowCounts(profile?.id ?? null);
+
+  const [posts, setPosts] = useState<{ id: string; content: string }[]>([]);
+
+  const fetchPosts = useCallback(async () => {
+    if (!profile) return;
+    const { data, error } = await supabase
+      .from('posts')
+      .select('id, content')
+      .eq('user_id', profile.id)
+      .order('created_at', { ascending: false });
+    if (!error && data) {
+      setPosts(data);
+    }
+  }, [profile]);
+
+  useFocusEffect(
+    useCallback(() => {
+      fetchPosts();
+    }, [fetchPosts]),
+  );
 
 
   const pickImage = async () => {
@@ -120,6 +142,17 @@ export default function ProfileScreen() {
       <TouchableOpacity onPress={pickBanner} style={styles.uploadLink}>
         <Text style={styles.uploadText}>Upload Banner</Text>
       </TouchableOpacity>
+
+      <FlatList
+        data={posts}
+        keyExtractor={(item) => item.id}
+        renderItem={({ item }) => (
+          <View style={styles.postItem}>
+            <Text style={styles.postContent}>{item.content}</Text>
+          </View>
+        )}
+        style={{ marginTop: 20 }}
+      />
     </View>
   );
 }
@@ -175,5 +208,12 @@ const styles = StyleSheet.create({
   uploadText: { color: 'white' },
   statsRow: { flexDirection: 'row', marginLeft: 15, marginBottom: 20 },
   statsText: { color: 'white', marginRight: 15 },
+  postItem: {
+    backgroundColor: '#ffffff10',
+    padding: 10,
+    borderRadius: 6,
+    marginBottom: 10,
+  },
+  postContent: { color: 'white' },
 
 });
