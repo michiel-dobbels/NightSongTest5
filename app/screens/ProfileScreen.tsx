@@ -22,6 +22,7 @@ import { supabase } from '../../lib/supabase';
 
 
 
+
 export default function ProfileScreen() {
   const navigation = useNavigation<any>();
   const {
@@ -34,7 +35,9 @@ export default function ProfileScreen() {
 
   const { followers, following } = useFollowCounts(profile?.id ?? null);
 
-  const { myPosts, fetchMyPosts } = useAuth() as any;
+  // Alias myPosts as posts so the FlatList uses a familiar prop name
+  const { myPosts: posts, fetchMyPosts } = useAuth() as any;
+
 
   useFocusEffect(
     useCallback(() => {
@@ -150,7 +153,7 @@ export default function ProfileScreen() {
     <FlatList
       style={styles.container}
       contentContainerStyle={styles.contentContainer}
-      data={myPosts}
+      data={posts}
 
       ListHeaderComponent={renderHeader}
       keyExtractor={item => item.id}
