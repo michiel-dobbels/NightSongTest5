@@ -256,17 +256,25 @@ export function AuthProvider({ children }) {
     }
     const { data, error } = await supabase
       .from('posts')
-      .select('id, content, created_at')
-
+      .select('id, content, created_at, reply_count')
       .eq('user_id', id)
       .order('created_at', { ascending: false });
+
     if (!error && data) {
       setMyPosts(prev => {
         const temps = prev.filter(p => String(p.id).startsWith('temp-'));
-        return [...temps, ...data];
+        const combined = [...temps, ...data];
+        const seen = new Set();
+        const unique = [];
+        for (const p of combined) {
+          if (!seen.has(p.id)) {
+            seen.add(p.id);
+            unique.push(p);
+          }
+        }
+        return unique;
       });
     }
-
   };
 
   const addPost = (post) => {
@@ -274,7 +282,18 @@ export function AuthProvider({ children }) {
   };
 
   const updatePost = (tempId, updated) => {
-    setMyPosts(prev => prev.map(p => (p.id === tempId ? { ...p, ...updated } : p)));
+    setMyPosts(prev => {
+      const mapped = prev.map(p => (p.id === tempId ? { ...p, ...updated } : p));
+      const seen = new Set();
+      const unique = [];
+      for (const post of mapped) {
+        if (!seen.has(post.id)) {
+          seen.add(post.id);
+          unique.push(post);
+        }
+      }
+      return unique;
+    });
   };
 
 
