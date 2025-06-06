@@ -8,6 +8,7 @@ import {
   Image,
   TouchableOpacity,
   Dimensions,
+  FlatList,
 } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 import * as FileSystem from 'expo-file-system';
@@ -18,6 +19,7 @@ import { useFollowCounts } from '../hooks/useFollowCounts';
 import { colors } from '../styles/colors';
 import { supabase } from '../../lib/supabase';
 import PostList from '../components/PostList';
+
 import { Post } from '../types/Post';
 
 export default function ProfileScreen() {
@@ -144,6 +146,7 @@ export default function ProfileScreen() {
 
       <Text style={styles.sectionTitle}>Posts</Text>
       <PostList posts={posts} />
+
     </View>
   );
 }
