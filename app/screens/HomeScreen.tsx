@@ -72,6 +72,7 @@ const HomeScreen = forwardRef<HomeScreenRef, HomeScreenProps>(
   ({ hideInput }, ref) => {
     const navigation = useNavigation<any>();
   const { user, profile, profileImageUri, bannerImageUri, addPost, updatePost } =
+
     useAuth() as any;
   const [postText, setPostText] = useState('');
   const [posts, setPosts] = useState<Post[]>([]);
@@ -430,6 +431,7 @@ const HomeScreen = forwardRef<HomeScreenRef, HomeScreenProps>(
         });
         if (!imageUri) {
           updatePost(newPost.id, { id: data.id, content: data.content });
+
         }
         setReplyCounts(prev => {
           const { [newPost.id]: tempCount, ...rest } = prev;
