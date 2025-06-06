@@ -256,7 +256,8 @@ export function AuthProvider({ children }) {
     }
     const { data, error } = await supabase
       .from('posts')
-      .select('id, content')
+      .select('id, content, created_at')
+
       .eq('user_id', id)
       .order('created_at', { ascending: false });
     if (!error && data) {

@@ -387,7 +387,8 @@ const HomeScreen = forwardRef<HomeScreenRef, HomeScreenProps>(
     });
 
     if (!imageUri) {
-      addPost({ id: newPost.id, content: text });
+      addPost({ id: newPost.id, content: text, created_at: newPost.created_at });
+
     }
 
     if (!hideInput) {
@@ -430,7 +431,11 @@ const HomeScreen = forwardRef<HomeScreenRef, HomeScreenProps>(
           return updated;
         });
         if (!imageUri) {
-          updatePost(newPost.id, { id: data.id, content: data.content });
+          updatePost(newPost.id, {
+            id: data.id,
+            content: data.content,
+            created_at: data.created_at,
+          });
 
         }
         setReplyCounts(prev => {

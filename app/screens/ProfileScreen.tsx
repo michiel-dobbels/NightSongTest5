@@ -25,6 +25,18 @@ import { supabase } from '../../lib/supabase';
 
 
 
+function timeAgo(dateString: string): string {
+  const diff = Date.now() - new Date(dateString).getTime();
+  const minutes = Math.floor(diff / (1000 * 60));
+  if (minutes < 1) return 'just now';
+  if (minutes < 60) return `${minutes}m ago`;
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) return `${hours}h ago`;
+  const days = Math.floor(hours / 24);
+  return `${days}d ago`;
+}
+
+
 export default function ProfileScreen() {
   const navigation = useNavigation<any>();
   const {
@@ -38,6 +50,12 @@ export default function ProfileScreen() {
   } = useAuth() as any;
 
   const { followers, following } = useFollowCounts(profile?.id ?? null);
+
+  useFocusEffect(
+    useCallback(() => {
+      fetchMyPosts();
+    }, [fetchMyPosts]),
+  );
 
 
   useFocusEffect(
@@ -160,7 +178,27 @@ export default function ProfileScreen() {
       keyExtractor={item => item.id}
       renderItem={({ item }) => (
         <View style={styles.postItem}>
-          <Text style={styles.postContent}>{item.content}</Text>
+          <View style={styles.row}>
+            {profileImageUri ? (
+              <Image source={{ uri: profileImageUri }} style={styles.postAvatar} />
+            ) : (
+              <View style={[styles.postAvatar, styles.placeholder]} />
+            )}
+            <View style={{ flex: 1 }}>
+              <View style={styles.headerRow}>
+                <Text style={styles.postUsername}>
+                  {profile.name || profile.username} @{profile.username}
+                </Text>
+                {item.created_at && (
+                  <Text style={[styles.timestamp, styles.timestampMargin]}>
+                    {timeAgo(item.created_at)}
+                  </Text>
+                )}
+              </View>
+              <Text style={styles.postContent}>{item.content}</Text>
+            </View>
+          </View>
+
         </View>
       )}
     />
@@ -227,5 +265,12 @@ const styles = StyleSheet.create({
     marginBottom: 10,
   },
   postContent: { color: 'white' },
+  postUsername: { fontWeight: 'bold', color: 'white' },
+  row: { flexDirection: 'row', alignItems: 'flex-start' },
+  postAvatar: { width: 48, height: 48, borderRadius: 24, marginRight: 8 },
+  headerRow: { flexDirection: 'row', alignItems: 'center' },
+  timestamp: { fontSize: 10, color: 'gray' },
+  timestampMargin: { marginLeft: 6 },
+
 
 });
