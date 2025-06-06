@@ -263,7 +263,13 @@ export function AuthProvider({ children }) {
     if (!error && data) {
       setMyPosts(prev => {
         const temps = prev.filter(p => String(p.id).startsWith('temp-'));
-        return [...temps, ...data];
+        const merged = [...temps, ...data];
+        const seen = new Set();
+        return merged.filter(p => {
+          if (seen.has(p.id)) return false;
+          seen.add(p.id);
+          return true;
+        });
       });
     }
 
@@ -274,7 +280,17 @@ export function AuthProvider({ children }) {
   };
 
   const updatePost = (tempId, updated) => {
-    setMyPosts(prev => prev.map(p => (p.id === tempId ? { ...p, ...updated } : p)));
+    setMyPosts(prev => {
+      const updatedList = prev.map(p =>
+        p.id === tempId ? { ...p, ...updated } : p
+      );
+      const seen = new Set();
+      return updatedList.filter(p => {
+        if (seen.has(p.id)) return false;
+        seen.add(p.id);
+        return true;
+      });
+    });
   };
 
 
