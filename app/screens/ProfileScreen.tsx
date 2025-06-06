@@ -181,6 +181,7 @@ export default function ProfileScreen() {
       renderItem={({ item }) => (
         <TouchableOpacity
           onPress={() => navigation.navigate('PostDetail', { post: item })}
+
         >
           <View style={styles.postItem}>
             <View style={styles.row}>
@@ -214,6 +215,7 @@ export default function ProfileScreen() {
                 {replyCounts[item.id] ?? item.reply_count ?? 0}
               </Text>
             </View>
+
           </View>
         </TouchableOpacity>
       )}
@@ -299,6 +301,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   replyCountLarge: { fontSize: 15, color: "gray" },
+
   headerContainer: {
     padding: 20,
   },
