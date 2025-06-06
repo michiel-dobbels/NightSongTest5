@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 
 import {
   View,
@@ -8,6 +8,7 @@ import {
   Image,
   TouchableOpacity,
   Dimensions,
+  FlatList,
 } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 import * as FileSystem from 'expo-file-system';
@@ -17,6 +18,7 @@ import { useAuth } from '../../AuthContext';
 import { useFollowCounts } from '../hooks/useFollowCounts';
 import { colors } from '../styles/colors';
 import UserPosts from '../components/UserPosts';
+
 
 export default function ProfileScreen() {
   const navigation = useNavigation<any>();
@@ -29,6 +31,7 @@ export default function ProfileScreen() {
   } = useAuth() as any;
 
   const { followers, following } = useFollowCounts(profile?.id ?? null);
+
   const pickImage = async () => {
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (status !== 'granted') {
@@ -120,6 +123,7 @@ export default function ProfileScreen() {
 
       <Text style={styles.sectionTitle}>Posts</Text>
       {profile && <UserPosts userId={profile.id} />}
+
     </View>
   );
 }
