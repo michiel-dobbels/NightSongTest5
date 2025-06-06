@@ -256,14 +256,20 @@ export function AuthProvider({ children }) {
     }
     const { data, error } = await supabase
       .from('posts')
-      .select('id, content, created_at')
+      .select('id, content, created_at, reply_count')
 
       .eq('user_id', id)
       .order('created_at', { ascending: false });
     if (!error && data) {
       setMyPosts(prev => {
         const temps = prev.filter(p => String(p.id).startsWith('temp-'));
-        return [...temps, ...data];
+        const merged = [...temps, ...data];
+        const seen = new Set();
+        return merged.filter(p => {
+          if (seen.has(p.id)) return false;
+          seen.add(p.id);
+          return true;
+        });
       });
     }
 
@@ -274,7 +280,17 @@ export function AuthProvider({ children }) {
   };
 
   const updatePost = (tempId, updated) => {
-    setMyPosts(prev => prev.map(p => (p.id === tempId ? { ...p, ...updated } : p)));
+    setMyPosts(prev => {
+      const updatedList = prev.map(p =>
+        p.id === tempId ? { ...p, ...updated } : p
+      );
+      const seen = new Set();
+      return updatedList.filter(p => {
+        if (seen.has(p.id)) return false;
+        seen.add(p.id);
+        return true;
+      });
+    });
   };
 
 
