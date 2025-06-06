@@ -83,6 +83,7 @@ export default function PostDetailScreen() {
   const navigation = useNavigation<any>();
   const { user, profile, profileImageUri, bannerImageUri } = useAuth() as any;
   const post = route.params.post as Post;
+  const fromProfile = route.params?.fromProfile ?? false;
 
   const STORAGE_KEY = `${REPLY_STORAGE_PREFIX}${post.id}`;
 
@@ -597,7 +598,10 @@ export default function PostDetailScreen() {
       keyboardVerticalOffset={80}
     >
       <View style={styles.backButton}>
-        <Button title="Return" onPress={() => navigation.goBack()} />
+        <Button
+          title="Return"
+          onPress={() => (fromProfile ? navigation.navigate('Profile') : navigation.goBack())}
+        />
       </View>
       <FlatList
         ListHeaderComponent={() => (

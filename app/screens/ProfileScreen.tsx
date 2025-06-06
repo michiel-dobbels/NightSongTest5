@@ -166,6 +166,7 @@ export default function ProfileScreen() {
       renderItem={({ item }) => (
         <TouchableOpacity
           onPress={() => navigation.navigate('PostDetail', { post: item })}
+
         >
           <View style={styles.postItem}>
             <View style={styles.row}>
