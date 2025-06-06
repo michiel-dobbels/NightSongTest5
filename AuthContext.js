@@ -260,19 +260,23 @@ export function AuthProvider({ children }) {
 
       .eq('user_id', id)
       .order('created_at', { ascending: false });
+
     if (!error && data) {
       setMyPosts(prev => {
         const temps = prev.filter(p => String(p.id).startsWith('temp-'));
-        const merged = [...temps, ...data];
+        const combined = [...temps, ...data];
         const seen = new Set();
-        return merged.filter(p => {
-          if (seen.has(p.id)) return false;
-          seen.add(p.id);
-          return true;
-        });
+        const unique = [];
+        for (const p of combined) {
+          if (!seen.has(p.id)) {
+            seen.add(p.id);
+            unique.push(p);
+          }
+        }
+        return unique;
+
       });
     }
-
   };
 
   const addPost = (post) => {
@@ -281,15 +285,17 @@ export function AuthProvider({ children }) {
 
   const updatePost = (tempId, updated) => {
     setMyPosts(prev => {
-      const updatedList = prev.map(p =>
-        p.id === tempId ? { ...p, ...updated } : p
-      );
+      const mapped = prev.map(p => (p.id === tempId ? { ...p, ...updated } : p));
       const seen = new Set();
-      return updatedList.filter(p => {
-        if (seen.has(p.id)) return false;
-        seen.add(p.id);
-        return true;
-      });
+      const unique = [];
+      for (const post of mapped) {
+        if (!seen.has(post.id)) {
+          seen.add(post.id);
+          unique.push(post);
+        }
+      }
+      return unique;
+
     });
   };
 

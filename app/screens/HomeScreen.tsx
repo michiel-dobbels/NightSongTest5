@@ -387,8 +387,12 @@ const HomeScreen = forwardRef<HomeScreenRef, HomeScreenProps>(
     });
 
     if (!imageUri) {
-      addPost({ id: newPost.id, content: text, created_at: newPost.created_at });
-
+      addPost({
+        id: newPost.id,
+        content: text,
+        created_at: newPost.created_at,
+        reply_count: 0,
+      });
     }
 
     if (!hideInput) {
@@ -435,8 +439,8 @@ const HomeScreen = forwardRef<HomeScreenRef, HomeScreenProps>(
             id: data.id,
             content: data.content,
             created_at: data.created_at,
+            reply_count: 0,
           });
-
         }
         setReplyCounts(prev => {
           const { [newPost.id]: tempCount, ...rest } = prev;
