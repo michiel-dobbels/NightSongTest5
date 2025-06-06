@@ -24,6 +24,7 @@ import { supabase } from '../../lib/supabase';
 
 
 
+
 export default function ProfileScreen() {
   const navigation = useNavigation<any>();
   const {
@@ -32,12 +33,11 @@ export default function ProfileScreen() {
     setProfileImageUri,
     bannerImageUri,
     setBannerImageUri,
+    myPosts: posts,
+    fetchMyPosts,
   } = useAuth() as any;
 
   const { followers, following } = useFollowCounts(profile?.id ?? null);
-
-  // Alias myPosts as posts so the FlatList uses a familiar prop name
-  const { myPosts: posts, fetchMyPosts } = useAuth() as any;
 
 
   useFocusEffect(

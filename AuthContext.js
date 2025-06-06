@@ -259,7 +259,13 @@ export function AuthProvider({ children }) {
       .select('id, content')
       .eq('user_id', id)
       .order('created_at', { ascending: false });
-    if (!error && data) setMyPosts(data);
+    if (!error && data) {
+      setMyPosts(prev => {
+        const temps = prev.filter(p => String(p.id).startsWith('temp-'));
+        return [...temps, ...data];
+      });
+    }
+
   };
 
   const addPost = (post) => {
