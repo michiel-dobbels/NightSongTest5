@@ -13,6 +13,7 @@ import {
 } from 'react-native';
 import { Ionicons } from "@expo/vector-icons";
 import PostCard from '../components/PostCard';
+
 import * as ImagePicker from 'expo-image-picker';
 import * as FileSystem from 'expo-file-system';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
@@ -191,6 +192,7 @@ export default function ProfileScreen() {
           onReplyPress={() => navigation.navigate('PostDetail', { post: item })}
           rounded
         />
+
       )}
     />
   );
@@ -274,6 +276,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   replyCountLarge: { fontSize: 15, color: "gray" },
+
   headerContainer: {
     padding: 20,
   },

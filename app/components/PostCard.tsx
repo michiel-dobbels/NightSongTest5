@@ -46,6 +46,7 @@ interface PostCardProps {
   likeCount?: number;
   onLikePress?: () => void;
   rounded?: boolean;
+
 }
 
 export default function PostCard({
@@ -68,6 +69,7 @@ export default function PostCard({
   return (
     <TouchableOpacity onPress={onPress}>
       <View style={containerStyle}>
+
         {isMe && onDelete && (
           <TouchableOpacity onPress={onDelete} style={styles.deleteButton}>
             <Text style={{ color: 'white' }}>X</Text>
@@ -147,6 +149,7 @@ const styles = StyleSheet.create({
     marginBottom: 10,
     position: 'relative',
   },
+
   row: { flexDirection: 'row', alignItems: 'flex-start' },
   avatar: { width: 48, height: 48, borderRadius: 24, marginRight: 8 },
   placeholder: { backgroundColor: '#555' },
