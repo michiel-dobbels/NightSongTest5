@@ -91,8 +91,8 @@ export default function ProfileScreen() {
 
   if (!profile) return null;
 
-  return (
-    <View style={styles.container}>
+  const renderHeader = () => (
+    <View>
       {bannerImageUri ? (
         <Image source={{ uri: bannerImageUri }} style={styles.banner} />
       ) : (
@@ -109,9 +109,7 @@ export default function ProfileScreen() {
         )}
         <View style={styles.textContainer}>
           <Text style={styles.username}>@{profile.username}</Text>
-          {profile.name && (
-            <Text style={styles.name}>{profile.name}</Text>
-          )}
+          {profile.name && <Text style={styles.name}>{profile.name}</Text>}
         </View>
       </View>
       <View style={styles.statsRow}>
@@ -155,13 +153,30 @@ export default function ProfileScreen() {
       />
     </View>
   );
+
+  return (
+    <FlatList
+      style={styles.container}
+      contentContainerStyle={styles.contentContainer}
+      data={posts}
+      ListHeaderComponent={renderHeader}
+      keyExtractor={item => item.id}
+      renderItem={({ item }) => (
+        <View style={styles.postItem}>
+          <Text style={styles.postContent}>{item.content}</Text>
+        </View>
+      )}
+    />
+  );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    padding: 20,
     backgroundColor: colors.background,
+  },
+  contentContainer: {
+    padding: 20,
   },
   backButton: {
     alignSelf: 'flex-start',
