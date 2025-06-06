@@ -11,6 +11,7 @@ import {
   Dimensions,
   FlatList,
 } from 'react-native';
+import { Ionicons } from "@expo/vector-icons";
 import * as ImagePicker from 'expo-image-picker';
 import * as FileSystem from 'expo-file-system';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
@@ -189,6 +190,11 @@ export default function ProfileScreen() {
                 <Text style={styles.postContent}>{item.content}</Text>
               </View>
             </View>
+            <View style={styles.replyCountContainer}>
+              <Ionicons name="chatbubble-outline" size={18} color="#66538f" style={{ marginRight: 2 }} />
+              <Text style={styles.replyCountLarge}>{item.reply_count || 0}</Text>
+
+            </View>
           </View>
         </TouchableOpacity>
       )}
@@ -266,6 +272,15 @@ const styles = StyleSheet.create({
   headerRow: { flexDirection: 'row', alignItems: 'center' },
   timestamp: { fontSize: 10, color: 'gray' },
   timestampMargin: { marginLeft: 6 },
+  replyCountContainer: {
+    position: "absolute",
+    bottom: 6,
+    left: 66,
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  replyCountLarge: { fontSize: 15, color: "gray" },
+
   headerContainer: {
     padding: 20,
   },
