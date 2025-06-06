@@ -16,6 +16,7 @@ import { useNavigation } from '@react-navigation/native';
 import { useAuth } from '../../AuthContext';
 import { useFollowCounts } from '../hooks/useFollowCounts';
 import { colors } from '../styles/colors';
+import UserPosts from '../components/UserPosts';
 
 export default function ProfileScreen() {
   const navigation = useNavigation<any>();
@@ -28,8 +29,6 @@ export default function ProfileScreen() {
   } = useAuth() as any;
 
   const { followers, following } = useFollowCounts(profile?.id ?? null);
-
-
   const pickImage = async () => {
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (status !== 'granted') {
@@ -45,8 +44,6 @@ export default function ProfileScreen() {
       const uri = result.assets[0].uri;
       const base64 = await FileSystem.readAsStringAsync(uri, { encoding: 'base64' });
       setProfileImageUri(`data:image/jpeg;base64,${base64}`);
-
-
     }
   };
 
@@ -120,6 +117,9 @@ export default function ProfileScreen() {
       <TouchableOpacity onPress={pickBanner} style={styles.uploadLink}>
         <Text style={styles.uploadText}>Upload Banner</Text>
       </TouchableOpacity>
+
+      <Text style={styles.sectionTitle}>Posts</Text>
+      {profile && <UserPosts userId={profile.id} />}
     </View>
   );
 }
@@ -175,5 +175,6 @@ const styles = StyleSheet.create({
   uploadText: { color: 'white' },
   statsRow: { flexDirection: 'row', marginLeft: 15, marginBottom: 20 },
   statsText: { color: 'white', marginRight: 15 },
+  sectionTitle: { color: 'white', fontSize: 18, marginBottom: 10 },
 
 });
