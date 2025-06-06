@@ -6,7 +6,6 @@ import { colors } from '../styles/colors';
 import { useFollowCounts } from '../hooks/useFollowCounts';
 import { useAuth } from '../../AuthContext';
 import FollowButton from '../components/FollowButton';
-import PostCard from '../components/PostCard';
 import { Post } from '../types/Post';
 
 
@@ -368,42 +367,15 @@ export default function UserProfileScreen() {
         )}
       />
 
-      <Text style={styles.sectionTitle}>Posts</Text>
+      <TouchableOpacity onPress={() => navigation.navigate('UserPosts', { userId })}>
+        <Text style={styles.sectionTitle}>Posts</Text>
+      </TouchableOpacity>
       <FlatList
         data={posts}
         keyExtractor={item => item.id}
-        renderItem={({ item }) => {
-          const isMe = user?.id === item.user_id;
-          const avatarUri = isMe ? profile?.image_url ?? avatarUrl : item.profiles?.image_url || null;
-          const displayName = item.profiles?.name || item.profiles?.username || item.username;
-          const usernameDisplay = item.profiles?.username || item.username;
-          return (
-            <PostCard
-              post={item}
-              isCurrentUser={isMe}
-              avatarUri={avatarUri}
-              onPress={() => navigation.navigate('PostDetail', { post: item })}
-              onPressAvatar={() => {
-                if (isMe) {
-                  navigation.navigate('Profile');
-                } else {
-                  navigation.navigate('UserProfile', {
-                    userId: item.user_id,
-                    avatarUrl: avatarUri,
-                    bannerUrl: item.profiles?.banner_url,
-                    name: displayName,
-                    username: usernameDisplay,
-                  });
-                }
-              }}
-              onDelete={() => {}}
-              onReply={() => {}}
-              onLike={() => {}}
-              likeCount={item.like_count || 0}
-              replyCount={item.reply_count || 0}
-            />
-          );
-        }}
+        renderItem={({ item }) => (
+          <Text style={styles.postItem}>{item.content}</Text>
+        )}
       />
 
     </View>
@@ -447,5 +419,11 @@ const styles = StyleSheet.create({
   followingAvatar: { width: 40, height: 40, borderRadius: 20, marginRight: 12 },
   followingName: { color: 'white', fontSize: 16, fontWeight: 'bold' },
   followingUsername: { color: 'white', fontSize: 16 },
+  postItem: {
+    color: 'white',
+    paddingVertical: 8,
+    borderBottomColor: '#ffffff20',
+    borderBottomWidth: StyleSheet.hairlineWidth,
+  },
 
 });
