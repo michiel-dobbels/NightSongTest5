@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useCallback } from 'react';
 
 import {
   View,
@@ -8,14 +8,27 @@ import {
   Image,
   TouchableOpacity,
   Dimensions,
+  FlatList,
 } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 import * as FileSystem from 'expo-file-system';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useFocusEffect } from '@react-navigation/native';
 
 import { useAuth } from '../../AuthContext';
 import { useFollowCounts } from '../hooks/useFollowCounts';
 import { colors } from '../styles/colors';
+
+function timeAgo(dateString: string): string {
+  const diff = Date.now() - new Date(dateString).getTime();
+  const minutes = Math.floor(diff / (1000 * 60));
+  if (minutes < 1) return 'just now';
+  if (minutes < 60) return `${minutes}m ago`;
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) return `${hours}h ago`;
+  const days = Math.floor(hours / 24);
+  return `${days}d ago`;
+}
+
 
 export default function ProfileScreen() {
   const navigation = useNavigation<any>();
@@ -25,9 +38,17 @@ export default function ProfileScreen() {
     setProfileImageUri,
     bannerImageUri,
     setBannerImageUri,
+    myPosts: posts,
+    fetchMyPosts,
   } = useAuth() as any;
 
   const { followers, following } = useFollowCounts(profile?.id ?? null);
+
+  useFocusEffect(
+    useCallback(() => {
+      fetchMyPosts();
+    }, [fetchMyPosts]),
+  );
 
 
   const pickImage = async () => {
@@ -69,8 +90,8 @@ export default function ProfileScreen() {
 
   if (!profile) return null;
 
-  return (
-    <View style={styles.container}>
+  const renderHeader = () => (
+    <View>
       {bannerImageUri ? (
         <Image source={{ uri: bannerImageUri }} style={styles.banner} />
       ) : (
@@ -87,9 +108,7 @@ export default function ProfileScreen() {
         )}
         <View style={styles.textContainer}>
           <Text style={styles.username}>@{profile.username}</Text>
-          {profile.name && (
-            <Text style={styles.name}>{profile.name}</Text>
-          )}
+          {profile.name && <Text style={styles.name}>{profile.name}</Text>}
         </View>
       </View>
       <View style={styles.statsRow}>
@@ -122,13 +141,49 @@ export default function ProfileScreen() {
       </TouchableOpacity>
     </View>
   );
+
+  return (
+    <FlatList
+      style={styles.container}
+      contentContainerStyle={styles.contentContainer}
+      data={posts}
+      ListHeaderComponent={renderHeader}
+      keyExtractor={item => item.id}
+      renderItem={({ item }) => (
+        <View style={styles.postItem}>
+          <View style={styles.row}>
+            {profileImageUri ? (
+              <Image source={{ uri: profileImageUri }} style={styles.postAvatar} />
+            ) : (
+              <View style={[styles.postAvatar, styles.placeholder]} />
+            )}
+            <View style={{ flex: 1 }}>
+              <View style={styles.headerRow}>
+                <Text style={styles.postUsername}>
+                  {profile.name || profile.username} @{profile.username}
+                </Text>
+                {item.created_at && (
+                  <Text style={[styles.timestamp, styles.timestampMargin]}>
+                    {timeAgo(item.created_at)}
+                  </Text>
+                )}
+              </View>
+              <Text style={styles.postContent}>{item.content}</Text>
+            </View>
+          </View>
+        </View>
+      )}
+    />
+  );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    padding: 20,
     backgroundColor: colors.background,
+  },
+  contentContainer: {
+    padding: 20,
   },
   backButton: {
     alignSelf: 'flex-start',
@@ -175,5 +230,18 @@ const styles = StyleSheet.create({
   uploadText: { color: 'white' },
   statsRow: { flexDirection: 'row', marginLeft: 15, marginBottom: 20 },
   statsText: { color: 'white', marginRight: 15 },
+  postItem: {
+    backgroundColor: '#ffffff10',
+    padding: 10,
+    borderRadius: 6,
+    marginBottom: 10,
+  },
+  postContent: { color: 'white' },
+  postUsername: { fontWeight: 'bold', color: 'white' },
+  row: { flexDirection: 'row', alignItems: 'flex-start' },
+  postAvatar: { width: 48, height: 48, borderRadius: 24, marginRight: 8 },
+  headerRow: { flexDirection: 'row', alignItems: 'center' },
+  timestamp: { fontSize: 10, color: 'gray' },
+  timestampMargin: { marginLeft: 6 },
 
 });
