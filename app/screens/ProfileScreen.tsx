@@ -1,4 +1,5 @@
-import React, { useState, useCallback } from 'react';
+import React, { useCallback } from 'react';
+
 
 import {
   View,
@@ -19,6 +20,7 @@ import { useFollowCounts } from '../hooks/useFollowCounts';
 import { colors } from '../styles/colors';
 import { supabase } from '../../lib/supabase';
 
+
 export default function ProfileScreen() {
   const navigation = useNavigation<any>();
   const {
@@ -31,24 +33,13 @@ export default function ProfileScreen() {
 
   const { followers, following } = useFollowCounts(profile?.id ?? null);
 
-  const [posts, setPosts] = useState<{ id: string; content: string }[]>([]);
-
-  const fetchPosts = useCallback(async () => {
-    if (!profile) return;
-    const { data, error } = await supabase
-      .from('posts')
-      .select('id, content')
-      .eq('user_id', profile.id)
-      .order('created_at', { ascending: false });
-    if (!error && data) {
-      setPosts(data);
-    }
-  }, [profile]);
+  const { myPosts, fetchMyPosts } = useAuth() as any;
 
   useFocusEffect(
     useCallback(() => {
-      fetchPosts();
-    }, [fetchPosts]),
+      fetchMyPosts();
+    }, [fetchMyPosts]),
+
   );
 
 
@@ -158,7 +149,8 @@ export default function ProfileScreen() {
     <FlatList
       style={styles.container}
       contentContainerStyle={styles.contentContainer}
-      data={posts}
+      data={myPosts}
+
       ListHeaderComponent={renderHeader}
       keyExtractor={item => item.id}
       renderItem={({ item }) => (
