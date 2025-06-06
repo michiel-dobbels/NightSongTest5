@@ -18,6 +18,7 @@ import { useAuth } from '../../AuthContext';
 import { useFollowCounts } from '../hooks/useFollowCounts';
 import { colors } from '../styles/colors';
 import UserPosts from '../components/UserPosts';
+import { supabase } from '../../lib/supabase';
 
 
 export default function ProfileScreen() {
@@ -31,6 +32,25 @@ export default function ProfileScreen() {
   } = useAuth() as any;
 
   const { followers, following } = useFollowCounts(profile?.id ?? null);
+
+  const [textPosts, setTextPosts] = useState<{ id: string; content: string }[]>([]);
+
+  useEffect(() => {
+    const fetchTextPosts = async () => {
+      if (!profile) return;
+      const { data, error } = await supabase
+        .from('posts')
+        .select('id, content')
+        .eq('user_id', profile.id)
+        .is('image_url', null)
+        .not('content', 'is', null)
+        .order('created_at', { ascending: false });
+      if (!error && data) {
+        setTextPosts(data as { id: string; content: string }[]);
+      }
+    };
+    fetchTextPosts();
+  }, [profile]);
 
   const pickImage = async () => {
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
@@ -121,6 +141,14 @@ export default function ProfileScreen() {
         <Text style={styles.uploadText}>Upload Banner</Text>
       </TouchableOpacity>
 
+      <FlatList
+        data={textPosts}
+        keyExtractor={item => item.id}
+        renderItem={({ item }) => (
+          <Text style={styles.textPost}>{item.content}</Text>
+        )}
+      />
+
       <Text style={styles.sectionTitle}>Posts</Text>
       {profile && <UserPosts userId={profile.id} />}
 
@@ -180,5 +208,6 @@ const styles = StyleSheet.create({
   statsRow: { flexDirection: 'row', marginLeft: 15, marginBottom: 20 },
   statsText: { color: 'white', marginRight: 15 },
   sectionTitle: { color: 'white', fontSize: 18, marginBottom: 10 },
+  textPost: { color: 'white', marginBottom: 8 },
 
 });

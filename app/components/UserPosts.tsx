@@ -1,9 +1,8 @@
 import React, { useCallback, useState } from 'react';
-import { FlatList } from 'react-native';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { supabase } from '../../lib/supabase';
-import PostCard from './PostCard';
+import PostList from './PostList';
 import { Post } from '../types/Post';
 import { useAuth } from '../../AuthContext';
 
@@ -17,7 +16,7 @@ interface UserPostsProps {
 
 export default function UserPosts({ userId }: UserPostsProps) {
   const navigation = useNavigation<any>();
-  const { user, profile, profileImageUri } = useAuth() as any;
+  const { user } = useAuth() as any;
 
   const [posts, setPosts] = useState<Post[]>([]);
   const [replyCounts, setReplyCounts] = useState<{ [key: string]: number }>({});
@@ -107,41 +106,13 @@ export default function UserPosts({ userId }: UserPostsProps) {
   };
 
   return (
-    <FlatList
-      data={posts}
-      keyExtractor={item => item.id}
-      renderItem={({ item }) => {
-        const isMe = user?.id === item.user_id;
-        const avatarUri = isMe ? profileImageUri ?? null : item.profiles?.image_url || null;
-        const displayName = item.profiles?.name || item.profiles?.username || item.username;
-        const usernameDisplay = item.profiles?.username || item.username;
-        return (
-          <PostCard
-            post={item}
-            isCurrentUser={isMe}
-            avatarUri={avatarUri}
-            onPress={() => navigation.navigate('PostDetail', { post: item })}
-            onPressAvatar={() => {
-              if (isMe) {
-                navigation.navigate('Profile');
-              } else {
-                navigation.navigate('UserProfile', {
-                  userId: item.user_id,
-                  avatarUrl: avatarUri,
-                  bannerUrl: item.profiles?.banner_url,
-                  name: displayName,
-                  username: usernameDisplay,
-                });
-              }
-            }}
-            onLike={() => toggleLike(item.id)}
-            onReply={() => navigation.navigate('PostDetail', { post: item })}
-            liked={likedPosts[item.id]}
-            likeCount={likeCounts[item.id] || 0}
-            replyCount={replyCounts[item.id] || 0}
-          />
-        );
-      }}
+    <PostList
+      posts={posts}
+      onLike={toggleLike}
+      onReply={id => navigation.navigate('PostDetail', { post: posts.find(p => p.id === id) })}
+      likedPosts={likedPosts}
+      likeCounts={likeCounts}
+      replyCounts={replyCounts}
     />
   );
 }
