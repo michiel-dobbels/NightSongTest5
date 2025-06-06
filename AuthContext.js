@@ -257,6 +257,7 @@ export function AuthProvider({ children }) {
     const { data, error } = await supabase
       .from('posts')
       .select('id, content, created_at, reply_count')
+
       .eq('user_id', id)
       .order('created_at', { ascending: false });
 
@@ -273,6 +274,7 @@ export function AuthProvider({ children }) {
           }
         }
         return unique;
+
       });
     }
   };
@@ -293,6 +295,7 @@ export function AuthProvider({ children }) {
         }
       }
       return unique;
+
     });
   };
 
