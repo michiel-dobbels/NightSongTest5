@@ -1,10 +1,10 @@
 import React, { useEffect, useState } from 'react';
-import { View, FlatList, StyleSheet, Button, Image, Text, Dimensions } from 'react-native';
-
+import { View, StyleSheet, Button, Image, Text, Dimensions } from 'react-native';
 import { useRoute, useNavigation } from '@react-navigation/native';
 import { supabase } from '../../lib/supabase';
 import { colors } from '../styles/colors';
-import PostCard from '../components/PostCard';
+import PostList from '../components/PostList';
+
 import { Post } from '../types/Post';
 import { useAuth } from '../../AuthContext';
 
@@ -15,7 +15,6 @@ interface Profile {
   image_url: string | null;
   banner_url: string | null;
 }
-
 
 export default function UserPostsScreen() {
   const navigation = useNavigation<any>();
@@ -128,43 +127,8 @@ export default function UserPostsScreen() {
           )}
         </View>
       </View>
+      <PostList posts={posts} />
 
-      <FlatList
-        data={posts}
-        keyExtractor={item => item.id}
-        renderItem={({ item }) => {
-          const isMe = user?.id === item.user_id;
-          const avatarUri = isMe ? profile?.image_url ?? null : item.profiles?.image_url || null;
-          const displayName = item.profiles?.name || item.profiles?.username || item.username;
-          const usernameDisplay = item.profiles?.username || item.username;
-          return (
-            <PostCard
-              post={item}
-              isCurrentUser={isMe}
-              avatarUri={avatarUri}
-              onPress={() => navigation.navigate('PostDetail', { post: item })}
-              onPressAvatar={() => {
-                if (isMe) {
-                  navigation.navigate('Profile');
-                } else {
-                  navigation.navigate('UserProfile', {
-                    userId: item.user_id,
-                    avatarUrl: avatarUri,
-                    bannerUrl: item.profiles?.banner_url,
-                    name: displayName,
-                    username: usernameDisplay,
-                  });
-                }
-              }}
-              onDelete={() => {}}
-              onReply={() => {}}
-              onLike={() => {}}
-              likeCount={item.like_count || 0}
-              replyCount={item.reply_count || 0}
-            />
-          );
-        }}
-      />
     </View>
   );
 }

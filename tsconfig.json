@@ -2,7 +2,8 @@
   "compilerOptions": {
     "strict": true,
     "jsx": "react",
-    "lib": ["esnext"],
+    "lib": ["esnext", "dom"],
+
     "target": "esnext",
     "moduleResolution": "node",
     "allowJs": true,

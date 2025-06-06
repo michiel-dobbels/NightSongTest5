@@ -18,7 +18,8 @@ import { useAuth } from '../../AuthContext';
 import { useFollowCounts } from '../hooks/useFollowCounts';
 import { colors } from '../styles/colors';
 import { supabase } from '../../lib/supabase';
-import PostCard from '../components/PostCard';
+import PostList from '../components/PostList';
+
 import { Post } from '../types/Post';
 
 export default function ProfileScreen() {
@@ -144,24 +145,8 @@ export default function ProfileScreen() {
       </TouchableOpacity>
 
       <Text style={styles.sectionTitle}>Posts</Text>
-      <FlatList
-        data={posts}
-        keyExtractor={item => item.id}
-        renderItem={({ item }) => (
-          <PostCard
-            post={item}
-            isCurrentUser={true}
-            avatarUri={profileImageUri || profile.image_url || null}
-            onPress={() => navigation.navigate('PostDetail', { post: item })}
-            onPressAvatar={() => navigation.navigate('Profile')}
-            onDelete={() => {}}
-            onReply={() => {}}
-            onLike={() => {}}
-            likeCount={item.like_count || 0}
-            replyCount={item.reply_count || 0}
-          />
-        )}
-      />
+      <PostList posts={posts} />
+
     </View>
   );
 }
