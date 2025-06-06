@@ -17,10 +17,8 @@ import { useNavigation } from '@react-navigation/native';
 import { useAuth } from '../../AuthContext';
 import { useFollowCounts } from '../hooks/useFollowCounts';
 import { colors } from '../styles/colors';
-import { supabase } from '../../lib/supabase';
-import PostList from '../components/PostList';
+import UserPosts from '../components/UserPosts';
 
-import { Post } from '../types/Post';
 
 export default function ProfileScreen() {
   const navigation = useNavigation<any>();
@@ -33,25 +31,6 @@ export default function ProfileScreen() {
   } = useAuth() as any;
 
   const { followers, following } = useFollowCounts(profile?.id ?? null);
-  const [posts, setPosts] = useState<Post[]>([]);
-
-  useEffect(() => {
-    const fetchPosts = async () => {
-      if (!profile?.id) return;
-      const { data, error } = await supabase
-        .from('posts')
-        .select(
-          'id, content, image_url, user_id, created_at, reply_count, like_count, profiles(username, name, image_url, banner_url)'
-        )
-        .eq('user_id', profile.id)
-        .order('created_at', { ascending: false });
-      if (!error && data) {
-        setPosts(data as any);
-      }
-    };
-    fetchPosts();
-  }, [profile?.id]);
-
 
   const pickImage = async () => {
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
@@ -68,8 +47,6 @@ export default function ProfileScreen() {
       const uri = result.assets[0].uri;
       const base64 = await FileSystem.readAsStringAsync(uri, { encoding: 'base64' });
       setProfileImageUri(`data:image/jpeg;base64,${base64}`);
-
-
     }
   };
 
@@ -145,7 +122,7 @@ export default function ProfileScreen() {
       </TouchableOpacity>
 
       <Text style={styles.sectionTitle}>Posts</Text>
-      <PostList posts={posts} />
+      {profile && <UserPosts userId={profile.id} />}
 
     </View>
   );

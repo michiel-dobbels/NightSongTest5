@@ -59,7 +59,6 @@ export default function UserPostsScreen() {
     fetchProfile();
   }, [userId]);
 
-
   useEffect(() => {
     const fetchPosts = async () => {
       const { data, error } = await supabase
