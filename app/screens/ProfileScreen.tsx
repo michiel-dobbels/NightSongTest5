@@ -12,6 +12,8 @@ import {
   FlatList,
 } from 'react-native';
 import { Ionicons } from "@expo/vector-icons";
+import PostCard from '../components/PostCard';
+
 import * as ImagePicker from 'expo-image-picker';
 import * as FileSystem from 'expo-file-system';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
@@ -179,45 +181,16 @@ export default function ProfileScreen() {
       ListHeaderComponent={renderHeader}
       keyExtractor={item => item.id}
       renderItem={({ item }) => (
-        <TouchableOpacity
+        <PostCard
+          post={item}
+          isMe={true}
+          avatarUri={profileImageUri || undefined}
+          displayName={profile.name || profile.username}
+          userName={profile.username}
           onPress={() => navigation.navigate('PostDetail', { post: item })}
+          onAvatarPress={() => {}}
+        />
 
-        >
-          <View style={styles.postItem}>
-            <View style={styles.row}>
-              {profileImageUri ? (
-                <Image source={{ uri: profileImageUri }} style={styles.postAvatar} />
-              ) : (
-                <View style={[styles.postAvatar, styles.placeholder]} />
-              )}
-              <View style={{ flex: 1 }}>
-                <View style={styles.headerRow}>
-                  <Text style={styles.postUsername}>
-                    {profile.name || profile.username} @{profile.username}
-                  </Text>
-                  {item.created_at && (
-                    <Text style={[styles.timestamp, styles.timestampMargin]}>
-                      {timeAgo(item.created_at)}
-                    </Text>
-                  )}
-                </View>
-                <Text style={styles.postContent}>{item.content}</Text>
-              </View>
-            </View>
-            <View style={styles.replyCountContainer}>
-              <Ionicons
-                name="chatbubble-outline"
-                size={18}
-                color="#66538f"
-                style={{ marginRight: 2 }}
-              />
-              <Text style={styles.replyCountLarge}>
-                {replyCounts[item.id] ?? item.reply_count ?? 0}
-              </Text>
-            </View>
-
-          </View>
-        </TouchableOpacity>
       )}
     />
   );
