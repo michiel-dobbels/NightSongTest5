@@ -1,5 +1,6 @@
 import React, { useCallback } from 'react';
 
+
 import {
   View,
   Text,
@@ -17,6 +18,9 @@ import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { useAuth } from '../../AuthContext';
 import { useFollowCounts } from '../hooks/useFollowCounts';
 import { colors } from '../styles/colors';
+import { supabase } from '../../lib/supabase';
+
+
 
 
 export default function ProfileScreen() {
@@ -34,10 +38,12 @@ export default function ProfileScreen() {
   // Alias myPosts as posts so the FlatList uses a familiar prop name
   const { myPosts: posts, fetchMyPosts } = useAuth() as any;
 
+
   useFocusEffect(
     useCallback(() => {
       fetchMyPosts();
     }, [fetchMyPosts]),
+
   );
 
 
@@ -129,6 +135,17 @@ export default function ProfileScreen() {
       <TouchableOpacity onPress={pickBanner} style={styles.uploadLink}>
         <Text style={styles.uploadText}>Upload Banner</Text>
       </TouchableOpacity>
+
+      <FlatList
+        data={posts}
+        keyExtractor={(item) => item.id}
+        renderItem={({ item }) => (
+          <View style={styles.postItem}>
+            <Text style={styles.postContent}>{item.content}</Text>
+          </View>
+        )}
+        style={{ marginTop: 20 }}
+      />
     </View>
   );
 
@@ -137,6 +154,7 @@ export default function ProfileScreen() {
       style={styles.container}
       contentContainerStyle={styles.contentContainer}
       data={posts}
+
       ListHeaderComponent={renderHeader}
       keyExtractor={item => item.id}
       renderItem={({ item }) => (
