@@ -102,7 +102,7 @@ export default function ProfileScreen() {
   if (!profile) return null;
 
   const renderHeader = () => (
-    <View>
+    <View style={styles.headerContainer}>
       {bannerImageUri ? (
         <Image source={{ uri: bannerImageUri }} style={styles.banner} />
       ) : (
@@ -151,16 +151,7 @@ export default function ProfileScreen() {
         <Text style={styles.uploadText}>Upload Banner</Text>
       </TouchableOpacity>
 
-      <FlatList
-        data={posts}
-        keyExtractor={(item) => item.id}
-        renderItem={({ item }) => (
-          <View style={styles.postItem}>
-            <Text style={styles.postContent}>{item.content}</Text>
-          </View>
-        )}
-        style={{ marginTop: 20 }}
-      />
+      {/* Removed duplicate post list */}
     </View>
   );
 
@@ -173,29 +164,32 @@ export default function ProfileScreen() {
       ListHeaderComponent={renderHeader}
       keyExtractor={item => item.id}
       renderItem={({ item }) => (
-        <View style={styles.postItem}>
-          <View style={styles.row}>
-            {profileImageUri ? (
-              <Image source={{ uri: profileImageUri }} style={styles.postAvatar} />
-            ) : (
-              <View style={[styles.postAvatar, styles.placeholder]} />
-            )}
-            <View style={{ flex: 1 }}>
-              <View style={styles.headerRow}>
-                <Text style={styles.postUsername}>
-                  {profile.name || profile.username} @{profile.username}
-                </Text>
-                {item.created_at && (
-                  <Text style={[styles.timestamp, styles.timestampMargin]}>
-                    {timeAgo(item.created_at)}
+        <TouchableOpacity
+          onPress={() => navigation.navigate('PostDetail', { post: item })}
+        >
+          <View style={styles.postItem}>
+            <View style={styles.row}>
+              {profileImageUri ? (
+                <Image source={{ uri: profileImageUri }} style={styles.postAvatar} />
+              ) : (
+                <View style={[styles.postAvatar, styles.placeholder]} />
+              )}
+              <View style={{ flex: 1 }}>
+                <View style={styles.headerRow}>
+                  <Text style={styles.postUsername}>
+                    {profile.name || profile.username} @{profile.username}
                   </Text>
-                )}
+                  {item.created_at && (
+                    <Text style={[styles.timestamp, styles.timestampMargin]}>
+                      {timeAgo(item.created_at)}
+                    </Text>
+                  )}
+                </View>
+                <Text style={styles.postContent}>{item.content}</Text>
               </View>
-              <Text style={styles.postContent}>{item.content}</Text>
             </View>
           </View>
-
-        </View>
+        </TouchableOpacity>
       )}
     />
   );
@@ -207,7 +201,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.background,
   },
   contentContainer: {
-    padding: 20,
+    padding: 0,
   },
   backButton: {
     alignSelf: 'flex-start',
@@ -256,9 +250,13 @@ const styles = StyleSheet.create({
   statsText: { color: 'white', marginRight: 15 },
   postItem: {
     backgroundColor: '#ffffff10',
+    borderRadius: 0,
     padding: 10,
-    borderRadius: 6,
-    marginBottom: 10,
+    paddingBottom: 30,
+    marginBottom: 0,
+    borderBottomColor: 'gray',
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    position: 'relative',
   },
   postContent: { color: 'white' },
   postUsername: { fontWeight: 'bold', color: 'white' },
@@ -267,6 +265,9 @@ const styles = StyleSheet.create({
   headerRow: { flexDirection: 'row', alignItems: 'center' },
   timestamp: { fontSize: 10, color: 'gray' },
   timestampMargin: { marginLeft: 6 },
+  headerContainer: {
+    padding: 20,
+  },
 
 
 });
