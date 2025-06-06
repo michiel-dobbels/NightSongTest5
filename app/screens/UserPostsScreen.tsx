@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { View, FlatList, StyleSheet, Button, Image, Text, Dimensions } from 'react-native';
+
 import { useRoute, useNavigation } from '@react-navigation/native';
 import { supabase } from '../../lib/supabase';
 import { colors } from '../styles/colors';
@@ -14,6 +15,7 @@ interface Profile {
   image_url: string | null;
   banner_url: string | null;
 }
+
 
 export default function UserPostsScreen() {
   const navigation = useNavigation<any>();
@@ -58,6 +60,7 @@ export default function UserPostsScreen() {
     fetchProfile();
   }, [userId]);
 
+
   useEffect(() => {
     const fetchPosts = async () => {
       const { data, error } = await supabase
@@ -99,6 +102,7 @@ export default function UserPostsScreen() {
     return () => {
       supabase.removeSubscription(subscription as any);
     };
+
   }, [userId]);
 
   return (
@@ -124,6 +128,7 @@ export default function UserPostsScreen() {
           )}
         </View>
       </View>
+
       <FlatList
         data={posts}
         keyExtractor={item => item.id}
@@ -189,4 +194,5 @@ const styles = StyleSheet.create({
   textContainer: { marginLeft: 15 },
   username: { color: 'white', fontSize: 24, fontWeight: 'bold' },
   name: { color: 'white', fontSize: 20, marginTop: 4 },
+
 });
