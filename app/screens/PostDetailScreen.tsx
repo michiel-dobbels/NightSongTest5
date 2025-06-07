@@ -22,6 +22,7 @@ import { useRoute, useNavigation, useFocusEffect } from '@react-navigation/nativ
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../AuthContext';
 import { colors } from '../styles/colors';
+import { replyEvents } from '../replyEvents';
 
 const REPLY_STORAGE_PREFIX = 'cached_replies_';
 const COUNT_STORAGE_KEY = 'cached_reply_counts';
@@ -516,6 +517,7 @@ export default function PostDetailScreen() {
       AsyncStorage.setItem(COUNT_STORAGE_KEY, JSON.stringify(counts));
       return counts;
     });
+    replyEvents.emit('replyAdded', post.id);
     setLikeCounts(prev => {
       const counts = { ...prev, [newReply.id]: 0 };
       AsyncStorage.setItem(LIKE_COUNT_KEY, JSON.stringify(counts));

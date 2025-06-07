@@ -23,6 +23,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../AuthContext';
 import { colors } from '../styles/colors';
+import { replyEvents } from '../replyEvents';
 
 const STORAGE_KEY = 'cached_posts';
 const COUNT_STORAGE_KEY = 'cached_reply_counts';
@@ -502,6 +503,20 @@ const HomeScreen = forwardRef<HomeScreenRef, HomeScreenProps>(
   useImperativeHandle(ref, () => ({
     createPost,
   }));
+
+  useEffect(() => {
+    const onReplyAdded = (postId: string) => {
+      setReplyCounts(prev => {
+        const updated = { ...prev, [postId]: (prev[postId] || 0) + 1 };
+        AsyncStorage.setItem(COUNT_STORAGE_KEY, JSON.stringify(updated));
+        return updated;
+      });
+    };
+    replyEvents.on('replyAdded', onReplyAdded);
+    return () => {
+      replyEvents.off('replyAdded', onReplyAdded);
+    };
+  }, []);
 
   useEffect(() => {
     const loadCached = async () => {
