@@ -311,8 +311,22 @@ const HomeScreen = forwardRef<HomeScreenRef, HomeScreenProps>(
       const replyEntries = (data as any[]).map(p => [p.id, p.reply_count ?? 0]);
       const likeEntries = (data as any[]).map(p => [p.id, p.like_count ?? 0]);
       const slice = (data as Post[]).slice(0, PAGE_SIZE);
-      setPosts(slice);
-      AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(slice));
+
+      // Preserve any optimistic posts that are not yet returned from the server
+      setPosts(prev => {
+        const temps = prev.filter(p => p.id.startsWith('temp-'));
+        const merged = [...temps, ...slice];
+        const unique: Post[] = [];
+        const seen = new Set();
+        for (const p of merged) {
+          if (!seen.has(p.id) && unique.length < PAGE_SIZE) {
+            unique.push(p);
+            seen.add(p.id);
+          }
+        }
+        AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(unique));
+        return unique;
+      });
 
       const replyCountsMap = Object.fromEntries(replyEntries);
       setReplyCounts(replyCountsMap);
@@ -450,7 +464,7 @@ const HomeScreen = forwardRef<HomeScreenRef, HomeScreenProps>(
       }
 
       // Refresh from the server in the background to keep the feed up to date
-      fetchPosts(0);
+      setTimeout(() => fetchPosts(0), 2000);
 
 
     } else {
