@@ -1,5 +1,4 @@
-import React, { useCallback, useState } from 'react';
-
+import React, { useCallback, useEffect, useRef, useState } from "react";
 
 import {
   View,
@@ -10,39 +9,33 @@ import {
   TouchableOpacity,
   Dimensions,
   FlatList,
-} from 'react-native';
+} from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import PostCard from '../components/PostCard';
+import PostCard from "../components/PostCard";
 
-import * as ImagePicker from 'expo-image-picker';
-import * as FileSystem from 'expo-file-system';
-import { useNavigation, useFocusEffect } from '@react-navigation/native';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import * as ImagePicker from "expo-image-picker";
+import * as FileSystem from "expo-file-system";
+import { useNavigation, useFocusEffect } from "@react-navigation/native";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
-import { useAuth } from '../../AuthContext';
-import { useFollowCounts } from '../hooks/useFollowCounts';
-import { colors } from '../styles/colors';
+import { useAuth } from "../../AuthContext";
+import { useFollowCounts } from "../hooks/useFollowCounts";
+import { colors } from "../styles/colors";
 
-import { supabase } from '../../lib/supabase';
+import { supabase } from "../../lib/supabase";
 
-const COUNT_STORAGE_KEY = 'cached_reply_counts';
-
-
+const COUNT_STORAGE_KEY = "cached_reply_counts";
 
 function timeAgo(dateString: string): string {
   const diff = Date.now() - new Date(dateString).getTime();
   const minutes = Math.floor(diff / (1000 * 60));
-  if (minutes < 1) return 'just now';
+  if (minutes < 1) return "just now";
   if (minutes < 60) return `${minutes}m ago`;
   const hours = Math.floor(minutes / 60);
   if (hours < 24) return `${hours}h ago`;
   const days = Math.floor(hours / 24);
   return `${days}d ago`;
 }
-
-
-
-
 
 export default function ProfileScreen() {
   const navigation = useNavigation<any>();
@@ -57,6 +50,7 @@ export default function ProfileScreen() {
   } = useAuth() as any;
 
   const [replyCounts, setReplyCounts] = useState<{ [key: string]: number }>({});
+  const subscriptions = useRef<any[]>([]);
 
   const { followers, following } = useFollowCounts(profile?.id ?? null);
 
@@ -68,7 +62,7 @@ export default function ProfileScreen() {
           try {
             setReplyCounts(JSON.parse(stored));
           } catch (e) {
-            console.error('Failed to parse cached counts', e);
+            console.error("Failed to parse cached counts", e);
           }
         }
       };
@@ -77,12 +71,45 @@ export default function ProfileScreen() {
     }, [fetchMyPosts]),
   );
 
+  useEffect(() => {
+    const refreshCount = async (postId: string) => {
+      const { data } = await supabase
+        .from("posts")
+        .select("reply_count")
+        .eq("id", postId)
+        .single();
+      if (data) {
+        setReplyCounts((prev) => {
+          const updated = { ...prev, [postId]: data.reply_count ?? 0 };
+          AsyncStorage.setItem(COUNT_STORAGE_KEY, JSON.stringify(updated));
+          return updated;
+        });
+      }
+    };
 
+    subscriptions.current.forEach((sub) => supabase.removeSubscription(sub));
+    subscriptions.current = [];
+
+    posts.forEach((p) => {
+      if (!p.id) return;
+      const sub = supabase
+        .from(`replies:post_id=eq.${p.id}`)
+        .on("INSERT", () => refreshCount(p.id))
+        .on("DELETE", () => refreshCount(p.id))
+        .subscribe();
+      subscriptions.current.push(sub);
+    });
+
+    return () => {
+      subscriptions.current.forEach((sub) => supabase.removeSubscription(sub));
+      subscriptions.current = [];
+    };
+  }, [posts]);
 
   const pickImage = async () => {
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
-    if (status !== 'granted') {
-      alert('Permission to access photos is required!');
+    if (status !== "granted") {
+      alert("Permission to access photos is required!");
       return;
     }
     const result = await ImagePicker.launchImageLibraryAsync({
@@ -92,17 +119,17 @@ export default function ProfileScreen() {
 
     if (!result.canceled && result.assets && result.assets.length > 0) {
       const uri = result.assets[0].uri;
-      const base64 = await FileSystem.readAsStringAsync(uri, { encoding: 'base64' });
+      const base64 = await FileSystem.readAsStringAsync(uri, {
+        encoding: "base64",
+      });
       setProfileImageUri(`data:image/jpeg;base64,${base64}`);
-
-
     }
   };
 
   const pickBanner = async () => {
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
-    if (status !== 'granted') {
-      alert('Permission to access photos is required!');
+    if (status !== "granted") {
+      alert("Permission to access photos is required!");
       return;
     }
     const result = await ImagePicker.launchImageLibraryAsync({
@@ -111,7 +138,9 @@ export default function ProfileScreen() {
     });
     if (!result.canceled && result.assets && result.assets.length > 0) {
       const uri = result.assets[0].uri;
-      const base64 = await FileSystem.readAsStringAsync(uri, { encoding: 'base64' });
+      const base64 = await FileSystem.readAsStringAsync(uri, {
+        encoding: "base64",
+      });
       setBannerImageUri(`data:image/jpeg;base64,${base64}`);
     }
   };
@@ -142,9 +171,9 @@ export default function ProfileScreen() {
       <View style={styles.statsRow}>
         <TouchableOpacity
           onPress={() =>
-            navigation.navigate('FollowList', {
+            navigation.navigate("FollowList", {
               userId: profile.id,
-              mode: 'followers',
+              mode: "followers",
             })
           }
         >
@@ -152,9 +181,9 @@ export default function ProfileScreen() {
         </TouchableOpacity>
         <TouchableOpacity
           onPress={() =>
-            navigation.navigate('FollowList', {
+            navigation.navigate("FollowList", {
               userId: profile.id,
-              mode: 'following',
+              mode: "following",
             })
           }
         >
@@ -177,12 +206,14 @@ export default function ProfileScreen() {
       style={styles.container}
       contentContainerStyle={styles.contentContainer}
       data={posts}
-
       ListHeaderComponent={renderHeader}
-      keyExtractor={item => item.id}
+      keyExtractor={(item) => item.id}
       renderItem={({ item }) => {
         const count = replyCounts[item.id];
-        const postWithCount = { ...item, reply_count: count ?? item.reply_count };
+        const postWithCount = {
+          ...item,
+          reply_count: count ?? item.reply_count,
+        };
 
         return (
           <PostCard
@@ -191,13 +222,14 @@ export default function ProfileScreen() {
             avatarUri={profileImageUri || undefined}
             displayName={profile.name || profile.username}
             userName={profile.username}
-            onPress={() => navigation.navigate('PostDetail', { post: item })}
+            onPress={() => navigation.navigate("PostDetail", { post: item })}
             onAvatarPress={() => {}}
-            onReplyPress={() => navigation.navigate('PostDetail', { post: item })}
+            onReplyPress={() =>
+              navigation.navigate("PostDetail", { post: item })
+            }
             rounded
           />
         );
-
       }}
     />
   );
@@ -212,17 +244,17 @@ const styles = StyleSheet.create({
     padding: 0,
   },
   backButton: {
-    alignSelf: 'flex-start',
+    alignSelf: "flex-start",
     marginBottom: 20,
   },
   profileRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     marginBottom: 20,
   },
   banner: {
-    width: '100%',
-    height: Dimensions.get('window').height * 0.25,
+    width: "100%",
+    height: Dimensions.get("window").height * 0.25,
     marginBottom: 20,
   },
   avatar: {
@@ -231,47 +263,47 @@ const styles = StyleSheet.create({
     borderRadius: 40,
   },
   placeholder: {
-    backgroundColor: '#ffffff20',
+    backgroundColor: "#ffffff20",
   },
   textContainer: {
     marginLeft: 15,
   },
   username: {
-    color: 'white',
+    color: "white",
     fontSize: 24,
-    fontWeight: 'bold',
+    fontWeight: "bold",
   },
   name: {
-    color: 'white',
+    color: "white",
     fontSize: 20,
     marginTop: 4,
   },
   uploadLink: {
     marginTop: 20,
     padding: 10,
-    backgroundColor: '#ffffff10',
+    backgroundColor: "#ffffff10",
     borderRadius: 6,
-    alignSelf: 'flex-start',
+    alignSelf: "flex-start",
   },
-  uploadText: { color: 'white' },
-  statsRow: { flexDirection: 'row', marginLeft: 15, marginBottom: 20 },
-  statsText: { color: 'white', marginRight: 15 },
+  uploadText: { color: "white" },
+  statsRow: { flexDirection: "row", marginLeft: 15, marginBottom: 20 },
+  statsText: { color: "white", marginRight: 15 },
   postItem: {
-    backgroundColor: '#ffffff10',
+    backgroundColor: "#ffffff10",
     borderRadius: 0,
     padding: 10,
     paddingBottom: 30,
     marginBottom: 0,
-    borderBottomColor: 'gray',
+    borderBottomColor: "gray",
     borderBottomWidth: StyleSheet.hairlineWidth,
-    position: 'relative',
+    position: "relative",
   },
-  postContent: { color: 'white' },
-  postUsername: { fontWeight: 'bold', color: 'white' },
-  row: { flexDirection: 'row', alignItems: 'flex-start' },
+  postContent: { color: "white" },
+  postUsername: { fontWeight: "bold", color: "white" },
+  row: { flexDirection: "row", alignItems: "flex-start" },
   postAvatar: { width: 48, height: 48, borderRadius: 24, marginRight: 8 },
-  headerRow: { flexDirection: 'row', alignItems: 'center' },
-  timestamp: { fontSize: 10, color: 'gray' },
+  headerRow: { flexDirection: "row", alignItems: "center" },
+  timestamp: { fontSize: 10, color: "gray" },
   timestampMargin: { marginLeft: 6 },
   replyCountContainer: {
     position: "absolute",
@@ -285,6 +317,4 @@ const styles = StyleSheet.create({
   headerContainer: {
     padding: 20,
   },
-
-
 });
