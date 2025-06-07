@@ -311,8 +311,22 @@ const HomeScreen = forwardRef<HomeScreenRef, HomeScreenProps>(
       const replyEntries = (data as any[]).map(p => [p.id, p.reply_count ?? 0]);
       const likeEntries = (data as any[]).map(p => [p.id, p.like_count ?? 0]);
       const slice = (data as Post[]).slice(0, PAGE_SIZE);
-      setPosts(slice);
-      AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(slice));
+
+      // Preserve any optimistic posts that are not yet returned from the server
+      setPosts(prev => {
+        const temps = prev.filter(p => p.id.startsWith('temp-'));
+        const merged = [...temps, ...slice];
+        const unique: Post[] = [];
+        const seen = new Set();
+        for (const p of merged) {
+          if (!seen.has(p.id) && unique.length < PAGE_SIZE) {
+            unique.push(p);
+            seen.add(p.id);
+          }
+        }
+        AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(unique));
+        return unique;
+      });
 
       const replyCountsMap = Object.fromEntries(replyEntries);
       setReplyCounts(replyCountsMap);
@@ -386,10 +400,8 @@ const HomeScreen = forwardRef<HomeScreenRef, HomeScreenProps>(
       return counts;
     });
 
-    if (!imageUri) {
-      addPost({ id: newPost.id, content: text, created_at: newPost.created_at });
-
-    }
+    // Cache the new post for the profile screen as well
+    addPost({ id: newPost.id, content: text, created_at: newPost.created_at });
 
     if (!hideInput) {
       setPostText('');
@@ -430,14 +442,12 @@ const HomeScreen = forwardRef<HomeScreenRef, HomeScreenProps>(
           AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
           return updated;
         });
-        if (!imageUri) {
-          updatePost(newPost.id, {
-            id: data.id,
-            content: data.content,
-            created_at: data.created_at,
-          });
-
-        }
+        // Update cached profile posts with the real data
+        updatePost(newPost.id, {
+          id: data.id,
+          content: data.content,
+          created_at: data.created_at,
+        });
         setReplyCounts(prev => {
           const { [newPost.id]: tempCount, ...rest } = prev;
           const counts = { ...rest, [data.id]: tempCount };
@@ -451,16 +461,10 @@ const HomeScreen = forwardRef<HomeScreenRef, HomeScreenProps>(
           AsyncStorage.setItem(LIKE_COUNT_KEY, JSON.stringify(counts));
           return counts;
         });
-        setLikeCounts(prev => {
-          const { [newPost.id]: tempLike, ...rest } = prev;
-          const counts = { ...rest, [data.id]: tempLike ?? 0 };
-          AsyncStorage.setItem(LIKE_COUNT_KEY, JSON.stringify(counts));
-          return counts;
-        });
       }
 
-      // Refresh from the server in the background to stay in sync
-      fetchPosts(0);
+      // Refresh from the server in the background to keep the feed up to date
+      setTimeout(() => fetchPosts(0), 2000);
 
     } else {
       // Remove the optimistic post if it failed to persist
