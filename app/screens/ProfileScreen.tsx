@@ -72,20 +72,6 @@ export default function ProfileScreen() {
   );
 
   useEffect(() => {
-    const refreshCount = async (postId: string) => {
-      const { data } = await supabase
-        .from("posts")
-        .select("reply_count")
-        .eq("id", postId)
-        .single();
-      if (data) {
-        setReplyCounts((prev) => {
-          const updated = { ...prev, [postId]: data.reply_count ?? 0 };
-          AsyncStorage.setItem(COUNT_STORAGE_KEY, JSON.stringify(updated));
-          return updated;
-        });
-      }
-    };
 
     subscriptions.current.forEach((sub) => supabase.removeSubscription(sub));
     subscriptions.current = [];
@@ -94,8 +80,23 @@ export default function ProfileScreen() {
       if (!p.id) return;
       const sub = supabase
         .from(`replies:post_id=eq.${p.id}`)
-        .on("INSERT", () => refreshCount(p.id))
-        .on("DELETE", () => refreshCount(p.id))
+        .on("INSERT", () => {
+          setReplyCounts((prev) => {
+            const current = prev[p.id] ?? p.reply_count ?? 0;
+            const updated = { ...prev, [p.id]: current + 1 };
+            AsyncStorage.setItem(COUNT_STORAGE_KEY, JSON.stringify(updated));
+            return updated;
+          });
+        })
+        .on("DELETE", () => {
+          setReplyCounts((prev) => {
+            const current = prev[p.id] ?? p.reply_count ?? 0;
+            const updated = { ...prev, [p.id]: Math.max(0, current - 1) };
+            AsyncStorage.setItem(COUNT_STORAGE_KEY, JSON.stringify(updated));
+            return updated;
+          });
+        })
+
         .subscribe();
       subscriptions.current.push(sub);
     });
