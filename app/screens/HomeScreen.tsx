@@ -85,9 +85,9 @@ const HomeScreen = forwardRef<HomeScreenRef, HomeScreenProps>(
       return rest;
     });
     remove(id);
-
     await supabase.from('posts').delete().eq('id', id);
   };
+
 
 
   const openReplyModal = (postId: string) => {

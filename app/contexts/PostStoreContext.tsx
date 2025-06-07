@@ -103,6 +103,12 @@ export const PostStoreProvider: React.FC<{ children: React.ReactNode }> = ({
         JSON.stringify(likedMap),
       );
 
+      if (id.startsWith('temp-')) {
+        // Don't sync with Supabase until the item has a real UUID
+        return;
+      }
+
+
       if (newLiked) {
         await supabase
           .from('likes')
