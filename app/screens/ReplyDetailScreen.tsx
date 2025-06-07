@@ -133,61 +133,7 @@ export default function ReplyDetailScreen() {
     navigation.goBack();
   };
 
-  const refreshLikeCount = async (id: string, isPost: boolean) => {
-    const { count } = await supabase
-      .from('likes')
-      .select('id', { count: 'exact', head: true })
-      .match(isPost ? { post_id: id } : { reply_id: id });
 
-    if (typeof count === 'number') {
-      await supabase
-        .from(isPost ? 'posts' : 'replies')
-        .update({ like_count: count })
-        .eq('id', id);
-      const stored = await AsyncStorage.getItem(LIKE_COUNT_KEY);
-      const map = stored ? JSON.parse(stored) : {};
-      map[id] = count;
-      AsyncStorage.setItem(LIKE_COUNT_KEY, JSON.stringify(map));
-    }
-  };
-
-  const refreshChainLikes = async () => {
-    const replyIds = [parent.id, ...ancestors.map(a => a.id)];
-    if (replyIds.length) {
-      const entries: [string, number][] = [];
-      await Promise.all(
-        replyIds.map(async rid => {
-          const { count } = await supabase
-            .from('likes')
-            .select('id', { count: 'exact', head: true })
-            .eq('reply_id', rid);
-          if (typeof count === 'number') {
-            entries.push([rid, count]);
-            await supabase.from('replies').update({ like_count: count }).eq('id', rid);
-          }
-        }),
-      );
-      if (entries.length) {
-        const stored = await AsyncStorage.getItem(LIKE_COUNT_KEY);
-        const counts = stored ? JSON.parse(stored) : {};
-        Object.assign(counts, Object.fromEntries(entries));
-        AsyncStorage.setItem(LIKE_COUNT_KEY, JSON.stringify(counts));
-      }
-    }
-    if (originalPost) {
-      const { count } = await supabase
-        .from('likes')
-        .select('id', { count: 'exact', head: true })
-        .eq('post_id', originalPost.id);
-      if (typeof count === 'number') {
-        await supabase.from('posts').update({ like_count: count }).eq('id', originalPost.id);
-        const stored = await AsyncStorage.getItem(LIKE_COUNT_KEY);
-        const counts = stored ? JSON.parse(stored) : {};
-        counts[originalPost.id] = count;
-        AsyncStorage.setItem(LIKE_COUNT_KEY, JSON.stringify(counts));
-      }
-    }
-  };
 
 
   const confirmDeleteReply = (id: string) => {
@@ -266,7 +212,6 @@ export default function ReplyDetailScreen() {
 
     await supabase.from('replies').delete().eq('id', id);
     fetchReplies();
-    refreshChainLikes();
   };
 
   
@@ -335,11 +280,10 @@ export default function ReplyDetailScreen() {
             const key = l.post_id || l.reply_id;
             map[key] = true;
           });
-          setLikedItems(map);
-          AsyncStorage.setItem(
-            `${LIKED_KEY_PREFIX}${user.id}`,
-            JSON.stringify(map),
-          );
+        AsyncStorage.setItem(
+          `${LIKED_KEY_PREFIX}${user.id}`,
+          JSON.stringify(map),
+        );
         }
       }
 
@@ -354,15 +298,12 @@ export default function ReplyDetailScreen() {
             if (l.post_id) likedObj[l.post_id] = true;
             if (l.reply_id) likedObj[l.reply_id] = true;
           });
-          setLikedItems(likedObj);
-          AsyncStorage.setItem(
-            `${LIKED_KEY_PREFIX}${user.id}`,
-            JSON.stringify(likedObj),
-          );
+        AsyncStorage.setItem(
+          `${LIKED_KEY_PREFIX}${user.id}`,
+          JSON.stringify(likedObj),
+        );
         }
       }
-
-      refreshChainLikes();
 
     }
   };
@@ -420,7 +361,7 @@ export default function ReplyDetailScreen() {
         const likedStored = await AsyncStorage.getItem(`${LIKED_KEY_PREFIX}${user.id}`);
         if (likedStored) {
           try {
-            setLikedItems(JSON.parse(likedStored));
+            JSON.parse(likedStored);
           } catch (e) {
             console.error('Failed to parse cached likes', e);
           }
@@ -432,7 +373,6 @@ export default function ReplyDetailScreen() {
       if (legacyLiked) {
         try {
           const parsed = JSON.parse(legacyLiked);
-          setLikedItems(parsed);
           AsyncStorage.setItem(
             `${LIKED_KEY_PREFIX}${user.id}`,
             JSON.stringify(parsed),
@@ -445,7 +385,6 @@ export default function ReplyDetailScreen() {
       
 
       fetchReplies();
-      refreshChainLikes();
     };
     loadCached();
   }, []);
@@ -478,7 +417,7 @@ export default function ReplyDetailScreen() {
           const likedStored = await AsyncStorage.getItem(`${LIKED_KEY_PREFIX}${user.id}`);
           if (likedStored) {
             try {
-              setLikedItems(JSON.parse(likedStored));
+              JSON.parse(likedStored);
             } catch (e) {
               console.error('Failed to parse cached likes', e);
             }
@@ -488,7 +427,7 @@ export default function ReplyDetailScreen() {
       };
       refreshCounts();
       fetchReplies();
-      refreshChainLikes();
+
     }, []),
   );
 
@@ -613,7 +552,6 @@ export default function ReplyDetailScreen() {
 
       }
       fetchReplies();
-      refreshChainLikes();
     }
   };
 
