@@ -1,4 +1,4 @@
-import React, { useCallback } from 'react';
+import React, { useCallback, useState, useEffect } from 'react';
 
 
 import {
@@ -15,11 +15,15 @@ import { Ionicons } from "@expo/vector-icons";
 import * as ImagePicker from 'expo-image-picker';
 import * as FileSystem from 'expo-file-system';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 import { useAuth } from '../../AuthContext';
 import { useFollowCounts } from '../hooks/useFollowCounts';
 import { colors } from '../styles/colors';
 import { supabase } from '../../lib/supabase';
+
+
+const COUNT_STORAGE_KEY = 'cached_reply_counts';
 
 
 
@@ -53,11 +57,38 @@ export default function ProfileScreen() {
     fetchMyPosts,
   } = useAuth() as any;
 
+  const [replyCounts, setReplyCounts] = useState<{ [key: string]: number }>({});
+
   const { followers, following } = useFollowCounts(profile?.id ?? null);
+
+  useEffect(() => {
+    const loadCounts = async () => {
+      const stored = await AsyncStorage.getItem(COUNT_STORAGE_KEY);
+      if (stored) {
+        try {
+          setReplyCounts(JSON.parse(stored));
+        } catch (e) {
+          console.error('Failed to parse cached counts', e);
+        }
+      }
+    };
+    loadCounts();
+  }, []);
 
   useFocusEffect(
     useCallback(() => {
       fetchMyPosts();
+      const syncCounts = async () => {
+        const stored = await AsyncStorage.getItem(COUNT_STORAGE_KEY);
+        if (stored) {
+          try {
+            setReplyCounts(JSON.parse(stored));
+          } catch (e) {
+            console.error('Failed to parse cached counts', e);
+          }
+        }
+      };
+      syncCounts();
     }, [fetchMyPosts]),
   );
 
@@ -192,7 +223,7 @@ export default function ProfileScreen() {
             </View>
             <View style={styles.replyCountContainer}>
               <Ionicons name="chatbubble-outline" size={18} color="#66538f" style={{ marginRight: 2 }} />
-              <Text style={styles.replyCountLarge}>{item.reply_count || 0}</Text>
+              <Text style={styles.replyCountLarge}>{replyCounts[item.id] ?? item.reply_count ?? 0}</Text>
             </View>
 
           </View>
