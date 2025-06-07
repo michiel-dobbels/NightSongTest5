@@ -254,8 +254,7 @@ const HomeScreen = forwardRef<HomeScreenRef, HomeScreenProps>(
         return merged;
       });
       const likeMap = Object.fromEntries(likeEntries);
-      AsyncStorage.setItem(LIKE_COUNT_KEY, JSON.stringify(likeMap));
-      initialize(data.map((p: any) => ({ id: p.id, like_count: p.like_count ?? 0 })));
+      initialize(data.map((p: any) => ({ id: p.id, like_count: p.like_count ?? 0 }))); 
 
 
       if (user) {
@@ -430,8 +429,7 @@ const HomeScreen = forwardRef<HomeScreenRef, HomeScreenProps>(
           setReplyCounts(Object.fromEntries(entries));
       const likeEntries = cached.map((p: any) => [p.id, p.like_count ?? 0]);
       const likeMap = Object.fromEntries(likeEntries);
-      AsyncStorage.setItem(LIKE_COUNT_KEY, JSON.stringify(likeMap));
-      initialize(cached.map((p: any) => ({ id: p.id, like_count: p.like_count ?? 0 })));
+      initialize(cached.map((p: any) => ({ id: p.id, like_count: p.like_count ?? 0 }))); 
 
 
         } catch (e) {

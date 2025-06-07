@@ -199,18 +199,8 @@ export default function ReplyDetailScreen() {
       AsyncStorage.setItem(COUNT_STORAGE_KEY, JSON.stringify(counts));
       return counts;
     });
-    const likeStored = await AsyncStorage.getItem(LIKE_COUNT_KEY);
-    const likeMap = likeStored ? JSON.parse(likeStored) : {};
-    delete likeMap[id];
-    AsyncStorage.setItem(LIKE_COUNT_KEY, JSON.stringify(likeMap));
-    if (user) {
-      const likedStored = await AsyncStorage.getItem(`${LIKED_KEY_PREFIX}${user?.id}`);
-      const likedMap = likedStored ? JSON.parse(likedStored) : {};
-      delete likedMap[id];
-      AsyncStorage.setItem(`${LIKED_KEY_PREFIX}${user.id}`, JSON.stringify(likedMap));
-    }
-
     await supabase.from('replies').delete().eq('id', id);
+    remove(id);
     fetchReplies();
   };
 
@@ -264,7 +254,6 @@ export default function ReplyDetailScreen() {
       if (postLikeCount !== undefined)
         likeEntries.push([parent.post_id, postLikeCount]);
       const fromServer = Object.fromEntries(likeEntries) as Record<string, number>;
-      AsyncStorage.setItem(LIKE_COUNT_KEY, JSON.stringify(fromServer));
       initialize([
         ...Object.entries(fromServer).map(([id, c]) => ({ id, like_count: c })),
       ]);
@@ -344,7 +333,6 @@ export default function ReplyDetailScreen() {
             ...storedLikes,
             ...Object.fromEntries(likeEntries),
           } as Record<string, number>;
-          AsyncStorage.setItem(LIKE_COUNT_KEY, JSON.stringify(likeCountsObj));
           initialize([
             { id: parent.post_id, like_count: storedLikes[parent.post_id] ?? 0 },
             ...cached.map((r: any) => ({ id: r.id, like_count: likeCountsObj[r.id] ?? 0 })),
@@ -354,7 +342,6 @@ export default function ReplyDetailScreen() {
         }
       } else {
         setReplyCounts(storedCounts);
-        AsyncStorage.setItem(LIKE_COUNT_KEY, JSON.stringify(storedLikes));
         initialize([{ id: parent.post_id, like_count: storedLikes[parent.post_id] ?? 0 }]);
       }
       if (user) {
@@ -485,10 +472,6 @@ export default function ReplyDetailScreen() {
       AsyncStorage.setItem(COUNT_STORAGE_KEY, JSON.stringify(counts));
       return counts;
     });
-    const likeStored = await AsyncStorage.getItem(LIKE_COUNT_KEY);
-    const likeMap = likeStored ? JSON.parse(likeStored) : {};
-    likeMap[newReply.id] = 0;
-    await AsyncStorage.setItem(LIKE_COUNT_KEY, JSON.stringify(likeMap));
     initialize([{ id: newReply.id, like_count: 0 }]);
     setReplyText('');
     setReplyImage(null);
@@ -542,13 +525,7 @@ export default function ReplyDetailScreen() {
           AsyncStorage.setItem(COUNT_STORAGE_KEY, JSON.stringify(counts));
           return counts;
         });
-        const likeStored = await AsyncStorage.getItem(LIKE_COUNT_KEY);
-        const likeMap = likeStored ? JSON.parse(likeStored) : {};
-        const temp = likeMap[newReply.id] ?? 0;
-        delete likeMap[newReply.id];
-        likeMap[data.id] = temp;
-        await AsyncStorage.setItem(LIKE_COUNT_KEY, JSON.stringify(likeMap));
-        initialize([{ id: data.id, like_count: temp }]);
+        initialize([{ id: data.id, like_count: 0 }]);
 
       }
       fetchReplies();

@@ -150,24 +150,6 @@ export default function PostDetailScreen() {
       AsyncStorage.setItem(COUNT_STORAGE_KEY, JSON.stringify(counts));
       return counts;
     });
-    const likeStored = await AsyncStorage.getItem(LIKE_COUNT_KEY);
-    if (likeStored) {
-      try {
-        const map = JSON.parse(likeStored);
-        delete map[id];
-        await AsyncStorage.setItem(LIKE_COUNT_KEY, JSON.stringify(map));
-      } catch {}
-    }
-    if (user) {
-      const likedStored = await AsyncStorage.getItem(`${LIKED_KEY_PREFIX}${user?.id}`);
-      if (likedStored) {
-        try {
-          const map = JSON.parse(likedStored);
-          delete map[id];
-          await AsyncStorage.setItem(`${LIKED_KEY_PREFIX}${user.id}`, JSON.stringify(map));
-        } catch {}
-      }
-    }
     remove(id);
 
     await supabase.from('replies').delete().eq('id', id);
@@ -275,7 +257,6 @@ export default function PostDetailScreen() {
       likeEntries.push([post.id, postLikeCount]);
 
       const counts = Object.fromEntries(likeEntries) as Record<string, number>;
-      AsyncStorage.setItem(LIKE_COUNT_KEY, JSON.stringify(counts));
       initialize([
         { id: post.id, like_count: postLikeCount },
         ...all.map(r => ({ id: r.id, like_count: r.like_count ?? 0 })),
@@ -367,7 +348,6 @@ export default function PostDetailScreen() {
             ...Object.fromEntries(likeEntries),
             ...storedLikes,
           } as Record<string, number>;
-          AsyncStorage.setItem(LIKE_COUNT_KEY, JSON.stringify(likeCountsObj));
           initialize([
             { id: post.id, like_count: storedLikes[post.id] ?? post.like_count ?? 0 },
             ...cached.map((r: any) => ({ id: r.id, like_count: r.like_count ?? 0 })),
@@ -377,7 +357,6 @@ export default function PostDetailScreen() {
         }
       } else {
         setReplyCounts(storedCounts);
-        AsyncStorage.setItem(LIKE_COUNT_KEY, JSON.stringify(storedLikes));
         initialize([
           { id: post.id, like_count: storedLikes[post.id] ?? post.like_count ?? 0 },
         ]);
@@ -457,10 +436,6 @@ export default function PostDetailScreen() {
     });
     initialize([{ id: newReply.id, like_count: 0 }]);
     replyEvents.emit('replyAdded', post.id);
-    const likeStored = await AsyncStorage.getItem(LIKE_COUNT_KEY);
-    const map = likeStored ? JSON.parse(likeStored) : {};
-    map[newReply.id] = 0;
-    AsyncStorage.setItem(LIKE_COUNT_KEY, JSON.stringify(map));
     setReplyText('');
     setReplyImage(null);
 
@@ -510,13 +485,7 @@ export default function PostDetailScreen() {
           AsyncStorage.setItem(COUNT_STORAGE_KEY, JSON.stringify(counts));
           return counts;
         });
-        const likeStored = await AsyncStorage.getItem(LIKE_COUNT_KEY);
-        const map = likeStored ? JSON.parse(likeStored) : {};
-        const temp = map[newReply.id] ?? 0;
-        delete map[newReply.id];
-        map[data.id] = temp;
-        AsyncStorage.setItem(LIKE_COUNT_KEY, JSON.stringify(map));
-        initialize([{ id: data.id, like_count: temp }]);
+        initialize([{ id: data.id, like_count: 0 }]);
 
 
       }
