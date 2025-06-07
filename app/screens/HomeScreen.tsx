@@ -329,8 +329,14 @@ const HomeScreen = forwardRef<HomeScreenRef, HomeScreenProps>(
       });
 
       const replyCountsMap = Object.fromEntries(replyEntries);
-      setReplyCounts(replyCountsMap);
-      AsyncStorage.setItem(COUNT_STORAGE_KEY, JSON.stringify(replyCountsMap));
+      setReplyCounts(prev => {
+        const merged: { [key: string]: number } = { ...prev };
+        for (const [id, count] of Object.entries(replyCountsMap)) {
+          merged[id] = Math.max(prev[id] ?? 0, count);
+        }
+        AsyncStorage.setItem(COUNT_STORAGE_KEY, JSON.stringify(merged));
+        return merged;
+      });
       const likeMap = Object.fromEntries(likeEntries);
       setLikeCounts(likeMap);
       AsyncStorage.setItem(LIKE_COUNT_KEY, JSON.stringify(likeMap));
