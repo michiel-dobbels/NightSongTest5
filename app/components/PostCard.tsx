@@ -1,5 +1,6 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, Image, StyleSheet } from 'react-native';
+import useLike from '../hooks/useLike';
 import { Ionicons } from '@expo/vector-icons';
 import { colors } from '../styles/colors';
 
@@ -37,11 +38,8 @@ export interface PostCardProps {
   avatarUri?: string;
   bannerUrl?: string;
   replyCount: number;
-  likeCount: number;
-  liked: boolean;
   onPress: () => void;
   onProfilePress: () => void;
-  onToggleLike: () => void;
   onDelete: () => void;
   onOpenReplies: () => void;
 }
@@ -51,16 +49,15 @@ export default function PostCard({
   isOwner,
   avatarUri,
   replyCount,
-  likeCount,
-  liked,
   onPress,
   onProfilePress,
-  onToggleLike,
   onDelete,
   onOpenReplies,
 }: PostCardProps) {
   const displayName = post.profiles?.name || post.profiles?.username || post.username;
   const userName = post.profiles?.username || post.username;
+  const isReply = (post as any).post_id !== undefined;
+  const { likeCount, liked, toggleLike } = useLike(post.id, isReply);
 
   return (
     <TouchableOpacity onPress={onPress}>
@@ -97,7 +94,7 @@ export default function PostCard({
           <Ionicons name="chatbubble-outline" size={18} color="#66538f" style={{ marginRight: 2 }} />
           <Text style={styles.replyCountLarge}>{replyCount}</Text>
         </TouchableOpacity>
-        <TouchableOpacity style={styles.likeContainer} onPress={onToggleLike}>
+        <TouchableOpacity style={styles.likeContainer} onPress={toggleLike}>
           <Ionicons name={liked ? 'heart' : 'heart-outline'} size={18} color="red" style={{ marginRight: 2 }} />
           <Text style={[styles.likeCountLarge, liked && styles.likedLikeCount]}>{likeCount}</Text>
         </TouchableOpacity>
