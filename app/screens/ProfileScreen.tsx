@@ -11,7 +11,6 @@ import {
   Dimensions,
   FlatList,
 } from 'react-native';
-import { Ionicons } from "@expo/vector-icons";
 import * as ImagePicker from 'expo-image-picker';
 import * as FileSystem from 'expo-file-system';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
@@ -21,6 +20,7 @@ import { useAuth } from '../../AuthContext';
 import { useFollowCounts } from '../hooks/useFollowCounts';
 import { colors } from '../styles/colors';
 import { supabase } from '../../lib/supabase';
+import PostCard, { Post } from '../components/PostCard';
 
 
 const COUNT_STORAGE_KEY = 'cached_reply_counts';
@@ -30,16 +30,6 @@ const COUNT_STORAGE_KEY = 'cached_reply_counts';
 
 
 
-function timeAgo(dateString: string): string {
-  const diff = Date.now() - new Date(dateString).getTime();
-  const minutes = Math.floor(diff / (1000 * 60));
-  if (minutes < 1) return 'just now';
-  if (minutes < 60) return `${minutes}m ago`;
-  const hours = Math.floor(minutes / 60);
-  if (hours < 24) return `${hours}h ago`;
-  const days = Math.floor(hours / 24);
-  return `${days}d ago`;
-}
 
 
 
@@ -196,38 +186,20 @@ export default function ProfileScreen() {
       ListHeaderComponent={renderHeader}
       keyExtractor={item => item.id}
       renderItem={({ item }) => (
-        <TouchableOpacity
+        <PostCard
+          post={item as Post}
+          isOwner={false}
+          avatarUri={profileImageUri ?? undefined}
+          bannerUrl={bannerImageUri ?? undefined}
+          replyCount={replyCounts[item.id] ?? item.reply_count ?? 0}
+          likeCount={item.like_count ?? 0}
+          liked={false}
           onPress={() => navigation.navigate('PostDetail', { post: item })}
-
-        >
-          <View style={styles.postItem}>
-            <View style={styles.row}>
-              {profileImageUri ? (
-                <Image source={{ uri: profileImageUri }} style={styles.postAvatar} />
-              ) : (
-                <View style={[styles.postAvatar, styles.placeholder]} />
-              )}
-              <View style={{ flex: 1 }}>
-                <View style={styles.headerRow}>
-                  <Text style={styles.postUsername}>
-                    {profile.name || profile.username} @{profile.username}
-                  </Text>
-                  {item.created_at && (
-                    <Text style={[styles.timestamp, styles.timestampMargin]}>
-                      {timeAgo(item.created_at)}
-                    </Text>
-                  )}
-                </View>
-                <Text style={styles.postContent}>{item.content}</Text>
-              </View>
-            </View>
-            <View style={styles.replyCountContainer}>
-              <Ionicons name="chatbubble-outline" size={18} color="#66538f" style={{ marginRight: 2 }} />
-              <Text style={styles.replyCountLarge}>{replyCounts[item.id] ?? item.reply_count ?? 0}</Text>
-            </View>
-
-          </View>
-        </TouchableOpacity>
+          onProfilePress={() => navigation.navigate('Profile')}
+          onToggleLike={() => {}}
+          onDelete={() => {}}
+          onOpenReplies={() => {}}
+        />
       )}
     />
   );
@@ -286,32 +258,6 @@ const styles = StyleSheet.create({
   uploadText: { color: 'white' },
   statsRow: { flexDirection: 'row', marginLeft: 15, marginBottom: 20 },
   statsText: { color: 'white', marginRight: 15 },
-  postItem: {
-    backgroundColor: '#ffffff10',
-    borderRadius: 0,
-    padding: 10,
-    paddingBottom: 30,
-    marginBottom: 0,
-    borderBottomColor: 'gray',
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    position: 'relative',
-  },
-  postContent: { color: 'white' },
-  postUsername: { fontWeight: 'bold', color: 'white' },
-  row: { flexDirection: 'row', alignItems: 'flex-start' },
-  postAvatar: { width: 48, height: 48, borderRadius: 24, marginRight: 8 },
-  headerRow: { flexDirection: 'row', alignItems: 'center' },
-  timestamp: { fontSize: 10, color: 'gray' },
-  timestampMargin: { marginLeft: 6 },
-  replyCountContainer: {
-    position: "absolute",
-    bottom: 6,
-    left: 66,
-    flexDirection: "row",
-    alignItems: "center",
-  },
-  replyCountLarge: { fontSize: 15, color: "gray" },
-
   headerContainer: {
     padding: 20,
   },
