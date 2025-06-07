@@ -386,10 +386,8 @@ const HomeScreen = forwardRef<HomeScreenRef, HomeScreenProps>(
       return counts;
     });
 
-    if (!imageUri) {
-      addPost({ id: newPost.id, content: text, created_at: newPost.created_at });
-
-    }
+    // Cache the new post for the profile screen as well
+    addPost({ id: newPost.id, content: text, created_at: newPost.created_at });
 
     if (!hideInput) {
       setPostText('');
@@ -430,14 +428,12 @@ const HomeScreen = forwardRef<HomeScreenRef, HomeScreenProps>(
           AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
           return updated;
         });
-        if (!imageUri) {
-          updatePost(newPost.id, {
-            id: data.id,
-            content: data.content,
-            created_at: data.created_at,
-          });
-
-        }
+        // Update cached profile posts with the real data
+        updatePost(newPost.id, {
+          id: data.id,
+          content: data.content,
+          created_at: data.created_at,
+        });
         setReplyCounts(prev => {
           const { [newPost.id]: tempCount, ...rest } = prev;
           const counts = { ...rest, [data.id]: tempCount };
@@ -451,16 +447,9 @@ const HomeScreen = forwardRef<HomeScreenRef, HomeScreenProps>(
           AsyncStorage.setItem(LIKE_COUNT_KEY, JSON.stringify(counts));
           return counts;
         });
-        setLikeCounts(prev => {
-          const { [newPost.id]: tempLike, ...rest } = prev;
-          const counts = { ...rest, [data.id]: tempLike ?? 0 };
-          AsyncStorage.setItem(LIKE_COUNT_KEY, JSON.stringify(counts));
-          return counts;
-        });
       }
 
-      // Refresh from the server in the background to stay in sync
-      fetchPosts(0);
+      // Optionally refresh from the server later to stay in sync
 
     } else {
       // Remove the optimistic post if it failed to persist
