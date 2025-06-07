@@ -17,6 +17,7 @@ import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 import { useAuth } from '../../AuthContext';
+import { usePostStore } from '../contexts/PostStoreContext';
 import { useFollowCounts } from '../hooks/useFollowCounts';
 import { colors } from '../styles/colors';
 import { supabase } from '../../lib/supabase';
@@ -46,10 +47,17 @@ export default function ProfileScreen() {
     myPosts: posts,
     fetchMyPosts,
   } = useAuth() as any;
+  const { initialize } = usePostStore();
 
   const [replyCounts, setReplyCounts] = useState<{ [key: string]: number }>({});
 
   const { followers, following } = useFollowCounts(profile?.id ?? null);
+
+  useEffect(() => {
+    if (posts && posts.length) {
+      initialize(posts.map(p => ({ id: p.id, like_count: p.like_count ?? 0 })));
+    }
+  }, [posts]);
 
   useEffect(() => {
     const loadCounts = async () => {
@@ -192,11 +200,8 @@ export default function ProfileScreen() {
           avatarUri={profileImageUri ?? undefined}
           bannerUrl={bannerImageUri ?? undefined}
           replyCount={replyCounts[item.id] ?? item.reply_count ?? 0}
-          likeCount={item.like_count ?? 0}
-          liked={false}
           onPress={() => navigation.navigate('PostDetail', { post: item })}
           onProfilePress={() => navigation.navigate('Profile')}
-          onToggleLike={() => {}}
           onDelete={() => {}}
           onOpenReplies={() => {}}
         />
