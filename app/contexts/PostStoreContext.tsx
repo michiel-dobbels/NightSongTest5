@@ -43,11 +43,20 @@ export const PostStoreProvider: React.FC<{ children: React.ReactNode }> = ({
           );
           likedMap = likedStored ? JSON.parse(likedStored) : {};
         }
-        const merged: Record<string, PostState> = {};
-        Object.keys(likeMap).forEach(id => {
-          merged[id] = { likeCount: likeMap[id], liked: !!likedMap[id] };
+        setPosts(prev => {
+          const merged = { ...prev };
+          const ids = new Set([
+            ...Object.keys(likeMap),
+            ...Object.keys(likedMap),
+          ]);
+          ids.forEach(id => {
+            merged[id] = {
+              likeCount: prev[id]?.likeCount ?? likeMap[id] ?? 0,
+              liked: prev[id]?.liked ?? !!likedMap[id],
+            };
+          });
+          return merged;
         });
-        setPosts(merged);
       } catch (e) {
         console.error('Failed to load post store', e);
       }
