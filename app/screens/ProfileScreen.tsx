@@ -192,11 +192,8 @@ export default function ProfileScreen() {
           avatarUri={profileImageUri ?? undefined}
           bannerUrl={bannerImageUri ?? undefined}
           replyCount={replyCounts[item.id] ?? item.reply_count ?? 0}
-          likeCount={item.like_count ?? 0}
-          liked={false}
           onPress={() => navigation.navigate('PostDetail', { post: item })}
           onProfilePress={() => navigation.navigate('Profile')}
-          onToggleLike={() => {}}
           onDelete={() => {}}
           onOpenReplies={() => {}}
         />

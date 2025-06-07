@@ -2,6 +2,7 @@ import React from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { AuthProvider } from './AuthContext';
 import Navigator from './Navigator';
+import { PostStoreProvider } from './app/contexts/PostStoreContext';
 
 import { Buffer } from 'buffer';
 import process from 'process';
@@ -12,9 +13,11 @@ global.process = process;
 export default function App() {
   return (
     <AuthProvider>
-      <NavigationContainer>
-        <Navigator />
-      </NavigationContainer>
+      <PostStoreProvider>
+        <NavigationContainer>
+          <Navigator />
+        </NavigationContainer>
+      </PostStoreProvider>
     </AuthProvider>
   );
 }
