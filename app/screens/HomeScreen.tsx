@@ -452,6 +452,7 @@ const HomeScreen = forwardRef<HomeScreenRef, HomeScreenProps>(
       // Refresh from the server in the background to keep the feed up to date
       fetchPosts(0);
 
+
     } else {
       // Remove the optimistic post if it failed to persist
       setPosts((prev) => {
