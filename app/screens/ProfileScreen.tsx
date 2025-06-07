@@ -72,6 +72,7 @@ export default function ProfileScreen() {
   );
 
   useEffect(() => {
+
     subscriptions.current.forEach((sub) => supabase.removeSubscription(sub));
     subscriptions.current = [];
 
@@ -95,6 +96,7 @@ export default function ProfileScreen() {
             return updated;
           });
         })
+
         .subscribe();
       subscriptions.current.push(sub);
     });
@@ -206,6 +208,7 @@ export default function ProfileScreen() {
       contentContainerStyle={styles.contentContainer}
       data={posts}
       extraData={replyCounts}
+
       ListHeaderComponent={renderHeader}
       keyExtractor={(item) => item.id}
       renderItem={({ item }) => {
