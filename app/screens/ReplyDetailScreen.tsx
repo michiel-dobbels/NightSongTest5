@@ -22,6 +22,8 @@ import { useRoute, useNavigation, useFocusEffect } from '@react-navigation/nativ
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../AuthContext';
 import { colors } from '../styles/colors';
+import { usePostStore } from '../contexts/PostStoreContext';
+import useLike from '../hooks/useLike';
 
 const CHILD_PREFIX = 'cached_child_replies_';
 const COUNT_STORAGE_KEY = 'cached_reply_counts';
@@ -78,10 +80,28 @@ interface Post {
   } | null;
 }
 
+function LikeInfo({ id, isPost = false }: { id: string; isPost?: boolean }) {
+  const { likeCount, liked, toggleLike } = useLike(id, !isPost);
+  return (
+    <TouchableOpacity style={styles.likeContainer} onPress={toggleLike}>
+      <Ionicons
+        name={liked ? 'heart' : 'heart-outline'}
+        size={18}
+        color="red"
+        style={{ marginRight: 2 }}
+      />
+      <Text style={[styles.likeCountLarge, liked && styles.likedLikeCount]}>
+        {likeCount}
+      </Text>
+    </TouchableOpacity>
+  );
+}
+
 export default function ReplyDetailScreen() {
   const route = useRoute<any>();
   const navigation = useNavigation<any>();
   const { user, profile, profileImageUri, bannerImageUri } = useAuth() as any;
+  const { initialize, remove } = usePostStore();
   const parent = route.params.reply as Reply;
   const originalPost = route.params.originalPost as Post | undefined;
   const ancestors = (route.params.ancestors as Reply[]) || [];
@@ -298,15 +318,11 @@ export default function ReplyDetailScreen() {
       const postLikeCount = postLike ? postLike.like_count ?? 0 : undefined;
       if (postLikeCount !== undefined)
         likeEntries.push([parent.post_id, postLikeCount]);
-      setLikeCounts(prev => {
-        const fromServer = Object.fromEntries(likeEntries) as Record<string, number>;
-        const counts = { ...prev, ...fromServer };
-        Object.keys(fromServer).forEach(id => {
-          if (prev[id] !== undefined) counts[id] = prev[id];
-        });
-        AsyncStorage.setItem(LIKE_COUNT_KEY, JSON.stringify(counts));
-        return counts;
-      });
+      const fromServer = Object.fromEntries(likeEntries) as Record<string, number>;
+      AsyncStorage.setItem(LIKE_COUNT_KEY, JSON.stringify(fromServer));
+      initialize([
+        ...Object.entries(fromServer).map(([id, c]) => ({ id, like_count: c })),
+      ]);
 
       if (user) {
         const { data: likedData } = await supabase
@@ -387,14 +403,18 @@ export default function ReplyDetailScreen() {
             ...storedLikes,
             ...Object.fromEntries(likeEntries),
           } as Record<string, number>;
-          setLikeCounts(likeCountsObj);
           AsyncStorage.setItem(LIKE_COUNT_KEY, JSON.stringify(likeCountsObj));
+          initialize([
+            { id: parent.post_id, like_count: storedLikes[parent.post_id] ?? 0 },
+            ...cached.map((r: any) => ({ id: r.id, like_count: likeCountsObj[r.id] ?? 0 })),
+          ]);
         } catch (e) {
           console.error('Failed to parse cached replies', e);
         }
       } else {
         setReplyCounts(storedCounts);
-        setLikeCounts(storedLikes);
+        AsyncStorage.setItem(LIKE_COUNT_KEY, JSON.stringify(storedLikes));
+        initialize([{ id: parent.post_id, like_count: storedLikes[parent.post_id] ?? 0 }]);
       }
       if (user) {
         const likedStored = await AsyncStorage.getItem(`${LIKED_KEY_PREFIX}${user.id}`);
@@ -444,7 +464,12 @@ export default function ReplyDetailScreen() {
         const likeStored = await AsyncStorage.getItem(LIKE_COUNT_KEY);
         if (likeStored) {
           try {
-            setLikeCounts(prev => ({ ...prev, ...JSON.parse(likeStored) }));
+            initialize(
+              Object.entries(JSON.parse(likeStored)).map(([id, c]) => ({
+                id,
+                like_count: c as number,
+              })),
+            );
           } catch (e) {
             console.error('Failed to parse cached like counts', e);
           }
@@ -521,11 +546,11 @@ export default function ReplyDetailScreen() {
       AsyncStorage.setItem(COUNT_STORAGE_KEY, JSON.stringify(counts));
       return counts;
     });
-    setLikeCounts(prev => {
-      const counts = { ...prev, [newReply.id]: 0 };
-      AsyncStorage.setItem(LIKE_COUNT_KEY, JSON.stringify({ ...likeCounts, ...counts }));
-      return { ...prev, [newReply.id]: 0 };
-    });
+    const likeStored = await AsyncStorage.getItem(LIKE_COUNT_KEY);
+    const likeMap = likeStored ? JSON.parse(likeStored) : {};
+    likeMap[newReply.id] = 0;
+    await AsyncStorage.setItem(LIKE_COUNT_KEY, JSON.stringify(likeMap));
+    initialize([{ id: newReply.id, like_count: 0 }]);
     setReplyText('');
     setReplyImage(null);
 
@@ -578,14 +603,13 @@ export default function ReplyDetailScreen() {
           AsyncStorage.setItem(COUNT_STORAGE_KEY, JSON.stringify(counts));
           return counts;
         });
-        setLikeCounts(prev => {
-          const temp = prev[newReply.id] ?? 0;
-          const { [newReply.id]: _o, ...rest } = prev;
-
-          const counts = { ...rest, [data.id]: temp };
-          AsyncStorage.setItem(LIKE_COUNT_KEY, JSON.stringify(counts));
-          return counts;
-        });
+        const likeStored = await AsyncStorage.getItem(LIKE_COUNT_KEY);
+        const likeMap = likeStored ? JSON.parse(likeStored) : {};
+        const temp = likeMap[newReply.id] ?? 0;
+        delete likeMap[newReply.id];
+        likeMap[data.id] = temp;
+        await AsyncStorage.setItem(LIKE_COUNT_KEY, JSON.stringify(likeMap));
+        initialize([{ id: data.id, like_count: temp }]);
 
       }
       fetchReplies();
@@ -674,26 +698,7 @@ export default function ReplyDetailScreen() {
                   />
                   <Text style={styles.replyCountLarge}>{replyCounts[originalPost.id] || 0}</Text>
                 </View>
-                <TouchableOpacity
-                  style={styles.likeContainer}
-                  onPress={() => toggleLike(originalPost.id, true)}
-                >
-                  <Ionicons
-                    name={likedItems[originalPost.id] ? 'heart' : 'heart-outline'}
-
-                    size={18}
-                    color="red"
-                    style={{ marginRight: 2 }}
-                  />
-                  <Text
-                    style={[
-                      styles.likeCountLarge,
-                      likedItems[originalPost.id] && styles.likedLikeCount,
-                    ]}
-                  >
-                    {likeCounts[originalPost.id] || 0}
-                  </Text>
-                </TouchableOpacity>
+                <LikeInfo id={originalPost.id} isPost />
 
               </View>
             )}
@@ -762,26 +767,7 @@ export default function ReplyDetailScreen() {
                   />
                   <Text style={styles.replyCountLarge}>{replyCounts[a.id] || 0}</Text>
                 </View>
-                <TouchableOpacity
-                  style={styles.likeContainer}
-                  onPress={() => toggleLike(a.id, false)}
-                >
-                  <Ionicons
-                    name={likedItems[a.id] ? 'heart' : 'heart-outline'}
-
-                    size={18}
-                    color="red"
-                    style={{ marginRight: 2 }}
-                  />
-                  <Text
-                    style={[
-                      styles.likeCountLarge,
-                      likedItems[a.id] && styles.likedLikeCount,
-                    ]}
-                  >
-                    {likeCounts[a.id] || 0}
-                  </Text>
-                </TouchableOpacity>
+                <LikeInfo id={a.id} />
 
               </View>
             );
@@ -842,26 +828,7 @@ export default function ReplyDetailScreen() {
             />
             <Text style={styles.replyCountLarge}>{replyCounts[parent.id] || 0}</Text>
           </View>
-          <TouchableOpacity
-            style={styles.likeContainer}
-            onPress={() => toggleLike(parent.id, false)}
-          >
-            <Ionicons
-              name={likedItems[parent.id] ? 'heart' : 'heart-outline'}
-
-              size={18}
-              color="red"
-              style={{ marginRight: 2 }}
-            />
-            <Text
-              style={[
-                styles.likeCountLarge,
-                likedItems[parent.id] && styles.likedLikeCount,
-              ]}
-            >
-              {likeCounts[parent.id] || 0}
-            </Text>
-          </TouchableOpacity>
+          <LikeInfo id={parent.id} />
 
           </View>
           </>
@@ -941,26 +908,7 @@ export default function ReplyDetailScreen() {
                   />
                   <Text style={styles.replyCountLarge}>{replyCounts[item.id] || 0}</Text>
                 </View>
-                <TouchableOpacity
-                  style={styles.likeContainer}
-                  onPress={() => toggleLike(item.id, false)}
-                >
-                  <Ionicons
-                    name={likedItems[item.id] ? 'heart' : 'heart-outline'}
-
-                    size={18}
-                    color="red"
-                    style={{ marginRight: 2 }}
-                  />
-                  <Text
-                    style={[
-                      styles.likeCountLarge,
-                      likedItems[item.id] && styles.likedLikeCount,
-                    ]}
-                  >
-                    {likeCounts[item.id] || 0}
-                  </Text>
-                </TouchableOpacity>
+                <LikeInfo id={item.id} />
 
               </View>
             </TouchableOpacity>

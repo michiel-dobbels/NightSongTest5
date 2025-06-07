@@ -22,6 +22,7 @@ import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../AuthContext';
 import { colors } from '../styles/colors';
 import { replyEvents } from '../replyEvents';
+import { usePostStore } from '../contexts/PostStoreContext';
 import PostCard, { Post } from '../components/PostCard';
 
 const REPLY_STORAGE_PREFIX = 'cached_replies_';
@@ -56,6 +57,7 @@ export default function PostDetailScreen() {
   const route = useRoute<any>();
   const navigation = useNavigation<any>();
   const { user, profile, profileImageUri, bannerImageUri } = useAuth() as any;
+  const { initialize, remove } = usePostStore();
   const post = route.params.post as Post;
   const fromProfile = route.params?.fromProfile ?? false;
 
@@ -95,6 +97,7 @@ export default function PostDetailScreen() {
 
   const handleDeletePost = async (id: string) => {
     await supabase.from('posts').delete().eq('id', id);
+    remove(id);
     navigation.goBack();
   };
 
@@ -165,6 +168,8 @@ export default function PostDetailScreen() {
         } catch {}
       }
     }
+    remove(id);
+
     await supabase.from('replies').delete().eq('id', id);
     fetchReplies();
   };
@@ -271,6 +276,11 @@ export default function PostDetailScreen() {
 
       const counts = Object.fromEntries(likeEntries) as Record<string, number>;
       AsyncStorage.setItem(LIKE_COUNT_KEY, JSON.stringify(counts));
+      initialize([
+        { id: post.id, like_count: postLikeCount },
+        ...all.map(r => ({ id: r.id, like_count: r.like_count ?? 0 })),
+      ]);
+
 
       if (user) {
         const { data: likedData } = await supabase
@@ -358,12 +368,20 @@ export default function PostDetailScreen() {
             ...storedLikes,
           } as Record<string, number>;
           AsyncStorage.setItem(LIKE_COUNT_KEY, JSON.stringify(likeCountsObj));
+          initialize([
+            { id: post.id, like_count: storedLikes[post.id] ?? post.like_count ?? 0 },
+            ...cached.map((r: any) => ({ id: r.id, like_count: r.like_count ?? 0 })),
+          ]);
         } catch (e) {
           console.error('Failed to parse cached replies', e);
         }
       } else {
         setReplyCounts(storedCounts);
         AsyncStorage.setItem(LIKE_COUNT_KEY, JSON.stringify(storedLikes));
+        initialize([
+          { id: post.id, like_count: storedLikes[post.id] ?? post.like_count ?? 0 },
+        ]);
+
       }
 
       if (user) {
@@ -437,6 +455,7 @@ export default function PostDetailScreen() {
       AsyncStorage.setItem(COUNT_STORAGE_KEY, JSON.stringify(counts));
       return counts;
     });
+    initialize([{ id: newReply.id, like_count: 0 }]);
     replyEvents.emit('replyAdded', post.id);
     const likeStored = await AsyncStorage.getItem(LIKE_COUNT_KEY);
     const map = likeStored ? JSON.parse(likeStored) : {};
@@ -497,6 +516,8 @@ export default function PostDetailScreen() {
         delete map[newReply.id];
         map[data.id] = temp;
         AsyncStorage.setItem(LIKE_COUNT_KEY, JSON.stringify(map));
+        initialize([{ id: data.id, like_count: temp }]);
+
 
       }
 
