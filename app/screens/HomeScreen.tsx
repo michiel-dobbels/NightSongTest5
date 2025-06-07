@@ -89,6 +89,7 @@ const HomeScreen = forwardRef<HomeScreenRef, HomeScreenProps>(
   };
 
 
+
   const openReplyModal = (postId: string) => {
 
     setActivePostId(postId);
@@ -200,6 +201,7 @@ const HomeScreen = forwardRef<HomeScreenRef, HomeScreenProps>(
         return counts;
       });
       initialize([{ id: data.id, like_count: 0 }]);
+
       } else if (error) {
         // Reply insertion sometimes fails if the post has not been
         // assigned a real UUID yet. The optimistic reply will still
@@ -254,6 +256,7 @@ const HomeScreen = forwardRef<HomeScreenRef, HomeScreenProps>(
       const likeMap = Object.fromEntries(likeEntries);
       AsyncStorage.setItem(LIKE_COUNT_KEY, JSON.stringify(likeMap));
       initialize(data.map((p: any) => ({ id: p.id, like_count: p.like_count ?? 0 })));
+
 
       if (user) {
         const { data: likedData } = await supabase
@@ -314,6 +317,7 @@ const HomeScreen = forwardRef<HomeScreenRef, HomeScreenProps>(
     });
     initialize([{ id: newPost.id, like_count: 0 }]);
 
+
     // Cache the new post for the profile screen as well
     addPost({ id: newPost.id, content: text, created_at: newPost.created_at });
 
@@ -369,6 +373,7 @@ const HomeScreen = forwardRef<HomeScreenRef, HomeScreenProps>(
           return counts;
         });
         initialize([{ id: data.id, like_count: 0 }]);
+
       }
 
       // Refresh from the server in the background to keep the feed up to date
@@ -427,6 +432,7 @@ const HomeScreen = forwardRef<HomeScreenRef, HomeScreenProps>(
       const likeMap = Object.fromEntries(likeEntries);
       AsyncStorage.setItem(LIKE_COUNT_KEY, JSON.stringify(likeMap));
       initialize(cached.map((p: any) => ({ id: p.id, like_count: p.like_count ?? 0 })));
+
 
         } catch (e) {
           console.error('Failed to parse cached posts', e);

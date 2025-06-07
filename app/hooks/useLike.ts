@@ -6,3 +6,4 @@ export default function useLike(id: string, isReply: boolean = false) {
   const liked = posts[id]?.liked ?? false;
   return { likeCount, liked, toggleLike: () => toggleLike(id, isReply) };
 }
+

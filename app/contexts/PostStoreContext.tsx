@@ -61,6 +61,7 @@ export const PostStoreProvider: React.FC<{ children: React.ReactNode }> = ({
       items.forEach(item => {
         const existing = updated[item.id];
         const likeCount = existing?.likeCount ?? item.like_count ?? 0;
+
         const liked = existing?.liked ?? false;
         updated[item.id] = { likeCount, liked };
       });
@@ -73,6 +74,7 @@ export const PostStoreProvider: React.FC<{ children: React.ReactNode }> = ({
         if (map[i.id] === undefined) {
           map[i.id] = i.like_count ?? 0;
         }
+
       });
       await AsyncStorage.setItem(LIKE_COUNT_KEY, JSON.stringify(map));
     } catch (e) {
@@ -109,6 +111,7 @@ export const PostStoreProvider: React.FC<{ children: React.ReactNode }> = ({
         // Don't sync with Supabase until the item has a real UUID
         return;
       }
+
 
       if (newLiked) {
         await supabase

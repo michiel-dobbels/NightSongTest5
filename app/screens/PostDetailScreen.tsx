@@ -169,6 +169,7 @@ export default function PostDetailScreen() {
       }
     }
     remove(id);
+
     await supabase.from('replies').delete().eq('id', id);
     fetchReplies();
   };
@@ -280,6 +281,7 @@ export default function PostDetailScreen() {
         ...all.map(r => ({ id: r.id, like_count: r.like_count ?? 0 })),
       ]);
 
+
       if (user) {
         const { data: likedData } = await supabase
           .from('likes')
@@ -379,6 +381,7 @@ export default function PostDetailScreen() {
         initialize([
           { id: post.id, like_count: storedLikes[post.id] ?? post.like_count ?? 0 },
         ]);
+
       }
 
       if (user) {
@@ -514,6 +517,7 @@ export default function PostDetailScreen() {
         map[data.id] = temp;
         AsyncStorage.setItem(LIKE_COUNT_KEY, JSON.stringify(map));
         initialize([{ id: data.id, like_count: temp }]);
+
 
       }
 
