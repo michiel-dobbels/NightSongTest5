@@ -108,6 +108,7 @@ export const PostStoreProvider: React.FC<{ children: React.ReactNode }> = ({
         return;
       }
 
+
       if (newLiked) {
         await supabase
           .from('likes')
