@@ -15,7 +15,6 @@ import {
 } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 import * as FileSystem from 'expo-file-system';
-import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useRoute, useNavigation, useFocusEffect } from '@react-navigation/native';
 
@@ -23,6 +22,7 @@ import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../AuthContext';
 import { colors } from '../styles/colors';
 import { replyEvents } from '../replyEvents';
+import PostCard, { Post } from '../components/PostCard';
 
 const REPLY_STORAGE_PREFIX = 'cached_replies_';
 const COUNT_STORAGE_KEY = 'cached_reply_counts';
@@ -30,34 +30,7 @@ const LIKE_COUNT_KEY = 'cached_like_counts';
 const LIKED_KEY_PREFIX = 'cached_likes_';
 
 
-function timeAgo(dateString: string): string {
-  const diff = Date.now() - new Date(dateString).getTime();
-  const minutes = Math.floor(diff / (1000 * 60));
-  if (minutes < 1) return 'just now';
-  if (minutes < 60) return `${minutes}m ago`;
-  const hours = Math.floor(minutes / 60);
-  if (hours < 24) return `${hours}h ago`;
-  const days = Math.floor(hours / 24);
-  return `${days}d ago`;
-}
 
-interface Post {
-  id: string;
-  content: string;
-  image_url?: string;
-  user_id: string;
-  created_at: string;
-
-  username?: string;
-  reply_count?: number;
-  like_count?: number;
-  profiles?: {
-    username: string | null;
-    name: string | null;
-    image_url?: string | null;
-    banner_url?: string | null;
-  } | null;
-}
 
 interface Reply {
   id: string;
@@ -607,95 +580,51 @@ export default function PostDetailScreen() {
       </View>
       <FlatList
         ListHeaderComponent={() => (
-          <View style={[styles.post, styles.highlightPost]}>
-            {user?.id === post.user_id && (
-              <TouchableOpacity
-                onPress={() => confirmDeletePost(post.id)}
-                style={styles.deleteButton}
-              >
-                <Text style={{ color: 'white' }}>X</Text>
-              </TouchableOpacity>
-            )}
-            <View style={styles.row}>
-              <TouchableOpacity
-                onPress={() =>
-                  user?.id === post.user_id
-                    ? navigation.navigate('Profile')
-                    : navigation.navigate('UserProfile', {
-                        userId: post.user_id,
-                        avatarUrl: post.profiles?.image_url,
-                        bannerUrl: post.profiles?.banner_url,
-
-                        name: displayName,
-                        username: userName,
-                      })
-                }
-              >
-                {user?.id === post.user_id && profileImageUri ? (
-                  <Image source={{ uri: profileImageUri }} style={styles.avatar} />
-                ) : (
-                  <View style={[styles.avatar, styles.placeholder]} />
-                )}
-              </TouchableOpacity>
-
-              <View style={{ flex: 1 }}>
-                <View style={styles.headerRow}>
-                  <Text style={styles.username}>
-                    {displayName} @{userName}
-                  </Text>
-                  <Text style={[styles.timestamp, styles.timestampMargin]}>
-                    {timeAgo(post.created_at)}
-                  </Text>
-                </View>
-                <Text style={styles.postContent}>{post.content}</Text>
-                {post.image_url && (
-                  <Image source={{ uri: post.image_url }} style={styles.postImage} />
-                )}
-              </View>
-            </View>
-            <View style={styles.replyCountContainer}>
-              <Ionicons
-                name="chatbubble-outline"
-                size={18}
-                color="#66538f"
-                style={{ marginRight: 2 }}
-              />
-              <Text style={styles.replyCountLarge}>{replyCounts[post.id] || 0}</Text>
-            </View>
-            <TouchableOpacity
-              style={styles.likeContainer}
-              onPress={() => toggleLike(post.id, true)}
-            >
-              <Ionicons
-                name={likedItems[post.id] ? 'heart' : 'heart-outline'}
-
-                size={18}
-                color="red"
-                style={{ marginRight: 2 }}
-              />
-              <Text
-                style={[
-                  styles.likeCountLarge,
-                  likedItems[post.id] && styles.likedLikeCount,
-                ]}
-              >
-                {likeCounts[post.id] || 0}
-              </Text>
-            </TouchableOpacity>
-
-          </View>
+          <PostCard
+            post={post}
+            isOwner={user?.id === post.user_id}
+            avatarUri={
+              user?.id === post.user_id ? profileImageUri : post.profiles?.image_url || undefined
+            }
+            bannerUrl={user?.id === post.user_id ? undefined : post.profiles?.banner_url || undefined}
+            replyCount={replyCounts[post.id] || 0}
+            likeCount={likeCounts[post.id] || 0}
+            liked={!!likedItems[post.id]}
+            onPress={() => {}}
+            onProfilePress={() =>
+              user?.id === post.user_id
+                ? navigation.navigate('Profile')
+                : navigation.navigate('UserProfile', {
+                    userId: post.user_id,
+                    avatarUrl: post.profiles?.image_url,
+                    bannerUrl: post.profiles?.banner_url,
+                    name: displayName,
+                    username: userName,
+                  })
+            }
+            onToggleLike={() => toggleLike(post.id, true)}
+            onDelete={() => confirmDeletePost(post.id)}
+            onOpenReplies={() => {}}
+          />
         )}
         contentContainerStyle={{ paddingBottom: 100 }}
         data={replies}
         keyExtractor={item => item.id}
-          renderItem={({ item }) => {
+        renderItem={({ item }) => {
           const name = item.profiles?.name || item.profiles?.username || item.username;
           const replyUserName = item.profiles?.username || item.username;
           const isMe = user?.id === item.user_id;
           const avatarUri = isMe ? profileImageUri : item.profiles?.image_url || undefined;
 
           return (
-            <TouchableOpacity
+            <PostCard
+              post={item as Post}
+              isOwner={isMe}
+              avatarUri={avatarUri}
+              bannerUrl={item.profiles?.banner_url || undefined}
+              replyCount={replyCounts[item.id] || 0}
+              likeCount={likeCounts[item.id] || 0}
+              liked={!!likedItems[item.id]}
               onPress={() =>
                 navigation.push('ReplyDetail', {
                   reply: item,
@@ -703,85 +632,21 @@ export default function PostDetailScreen() {
                   ancestors: [],
                 })
               }
-            >
-              <View style={styles.reply}>
-                {isMe && (
-                  <TouchableOpacity
-                    onPress={() => confirmDeleteReply(item.id)}
-                    style={styles.deleteButton}
-                  >
-                    <Text style={{ color: 'white' }}>X</Text>
-                  </TouchableOpacity>
-                )}
-                <View style={styles.row}>
-                  <TouchableOpacity
-                    onPress={() =>
-                      isMe
-                        ? navigation.navigate('Profile')
-                        : navigation.navigate('UserProfile', {
-                            userId: item.user_id,
-                            avatarUrl: avatarUri,
-                            bannerUrl: item.profiles?.banner_url,
-
-                            name,
-                            username: replyUserName,
-                          })
-                    }
-                  >
-                    {avatarUri ? (
-                      <Image source={{ uri: avatarUri }} style={styles.avatar} />
-                    ) : (
-                      <View style={[styles.avatar, styles.placeholder]} />
-                    )}
-                  </TouchableOpacity>
-                  <View style={{ flex: 1 }}>
-                    <View style={styles.headerRow}>
-                      <Text style={styles.username}>
-                        {name} @{replyUserName}
-                      </Text>
-                      <Text style={[styles.timestamp, styles.timestampMargin]}>
-                        {timeAgo(item.created_at)}
-                      </Text>
-                    </View>
-
-                    <Text style={styles.postContent}>{item.content}</Text>
-                    {item.image_url && (
-                      <Image source={{ uri: item.image_url }} style={styles.postImage} />
-                    )}
-                  </View>
-                  </View>
-                  <View style={styles.replyCountContainer}>
-                    <Ionicons
-                      name="chatbubble-outline"
-                      size={18}
-                      color="#66538f"
-                      style={{ marginRight: 2 }}
-                    />
-                    <Text style={styles.replyCountLarge}>{replyCounts[item.id] || 0}</Text>
-                  </View>
-                  <TouchableOpacity
-                    style={styles.likeContainer}
-                    onPress={() => toggleLike(item.id, false)}
-                  >
-                    <Ionicons
-                      name={likedItems[item.id] ? 'heart' : 'heart-outline'}
-
-                      size={18}
-                      color="red"
-                      style={{ marginRight: 2 }}
-                    />
-                    <Text
-                      style={[
-                        styles.likeCountLarge,
-                        likedItems[item.id] && styles.likedLikeCount,
-                      ]}
-                    >
-                      {likeCounts[item.id] || 0}
-                    </Text>
-                  </TouchableOpacity>
-
-                </View>
-              </TouchableOpacity>
+              onProfilePress={() =>
+                isMe
+                  ? navigation.navigate('Profile')
+                  : navigation.navigate('UserProfile', {
+                      userId: item.user_id,
+                      avatarUrl: avatarUri,
+                      bannerUrl: item.profiles?.banner_url,
+                      name,
+                      username: replyUserName,
+                    })
+              }
+              onToggleLike={() => toggleLike(item.id, false)}
+              onDelete={() => confirmDeleteReply(item.id)}
+              onOpenReplies={() => {}}
+            />
           );
         }}
       />
@@ -814,72 +679,6 @@ const styles = StyleSheet.create({
     paddingBottom: 0,
     backgroundColor: colors.background,
   },
-  post: {
-    backgroundColor: '#ffffff10',
-    borderRadius: 0,
-    padding: 10,
-    // add extra space at the bottom so action icons don't overlap content
-    paddingBottom: 30,
-    marginBottom: 0,
-    borderBottomColor: 'gray',
-    borderBottomWidth: StyleSheet.hairlineWidth,
-
-    position: 'relative',
-  },
-  row: { flexDirection: 'row', alignItems: 'flex-start' },
-  avatar: { width: 48, height: 48, borderRadius: 24, marginRight: 8 },
-  placeholder: { backgroundColor: '#555' },
-  highlightPost: {
-    borderColor: '#4f1fde',
-    borderWidth: 2,
-
-  },
-  reply: {
-    backgroundColor: '#ffffff10',
-    borderRadius: 0,
-    padding: 10,
-    // add extra space at the bottom so action icons don't overlap content
-    paddingBottom: 30,
-    marginTop: 0,
-    borderBottomColor: 'gray',
-    borderBottomWidth: StyleSheet.hairlineWidth,
-
-    position: 'relative',
-  },
-  postContent: { color: 'white' },
-  username: { fontWeight: 'bold', color: 'white' },
-  timestamp: { fontSize: 10, color: 'gray' },
-  headerRow: { flexDirection: 'row', alignItems: 'center' },
-  timestampMargin: { marginLeft: 6 },
-  replyCountContainer: {
-    position: 'absolute',
-    bottom: 6,
-    // Align with the left edge of the post content (text/image)
-    // Avatar width (48) + margin (8) + container padding (10)
-    left: 66,
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  replyCount: { fontSize: 10, color: 'gray' },
-  replyCountLarge: { fontSize: 15, color: 'gray' },
-  likeCountLarge: { fontSize: 15, color: 'gray' },
-  likedLikeCount: { color: 'red' },
-  likeContainer: {
-    position: 'absolute',
-    bottom: 6,
-    left: '50%',
-    transform: [{ translateX: -6 }],
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-
-  postImage: {
-    width: '100%',
-    height: 200,
-    borderRadius: 6,
-    marginTop: 8,
-  },
-
   input: {
     backgroundColor: 'white',
     padding: 10,
@@ -889,12 +688,6 @@ const styles = StyleSheet.create({
   backButton: {
     alignSelf: 'flex-start',
     marginBottom: 10,
-  },
-  deleteButton: {
-    position: 'absolute',
-    right: 6,
-    top: 6,
-    padding: 4,
   },
   inputContainer: {
     position: 'absolute',

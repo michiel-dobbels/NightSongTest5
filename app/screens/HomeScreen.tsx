@@ -24,6 +24,7 @@ import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../AuthContext';
 import { colors } from '../styles/colors';
 import { replyEvents } from '../replyEvents';
+import PostCard, { Post } from '../components/PostCard';
 
 const STORAGE_KEY = 'cached_posts';
 const COUNT_STORAGE_KEY = 'cached_reply_counts';
@@ -33,33 +34,6 @@ const REPLY_STORAGE_PREFIX = 'cached_replies_';
 const PAGE_SIZE = 10;
 
 
-type Post = {
-  id: string;
-  content: string;
-  image_url?: string;
-  username?: string;
-  user_id: string;
-  created_at: string;
-  reply_count?: number;
-  like_count?: number;
-  profiles?: {
-    username: string | null;
-    name: string | null;
-    image_url?: string | null;
-    banner_url?: string | null;
-  } | null;
-};
-
-function timeAgo(dateString: string): string {
-  const diff = Date.now() - new Date(dateString).getTime();
-  const minutes = Math.floor(diff / (1000 * 60));
-  if (minutes < 1) return 'just now';
-  if (minutes < 60) return `${minutes}m ago`;
-  const hours = Math.floor(minutes / 60);
-  if (hours < 24) return `${hours}h ago`;
-  const days = Math.floor(hours / 24);
-  return `${days}d ago`;
-}
 
 export interface HomeScreenRef {
   createPost: (text: string, imageUri?: string) => Promise<void>;
@@ -633,88 +607,30 @@ const HomeScreen = forwardRef<HomeScreenRef, HomeScreenProps>(
           const bannerUrl = isMe ? undefined : item.profiles?.banner_url || undefined;
 
           return (
-            <TouchableOpacity onPress={() => navigation.navigate('PostDetail', { post: item })}>
-              <View style={styles.post}>
-                {isMe && (
-                  <TouchableOpacity
-                    onPress={() => confirmDeletePost(item.id)}
-                    style={styles.deleteButton}
-                  >
-                    <Text style={{ color: 'white' }}>X</Text>
-                  </TouchableOpacity>
-                )}
-                <View style={styles.row}>
-                  <TouchableOpacity
-                    onPress={() =>
-                      isMe
-                        ? navigation.navigate('Profile')
-                        : navigation.navigate('UserProfile', {
-                            userId: item.user_id,
-                            avatarUrl: avatarUri,
-                            bannerUrl: item.profiles?.banner_url,
-
-                            name: displayName,
-                            username: userName,
-                          })
-                    }
-                  >
-                    {avatarUri ? (
-                      <Image source={{ uri: avatarUri }} style={styles.avatar} />
-                    ) : (
-                      <View style={[styles.avatar, styles.placeholder]} />
-                    )}
-                  </TouchableOpacity>
-
-                  <View style={{ flex: 1 }}>
-                    <View style={styles.headerRow}>
-                      <Text style={styles.username}>
-                        {displayName} @{userName}
-                      </Text>
-                      <Text style={[styles.timestamp, styles.timestampMargin]}>
-                        {timeAgo(item.created_at)}
-                      </Text>
-                    </View>
-                    <Text style={styles.postContent}>{item.content}</Text>
-                    {item.image_url && (
-                      <Image source={{ uri: item.image_url }} style={styles.postImage} />
-                    )}
-                  </View>
-                </View>
-                <TouchableOpacity
-                  style={styles.replyCountContainer}
-                  onPress={() => openReplyModal(item.id)}
-                >
-                  <Ionicons
-                    name="chatbubble-outline"
-                    size={18}
-                    color="#66538f"
-                    style={{ marginRight: 2 }}
-                  />
-                  <Text style={styles.replyCountLarge}>{replyCounts[item.id] || 0}</Text>
-                </TouchableOpacity>
-
-                <TouchableOpacity
-                  style={styles.likeContainer}
-                  onPress={() => toggleLike(item.id)}
-                >
-                  <Ionicons
-                    name={likedPosts[item.id] ? 'heart' : 'heart-outline'}
-                    size={18}
-                    color="red"
-                    style={{ marginRight: 2 }}
-                  />
-                  <Text
-                    style={[
-                      styles.likeCountLarge,
-                      likedPosts[item.id] && styles.likedLikeCount,
-                    ]}
-                  >
-                    {likeCounts[item.id] || 0}
-                  </Text>
-                </TouchableOpacity>
-
-              </View>
-            </TouchableOpacity>
+            <PostCard
+              post={item}
+              isOwner={isMe}
+              avatarUri={avatarUri}
+              bannerUrl={bannerUrl}
+              replyCount={replyCounts[item.id] || 0}
+              likeCount={likeCounts[item.id] || 0}
+              liked={!!likedPosts[item.id]}
+              onPress={() => navigation.navigate('PostDetail', { post: item })}
+              onProfilePress={() =>
+                isMe
+                  ? navigation.navigate('Profile')
+                  : navigation.navigate('UserProfile', {
+                      userId: item.user_id,
+                      avatarUrl: avatarUri,
+                      bannerUrl: item.profiles?.banner_url,
+                      name: displayName,
+                      username: userName,
+                    })
+              }
+              onToggleLike={() => toggleLike(item.id)}
+              onDelete={() => confirmDeletePost(item.id)}
+              onOpenReplies={() => openReplyModal(item.id)}
+            />
           );
         }}
       />
@@ -759,54 +675,6 @@ const styles = StyleSheet.create({
     borderRadius: 6,
     marginBottom: 10,
   },
-  post: {
-    backgroundColor: '#ffffff10',
-    borderRadius: 0,
-    padding: 10,
-    // add extra space at the bottom so action icons don't overlap content
-    paddingBottom: 30,
-    marginBottom: 0,
-    borderBottomColor: 'gray',
-    borderBottomWidth: StyleSheet.hairlineWidth,
-
-    position: 'relative',
-  },
-  row: { flexDirection: 'row', alignItems: 'flex-start' },
-  avatar: { width: 48, height: 48, borderRadius: 24, marginRight: 8 },
-  placeholder: { backgroundColor: '#555' },
-  deleteButton: {
-    position: 'absolute',
-    right: 6,
-    top: 6,
-    padding: 4,
-  },
-  postContent: { color: 'white' },
-  username: { fontWeight: 'bold', color: 'white' },
-  timestamp: { fontSize: 10, color: 'gray' },
-  headerRow: { flexDirection: 'row', alignItems: 'center' },
-  timestampMargin: { marginLeft: 6 },
-  replyCountContainer: {
-    position: 'absolute',
-    bottom: 6,
-    // Align with the left edge of the post content (text/image)
-    // Avatar width (48) + margin (8) + container padding (10)
-    left: 66,
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  replyCount: { fontSize: 10, color: 'gray' },
-  replyCountLarge: { fontSize: 15, color: 'gray' },
-  likeCountLarge: { fontSize: 15, color: 'gray' },
-  likedLikeCount: { color: 'red' },
-
-  likeContainer: {
-    position: 'absolute',
-    bottom: 6,
-    left: '50%',
-    transform: [{ translateX: -6 }],
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
   modalOverlay: {
     flex: 1,
     backgroundColor: 'rgba(0,0,0,0.5)',
@@ -827,12 +695,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     marginBottom: 10,
   },
-  postImage: {
-    width: '100%',
-    height: 200,
-    borderRadius: 6,
-    marginTop: 8,
-  },
+
 
 });
 
