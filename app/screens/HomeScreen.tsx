@@ -27,6 +27,7 @@ import { colors } from '../styles/colors';
 import { replyEvents } from '../replyEvents';
 import { postEvents } from '../postEvents';
 import { likeEvents } from '../likeEvents';
+
 import PostCard, { Post } from '../components/PostCard';
 
 const STORAGE_KEY = 'cached_posts';
@@ -65,7 +66,7 @@ const HomeScreen = forwardRef<HomeScreenRef, HomeScreenProps>(
 
   const confirmDeletePost = (id: string) => {
     Alert.alert("Delete Post", "Are you sure you want to delete this post?", [
-      { text: "Confirm", style: "cancel" },
+      { text: "Cancel", style: "cancel" },
       { text: "Delete", style: "destructive", onPress: () => handleDeletePost(id) }
     ]);
   };
@@ -84,6 +85,7 @@ const HomeScreen = forwardRef<HomeScreenRef, HomeScreenProps>(
     });
     remove(id);
     await removePost(id);
+
     await supabase.from('posts').delete().eq('id', id);
   };
 
@@ -440,6 +442,7 @@ const HomeScreen = forwardRef<HomeScreenRef, HomeScreenProps>(
         AsyncStorage.setItem(COUNT_STORAGE_KEY, JSON.stringify(rest));
         return rest;
       });
+
     };
     postEvents.on('postDeleted', onPostDeleted);
     return () => {
@@ -462,6 +465,7 @@ const HomeScreen = forwardRef<HomeScreenRef, HomeScreenProps>(
   }, []);
 
   useEffect(() => {
+
     const loadCached = async () => {
       const stored = await AsyncStorage.getItem(STORAGE_KEY);
       if (stored) {

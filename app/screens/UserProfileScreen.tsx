@@ -20,6 +20,7 @@ import PostCard, { Post } from '../components/PostCard';
 import { usePostStore } from '../contexts/PostStoreContext';
 import { likeEvents } from '../likeEvents';
 import { postEvents } from '../postEvents';
+
 import { getLikeCounts } from '../../lib/getLikeCounts';
 
 
@@ -136,6 +137,7 @@ export default function UserProfileScreen() {
           setPosts(unique);
           const counts = await getLikeCounts(unique.map(p => p.id));
           initialize(unique.map(p => ({ id: p.id, like_count: counts[p.id] })));
+
         } else if (error) {
           console.error('Failed to fetch posts', error);
         }
@@ -157,6 +159,7 @@ export default function UserProfileScreen() {
   useEffect(() => {
     const onPostDeleted = (postId: string) => {
       setPosts(prev => prev.filter(p => p.id !== postId));
+
     };
     postEvents.on('postDeleted', onPostDeleted);
     return () => {

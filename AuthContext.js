@@ -10,6 +10,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { postEvents } from './app/postEvents';
 import { likeEvents } from './app/likeEvents';
 
+
 const AuthContext = createContext();
 
 export function AuthProvider({ children }) {
@@ -335,6 +336,7 @@ export function AuthProvider({ children }) {
     } catch (e) {
       console.error('Failed to update cached posts', e);
     }
+
     postEvents.emit('postDeleted', postId);
   };
 

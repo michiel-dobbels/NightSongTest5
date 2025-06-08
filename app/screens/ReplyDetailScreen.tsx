@@ -29,6 +29,7 @@ import { postEvents } from '../postEvents';
 
 const CANCEL_ACTION = { text: 'Confirm', style: 'cancel' } as const;
 
+
 const CHILD_PREFIX = 'cached_child_replies_';
 const COUNT_STORAGE_KEY = 'cached_reply_counts';
 const LIKE_COUNT_KEY = 'cached_like_counts';
@@ -124,6 +125,7 @@ export default function ReplyDetailScreen() {
   const confirmDeletePost = (id: string) => {
     Alert.alert('Delete Post', 'Are you sure you want to delete this post?', [
       CANCEL_ACTION,
+
       {
         text: 'Delete',
         style: 'destructive',
@@ -135,6 +137,7 @@ export default function ReplyDetailScreen() {
   const handleDeletePost = async (id: string) => {
     remove(id);
     await removePost(id);
+
     await supabase.from('posts').delete().eq('id', id);
     navigation.goBack();
   };
@@ -145,6 +148,7 @@ export default function ReplyDetailScreen() {
   const confirmDeleteReply = (id: string) => {
     Alert.alert('Delete Post', 'Are you sure you want to delete this post?', [
       CANCEL_ACTION,
+
       {
         text: 'Delete',
         style: 'destructive',
