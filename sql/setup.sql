@@ -42,6 +42,10 @@ create policy "Users can insert posts" on public.posts
 create policy "Anyone can read posts" on public.posts
   for select using (true);
 
+-- Allow users to delete their own posts
+create policy "Users can delete their posts" on public.posts
+  for delete using (auth.uid() = user_id);
+
 -- Add the username column only if it doesn't exist (for older setups)
 alter table public.profiles add column if not exists image_url text;
 alter table public.posts add column if not exists username text;

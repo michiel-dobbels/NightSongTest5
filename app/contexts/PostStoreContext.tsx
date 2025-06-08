@@ -87,7 +87,6 @@ export const PostStoreProvider: React.FC<{ children: React.ReactNode }> = ({
         if (i.like_count !== undefined && i.like_count !== null) {
           map[i.id] = i.like_count;
         }
-
       });
       await AsyncStorage.setItem(LIKE_COUNT_KEY, JSON.stringify(map));
     } catch (e) {
