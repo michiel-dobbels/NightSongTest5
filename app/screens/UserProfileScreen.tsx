@@ -20,6 +20,7 @@ import PostCard, { Post } from '../components/PostCard';
 import { usePostStore } from '../contexts/PostStoreContext';
 import { likeEvents } from '../likeEvents';
 import { postEvents } from '../postEvents';
+
 import { getLikeCounts } from '../../lib/getLikeCounts';
 
 
@@ -157,6 +158,7 @@ export default function UserProfileScreen() {
       postEvents.off('postDeleted', onPostDeleted);
     };
   }, []);
+
 
   useEffect(() => {
     let isMounted = true;
