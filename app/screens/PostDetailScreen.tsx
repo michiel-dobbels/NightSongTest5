@@ -98,9 +98,9 @@ export default function PostDetailScreen() {
   };
 
   const handleDeletePost = async (id: string) => {
-    await supabase.from('posts').delete().eq('id', id);
     remove(id);
     await removePost(id);
+
     navigation.goBack();
   };
 
