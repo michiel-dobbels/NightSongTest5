@@ -150,9 +150,9 @@ export default function PostDetailScreen() {
       AsyncStorage.setItem(COUNT_STORAGE_KEY, JSON.stringify(counts));
       return counts;
     });
-    remove(id);
 
     await supabase.from('replies').delete().eq('id', id);
+    remove(id);
     fetchReplies();
   };
 
@@ -185,7 +185,13 @@ export default function PostDetailScreen() {
         const likeStored = await AsyncStorage.getItem(LIKE_COUNT_KEY);
         if (likeStored) {
           try {
-            JSON.parse(likeStored);
+            const parsed = JSON.parse(likeStored);
+            initialize(
+              Object.entries(parsed).map(([id, c]) => ({
+                id,
+                like_count: c as number,
+              })),
+            );
           } catch (e) {
             console.error('Failed to parse cached like counts', e);
           }
@@ -341,7 +347,7 @@ export default function PostDetailScreen() {
           setReplyCounts(counts);
           AsyncStorage.setItem(COUNT_STORAGE_KEY, JSON.stringify(counts));
 
-          const likeEntries = cached.map((r: any) => [r.id, r.like_count ?? 0]);
+          const likeEntries = cached.map((r: any) => [r.id, storedLikes[r.id] ?? r.like_count ?? 0]);
 
           likeEntries.push([post.id, storedLikes[post.id] ?? post.like_count ?? 0]);
           const likeCountsObj = {
@@ -349,17 +355,27 @@ export default function PostDetailScreen() {
             ...storedLikes,
           } as Record<string, number>;
           initialize([
-            { id: post.id, like_count: storedLikes[post.id] ?? post.like_count ?? 0 },
-            ...cached.map((r: any) => ({ id: r.id, like_count: r.like_count ?? 0 })),
+            { id: post.id, like_count: likeCountsObj[post.id] ?? 0 },
+            ...cached.map((r: any) => ({ id: r.id, like_count: likeCountsObj[r.id] ?? 0 })),
           ]);
         } catch (e) {
           console.error('Failed to parse cached replies', e);
         }
       } else {
         setReplyCounts(storedCounts);
-        initialize([
-          { id: post.id, like_count: storedLikes[post.id] ?? post.like_count ?? 0 },
-        ]);
+        const items = Object.keys(storedLikes).length
+          ? Object.entries(storedLikes).map(([id, c]) => ({
+              id,
+              like_count: c as number,
+            }))
+          : [
+              {
+                id: post.id,
+                like_count: storedLikes[post.id] ?? post.like_count ?? 0,
+              },
+            ];
+        initialize(items);
+
 
       }
 
