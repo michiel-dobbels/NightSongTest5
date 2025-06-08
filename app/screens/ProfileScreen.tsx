@@ -157,7 +157,9 @@ export default function ProfileScreen() {
 
   useFocusEffect(
     useCallback(() => {
-      fetchMyPosts();
+      if (!posts || posts.length === 0) {
+        fetchMyPosts();
+      }
       const syncCounts = async () => {
         const stored = await AsyncStorage.getItem(COUNT_STORAGE_KEY);
         if (stored) {
@@ -169,7 +171,7 @@ export default function ProfileScreen() {
         }
       };
       syncCounts();
-    }, [fetchMyPosts]),
+    }, [fetchMyPosts, posts?.length]),
   );
 
   const confirmDeletePost = (id: string) => {
