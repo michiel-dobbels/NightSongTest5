@@ -1,4 +1,10 @@
-import React, { createContext, useContext, useEffect, useState } from 'react';
+import React, {
+  createContext,
+  useContext,
+  useEffect,
+  useState,
+  useCallback,
+} from 'react';
 import { supabase } from './lib/supabase';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
@@ -248,7 +254,7 @@ export function AuthProvider({ children }) {
     }
   };
 
-  const fetchMyPosts = async () => {
+  const fetchMyPosts = useCallback(async () => {
     const id = user?.id;
     if (!id) {
       setMyPosts([]);
@@ -272,7 +278,7 @@ export function AuthProvider({ children }) {
       });
     }
 
-  };
+  }, [user]);
 
   const addPost = (post) => {
     setMyPosts((prev) => [post, ...prev]);
