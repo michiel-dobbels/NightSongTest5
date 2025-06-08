@@ -27,6 +27,9 @@ import { usePostStore } from '../contexts/PostStoreContext';
 import useLike from '../hooks/useLike';
 import { postEvents } from '../postEvents';
 
+const CANCEL_ACTION = { text: 'Cancel', style: 'cancel' } as const;
+
+
 const CHILD_PREFIX = 'cached_child_replies_';
 const COUNT_STORAGE_KEY = 'cached_reply_counts';
 const LIKE_COUNT_KEY = 'cached_like_counts';
@@ -121,7 +124,8 @@ export default function ReplyDetailScreen() {
 
   const confirmDeletePost = (id: string) => {
     Alert.alert('Delete Post', 'Are you sure you want to delete this post?', [
-      { text: 'Confirm', style: 'cancel' },
+      CANCEL_ACTION,
+
       {
         text: 'Delete',
         style: 'destructive',
@@ -143,7 +147,8 @@ export default function ReplyDetailScreen() {
 
   const confirmDeleteReply = (id: string) => {
     Alert.alert('Delete Post', 'Are you sure you want to delete this post?', [
-      { text: 'Confirm', style: 'cancel' },
+      CANCEL_ACTION,
+
       {
         text: 'Delete',
         style: 'destructive',

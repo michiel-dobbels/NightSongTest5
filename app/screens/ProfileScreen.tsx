@@ -32,6 +32,8 @@ import { replyEvents } from '../replyEvents';
 import { postEvents } from '../postEvents';
 import { likeEvents } from '../likeEvents';
 
+const CANCEL_ACTION = { text: 'Cancel', style: 'cancel' } as const;
+
 
 const STORAGE_KEY = 'cached_posts';
 const COUNT_STORAGE_KEY = 'cached_reply_counts';
@@ -173,7 +175,8 @@ export default function ProfileScreen() {
 
   const confirmDeletePost = (id: string) => {
     Alert.alert('Delete Post', 'Are you sure you want to delete this post?', [
-      { text: 'Confirm', style: 'cancel' },
+      CANCEL_ACTION,
+
       { text: 'Delete', style: 'destructive', onPress: () => handleDeletePost(id) },
     ]);
   };
