@@ -19,6 +19,7 @@ interface ItemInfo {
 interface PostStore {
   posts: Record<string, PostState>;
   initialize: (items: ItemInfo[]) => Promise<void>;
+  mergeLiked: (map: Record<string, boolean>) => Promise<void>;
   toggleLike: (id: string, isReply?: boolean) => Promise<void>;
   remove: (id: string) => void;
 }
@@ -69,8 +70,10 @@ export const PostStoreProvider: React.FC<{ children: React.ReactNode }> = ({
       const updated = { ...prev };
       items.forEach(item => {
         const existing = updated[item.id];
-        const likeCount = existing?.likeCount ?? item.like_count ?? 0;
-
+        const likeCount =
+          item.like_count !== undefined && item.like_count !== null
+            ? item.like_count
+            : existing?.likeCount ?? 0;
         const liked = existing?.liked ?? false;
         updated[item.id] = { likeCount, liked };
       });
@@ -80,14 +83,42 @@ export const PostStoreProvider: React.FC<{ children: React.ReactNode }> = ({
       const stored = await AsyncStorage.getItem(LIKE_COUNT_KEY);
       const map = stored ? JSON.parse(stored) : {};
       items.forEach(i => {
-        if (map[i.id] === undefined) {
-          map[i.id] = i.like_count ?? 0;
+        if (i.like_count !== undefined && i.like_count !== null) {
+          map[i.id] = i.like_count;
         }
-
       });
       await AsyncStorage.setItem(LIKE_COUNT_KEY, JSON.stringify(map));
     } catch (e) {
       console.error('Failed to persist like counts', e);
+    }
+  };
+
+  const mergeLiked = async (likedMap: Record<string, boolean>) => {
+    if (!user) return;
+    setPosts(prev => {
+      const updated = { ...prev };
+      Object.entries(likedMap).forEach(([id, liked]) => {
+        const existing = updated[id] || { likeCount: 0, liked: false };
+        updated[id] = { likeCount: existing.likeCount, liked };
+      });
+      return updated;
+    });
+    try {
+      const stored = await AsyncStorage.getItem(`${LIKED_KEY_PREFIX}${user.id}`);
+      const map = stored ? JSON.parse(stored) : {};
+      Object.entries(likedMap).forEach(([id, liked]) => {
+        if (liked) {
+          map[id] = true;
+        } else {
+          delete map[id];
+        }
+      });
+      await AsyncStorage.setItem(
+        `${LIKED_KEY_PREFIX}${user.id}`,
+        JSON.stringify(map),
+      );
+    } catch (e) {
+      console.error('Failed to persist liked state', e);
     }
   };
 
@@ -158,7 +189,7 @@ export const PostStoreProvider: React.FC<{ children: React.ReactNode }> = ({
   };
 
   return (
-    <PostStoreContext.Provider value={{ posts, initialize, toggleLike, remove }}>
+    <PostStoreContext.Provider value={{ posts, initialize, mergeLiked, toggleLike, remove }}>
       {children}
     </PostStoreContext.Provider>
   );
