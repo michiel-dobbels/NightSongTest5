@@ -34,6 +34,7 @@ import { likeEvents } from '../likeEvents';
 
 const CANCEL_ACTION = { text: 'Confirm', style: 'cancel' } as const;
 
+
 const STORAGE_KEY = 'cached_posts';
 const COUNT_STORAGE_KEY = 'cached_reply_counts';
 const REPLY_STORAGE_PREFIX = 'cached_replies_';
@@ -132,6 +133,7 @@ export default function ProfileScreen() {
         AsyncStorage.setItem(COUNT_STORAGE_KEY, JSON.stringify(rest));
         return rest;
       });
+
     };
     postEvents.on('postDeleted', onPostDeleted);
     return () => {
@@ -173,6 +175,7 @@ export default function ProfileScreen() {
   const confirmDeletePost = (id: string) => {
     Alert.alert('Delete Post', 'Are you sure you want to delete this post?', [
       CANCEL_ACTION,
+
       { text: 'Delete', style: 'destructive', onPress: () => handleDeletePost(id) },
     ]);
   };
@@ -191,6 +194,7 @@ export default function ProfileScreen() {
     await supabase.from('posts').delete().eq('id', id);
     remove(id);
     await removePost(id);
+
   };
 
   const openReplyModal = (postId: string) => {
@@ -299,6 +303,7 @@ export default function ProfileScreen() {
     } else if (error) {
       console.error('Reply failed', error.message);
     }
+
   };
 
 
