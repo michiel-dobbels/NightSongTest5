@@ -254,7 +254,9 @@ const HomeScreen = forwardRef<HomeScreenRef, HomeScreenProps>(
         return merged;
       });
       const likeCounts = await getLikeCounts(slice.map(p => p.id));
-      initialize(slice.map(p => ({ id: p.id, like_count: likeCounts[p.id] ?? 0 })));
+      initialize(
+        slice.map(p => ({ id: p.id, like_count: likeCounts[p.id] })),
+      );
 
 
 

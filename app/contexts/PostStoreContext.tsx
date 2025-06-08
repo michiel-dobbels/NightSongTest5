@@ -70,7 +70,11 @@ export const PostStoreProvider: React.FC<{ children: React.ReactNode }> = ({
       const updated = { ...prev };
       items.forEach(item => {
         const existing = updated[item.id];
-        const likeCount = item.like_count ?? existing?.likeCount ?? 0;
+        const likeCount =
+          item.like_count !== undefined && item.like_count !== null
+            ? item.like_count
+            : existing?.likeCount ?? 0;
+
         const liked = existing?.liked ?? false;
         updated[item.id] = { likeCount, liked };
       });
@@ -80,7 +84,10 @@ export const PostStoreProvider: React.FC<{ children: React.ReactNode }> = ({
       const stored = await AsyncStorage.getItem(LIKE_COUNT_KEY);
       const map = stored ? JSON.parse(stored) : {};
       items.forEach(i => {
-        map[i.id] = i.like_count ?? 0;
+        if (i.like_count !== undefined && i.like_count !== null) {
+          map[i.id] = i.like_count;
+        }
+
       });
       await AsyncStorage.setItem(LIKE_COUNT_KEY, JSON.stringify(map));
     } catch (e) {

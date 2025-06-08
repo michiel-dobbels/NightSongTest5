@@ -61,7 +61,8 @@ export default function ProfileScreen() {
     const syncLikes = async () => {
       if (posts && posts.length) {
         const counts = await getLikeCounts(posts.map(p => p.id));
-        initialize(posts.map(p => ({ id: p.id, like_count: counts[p.id] ?? 0 })));
+        initialize(posts.map(p => ({ id: p.id, like_count: counts[p.id] })));
+
         setMyPosts(posts);
       } else {
         setMyPosts([]);

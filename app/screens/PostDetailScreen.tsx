@@ -255,7 +255,7 @@ export default function PostDetailScreen() {
       });
       const ids = [post.id, ...all.map(r => r.id)];
       const likeCounts = await getLikeCounts(ids);
-      initialize(ids.map(id => ({ id, like_count: likeCounts[id] ?? 0 })));
+      initialize(ids.map(id => ({ id, like_count: likeCounts[id] })));
 
 
 
