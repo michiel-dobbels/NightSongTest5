@@ -133,7 +133,7 @@ export default function ProfileScreen() {
         AsyncStorage.setItem(COUNT_STORAGE_KEY, JSON.stringify(rest));
         return rest;
       });
-      remove(postId);
+
     };
     postEvents.on('postDeleted', onPostDeleted);
     return () => {

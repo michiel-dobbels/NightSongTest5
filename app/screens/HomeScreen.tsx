@@ -442,7 +442,7 @@ const HomeScreen = forwardRef<HomeScreenRef, HomeScreenProps>(
         AsyncStorage.setItem(COUNT_STORAGE_KEY, JSON.stringify(rest));
         return rest;
       });
-      remove(postId);
+
     };
     postEvents.on('postDeleted', onPostDeleted);
     return () => {

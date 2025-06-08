@@ -64,7 +64,6 @@ export default function UserProfileScreen() {
   const [posts, setPosts] = useState<Post[]>([]);
   const { initialize, remove } = usePostStore();
 
-
   const { user } = useAuth() as any;
 
   const name = profile?.name ?? initialName ?? null;
@@ -129,9 +128,16 @@ export default function UserProfileScreen() {
           .order('created_at', { ascending: false });
 
         if (!error && data) {
-          setPosts(data as Post[]);
-          const counts = await getLikeCounts(data.map(p => p.id));
-          initialize(data.map(p => ({ id: p.id, like_count: counts[p.id] })));
+          const seen = new Set<string>();
+          const unique = (data as Post[]).filter(p => {
+            if (seen.has(p.id)) return false;
+            seen.add(p.id);
+            return true;
+          });
+          setPosts(unique);
+          const counts = await getLikeCounts(unique.map(p => p.id));
+          initialize(unique.map(p => ({ id: p.id, like_count: counts[p.id] })));
+
         } else if (error) {
           console.error('Failed to fetch posts', error);
         }
@@ -153,7 +159,6 @@ export default function UserProfileScreen() {
   useEffect(() => {
     const onPostDeleted = (postId: string) => {
       setPosts(prev => prev.filter(p => p.id !== postId));
-      remove(postId);
 
     };
     postEvents.on('postDeleted', onPostDeleted);

@@ -4,7 +4,6 @@ import { supabase } from '../../lib/supabase';
 import { likeEvents } from '../likeEvents';
 import { postEvents } from '../postEvents';
 
-
 import { useAuth } from '../../AuthContext';
 
 const LIKE_COUNT_KEY = 'cached_like_counts';
