@@ -7,6 +7,7 @@ import React, {
 } from 'react';
 import { supabase } from './lib/supabase';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { postEvents } from './app/postEvents';
 
 const AuthContext = createContext();
 
@@ -262,7 +263,9 @@ export function AuthProvider({ children }) {
     }
     const { data, error } = await supabase
       .from('posts')
-      .select('id, content, created_at, reply_count, like_count')
+      .select(
+        'id, content, image_url, username, created_at, reply_count, like_count'
+      )
       .eq('user_id', id)
       .order('created_at', { ascending: false });
     if (!error && data) {
@@ -281,7 +284,10 @@ export function AuthProvider({ children }) {
   }, [user]);
 
   const addPost = (post) => {
-    setMyPosts((prev) => [post, ...prev]);
+    setMyPosts(prev => {
+      const withoutDuplicate = prev.filter(p => p.id !== post.id);
+      return [post, ...withoutDuplicate];
+    });
   };
 
   const updatePost = (tempId, updated) => {
@@ -296,6 +302,21 @@ export function AuthProvider({ children }) {
         return true;
       });
     });
+  };
+
+  const removePost = async (postId) => {
+    setMyPosts(prev => prev.filter(p => p.id !== postId));
+    try {
+      const stored = await AsyncStorage.getItem('cached_posts');
+      if (stored) {
+        const arr = JSON.parse(stored);
+        const updated = arr.filter(p => p.id !== postId);
+        await AsyncStorage.setItem('cached_posts', JSON.stringify(updated));
+      }
+    } catch (e) {
+      console.error('Failed to update cached posts', e);
+    }
+    postEvents.emit('postDeleted', postId);
   };
 
 
@@ -366,6 +387,7 @@ export function AuthProvider({ children }) {
     fetchMyPosts,
     addPost,
     updatePost,
+    removePost,
 
     signUp,
     signIn,
