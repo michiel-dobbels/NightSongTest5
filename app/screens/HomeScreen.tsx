@@ -317,7 +317,13 @@ const HomeScreen = forwardRef<HomeScreenRef, HomeScreenProps>(
 
 
     // Cache the new post for the profile screen as well
-    addPost({ id: newPost.id, content: text, created_at: newPost.created_at });
+    addPost({
+      id: newPost.id,
+      content: text,
+      created_at: newPost.created_at,
+      image_url: imageUri,
+      username: profile.name || profile.username,
+    });
 
     if (!hideInput) {
       setPostText('');
@@ -363,6 +369,8 @@ const HomeScreen = forwardRef<HomeScreenRef, HomeScreenProps>(
           id: data.id,
           content: data.content,
           created_at: data.created_at,
+          image_url: data.image_url,
+          username: data.username,
         });
         setReplyCounts(prev => {
           const { [newPost.id]: tempCount, ...rest } = prev;
