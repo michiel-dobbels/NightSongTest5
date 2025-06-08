@@ -27,7 +27,7 @@ import { usePostStore } from '../contexts/PostStoreContext';
 import useLike from '../hooks/useLike';
 import { postEvents } from '../postEvents';
 
-const CANCEL_ACTION = { text: 'Cancel', style: 'cancel' } as const;
+const CANCEL_ACTION = { text: 'Confirm', style: 'cancel' } as const;
 
 
 const CHILD_PREFIX = 'cached_child_replies_';

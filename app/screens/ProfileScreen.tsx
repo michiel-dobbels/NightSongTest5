@@ -32,7 +32,7 @@ import { replyEvents } from '../replyEvents';
 import { postEvents } from '../postEvents';
 import { likeEvents } from '../likeEvents';
 
-const CANCEL_ACTION = { text: 'Cancel', style: 'cancel' } as const;
+const CANCEL_ACTION = { text: 'Confirm', style: 'cancel' } as const;
 
 
 const STORAGE_KEY = 'cached_posts';

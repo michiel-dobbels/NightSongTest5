@@ -62,7 +62,8 @@ export default function UserProfileScreen() {
     }[]>([]);
 
   const [posts, setPosts] = useState<Post[]>([]);
-  const { initialize } = usePostStore();
+  const { initialize, remove } = usePostStore();
+
 
   const { user } = useAuth() as any;
 
@@ -152,13 +153,14 @@ export default function UserProfileScreen() {
   useEffect(() => {
     const onPostDeleted = (postId: string) => {
       setPosts(prev => prev.filter(p => p.id !== postId));
+      remove(postId);
+
     };
     postEvents.on('postDeleted', onPostDeleted);
     return () => {
       postEvents.off('postDeleted', onPostDeleted);
     };
   }, []);
-
 
   useEffect(() => {
     let isMounted = true;
