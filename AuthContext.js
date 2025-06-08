@@ -304,8 +304,19 @@ export function AuthProvider({ children }) {
     });
   };
 
-  const removePost = (postId) => {
+  const removePost = async (postId) => {
     setMyPosts(prev => prev.filter(p => p.id !== postId));
+    try {
+      const stored = await AsyncStorage.getItem('cached_posts');
+      if (stored) {
+        const arr = JSON.parse(stored);
+        const updated = arr.filter(p => p.id !== postId);
+        await AsyncStorage.setItem('cached_posts', JSON.stringify(updated));
+      }
+    } catch (e) {
+      console.error('Failed to update cached posts', e);
+    }
+
     postEvents.emit('postDeleted', postId);
   };
 

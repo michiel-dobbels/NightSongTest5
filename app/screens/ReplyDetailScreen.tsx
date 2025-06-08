@@ -132,7 +132,7 @@ export default function ReplyDetailScreen() {
 
   const handleDeletePost = async (id: string) => {
     remove(id);
-    removePost(id);
+    await removePost(id);
 
     await supabase.from('posts').delete().eq('id', id);
     navigation.goBack();

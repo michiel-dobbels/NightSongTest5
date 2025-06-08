@@ -175,7 +175,7 @@ export default function ProfileScreen() {
       return rest;
     });
     remove(id);
-    removePost(id);
+    await removePost(id);
 
     await supabase.from('posts').delete().eq('id', id);
   };
