@@ -61,8 +61,12 @@ const HomeScreen = forwardRef<HomeScreenRef, HomeScreenProps>(
   const [replyText, setReplyText] = useState('');
   const [replyImage, setReplyImage] = useState<string | null>(null);
 
-
-
+  const confirmDeletePost = (id: string) => {
+    Alert.alert("Delete Post", "Are you sure you want to delete this post?", [
+      { text: "Confirm", style: "cancel" },
+      { text: "Delete", style: "destructive", onPress: () => handleDeletePost(id) }
+    ]);
+  };
 
 
   const handleDeletePost = async (id: string) => {
