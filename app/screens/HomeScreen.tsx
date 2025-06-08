@@ -25,6 +25,7 @@ import { useAuth } from '../../AuthContext';
 import { usePostStore } from '../contexts/PostStoreContext';
 import { colors } from '../styles/colors';
 import { replyEvents } from '../replyEvents';
+import { postEvents } from '../postEvents';
 import PostCard, { Post } from '../components/PostCard';
 
 const STORAGE_KEY = 'cached_posts';
@@ -47,7 +48,7 @@ interface HomeScreenProps {
 const HomeScreen = forwardRef<HomeScreenRef, HomeScreenProps>(
   ({ hideInput }, ref) => {
     const navigation = useNavigation<any>();
-  const { user, profile, profileImageUri, bannerImageUri, addPost, updatePost } =
+  const { user, profile, profileImageUri, bannerImageUri, addPost, updatePost, removePost } =
 
     useAuth() as any;
   const { initialize, mergeLiked, remove } = usePostStore();
@@ -81,6 +82,7 @@ const HomeScreen = forwardRef<HomeScreenRef, HomeScreenProps>(
       return rest;
     });
     remove(id);
+    removePost(id);
     await supabase.from('posts').delete().eq('id', id);
   };
 
@@ -317,7 +319,13 @@ const HomeScreen = forwardRef<HomeScreenRef, HomeScreenProps>(
 
 
     // Cache the new post for the profile screen as well
-    addPost({ id: newPost.id, content: text, created_at: newPost.created_at });
+    addPost({
+      id: newPost.id,
+      content: text,
+      created_at: newPost.created_at,
+      image_url: imageUri,
+      username: profile.name || profile.username,
+    });
 
     if (!hideInput) {
       setPostText('');
@@ -363,6 +371,8 @@ const HomeScreen = forwardRef<HomeScreenRef, HomeScreenProps>(
           id: data.id,
           content: data.content,
           created_at: data.created_at,
+          image_url: data.image_url,
+          username: data.username,
         });
         setReplyCounts(prev => {
           const { [newPost.id]: tempCount, ...rest } = prev;
@@ -414,6 +424,26 @@ const HomeScreen = forwardRef<HomeScreenRef, HomeScreenProps>(
     replyEvents.on('replyAdded', onReplyAdded);
     return () => {
       replyEvents.off('replyAdded', onReplyAdded);
+    };
+  }, []);
+
+  useEffect(() => {
+    const onPostDeleted = (postId: string) => {
+      setPosts(prev => {
+        const updated = prev.filter(p => p.id !== postId);
+        AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
+        return updated;
+      });
+      setReplyCounts(prev => {
+        const { [postId]: _omit, ...rest } = prev;
+        AsyncStorage.setItem(COUNT_STORAGE_KEY, JSON.stringify(rest));
+        return rest;
+      });
+      remove(postId);
+    };
+    postEvents.on('postDeleted', onPostDeleted);
+    return () => {
+      postEvents.off('postDeleted', onPostDeleted);
     };
   }, []);
 
@@ -566,7 +596,7 @@ const HomeScreen = forwardRef<HomeScreenRef, HomeScreenProps>(
                       username: userName,
                     })
               }
-              onDelete={() => handleDeletePost(item.id)}
+              onDelete={() => confirmDeletePost(item.id)}
               onOpenReplies={() => openReplyModal(item.id)}
             />
           );

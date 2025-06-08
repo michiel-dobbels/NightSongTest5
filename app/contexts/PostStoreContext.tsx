@@ -37,6 +37,19 @@ export const PostStoreProvider: React.FC<{ children: React.ReactNode }> = ({
       try {
         const likeStored = await AsyncStorage.getItem(LIKE_COUNT_KEY);
         const likeMap = likeStored ? JSON.parse(likeStored) : {};
+        const postStored = await AsyncStorage.getItem('cached_posts');
+        if (postStored) {
+          try {
+            const arr = JSON.parse(postStored);
+            arr.forEach((p: any) => {
+              if (p.id && typeof p.like_count === 'number' && likeMap[p.id] === undefined) {
+                likeMap[p.id] = p.like_count;
+              }
+            });
+          } catch (err) {
+            console.error('Failed to parse cached posts', err);
+          }
+        }
         let likedMap: Record<string, boolean> = {};
         if (user) {
           const likedStored = await AsyncStorage.getItem(
@@ -147,6 +160,21 @@ export const PostStoreProvider: React.FC<{ children: React.ReactNode }> = ({
         `${LIKED_KEY_PREFIX}${user.id}`,
         JSON.stringify(likedMap),
       );
+
+      if (!isReply) {
+        try {
+          const postStored = await AsyncStorage.getItem('cached_posts');
+          if (postStored) {
+            const arr = JSON.parse(postStored);
+            const updated = arr.map((p: any) =>
+              p.id === id ? { ...p, like_count: newCount } : p,
+            );
+            await AsyncStorage.setItem('cached_posts', JSON.stringify(updated));
+          }
+        } catch (err) {
+          console.error('Failed to update cached posts', err);
+        }
+      }
 
       if (id.startsWith('temp-')) {
         // Don't sync with Supabase until the item has a real UUID
