@@ -31,6 +31,7 @@ import PostCard, { Post } from '../components/PostCard';
 import { replyEvents } from '../replyEvents';
 import { postEvents } from '../postEvents';
 
+
 const STORAGE_KEY = 'cached_posts';
 const COUNT_STORAGE_KEY = 'cached_reply_counts';
 const REPLY_STORAGE_PREFIX = 'cached_replies_';
@@ -136,6 +137,7 @@ export default function ProfileScreen() {
       postEvents.off('postDeleted', onPostDeleted);
     };
   }, []);
+
 
   useFocusEffect(
     useCallback(() => {
