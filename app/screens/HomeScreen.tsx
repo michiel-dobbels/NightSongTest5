@@ -66,7 +66,7 @@ const HomeScreen = forwardRef<HomeScreenRef, HomeScreenProps>(
 
   const confirmDeletePost = (id: string) => {
     Alert.alert("Delete Post", "Are you sure you want to delete this post?", [
-      { text: "Confirm", style: "cancel" },
+      { text: "Cancel", style: "cancel" },
       { text: "Delete", style: "destructive", onPress: () => handleDeletePost(id) }
     ]);
   };

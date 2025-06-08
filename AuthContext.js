@@ -8,6 +8,8 @@ import React, {
 import { supabase } from './lib/supabase';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { postEvents } from './app/postEvents';
+import { likeEvents } from './app/likeEvents';
+
 
 const AuthContext = createContext();
 
@@ -128,6 +130,24 @@ export function AuthProvider({ children }) {
     loadImage();
     fetchMyPosts();
   }, [user]);
+
+  useEffect(() => {
+    const onLikeChanged = ({ id, count }) => {
+      setMyPosts(prev => {
+        const found = prev.find(p => p.id === id);
+        if (!found) return prev;
+        const updated = prev.map(p =>
+          p.id === id ? { ...p, like_count: count } : p,
+        );
+        AsyncStorage.setItem('cached_posts', JSON.stringify(updated));
+        return updated;
+      });
+    };
+    likeEvents.on('likeChanged', onLikeChanged);
+    return () => {
+      likeEvents.off('likeChanged', onLikeChanged);
+    };
+  }, []);
 
   // 🔐 Sign in
   async function signIn(email, password) {
