@@ -206,6 +206,7 @@ export default function ReplyDetailScreen() {
     } else {
       console.error('Failed to delete reply', error);
     }
+
     fetchReplies();
   };
 
@@ -253,6 +254,7 @@ export default function ReplyDetailScreen() {
       const replyCounts = await getLikeCounts(all.map(r => r.id), true);
       const counts = { ...postCounts, ...replyCounts } as Record<string, number | undefined>;
       initialize(Object.keys(counts).map(id => ({ id, like_count: counts[id] })));
+
 
       if (user) {
         const { data: likedData } = await supabase
