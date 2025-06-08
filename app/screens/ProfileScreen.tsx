@@ -32,6 +32,7 @@ import { replyEvents } from '../replyEvents';
 import { postEvents } from '../postEvents';
 import { likeEvents } from '../likeEvents';
 
+
 const STORAGE_KEY = 'cached_posts';
 const COUNT_STORAGE_KEY = 'cached_reply_counts';
 const REPLY_STORAGE_PREFIX = 'cached_replies_';
@@ -152,6 +153,7 @@ export default function ProfileScreen() {
     };
   }, []);
 
+
   useFocusEffect(
     useCallback(() => {
       fetchMyPosts();
@@ -171,7 +173,7 @@ export default function ProfileScreen() {
 
   const confirmDeletePost = (id: string) => {
     Alert.alert('Delete Post', 'Are you sure you want to delete this post?', [
-      { text: 'Cancel', style: 'cancel' },
+      { text: 'Confirm', style: 'cancel' },
       { text: 'Delete', style: 'destructive', onPress: () => handleDeletePost(id) },
     ]);
   };
@@ -189,6 +191,7 @@ export default function ProfileScreen() {
     });
     remove(id);
     await removePost(id);
+
     await supabase.from('posts').delete().eq('id', id);
   };
 
@@ -298,6 +301,7 @@ export default function ProfileScreen() {
     } else if (error) {
       console.error('Reply failed', error.message);
     }
+
   };
 
 
