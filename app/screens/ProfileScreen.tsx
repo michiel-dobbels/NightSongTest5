@@ -61,7 +61,7 @@ export default function ProfileScreen() {
     fetchMyPosts,
     removePost,
   } = useAuth() as any;
-  const { initialize, remove } = usePostStore();
+  const { initialize, remove, posts: storePosts } = usePostStore();
 
   const [myPosts, setMyPosts] = useState<Post[]>(posts ?? []);
 
@@ -76,8 +76,7 @@ export default function ProfileScreen() {
   useEffect(() => {
     const syncLikes = async () => {
       if (posts && posts.length) {
-        const counts = await getLikeCounts(posts.map(p => p.id));
-        initialize(posts.map(p => ({ id: p.id, like_count: counts[p.id] })));
+
         const seen = new Set<string>();
         const unique = posts.filter(p => {
           if (seen.has(p.id)) return false;
@@ -85,13 +84,14 @@ export default function ProfileScreen() {
           return true;
         });
         setMyPosts(unique);
+
       } else {
         setMyPosts([]);
       }
     };
     syncLikes();
 
-  }, [posts]);
+  }, [posts, storePosts]);
 
   useEffect(() => {
     const loadCounts = async () => {
