@@ -101,7 +101,6 @@ export default function PostDetailScreen() {
     remove(id);
     await removePost(id);
 
-    await supabase.from('posts').delete().eq('id', id);
     navigation.goBack();
   };
 

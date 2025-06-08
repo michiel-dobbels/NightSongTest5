@@ -139,6 +139,8 @@ export default function ReplyDetailScreen() {
     await removePost(id);
 
     await supabase.from('posts').delete().eq('id', id);
+    remove(id);
+    await removePost(id);
     navigation.goBack();
   };
 

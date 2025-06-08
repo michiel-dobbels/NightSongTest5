@@ -155,7 +155,6 @@ export default function ProfileScreen() {
     };
   }, []);
 
-
   useFocusEffect(
     useCallback(() => {
       fetchMyPosts();
@@ -192,10 +191,10 @@ export default function ProfileScreen() {
       AsyncStorage.setItem(COUNT_STORAGE_KEY, JSON.stringify(rest));
       return rest;
     });
+    await supabase.from('posts').delete().eq('id', id);
     remove(id);
     await removePost(id);
 
-    await supabase.from('posts').delete().eq('id', id);
   };
 
   const openReplyModal = (postId: string) => {
