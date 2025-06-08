@@ -20,6 +20,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useRoute, useNavigation, useFocusEffect } from '@react-navigation/native';
 
 import { supabase } from '../../lib/supabase';
+import { getLikeCounts } from '../../lib/getLikeCounts';
 import { useAuth } from '../../AuthContext';
 import { colors } from '../styles/colors';
 import { usePostStore } from '../contexts/PostStoreContext';
@@ -244,19 +245,11 @@ export default function ReplyDetailScreen() {
         AsyncStorage.setItem(COUNT_STORAGE_KEY, JSON.stringify(counts));
         return counts;
       });
-      const likeEntries = all.map(r => [r.id, r.like_count ?? 0]);
-      const { data: postLike } = await supabase
-        .from('posts')
-        .select('like_count')
-        .eq('id', parent.post_id)
-        .single();
-      const postLikeCount = postLike ? postLike.like_count ?? 0 : undefined;
-      if (postLikeCount !== undefined)
-        likeEntries.push([parent.post_id, postLikeCount]);
-      const fromServer = Object.fromEntries(likeEntries) as Record<string, number>;
-      initialize([
-        ...Object.entries(fromServer).map(([id, c]) => ({ id, like_count: c })),
-      ]);
+      const postCounts = await getLikeCounts([parent.post_id]);
+      const replyCounts = await getLikeCounts(all.map(r => r.id), true);
+      const counts = { ...postCounts, ...replyCounts } as Record<string, number>;
+      initialize(Object.keys(counts).map(id => ({ id, like_count: counts[id] ?? 0 })));
+
 
       if (user) {
         const { data: likedData } = await supabase

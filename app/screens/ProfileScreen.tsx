@@ -22,6 +22,7 @@ import { usePostStore } from '../contexts/PostStoreContext';
 import { useFollowCounts } from '../hooks/useFollowCounts';
 import { colors } from '../styles/colors';
 import { supabase } from '../../lib/supabase';
+import { getLikeCounts } from '../../lib/getLikeCounts';
 import PostCard, { Post } from '../components/PostCard';
 
 const STORAGE_KEY = 'cached_posts';
@@ -57,12 +58,17 @@ export default function ProfileScreen() {
   const { followers, following } = useFollowCounts(profile?.id ?? null);
 
   useEffect(() => {
-    if (posts && posts.length) {
-      initialize(posts.map(p => ({ id: p.id, like_count: p.like_count ?? 0 })));
-      setMyPosts(posts);
-    } else {
-      setMyPosts([]);
-    }
+    const syncLikes = async () => {
+      if (posts && posts.length) {
+        const counts = await getLikeCounts(posts.map(p => p.id));
+        initialize(posts.map(p => ({ id: p.id, like_count: counts[p.id] ?? 0 })));
+        setMyPosts(posts);
+      } else {
+        setMyPosts([]);
+      }
+    };
+    syncLikes();
+
   }, [posts]);
 
   useEffect(() => {

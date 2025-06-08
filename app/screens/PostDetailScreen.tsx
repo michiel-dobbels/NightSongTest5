@@ -19,6 +19,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useRoute, useNavigation, useFocusEffect } from '@react-navigation/native';
 
 import { supabase } from '../../lib/supabase';
+import { getLikeCounts } from '../../lib/getLikeCounts';
 import { useAuth } from '../../AuthContext';
 import { colors } from '../styles/colors';
 import { replyEvents } from '../replyEvents';
@@ -252,21 +253,10 @@ export default function PostDetailScreen() {
         AsyncStorage.setItem(COUNT_STORAGE_KEY, JSON.stringify(counts));
         return counts;
       });
-      const likeEntries = all.map(r => [r.id, r.like_count ?? 0]);
-      const { data: postLike } = await supabase
-        .from('posts')
-        .select('like_count')
-        .eq('id', post.id)
-        .single();
+      const ids = [post.id, ...all.map(r => r.id)];
+      const likeCounts = await getLikeCounts(ids);
+      initialize(ids.map(id => ({ id, like_count: likeCounts[id] ?? 0 })));
 
-      const postLikeCount = postLike ? postLike.like_count ?? 0 : post.like_count ?? 0;
-      likeEntries.push([post.id, postLikeCount]);
-
-      const counts = Object.fromEntries(likeEntries) as Record<string, number>;
-      initialize([
-        { id: post.id, like_count: postLikeCount },
-        ...all.map(r => ({ id: r.id, like_count: r.like_count ?? 0 })),
-      ]);
 
 
       if (user) {

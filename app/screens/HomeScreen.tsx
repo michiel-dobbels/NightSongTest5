@@ -20,6 +20,7 @@ import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { useCallback } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { supabase } from '../../lib/supabase';
+import { getLikeCounts } from '../../lib/getLikeCounts';
 import { useAuth } from '../../AuthContext';
 import { usePostStore } from '../contexts/PostStoreContext';
 import { colors } from '../styles/colors';
@@ -225,7 +226,6 @@ const HomeScreen = forwardRef<HomeScreenRef, HomeScreenProps>(
 
     if (!error && data) {
       const replyEntries = (data as any[]).map(p => [p.id, p.reply_count ?? 0]);
-      const likeEntries = (data as any[]).map(p => [p.id, p.like_count ?? 0]);
       const slice = (data as Post[]).slice(0, PAGE_SIZE);
 
       // Preserve any optimistic posts that are not yet returned from the server
@@ -253,8 +253,9 @@ const HomeScreen = forwardRef<HomeScreenRef, HomeScreenProps>(
         AsyncStorage.setItem(COUNT_STORAGE_KEY, JSON.stringify(merged));
         return merged;
       });
-      const likeMap = Object.fromEntries(likeEntries);
-      initialize(data.map((p: any) => ({ id: p.id, like_count: p.like_count ?? 0 })));
+      const likeCounts = await getLikeCounts(slice.map(p => p.id));
+      initialize(slice.map(p => ({ id: p.id, like_count: likeCounts[p.id] ?? 0 })));
+
 
 
 
