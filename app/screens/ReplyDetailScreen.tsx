@@ -200,8 +200,13 @@ export default function ReplyDetailScreen() {
       AsyncStorage.setItem(COUNT_STORAGE_KEY, JSON.stringify(counts));
       return counts;
     });
-    await supabase.from('replies').delete().eq('id', id);
-    remove(id);
+    const { error } = await supabase.from('replies').delete().eq('id', id);
+    if (!error) {
+      remove(id);
+    } else {
+      console.error('Failed to delete reply', error);
+    }
+
     fetchReplies();
   };
 
