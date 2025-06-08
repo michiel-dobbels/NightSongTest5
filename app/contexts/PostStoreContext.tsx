@@ -2,6 +2,9 @@ import React, { createContext, useContext, useEffect, useState } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { supabase } from '../../lib/supabase';
 import { likeEvents } from '../likeEvents';
+import { postEvents } from '../postEvents';
+
+
 import { useAuth } from '../../AuthContext';
 
 const LIKE_COUNT_KEY = 'cached_like_counts';
@@ -222,6 +225,7 @@ export const PostStoreProvider: React.FC<{ children: React.ReactNode }> = ({
       const { [id]: _omit, ...rest } = prev;
       return rest;
     });
+    postEvents.emit('postDeleted', id);
   };
 
   return (
