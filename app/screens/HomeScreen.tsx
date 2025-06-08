@@ -566,7 +566,7 @@ const HomeScreen = forwardRef<HomeScreenRef, HomeScreenProps>(
                       username: userName,
                     })
               }
-              onDelete={() => handleDeletePost(item.id)}
+              onDelete={() => confirmDeletePost(item.id)}
               onOpenReplies={() => openReplyModal(item.id)}
             />
           );

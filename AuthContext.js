@@ -281,7 +281,10 @@ export function AuthProvider({ children }) {
   }, [user]);
 
   const addPost = (post) => {
-    setMyPosts((prev) => [post, ...prev]);
+    setMyPosts(prev => {
+      const withoutDuplicate = prev.filter(p => p.id !== post.id);
+      return [post, ...withoutDuplicate];
+    });
   };
 
   const updatePost = (tempId, updated) => {
