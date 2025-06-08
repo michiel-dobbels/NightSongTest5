@@ -62,8 +62,13 @@ export default function ProfileScreen() {
       if (posts && posts.length) {
         const counts = await getLikeCounts(posts.map(p => p.id));
         initialize(posts.map(p => ({ id: p.id, like_count: counts[p.id] })));
-
-        setMyPosts(posts);
+        const seen = new Set<string>();
+        const unique = posts.filter(p => {
+          if (seen.has(p.id)) return false;
+          seen.add(p.id);
+          return true;
+        });
+        setMyPosts(unique);
       } else {
         setMyPosts([]);
       }
