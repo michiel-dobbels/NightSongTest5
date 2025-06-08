@@ -26,6 +26,8 @@ import { usePostStore } from '../contexts/PostStoreContext';
 import { colors } from '../styles/colors';
 import { replyEvents } from '../replyEvents';
 import { postEvents } from '../postEvents';
+import { likeEvents } from '../likeEvents';
+
 import PostCard, { Post } from '../components/PostCard';
 
 const STORAGE_KEY = 'cached_posts';
@@ -449,6 +451,21 @@ const HomeScreen = forwardRef<HomeScreenRef, HomeScreenProps>(
   }, []);
 
   useEffect(() => {
+    const onLikeChanged = ({ id, count }: { id: string; count: number }) => {
+      setPosts(prev => {
+        const updated = prev.map(p => (p.id === id ? { ...p, like_count: count } : p));
+        AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
+        return updated;
+      });
+    };
+    likeEvents.on('likeChanged', onLikeChanged);
+    return () => {
+      likeEvents.off('likeChanged', onLikeChanged);
+    };
+  }, []);
+
+  useEffect(() => {
+
     const loadCached = async () => {
       const stored = await AsyncStorage.getItem(STORAGE_KEY);
       if (stored) {

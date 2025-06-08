@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { supabase } from '../../lib/supabase';
+import { likeEvents } from '../likeEvents';
 import { useAuth } from '../../AuthContext';
 
 const LIKE_COUNT_KEY = 'cached_like_counts';
@@ -142,6 +143,9 @@ export const PostStoreProvider: React.FC<{ children: React.ReactNode }> = ({
     const newLiked = !current.liked;
     let newCount = current.likeCount + (newLiked ? 1 : -1);
     setPosts(prev => ({ ...prev, [id]: { likeCount: newCount, liked: newLiked } }));
+    if (!isReply) {
+      likeEvents.emit('likeChanged', { id, count: newCount, liked: newLiked });
+    }
 
     try {
       const likeStored = await AsyncStorage.getItem(LIKE_COUNT_KEY);
@@ -204,6 +208,9 @@ export const PostStoreProvider: React.FC<{ children: React.ReactNode }> = ({
         }));
         likeMap[id] = count;
         await AsyncStorage.setItem(LIKE_COUNT_KEY, JSON.stringify(likeMap));
+        if (!isReply) {
+          likeEvents.emit('likeChanged', { id, count, liked: newLiked });
+        }
       }
     } catch (e) {
       console.error('Failed to toggle like', e);

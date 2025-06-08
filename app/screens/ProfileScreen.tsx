@@ -30,6 +30,7 @@ import { getLikeCounts } from '../../lib/getLikeCounts';
 import PostCard, { Post } from '../components/PostCard';
 import { replyEvents } from '../replyEvents';
 import { postEvents } from '../postEvents';
+import { likeEvents } from '../likeEvents';
 
 
 const STORAGE_KEY = 'cached_posts';
@@ -135,6 +136,20 @@ export default function ProfileScreen() {
     postEvents.on('postDeleted', onPostDeleted);
     return () => {
       postEvents.off('postDeleted', onPostDeleted);
+    };
+  }, []);
+
+  useEffect(() => {
+    const onLikeChanged = ({ id, count }: { id: string; count: number }) => {
+      setMyPosts(prev => {
+        const updated = prev.map(p => (p.id === id ? { ...p, like_count: count } : p));
+        AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
+        return updated;
+      });
+    };
+    likeEvents.on('likeChanged', onLikeChanged);
+    return () => {
+      likeEvents.off('likeChanged', onLikeChanged);
     };
   }, []);
 
