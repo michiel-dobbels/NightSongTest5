@@ -336,9 +336,30 @@ export function AuthProvider({ children }) {
     } catch (e) {
       console.error('Failed to update cached posts', e);
     }
-
     postEvents.emit('postDeleted', postId);
   };
+
+  useEffect(() => {
+    const onPostDeleted = (postId) => {
+      setMyPosts(prev => prev.filter(p => p.id !== postId));
+      AsyncStorage.getItem('cached_posts').then(stored => {
+        if (stored) {
+          try {
+            const arr = JSON.parse(stored);
+            const updated = arr.filter(p => p.id !== postId);
+            AsyncStorage.setItem('cached_posts', JSON.stringify(updated));
+          } catch (e) {
+            console.error('Failed to update cached posts', e);
+          }
+        }
+      });
+    };
+    postEvents.on('postDeleted', onPostDeleted);
+    return () => {
+      postEvents.off('postDeleted', onPostDeleted);
+    };
+  }, []);
+
 
 
   // 🔍 Fetch profile by ID
