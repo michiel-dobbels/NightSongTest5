@@ -10,6 +10,7 @@ import {
   TouchableOpacity,
   Dimensions,
   FlatList,
+  Alert,
 } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 import * as FileSystem from 'expo-file-system';
@@ -21,9 +22,10 @@ import { usePostStore } from '../contexts/PostStoreContext';
 import { useFollowCounts } from '../hooks/useFollowCounts';
 import { colors } from '../styles/colors';
 import { supabase } from '../../lib/supabase';
+import { getLikeCounts } from '../../lib/getLikeCounts';
 import PostCard, { Post } from '../components/PostCard';
 
-
+const STORAGE_KEY = 'cached_posts';
 const COUNT_STORAGE_KEY = 'cached_reply_counts';
 
 
@@ -47,16 +49,25 @@ export default function ProfileScreen() {
     myPosts: posts,
     fetchMyPosts,
   } = useAuth() as any;
-  const { initialize } = usePostStore();
+  const { initialize, remove } = usePostStore();
+
+  const [myPosts, setMyPosts] = useState<Post[]>(posts ?? []);
 
   const [replyCounts, setReplyCounts] = useState<{ [key: string]: number }>({});
 
   const { followers, following } = useFollowCounts(profile?.id ?? null);
 
   useEffect(() => {
-    if (posts && posts.length) {
-      initialize(posts.map(p => ({ id: p.id, like_count: p.like_count ?? 0 })));
-    }
+    const syncLikes = async () => {
+      if (posts && posts.length) {
+        const counts = await getLikeCounts(posts.map(p => p.id));
+        initialize(posts.map(p => ({ id: p.id, like_count: counts[p.id] })));
+        setMyPosts(posts);
+      } else {
+        setMyPosts([]);
+      }
+    };
+    syncLikes();
   }, [posts]);
 
   useEffect(() => {
@@ -89,6 +100,29 @@ export default function ProfileScreen() {
       syncCounts();
     }, [fetchMyPosts]),
   );
+
+  const confirmDeletePost = (id: string) => {
+    Alert.alert('Delete Post', 'Are you sure you want to delete this post?', [
+      { text: 'Cancel', style: 'cancel' },
+      { text: 'Delete', style: 'destructive', onPress: () => handleDeletePost(id) },
+    ]);
+  };
+
+  const handleDeletePost = async (id: string) => {
+    setMyPosts(prev => {
+      const updated = prev.filter(p => p.id !== id);
+      AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
+      return updated;
+    });
+    setReplyCounts(prev => {
+      const { [id]: _removed, ...rest } = prev;
+      AsyncStorage.setItem(COUNT_STORAGE_KEY, JSON.stringify(rest));
+      return rest;
+    });
+    remove(id);
+    await supabase.from('posts').delete().eq('id', id);
+    fetchMyPosts();
+  };
 
 
 
@@ -189,20 +223,20 @@ export default function ProfileScreen() {
     <FlatList
       style={styles.container}
       contentContainerStyle={styles.contentContainer}
-      data={posts}
+      data={myPosts}
 
       ListHeaderComponent={renderHeader}
       keyExtractor={item => item.id}
       renderItem={({ item }) => (
         <PostCard
           post={item as Post}
-          isOwner={false}
+          isOwner={true}
           avatarUri={profileImageUri ?? undefined}
           bannerUrl={bannerImageUri ?? undefined}
           replyCount={replyCounts[item.id] ?? item.reply_count ?? 0}
           onPress={() => navigation.navigate('PostDetail', { post: item })}
           onProfilePress={() => navigation.navigate('Profile')}
-          onDelete={() => {}}
+          onDelete={() => confirmDeletePost(item.id)}
           onOpenReplies={() => {}}
         />
       )}

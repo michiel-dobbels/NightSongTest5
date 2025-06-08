@@ -64,7 +64,7 @@ export default function PostCard({
       <View style={styles.post}>
         {isOwner && (
           <TouchableOpacity onPress={onDelete} style={styles.deleteButton}>
-            <Text style={{ color: 'white' }}>X</Text>
+            <Text style={styles.deleteText}>X</Text>
           </TouchableOpacity>
         )}
         <View style={styles.row}>
@@ -121,8 +121,9 @@ const styles = StyleSheet.create({
     position: 'absolute',
     right: 6,
     top: 6,
-    padding: 4,
+    padding: 5,
   },
+  deleteText: { color: 'white', fontSize: 18 },
   postContent: { color: 'white' },
   username: { fontWeight: 'bold', color: 'white' },
   timestamp: { fontSize: 10, color: 'gray' },
