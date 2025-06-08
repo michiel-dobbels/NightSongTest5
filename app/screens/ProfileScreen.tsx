@@ -286,114 +286,7 @@ export default function ProfileScreen() {
     } else if (error) {
       console.error('Reply failed', error.message);
     }
-  };
 
-  const openReplyModal = (postId: string) => {
-    setActivePostId(postId);
-    setReplyText('');
-    setReplyImage(null);
-    setReplyModalVisible(true);
-  };
-
-  const pickReplyImage = async () => {
-    const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
-      allowsEditing: true,
-      quality: 0.8,
-    });
-    if (!result.canceled) {
-      const uri = result.assets[0].uri;
-      const base64 = await FileSystem.readAsStringAsync(uri, { encoding: 'base64' });
-      setReplyImage(`data:image/jpeg;base64,${base64}`);
-    }
-  };
-
-  const handleReplySubmit = async () => {
-    if (!activePostId || (!replyText.trim() && !replyImage) || !profile) {
-      setReplyModalVisible(false);
-      return;
-    }
-
-    setReplyModalVisible(false);
-
-    const newReply = {
-      id: `temp-${Date.now()}`,
-      post_id: activePostId,
-      parent_id: null,
-      user_id: profile.id,
-      content: replyText,
-      image_url: replyImage ?? undefined,
-      created_at: new Date().toISOString(),
-      username: profile.name || profile.username,
-      reply_count: 0,
-      like_count: 0,
-      profiles: {
-        username: profile.username,
-        name: profile.name,
-        image_url: profileImageUri,
-        banner_url: bannerImageUri,
-      },
-    } as const;
-
-    const storageKey = `${REPLY_STORAGE_PREFIX}${activePostId}`;
-    try {
-      const stored = await AsyncStorage.getItem(storageKey);
-      const cached = stored ? JSON.parse(stored) : [];
-      const updated = [newReply, ...cached];
-      await AsyncStorage.setItem(storageKey, JSON.stringify(updated));
-    } catch (e) {
-      console.error('Failed to cache reply', e);
-    }
-
-    setReplyCounts(prev => {
-      const counts = { ...prev, [activePostId]: (prev[activePostId] || 0) + 1, [newReply.id]: 0 };
-      AsyncStorage.setItem(COUNT_STORAGE_KEY, JSON.stringify(counts));
-      return counts;
-    });
-    initialize([{ id: newReply.id, like_count: 0 }]);
-
-    setReplyText('');
-    setReplyImage(null);
-
-    let { data, error } = await supabase
-      .from('replies')
-      .insert({
-        post_id: activePostId,
-        parent_id: null,
-        user_id: profile.id,
-        content: replyText,
-        image_url: replyImage,
-        username: profile.name || profile.username,
-      })
-      .select()
-      .single();
-    if (error?.code === 'PGRST204') {
-      error = null;
-    }
-
-    if (!error && data) {
-      try {
-        const stored = await AsyncStorage.getItem(storageKey);
-        const cached = stored ? JSON.parse(stored) : [];
-        const updated = cached.map((r: any) =>
-          r.id === newReply.id ? { ...r, id: data.id, created_at: data.created_at } : r,
-        );
-        await AsyncStorage.setItem(storageKey, JSON.stringify(updated));
-      } catch (e) {
-        console.error('Failed to update cached reply', e);
-      }
-      setReplyCounts(prev => {
-        const temp = prev[newReply.id] ?? 0;
-        const { [newReply.id]: _omit, ...rest } = prev;
-        const counts = { ...rest, [data.id]: temp };
-        AsyncStorage.setItem(COUNT_STORAGE_KEY, JSON.stringify(counts));
-        return counts;
-      });
-      initialize([{ id: data.id, like_count: 0 }]);
-      replyEvents.emit('replyAdded', activePostId);
-    } else if (error) {
-      console.error('Reply failed', error.message);
-    }
   };
 
 
@@ -487,7 +380,6 @@ export default function ProfileScreen() {
         <Text style={styles.uploadText}>Upload Banner</Text>
       </TouchableOpacity>
 
-      {/* Removed duplicate post list */}
     </View>
   );
 
