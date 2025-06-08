@@ -250,6 +250,7 @@ const HomeScreen = forwardRef<HomeScreenRef, HomeScreenProps>(
       );
 
 
+
       if (user) {
         const { data: likedData } = await supabase
           .from('likes')
