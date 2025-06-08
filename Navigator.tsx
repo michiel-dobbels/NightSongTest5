@@ -17,7 +17,7 @@ export default function Navigator() {
   if (loading) return null;
 
   return (
-    <Stack.Navigator screenOptions={{ headerShown: false }}>
+    <Stack.Navigator screenOptions={{ headerShown: false, detachInactiveScreens: false }}>
       {user ? (
         <>
           <Stack.Screen name="Tabs" component={TopTabsNavigator} />
