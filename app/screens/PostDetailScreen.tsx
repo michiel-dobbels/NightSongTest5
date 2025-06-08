@@ -19,6 +19,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useRoute, useNavigation, useFocusEffect } from '@react-navigation/native';
 
 import { supabase } from '../../lib/supabase';
+import { getLikeCounts } from '../../lib/getLikeCounts';
 import { useAuth } from '../../AuthContext';
 import { colors } from '../styles/colors';
 import { replyEvents } from '../replyEvents';
@@ -150,27 +151,8 @@ export default function PostDetailScreen() {
       AsyncStorage.setItem(COUNT_STORAGE_KEY, JSON.stringify(counts));
       return counts;
     });
-    const likeStored = await AsyncStorage.getItem(LIKE_COUNT_KEY);
-    if (likeStored) {
-      try {
-        const map = JSON.parse(likeStored);
-        delete map[id];
-        await AsyncStorage.setItem(LIKE_COUNT_KEY, JSON.stringify(map));
-      } catch {}
-    }
-    if (user) {
-      const likedStored = await AsyncStorage.getItem(`${LIKED_KEY_PREFIX}${user?.id}`);
-      if (likedStored) {
-        try {
-          const map = JSON.parse(likedStored);
-          delete map[id];
-          await AsyncStorage.setItem(`${LIKED_KEY_PREFIX}${user.id}`, JSON.stringify(map));
-        } catch {}
-      }
-    }
-    remove(id);
-
     await supabase.from('replies').delete().eq('id', id);
+    remove(id);
     fetchReplies();
   };
 
@@ -203,7 +185,13 @@ export default function PostDetailScreen() {
         const likeStored = await AsyncStorage.getItem(LIKE_COUNT_KEY);
         if (likeStored) {
           try {
-            JSON.parse(likeStored);
+            const parsed = JSON.parse(likeStored);
+            initialize(
+              Object.entries(parsed).map(([id, c]) => ({
+                id,
+                like_count: c as number,
+              })),
+            );
           } catch (e) {
             console.error('Failed to parse cached like counts', e);
           }
@@ -264,22 +252,9 @@ export default function PostDetailScreen() {
         AsyncStorage.setItem(COUNT_STORAGE_KEY, JSON.stringify(counts));
         return counts;
       });
-      const likeEntries = all.map(r => [r.id, r.like_count ?? 0]);
-      const { data: postLike } = await supabase
-        .from('posts')
-        .select('like_count')
-        .eq('id', post.id)
-        .single();
-
-      const postLikeCount = postLike ? postLike.like_count ?? 0 : post.like_count ?? 0;
-      likeEntries.push([post.id, postLikeCount]);
-
-      const counts = Object.fromEntries(likeEntries) as Record<string, number>;
-      AsyncStorage.setItem(LIKE_COUNT_KEY, JSON.stringify(counts));
-      initialize([
-        { id: post.id, like_count: postLikeCount },
-        ...all.map(r => ({ id: r.id, like_count: r.like_count ?? 0 })),
-      ]);
+      const ids = [post.id, ...all.map(r => r.id)];
+      const likeCounts = await getLikeCounts(ids);
+      initialize(ids.map(id => ({ id, like_count: likeCounts[id] ?? 0 })));
 
 
       if (user) {
@@ -360,27 +335,34 @@ export default function PostDetailScreen() {
           setReplyCounts(counts);
           AsyncStorage.setItem(COUNT_STORAGE_KEY, JSON.stringify(counts));
 
-          const likeEntries = cached.map((r: any) => [r.id, r.like_count ?? 0]);
+          const likeEntries = cached.map((r: any) => [r.id, storedLikes[r.id] ?? r.like_count ?? 0]);
 
           likeEntries.push([post.id, storedLikes[post.id] ?? post.like_count ?? 0]);
           const likeCountsObj = {
             ...Object.fromEntries(likeEntries),
             ...storedLikes,
           } as Record<string, number>;
-          AsyncStorage.setItem(LIKE_COUNT_KEY, JSON.stringify(likeCountsObj));
           initialize([
-            { id: post.id, like_count: storedLikes[post.id] ?? post.like_count ?? 0 },
-            ...cached.map((r: any) => ({ id: r.id, like_count: r.like_count ?? 0 })),
+            { id: post.id, like_count: likeCountsObj[post.id] ?? 0 },
+            ...cached.map((r: any) => ({ id: r.id, like_count: likeCountsObj[r.id] ?? 0 })),
           ]);
         } catch (e) {
           console.error('Failed to parse cached replies', e);
         }
       } else {
         setReplyCounts(storedCounts);
-        AsyncStorage.setItem(LIKE_COUNT_KEY, JSON.stringify(storedLikes));
-        initialize([
-          { id: post.id, like_count: storedLikes[post.id] ?? post.like_count ?? 0 },
-        ]);
+        const items = Object.keys(storedLikes).length
+          ? Object.entries(storedLikes).map(([id, c]) => ({
+              id,
+              like_count: c as number,
+            }))
+          : [
+              {
+                id: post.id,
+                like_count: storedLikes[post.id] ?? post.like_count ?? 0,
+              },
+            ];
+        initialize(items);
 
       }
 
@@ -457,10 +439,6 @@ export default function PostDetailScreen() {
     });
     initialize([{ id: newReply.id, like_count: 0 }]);
     replyEvents.emit('replyAdded', post.id);
-    const likeStored = await AsyncStorage.getItem(LIKE_COUNT_KEY);
-    const map = likeStored ? JSON.parse(likeStored) : {};
-    map[newReply.id] = 0;
-    AsyncStorage.setItem(LIKE_COUNT_KEY, JSON.stringify(map));
     setReplyText('');
     setReplyImage(null);
 
@@ -510,13 +488,7 @@ export default function PostDetailScreen() {
           AsyncStorage.setItem(COUNT_STORAGE_KEY, JSON.stringify(counts));
           return counts;
         });
-        const likeStored = await AsyncStorage.getItem(LIKE_COUNT_KEY);
-        const map = likeStored ? JSON.parse(likeStored) : {};
-        const temp = map[newReply.id] ?? 0;
-        delete map[newReply.id];
-        map[data.id] = temp;
-        AsyncStorage.setItem(LIKE_COUNT_KEY, JSON.stringify(map));
-        initialize([{ id: data.id, like_count: temp }]);
+        initialize([{ id: data.id, like_count: 0 }]);
 
 
       }
