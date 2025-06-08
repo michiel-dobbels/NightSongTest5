@@ -10,6 +10,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { postEvents } from './app/postEvents';
 import { likeEvents } from './app/likeEvents';
 
+
 const AuthContext = createContext();
 
 export function AuthProvider({ children }) {
@@ -358,6 +359,7 @@ export function AuthProvider({ children }) {
       postEvents.off('postDeleted', onPostDeleted);
     };
   }, []);
+
 
 
   // 🔍 Fetch profile by ID
