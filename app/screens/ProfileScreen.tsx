@@ -62,12 +62,14 @@ export default function ProfileScreen() {
       if (posts && posts.length) {
         const counts = await getLikeCounts(posts.map(p => p.id));
         initialize(posts.map(p => ({ id: p.id, like_count: counts[p.id] })));
+
         setMyPosts(posts);
       } else {
         setMyPosts([]);
       }
     };
     syncLikes();
+
   }, [posts]);
 
   useEffect(() => {

@@ -68,6 +68,7 @@ const HomeScreen = forwardRef<HomeScreenRef, HomeScreenProps>(
     ]);
   };
 
+
   const handleDeletePost = async (id: string) => {
     setPosts(prev => {
       const updated = prev.filter(p => p.id !== id);
@@ -251,6 +252,7 @@ const HomeScreen = forwardRef<HomeScreenRef, HomeScreenProps>(
       initialize(
         slice.map(p => ({ id: p.id, like_count: likeCounts[p.id] })),
       );
+
 
 
       if (user) {
@@ -564,7 +566,7 @@ const HomeScreen = forwardRef<HomeScreenRef, HomeScreenProps>(
                       username: userName,
                     })
               }
-              onDelete={() => confirmDeletePost(item.id)}
+              onDelete={() => handleDeletePost(item.id)}
               onOpenReplies={() => openReplyModal(item.id)}
             />
           );
