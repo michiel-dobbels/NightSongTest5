@@ -250,6 +250,7 @@ export default function ReplyDetailScreen() {
       const counts = { ...postCounts, ...replyCounts } as Record<string, number>;
       initialize(Object.keys(counts).map(id => ({ id, like_count: counts[id] ?? 0 })));
 
+
       if (user) {
         const { data: likedData } = await supabase
           .from('likes')

@@ -257,6 +257,8 @@ const HomeScreen = forwardRef<HomeScreenRef, HomeScreenProps>(
       initialize(slice.map(p => ({ id: p.id, like_count: likeCounts[p.id] ?? 0 })));
 
 
+
+
       if (user) {
         const { data: likedData } = await supabase
           .from('likes')
