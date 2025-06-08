@@ -257,6 +257,7 @@ const HomeScreen = forwardRef<HomeScreenRef, HomeScreenProps>(
       initialize(data.map((p: any) => ({ id: p.id, like_count: p.like_count ?? 0 })));
 
 
+
       if (user) {
         const { data: likedData } = await supabase
           .from('likes')
