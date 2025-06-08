@@ -75,7 +75,7 @@ export default function PostDetailScreen() {
 
   const confirmDeletePost = (id: string) => {
     Alert.alert('Delete Post', 'Are you sure you want to delete this post?', [
-      { text: 'Cancel', style: 'cancel' },
+      { text: 'Confirm', style: 'cancel' },
       {
         text: 'Delete',
         style: 'destructive',
@@ -100,6 +100,7 @@ export default function PostDetailScreen() {
   const handleDeletePost = async (id: string) => {
     remove(id);
     await removePost(id);
+
     await supabase.from('posts').delete().eq('id', id);
     navigation.goBack();
   };
@@ -107,7 +108,7 @@ export default function PostDetailScreen() {
 
   const confirmDeleteReply = (id: string) => {
     Alert.alert('Delete Post', 'Are you sure you want to delete this post?', [
-      { text: 'Cancel', style: 'cancel' },
+      { text: 'Confirm', style: 'cancel' },
       {
         text: 'Delete',
         style: 'destructive',
