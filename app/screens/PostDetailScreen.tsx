@@ -24,6 +24,7 @@ import { useAuth } from '../../AuthContext';
 import { colors } from '../styles/colors';
 import { replyEvents } from '../replyEvents';
 import { usePostStore } from '../contexts/PostStoreContext';
+import { postEvents } from '../postEvents';
 import PostCard, { Post } from '../components/PostCard';
 
 const REPLY_STORAGE_PREFIX = 'cached_replies_';
@@ -57,7 +58,7 @@ interface Reply {
 export default function PostDetailScreen() {
   const route = useRoute<any>();
   const navigation = useNavigation<any>();
-  const { user, profile, profileImageUri, bannerImageUri } = useAuth() as any;
+  const { user, profile, profileImageUri, bannerImageUri, removePost } = useAuth() as any;
   const { initialize, remove } = usePostStore();
   const post = route.params.post as Post;
   const fromProfile = route.params?.fromProfile ?? false;
@@ -74,7 +75,7 @@ export default function PostDetailScreen() {
 
   const confirmDeletePost = (id: string) => {
     Alert.alert('Delete Post', 'Are you sure you want to delete this post?', [
-      { text: 'Cancel', style: 'cancel' },
+      { text: 'Confirm', style: 'cancel' },
       {
         text: 'Delete',
         style: 'destructive',
@@ -97,15 +98,17 @@ export default function PostDetailScreen() {
   };
 
   const handleDeletePost = async (id: string) => {
-    await supabase.from('posts').delete().eq('id', id);
     remove(id);
+    removePost(id);
+    postEvents.emit('postDeleted', id);
+    await supabase.from('posts').delete().eq('id', id);
     navigation.goBack();
   };
 
 
   const confirmDeleteReply = (id: string) => {
     Alert.alert('Delete Post', 'Are you sure you want to delete this post?', [
-      { text: 'Cancel', style: 'cancel' },
+      { text: 'Confirm', style: 'cancel' },
       {
         text: 'Delete',
         style: 'destructive',

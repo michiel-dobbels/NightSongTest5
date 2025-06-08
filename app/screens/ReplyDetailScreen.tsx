@@ -25,6 +25,7 @@ import { useAuth } from '../../AuthContext';
 import { colors } from '../styles/colors';
 import { usePostStore } from '../contexts/PostStoreContext';
 import useLike from '../hooks/useLike';
+import { postEvents } from '../postEvents';
 
 const CHILD_PREFIX = 'cached_child_replies_';
 const COUNT_STORAGE_KEY = 'cached_reply_counts';
@@ -101,7 +102,7 @@ function LikeInfo({ id, isPost = false }: { id: string; isPost?: boolean }) {
 export default function ReplyDetailScreen() {
   const route = useRoute<any>();
   const navigation = useNavigation<any>();
-  const { user, profile, profileImageUri, bannerImageUri } = useAuth() as any;
+  const { user, profile, profileImageUri, bannerImageUri, removePost } = useAuth() as any;
   const { initialize, remove } = usePostStore();
   const parent = route.params.reply as Reply;
   const originalPost = route.params.originalPost as Post | undefined;
@@ -120,7 +121,7 @@ export default function ReplyDetailScreen() {
 
   const confirmDeletePost = (id: string) => {
     Alert.alert('Delete Post', 'Are you sure you want to delete this post?', [
-      { text: 'Cancel', style: 'cancel' },
+      { text: 'Confirm', style: 'cancel' },
       {
         text: 'Delete',
         style: 'destructive',
@@ -130,6 +131,9 @@ export default function ReplyDetailScreen() {
   };
 
   const handleDeletePost = async (id: string) => {
+    remove(id);
+    removePost(id);
+    postEvents.emit('postDeleted', id);
     await supabase.from('posts').delete().eq('id', id);
     navigation.goBack();
   };
@@ -139,7 +143,7 @@ export default function ReplyDetailScreen() {
 
   const confirmDeleteReply = (id: string) => {
     Alert.alert('Delete Post', 'Are you sure you want to delete this post?', [
-      { text: 'Cancel', style: 'cancel' },
+      { text: 'Confirm', style: 'cancel' },
       {
         text: 'Delete',
         style: 'destructive',
