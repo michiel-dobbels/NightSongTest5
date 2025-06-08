@@ -49,7 +49,7 @@ const HomeScreen = forwardRef<HomeScreenRef, HomeScreenProps>(
   const { user, profile, profileImageUri, bannerImageUri, addPost, updatePost } =
 
     useAuth() as any;
-  const { initialize, remove } = usePostStore();
+  const { initialize, mergeLiked, remove } = usePostStore();
   const [postText, setPostText] = useState('');
   const [posts, setPosts] = useState<Post[]>([]);
   const [replyCounts, setReplyCounts] = useState<{ [key: string]: number }>({});
@@ -254,7 +254,6 @@ const HomeScreen = forwardRef<HomeScreenRef, HomeScreenProps>(
         return merged;
       });
       const likeMap = Object.fromEntries(likeEntries);
-      AsyncStorage.setItem(LIKE_COUNT_KEY, JSON.stringify(likeMap));
       initialize(data.map((p: any) => ({ id: p.id, like_count: p.like_count ?? 0 })));
 
 
@@ -273,6 +272,7 @@ const HomeScreen = forwardRef<HomeScreenRef, HomeScreenProps>(
             `${LIKED_KEY_PREFIX}${user.id}`,
             JSON.stringify(likedObj),
           );
+          mergeLiked(likedObj);
         }
 
       }
@@ -430,8 +430,7 @@ const HomeScreen = forwardRef<HomeScreenRef, HomeScreenProps>(
           setReplyCounts(Object.fromEntries(entries));
       const likeEntries = cached.map((p: any) => [p.id, p.like_count ?? 0]);
       const likeMap = Object.fromEntries(likeEntries);
-      AsyncStorage.setItem(LIKE_COUNT_KEY, JSON.stringify(likeMap));
-      initialize(cached.map((p: any) => ({ id: p.id, like_count: p.like_count ?? 0 })));
+      initialize(cached.map((p: any) => ({ id: p.id, like_count: p.like_count ?? 0 }))); 
 
 
         } catch (e) {
@@ -448,9 +447,14 @@ const HomeScreen = forwardRef<HomeScreenRef, HomeScreenProps>(
       }
       const likeStored = await AsyncStorage.getItem(LIKE_COUNT_KEY);
       if (likeStored) {
-        // store counts for the like hook
         try {
-          JSON.parse(likeStored);
+          const parsed = JSON.parse(likeStored);
+          initialize(
+            Object.entries(parsed).map(([id, c]) => ({
+              id,
+              like_count: c as number,
+            })),
+          );
         } catch (e) {
           console.error('Failed to parse cached like counts', e);
         }
@@ -459,7 +463,8 @@ const HomeScreen = forwardRef<HomeScreenRef, HomeScreenProps>(
         const likedStored = await AsyncStorage.getItem(`${LIKED_KEY_PREFIX}${user.id}`);
         if (likedStored) {
           try {
-            JSON.parse(likedStored);
+            const map = JSON.parse(likedStored);
+            mergeLiked(map);
           } catch (e) {
             console.error('Failed to parse cached likes', e);
           }
@@ -487,7 +492,13 @@ const HomeScreen = forwardRef<HomeScreenRef, HomeScreenProps>(
         const likeStored = await AsyncStorage.getItem(LIKE_COUNT_KEY);
         if (likeStored) {
           try {
-            JSON.parse(likeStored);
+            const parsed = JSON.parse(likeStored);
+            initialize(
+              Object.entries(parsed).map(([id, c]) => ({
+                id,
+                like_count: c as number,
+              })),
+            );
           } catch (e) {
             console.error('Failed to parse cached like counts', e);
           }
@@ -496,7 +507,8 @@ const HomeScreen = forwardRef<HomeScreenRef, HomeScreenProps>(
           const likedStored = await AsyncStorage.getItem(`${LIKED_KEY_PREFIX}${user.id}`);
           if (likedStored) {
             try {
-              JSON.parse(likedStored);
+              const map = JSON.parse(likedStored);
+              mergeLiked(map);
             } catch (e) {
               console.error('Failed to parse cached likes', e);
             }
