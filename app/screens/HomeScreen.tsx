@@ -25,6 +25,7 @@ import { useAuth } from '../../AuthContext';
 import { usePostStore } from '../contexts/PostStoreContext';
 import { colors } from '../styles/colors';
 import { replyEvents } from '../replyEvents';
+import { postEvents } from '../postEvents';
 import PostCard, { Post } from '../components/PostCard';
 
 const STORAGE_KEY = 'cached_posts';
@@ -47,7 +48,7 @@ interface HomeScreenProps {
 const HomeScreen = forwardRef<HomeScreenRef, HomeScreenProps>(
   ({ hideInput }, ref) => {
     const navigation = useNavigation<any>();
-  const { user, profile, profileImageUri, bannerImageUri, addPost, updatePost } =
+  const { user, profile, profileImageUri, bannerImageUri, addPost, updatePost, removePost } =
 
     useAuth() as any;
   const { initialize, mergeLiked, remove } = usePostStore();
@@ -81,6 +82,8 @@ const HomeScreen = forwardRef<HomeScreenRef, HomeScreenProps>(
       return rest;
     });
     remove(id);
+    removePost(id);
+    postEvents.emit('postDeleted', id);
     await supabase.from('posts').delete().eq('id', id);
   };
 
@@ -422,6 +425,26 @@ const HomeScreen = forwardRef<HomeScreenRef, HomeScreenProps>(
     replyEvents.on('replyAdded', onReplyAdded);
     return () => {
       replyEvents.off('replyAdded', onReplyAdded);
+    };
+  }, []);
+
+  useEffect(() => {
+    const onPostDeleted = (postId: string) => {
+      setPosts(prev => {
+        const updated = prev.filter(p => p.id !== postId);
+        AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
+        return updated;
+      });
+      setReplyCounts(prev => {
+        const { [postId]: _omit, ...rest } = prev;
+        AsyncStorage.setItem(COUNT_STORAGE_KEY, JSON.stringify(rest));
+        return rest;
+      });
+      remove(postId);
+    };
+    postEvents.on('postDeleted', onPostDeleted);
+    return () => {
+      postEvents.off('postDeleted', onPostDeleted);
     };
   }, []);
 

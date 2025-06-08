@@ -29,6 +29,8 @@ import { supabase } from '../../lib/supabase';
 import { getLikeCounts } from '../../lib/getLikeCounts';
 import PostCard, { Post } from '../components/PostCard';
 import { replyEvents } from '../replyEvents';
+import { postEvents } from '../postEvents';
+
 
 const STORAGE_KEY = 'cached_posts';
 const COUNT_STORAGE_KEY = 'cached_reply_counts';
@@ -54,6 +56,7 @@ export default function ProfileScreen() {
     setBannerImageUri,
     myPosts: posts,
     fetchMyPosts,
+    removePost,
   } = useAuth() as any;
   const { initialize, remove } = usePostStore();
 
@@ -115,6 +118,27 @@ export default function ProfileScreen() {
     };
   }, []);
 
+  useEffect(() => {
+    const onPostDeleted = (postId: string) => {
+      setMyPosts(prev => {
+        const updated = prev.filter(p => p.id !== postId);
+        AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
+        return updated;
+      });
+      setReplyCounts(prev => {
+        const { [postId]: _omit, ...rest } = prev;
+        AsyncStorage.setItem(COUNT_STORAGE_KEY, JSON.stringify(rest));
+        return rest;
+      });
+      remove(postId);
+    };
+    postEvents.on('postDeleted', onPostDeleted);
+    return () => {
+      postEvents.off('postDeleted', onPostDeleted);
+    };
+  }, []);
+
+
   useFocusEffect(
     useCallback(() => {
       fetchMyPosts();
@@ -151,6 +175,8 @@ export default function ProfileScreen() {
       return rest;
     });
     remove(id);
+    removePost(id);
+    postEvents.emit('postDeleted', id);
     await supabase.from('posts').delete().eq('id', id);
     fetchMyPosts();
   };

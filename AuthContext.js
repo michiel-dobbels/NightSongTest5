@@ -7,6 +7,7 @@ import React, {
 } from 'react';
 import { supabase } from './lib/supabase';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { postEvents } from './app/postEvents';
 
 const AuthContext = createContext();
 
@@ -303,6 +304,11 @@ export function AuthProvider({ children }) {
     });
   };
 
+  const removePost = (postId) => {
+    setMyPosts(prev => prev.filter(p => p.id !== postId));
+    postEvents.emit('postDeleted', postId);
+  };
+
 
   // 🔍 Fetch profile by ID
   const fetchProfile = async (userId) => {
@@ -371,6 +377,7 @@ export function AuthProvider({ children }) {
     fetchMyPosts,
     addPost,
     updatePost,
+    removePost,
 
     signUp,
     signIn,
