@@ -1,11 +1,25 @@
-import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, Image, Button, Dimensions, ActivityIndicator, FlatList, TouchableOpacity } from 'react-native';
-import { useRoute, useNavigation } from '@react-navigation/native';
+import React, { useEffect, useState, useCallback } from 'react';
+import {
+  View,
+  Text,
+  StyleSheet,
+  Image,
+  Button,
+  Dimensions,
+  ActivityIndicator,
+  FlatList,
+  TouchableOpacity,
+} from 'react-native';
+import { useRoute, useNavigation, useFocusEffect } from '@react-navigation/native';
 import { supabase } from '../../lib/supabase';
 import { colors } from '../styles/colors';
 import { useFollowCounts } from '../hooks/useFollowCounts';
 import { useAuth } from '../../AuthContext';
 import FollowButton from '../components/FollowButton';
+import PostCard, { Post } from '../components/PostCard';
+import { usePostStore } from '../contexts/PostStoreContext';
+import { likeEvents } from '../likeEvents';
+import { getLikeCounts } from '../../lib/getLikeCounts';
 
 
 interface Profile {
@@ -44,6 +58,9 @@ export default function UserProfileScreen() {
       name: string | null;
       avatar_url: string | null;
     }[]>([]);
+
+  const [posts, setPosts] = useState<Post[]>([]);
+  const { initialize } = usePostStore();
 
   const { user } = useAuth() as any;
 
@@ -96,6 +113,39 @@ export default function UserProfileScreen() {
     };
     fetchProfile();
   }, [userId]);
+
+  useFocusEffect(
+    useCallback(() => {
+      const loadPosts = async () => {
+        const { data, error } = await supabase
+          .from('posts')
+          .select(
+            'id, content, image_url, user_id, created_at, reply_count, like_count, username, profiles(username, name, image_url, banner_url)'
+          )
+          .eq('user_id', userId)
+          .order('created_at', { ascending: false });
+
+        if (!error && data) {
+          setPosts(data as Post[]);
+          const counts = await getLikeCounts(data.map(p => p.id));
+          initialize(data.map(p => ({ id: p.id, like_count: counts[p.id] })));
+        } else if (error) {
+          console.error('Failed to fetch posts', error);
+        }
+      };
+      loadPosts();
+    }, [userId, initialize])
+  );
+
+  useEffect(() => {
+    const onLikeChanged = ({ id, count }: { id: string; count: number }) => {
+      setPosts(prev => prev.map(p => (p.id === id ? { ...p, like_count: count } : p)));
+    };
+    likeEvents.on('likeChanged', onLikeChanged);
+    return () => {
+      likeEvents.off('likeChanged', onLikeChanged);
+    };
+  }, []);
 
   useEffect(() => {
     let isMounted = true;
@@ -328,6 +378,25 @@ export default function UserProfileScreen() {
           <Text style={styles.statsText}>{following ?? 0} Following</Text>
         </TouchableOpacity>
       </View>
+
+      <Text style={styles.sectionTitle}>Posts</Text>
+      <FlatList
+        data={posts}
+        keyExtractor={item => item.id}
+        renderItem={({ item }) => (
+          <PostCard
+            post={item as Post}
+            isOwner={false}
+            avatarUri={profile.image_url || avatarUrl || undefined}
+            bannerUrl={item.profiles?.banner_url || bannerUrl || undefined}
+            replyCount={item.reply_count ?? 0}
+            onPress={() => navigation.navigate('PostDetail', { post: item })}
+            onProfilePress={() => {}}
+            onDelete={() => {}}
+            onOpenReplies={() => navigation.navigate('PostDetail', { post: item })}
+          />
+        )}
+      />
 
       <Text style={styles.sectionTitle}>Following</Text>
       <FlatList
