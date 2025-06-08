@@ -27,6 +27,7 @@ import { colors } from '../styles/colors';
 import { replyEvents } from '../replyEvents';
 import { postEvents } from '../postEvents';
 import { likeEvents } from '../likeEvents';
+
 import PostCard, { Post } from '../components/PostCard';
 
 const STORAGE_KEY = 'cached_posts';
@@ -84,6 +85,7 @@ const HomeScreen = forwardRef<HomeScreenRef, HomeScreenProps>(
     });
     remove(id);
     await removePost(id);
+
     await supabase.from('posts').delete().eq('id', id);
   };
 
@@ -463,6 +465,7 @@ const HomeScreen = forwardRef<HomeScreenRef, HomeScreenProps>(
   }, []);
 
   useEffect(() => {
+
     const loadCached = async () => {
       const stored = await AsyncStorage.getItem(STORAGE_KEY);
       if (stored) {

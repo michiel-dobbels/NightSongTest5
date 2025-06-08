@@ -316,6 +316,7 @@ export function AuthProvider({ children }) {
     } catch (e) {
       console.error('Failed to update cached posts', e);
     }
+
     postEvents.emit('postDeleted', postId);
   };
 
