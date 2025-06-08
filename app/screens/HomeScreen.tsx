@@ -83,6 +83,8 @@ const HomeScreen = forwardRef<HomeScreenRef, HomeScreenProps>(
       AsyncStorage.setItem(COUNT_STORAGE_KEY, JSON.stringify(rest));
       return rest;
     });
+    remove(id);
+    await removePost(id);
 
     await supabase.from('posts').delete().eq('id', id);
     remove(id);

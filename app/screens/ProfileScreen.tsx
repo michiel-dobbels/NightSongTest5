@@ -84,6 +84,11 @@ export default function ProfileScreen() {
           return true;
         });
         setMyPosts(unique);
+        const missing = unique.filter(p => storePosts[p.id] === undefined);
+        if (missing.length) {
+          const counts = await getLikeCounts(missing.map(p => p.id));
+          initialize(missing.map(p => ({ id: p.id, like_count: counts[p.id] })));
+        }
 
       } else {
         setMyPosts([]);
@@ -193,9 +198,9 @@ export default function ProfileScreen() {
       AsyncStorage.setItem(COUNT_STORAGE_KEY, JSON.stringify(rest));
       return rest;
     });
-    await supabase.from('posts').delete().eq('id', id);
     remove(id);
     await removePost(id);
+    await supabase.from('posts').delete().eq('id', id);
 
   };
 
