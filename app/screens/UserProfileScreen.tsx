@@ -19,6 +19,8 @@ import FollowButton from '../components/FollowButton';
 import PostCard, { Post } from '../components/PostCard';
 import { usePostStore } from '../contexts/PostStoreContext';
 import { likeEvents } from '../likeEvents';
+import { postEvents } from '../postEvents';
+
 import { getLikeCounts } from '../../lib/getLikeCounts';
 
 
@@ -146,6 +148,17 @@ export default function UserProfileScreen() {
       likeEvents.off('likeChanged', onLikeChanged);
     };
   }, []);
+
+  useEffect(() => {
+    const onPostDeleted = (postId: string) => {
+      setPosts(prev => prev.filter(p => p.id !== postId));
+    };
+    postEvents.on('postDeleted', onPostDeleted);
+    return () => {
+      postEvents.off('postDeleted', onPostDeleted);
+    };
+  }, []);
+
 
   useEffect(() => {
     let isMounted = true;
