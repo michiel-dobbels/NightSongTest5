@@ -150,6 +150,7 @@ export default function PostDetailScreen() {
       AsyncStorage.setItem(COUNT_STORAGE_KEY, JSON.stringify(counts));
       return counts;
     });
+
     await supabase.from('replies').delete().eq('id', id);
     remove(id);
     fetchReplies();
@@ -374,6 +375,7 @@ export default function PostDetailScreen() {
               },
             ];
         initialize(items);
+
 
       }
 
