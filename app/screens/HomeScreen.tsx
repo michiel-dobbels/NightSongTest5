@@ -63,16 +63,7 @@ const HomeScreen = forwardRef<HomeScreenRef, HomeScreenProps>(
 
 
 
-  const confirmDeletePost = (id: string) => {
-    Alert.alert('Delete Post', 'Are you sure you want to delete this post?', [
-      { text: 'Cancel', style: 'cancel' },
-      {
-        text: 'Delete',
-        style: 'destructive',
-        onPress: () => handleDeletePost(id),
-      },
-    ]);
-  };
+
 
   const handleDeletePost = async (id: string) => {
     setPosts(prev => {
@@ -571,7 +562,7 @@ const HomeScreen = forwardRef<HomeScreenRef, HomeScreenProps>(
                       username: userName,
                     })
               }
-              onDelete={() => confirmDeletePost(item.id)}
+              onDelete={() => handleDeletePost(item.id)}
               onOpenReplies={() => openReplyModal(item.id)}
             />
           );
