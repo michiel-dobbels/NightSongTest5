@@ -15,6 +15,7 @@ export async function getLikeCounts(
         counts[id] = count;
       }
     }),
+
   );
   return counts;
 }

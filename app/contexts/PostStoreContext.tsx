@@ -74,6 +74,7 @@ export const PostStoreProvider: React.FC<{ children: React.ReactNode }> = ({
           item.like_count !== undefined && item.like_count !== null
             ? item.like_count
             : existing?.likeCount ?? 0;
+
         const liked = existing?.liked ?? false;
         updated[item.id] = { likeCount, liked };
       });
