@@ -28,19 +28,11 @@ import {
 import { useAuth } from '../AuthContext';
 import { useNavigation } from '@react-navigation/native';
 import HomeScreen, { HomeScreenRef } from './screens/HomeScreen';
+import FollowingFeedScreen from './screens/FollowingFeedScreen';
 import { supabase } from '../lib/supabase';
 import { colors } from './styles/colors';
 import * as ImagePicker from 'expo-image-picker';
 import * as FileSystem from 'expo-file-system';
-
-
-function FollowingScreen() {
-  return (
-    <View style={{ flex: 1, backgroundColor: '#1d152b', justifyContent: 'center', alignItems: 'center' }}>
-      <Text style={{ color: 'white' }}>Following Content</Text>
-    </View>
-  );
-}
 
 const Tab = createMaterialTopTabNavigator();
 const TAB_BAR_HEIGHT = 48;
@@ -205,7 +197,7 @@ export default function TopTabsNavigator() {
         }}
       >
         <Tab.Screen name="For you" component={ForYouScreen} />
-        <Tab.Screen name="Following" component={FollowingScreen} />
+        <Tab.Screen name="Following" component={FollowingFeedScreen} />
         </Tab.Navigator>
 
         <TouchableOpacity
