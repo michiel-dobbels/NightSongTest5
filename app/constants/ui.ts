@@ -1,1 +1,1 @@
-export const CONFIRM_ACTION = { text: 'Confirm', style: 'cancel' } as const;
+export const CONFIRM_ACTION = { text: 'Cancel', style: 'cancel' } as const;
