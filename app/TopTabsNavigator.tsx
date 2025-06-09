@@ -18,6 +18,7 @@ import {
   TouchableWithoutFeedback,
   Dimensions,
   Image,
+  Alert,
 } from 'react-native';
 import {
   SafeAreaView,
@@ -28,19 +29,12 @@ import {
 import { useAuth } from '../AuthContext';
 import { useNavigation } from '@react-navigation/native';
 import HomeScreen, { HomeScreenRef } from './screens/HomeScreen';
+import FollowingFeedScreen from './screens/FollowingFeedScreen';
 import { supabase } from '../lib/supabase';
 import { colors } from './styles/colors';
 import * as ImagePicker from 'expo-image-picker';
 import * as FileSystem from 'expo-file-system';
-
-
-function FollowingScreen() {
-  return (
-    <View style={{ flex: 1, backgroundColor: '#1d152b', justifyContent: 'center', alignItems: 'center' }}>
-      <Text style={{ color: 'white' }}>Following Content</Text>
-    </View>
-  );
-}
+import { Video } from 'expo-av';
 
 const Tab = createMaterialTopTabNavigator();
 const TAB_BAR_HEIGHT = 48;
@@ -96,6 +90,7 @@ export default function TopTabsNavigator() {
   const [postText, setPostText] = useState('');
   const [modalText, setModalText] = useState('');
   const [modalImage, setModalImage] = useState<string | null>(null);
+  const [modalVideo, setModalVideo] = useState<string | null>(null);
   const homeScreenRef = useRef<HomeScreenRef>(null);
 
   const pickImage = async () => {
@@ -108,6 +103,23 @@ export default function TopTabsNavigator() {
       const uri = result.assets[0].uri;
       const base64 = await FileSystem.readAsStringAsync(uri, { encoding: 'base64' });
       setModalImage(`data:image/jpeg;base64,${base64}`);
+      setModalVideo(null);
+    }
+  };
+
+  const pickVideo = async () => {
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Videos,
+    });
+    if (!result.canceled) {
+      const uri = result.assets[0].uri;
+      const info = await FileSystem.getInfoAsync(uri);
+      if (info.size && info.size > 20 * 1024 * 1024) {
+        Alert.alert('Video too large', 'Please select a video under 20MB.');
+        return;
+      }
+      setModalVideo(uri);
+      setModalImage(null);
     }
   };
 
@@ -127,9 +139,14 @@ export default function TopTabsNavigator() {
   };
 
   const handleModalPost = async () => {
-    await homeScreenRef.current?.createPost(modalText, modalImage ?? undefined);
+    await homeScreenRef.current?.createPost(
+      modalText,
+      modalImage ?? undefined,
+      modalVideo ?? undefined,
+    );
     setModalText('');
     setModalImage(null);
+    setModalVideo(null);
     setModalVisible(false);
   };
 
@@ -205,7 +222,7 @@ export default function TopTabsNavigator() {
         }}
       >
         <Tab.Screen name="For you" component={ForYouScreen} />
-        <Tab.Screen name="Following" component={FollowingScreen} />
+        <Tab.Screen name="Following" component={FollowingFeedScreen} />
         </Tab.Navigator>
 
         <TouchableOpacity
@@ -227,8 +244,18 @@ export default function TopTabsNavigator() {
               {modalImage && (
                 <Image source={{ uri: modalImage }} style={styles.preview} />
               )}
+              {!modalImage && modalVideo && (
+                <Video
+                  source={{ uri: modalVideo }}
+                  style={styles.preview}
+                  useNativeControls
+                  isMuted
+                  resizeMode="contain"
+                />
+              )}
               <View style={styles.buttonRow}>
                 <Button title="Add Image" onPress={pickImage} />
+                <Button title="Add Video" onPress={pickVideo} />
                 <Button title="Post" onPress={handleModalPost} />
               </View>
               <Button title="Cancel" onPress={() => setModalVisible(false)} />
