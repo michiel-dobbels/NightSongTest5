@@ -257,6 +257,11 @@ const HomeScreen = forwardRef<HomeScreenRef, HomeScreenProps>(
       initialize(
         slice.map(p => ({ id: p.id, like_count: likeCounts[p.id] })),
       );
+      slice.forEach(p => {
+        if (user && p.user_id === user.id) {
+          updatePost(p.id, { like_count: likeCounts[p.id] });
+        }
+      });
 
 
 
