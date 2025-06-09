@@ -31,8 +31,7 @@ import PostCard, { Post } from '../components/PostCard';
 import { replyEvents } from '../replyEvents';
 import { postEvents } from '../postEvents';
 import { likeEvents } from '../likeEvents';
-
-const CANCEL_ACTION = { text: 'Confirm', style: 'cancel' } as const;
+import { CONFIRM_ACTION } from '../constants/ui';
 
 
 const STORAGE_KEY = 'cached_posts';
@@ -181,7 +180,7 @@ export default function ProfileScreen() {
 
   const confirmDeletePost = (id: string) => {
     Alert.alert('Delete Post', 'Are you sure you want to delete this post?', [
-      CANCEL_ACTION,
+      CONFIRM_ACTION,
 
       { text: 'Delete', style: 'destructive', onPress: () => handleDeletePost(id) },
     ]);

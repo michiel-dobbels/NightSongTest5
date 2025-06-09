@@ -26,8 +26,7 @@ import { colors } from '../styles/colors';
 import { usePostStore } from '../contexts/PostStoreContext';
 import useLike from '../hooks/useLike';
 import { postEvents } from '../postEvents';
-
-const CANCEL_ACTION = { text: 'Confirm', style: 'cancel' } as const;
+import { CONFIRM_ACTION } from '../constants/ui';
 
 
 const CHILD_PREFIX = 'cached_child_replies_';
@@ -124,7 +123,7 @@ export default function ReplyDetailScreen() {
 
   const confirmDeletePost = (id: string) => {
     Alert.alert('Delete Post', 'Are you sure you want to delete this post?', [
-      CANCEL_ACTION,
+      CONFIRM_ACTION,
 
       {
         text: 'Delete',
@@ -149,7 +148,7 @@ export default function ReplyDetailScreen() {
 
   const confirmDeleteReply = (id: string) => {
     Alert.alert('Delete Post', 'Are you sure you want to delete this post?', [
-      CANCEL_ACTION,
+      CONFIRM_ACTION,
 
       {
         text: 'Delete',
