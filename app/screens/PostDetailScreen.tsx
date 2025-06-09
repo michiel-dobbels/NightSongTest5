@@ -542,12 +542,8 @@ export default function PostDetailScreen() {
             onProfilePress={() =>
               user?.id === post.user_id
                 ? navigation.navigate('Profile')
-                : navigation.navigate('UserProfile', {
+                : navigation.navigate('OtherUserProfile', {
                     userId: post.user_id,
-                    avatarUrl: post.profiles?.image_url,
-                    bannerUrl: post.profiles?.banner_url,
-                    name: displayName,
-                    username: userName,
                   })
             }
             
@@ -581,12 +577,8 @@ export default function PostDetailScreen() {
               onProfilePress={() =>
                 isMe
                   ? navigation.navigate('Profile')
-                  : navigation.navigate('UserProfile', {
+                  : navigation.navigate('OtherUserProfile', {
                       userId: item.user_id,
-                      avatarUrl: avatarUri,
-                      bannerUrl: item.profiles?.banner_url,
-                      name,
-                      username: replyUserName,
                     })
               }
               onDelete={() => confirmDeleteReply(item.id)}
