@@ -290,8 +290,17 @@ export function AuthProvider({ children }) {
       .order('created_at', { ascending: false });
     if (!error && data) {
       setMyPosts(prev => {
+        const prevMap = Object.fromEntries(prev.map(p => [p.id, p]));
         const temps = prev.filter(p => String(p.id).startsWith('temp-'));
-        const merged = [...temps, ...data];
+        const merged = [
+          ...temps,
+          ...data.map(p => {
+            const existing = prevMap[p.id];
+            return existing
+              ? { ...p, like_count: existing.like_count, liked: existing.liked }
+              : p;
+          }),
+        ];
         const seen = new Set();
         return merged.filter(p => {
           if (seen.has(p.id)) return false;
