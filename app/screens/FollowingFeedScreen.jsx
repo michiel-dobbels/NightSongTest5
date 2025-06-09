@@ -45,6 +45,7 @@ export default function FollowingFeedScreen() {
       .from('posts')
       .select(
         'id, content, image_url, video_url, user_id, created_at, reply_count, like_count, username, profiles(username, name, image_url, banner_url)'
+
       )
       .in('user_id', ids)
       .order('created_at', { ascending: false });

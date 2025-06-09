@@ -36,6 +36,7 @@ import * as ImagePicker from 'expo-image-picker';
 import * as FileSystem from 'expo-file-system';
 import { Video } from 'expo-av';
 
+
 const Tab = createMaterialTopTabNavigator();
 const TAB_BAR_HEIGHT = 48;
 const HEADER_BOTTOM_PADDING = 0;
