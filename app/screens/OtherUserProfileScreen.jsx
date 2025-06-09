@@ -15,7 +15,8 @@ import { getLikeCounts } from '../../lib/getLikeCounts';
 export default function OtherUserProfileScreen() {
   const route = useRoute();
   const navigation = useNavigation();
-  const { user } = useAuth()!;
+  const { user } = useAuth();
+
   const { initialize } = usePostStore();
   const { userId: routeUserId, username: routeUsername } = route.params || {};
 
