@@ -28,6 +28,7 @@ import {
 import { useAuth } from '../AuthContext';
 import { useNavigation } from '@react-navigation/native';
 import HomeScreen, { HomeScreenRef } from './screens/HomeScreen';
+import ProfileScreen from './screens/ProfileScreen';
 import { supabase } from '../lib/supabase';
 import { colors } from './styles/colors';
 import * as ImagePicker from 'expo-image-picker';
@@ -206,6 +207,11 @@ export default function TopTabsNavigator() {
       >
         <Tab.Screen name="For you" component={ForYouScreen} />
         <Tab.Screen name="Following" component={FollowingScreen} />
+        <Tab.Screen
+          name="Profile"
+          component={ProfileScreen}
+          options={{ unmountOnBlur: false }}
+        />
         </Tab.Navigator>
 
         <TouchableOpacity
@@ -247,7 +253,7 @@ export default function TopTabsNavigator() {
         <TouchableOpacity
           onPress={() => {
             closeDrawer();
-            navigation.navigate('Profile');
+            navigation.navigate('Tabs', { screen: 'Profile' });
           }}
         >
 

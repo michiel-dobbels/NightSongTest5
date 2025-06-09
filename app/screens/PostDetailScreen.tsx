@@ -519,7 +519,7 @@ export default function PostDetailScreen() {
       <View style={styles.backButton}>
         <Button
           title="Return"
-          onPress={() => (fromProfile ? navigation.navigate('Profile') : navigation.goBack())}
+          onPress={() => (fromProfile ? navigation.navigate('Tabs', { screen: 'Profile' }) : navigation.goBack())}
         />
       </View>
       <FlatList
@@ -535,7 +535,7 @@ export default function PostDetailScreen() {
             onPress={() => {}}
             onProfilePress={() =>
               user?.id === post.user_id
-                ? navigation.navigate('Profile')
+                ? navigation.navigate('Tabs', { screen: 'Profile' })
                 : navigation.navigate('UserProfile', {
                     userId: post.user_id,
                     avatarUrl: post.profiles?.image_url,
@@ -574,7 +574,7 @@ export default function PostDetailScreen() {
               }
               onProfilePress={() =>
                 isMe
-                  ? navigation.navigate('Profile')
+                  ? navigation.navigate('Tabs', { screen: 'Profile' })
                   : navigation.navigate('UserProfile', {
                       userId: item.user_id,
                       avatarUrl: avatarUri,

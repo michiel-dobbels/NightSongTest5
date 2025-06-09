@@ -610,7 +610,7 @@ const HomeScreen = forwardRef<HomeScreenRef, HomeScreenProps>(
               onPress={() => navigation.navigate('PostDetail', { post: item })}
               onProfilePress={() =>
                 isMe
-                  ? navigation.navigate('Profile')
+                  ? navigation.navigate('Tabs', { screen: 'Profile' })
                   : navigation.navigate('UserProfile', {
                       userId: item.user_id,
                       avatarUrl: avatarUri,
