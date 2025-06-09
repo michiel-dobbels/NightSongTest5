@@ -29,12 +29,10 @@ import { supabase } from '../../lib/supabase';
 import { getLikeCounts } from '../../lib/getLikeCounts';
 import PostCard, { Post } from '../components/PostCard';
 import { replyEvents } from '../replyEvents';
-import { postEvents } from '../postEvents';
-import { likeEvents } from '../likeEvents';
+
 import { CONFIRM_ACTION } from '../constants/ui';
 
 
-const STORAGE_KEY = 'cached_posts';
 const COUNT_STORAGE_KEY = 'cached_reply_counts';
 const REPLY_STORAGE_PREFIX = 'cached_replies_';
 
@@ -56,13 +54,11 @@ export default function ProfileScreen() {
     setProfileImageUri,
     bannerImageUri,
     setBannerImageUri,
-    myPosts: posts,
+    myPosts,
     fetchMyPosts,
     removePost,
   } = useAuth() as any;
   const { initialize, remove, posts: storePosts } = usePostStore();
-
-  const [myPosts, setMyPosts] = useState<Post[]>(posts ?? []);
 
   const [replyCounts, setReplyCounts] = useState<{ [key: string]: number }>({});
   const [replyModalVisible, setReplyModalVisible] = useState(false);
@@ -74,28 +70,16 @@ export default function ProfileScreen() {
 
   useEffect(() => {
     const syncLikes = async () => {
-      if (posts && posts.length) {
-
-        const seen = new Set<string>();
-        const unique = posts.filter(p => {
-          if (seen.has(p.id)) return false;
-          seen.add(p.id);
-          return true;
-        });
-        setMyPosts(unique);
-        const missing = unique.filter(p => storePosts[p.id] === undefined);
+      if (myPosts && myPosts.length) {
+        const missing = myPosts.filter(p => storePosts[p.id] === undefined);
         if (missing.length) {
           const counts = await getLikeCounts(missing.map(p => p.id));
           initialize(missing.map(p => ({ id: p.id, like_count: counts[p.id] })));
         }
-
-      } else {
-        setMyPosts([]);
       }
     };
     syncLikes();
-
-  }, [posts, storePosts]);
+  }, [myPosts, storePosts]);
 
   useEffect(() => {
     const loadCounts = async () => {
@@ -125,39 +109,6 @@ export default function ProfileScreen() {
     };
   }, []);
 
-  useEffect(() => {
-    const onPostDeleted = (postId: string) => {
-      setMyPosts(prev => {
-        const updated = prev.filter(p => p.id !== postId);
-        AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
-        return updated;
-      });
-      setReplyCounts(prev => {
-        const { [postId]: _omit, ...rest } = prev;
-        AsyncStorage.setItem(COUNT_STORAGE_KEY, JSON.stringify(rest));
-        return rest;
-      });
-
-    };
-    postEvents.on('postDeleted', onPostDeleted);
-    return () => {
-      postEvents.off('postDeleted', onPostDeleted);
-    };
-  }, []);
-
-  useEffect(() => {
-    const onLikeChanged = ({ id, count, liked }: { id: string; count: number; liked: boolean }) => {
-      setMyPosts(prev => {
-        const updated = prev.map(p => (p.id === id ? { ...p, like_count: count, liked } : p));
-        AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
-        return updated;
-      });
-    };
-    likeEvents.on('likeChanged', onLikeChanged);
-    return () => {
-      likeEvents.off('likeChanged', onLikeChanged);
-    };
-  }, []);
 
   useFocusEffect(
     useCallback(() => {
@@ -185,11 +136,6 @@ export default function ProfileScreen() {
   };
 
   const handleDeletePost = async (id: string) => {
-    setMyPosts(prev => {
-      const updated = prev.filter(p => p.id !== id);
-      AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
-      return updated;
-    });
     setReplyCounts(prev => {
       const { [id]: _removed, ...rest } = prev;
       AsyncStorage.setItem(COUNT_STORAGE_KEY, JSON.stringify(rest));
