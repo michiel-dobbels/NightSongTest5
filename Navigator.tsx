@@ -6,6 +6,7 @@ import PostDetailScreen from './app/screens/PostDetailScreen';
 import ReplyDetailScreen from './app/screens/ReplyDetailScreen';
 import ProfileScreen from './app/screens/ProfileScreen';
 import UserProfileScreen from './app/screens/UserProfileScreen';
+import OtherUserProfileScreen from './app/screens/OtherUserProfileScreen';
 import FollowListScreen from './app/screens/FollowListScreen';
 import { useAuth } from './AuthContext';
 
@@ -25,6 +26,7 @@ export default function Navigator() {
           <Stack.Screen name="ReplyDetail" component={ReplyDetailScreen} />
           <Stack.Screen name="Profile" component={ProfileScreen} />
           <Stack.Screen name="UserProfile" component={UserProfileScreen} />
+          <Stack.Screen name="OtherUserProfile" component={OtherUserProfileScreen} />
           <Stack.Screen name="FollowList" component={FollowListScreen} />
         </>
       ) : (
