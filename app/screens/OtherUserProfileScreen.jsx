@@ -36,7 +36,7 @@ export default function OtherUserProfileScreen() {
       let query = supabase.from('profiles').select('id, username, name, image_url, banner_url').single();
       if (routeUserId) query = query.eq('id', routeUserId);
       else if (routeUsername) query = query.eq('username', routeUsername);
-      const { data, error } = await query;
+          .select('id, content, image_url, video_url, user_id, created_at, reply_count, like_count, username, profiles(username, name, image_url, banner_url)')
       if (isMounted) {
         if (!error && data) {
           setProfile({

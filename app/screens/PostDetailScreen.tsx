@@ -13,6 +13,7 @@ import {
   Alert,
   Image,
 } from 'react-native';
+import { Video } from 'expo-av';
 import * as ImagePicker from 'expo-image-picker';
 import * as FileSystem from 'expo-file-system';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -74,6 +75,7 @@ export default function PostDetailScreen() {
 
   const [replyText, setReplyText] = useState('');
   const [replyImage, setReplyImage] = useState<string | null>(null);
+  const [replyVideo, setReplyVideo] = useState<string | null>(null);
   const [replies, setReplies] = useState<Reply[]>([]);
   const [allReplies, setAllReplies] = useState<Reply[]>([]);
   const [replyCounts, setReplyCounts] = useState<{ [key: string]: number }>({});
@@ -101,6 +103,21 @@ export default function PostDetailScreen() {
       const uri = result.assets[0].uri;
       const base64 = await FileSystem.readAsStringAsync(uri, { encoding: 'base64' });
       setReplyImage(`data:image/jpeg;base64,${base64}`);
+    }
+  };
+
+  const pickVideo = async () => {
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Videos,
+    });
+    if (!result.canceled) {
+      const uri = result.assets[0].uri;
+      const info = await FileSystem.getInfoAsync(uri);
+      if (info.size && info.size > 20 * 1024 * 1024) {
+        Alert.alert('Video too large', 'Please select a video under 20MB.');
+        return;
+      }
+      setReplyVideo(uri);
     }
   };
 
@@ -230,7 +247,7 @@ export default function PostDetailScreen() {
     const { data, error } = await supabase
       .from('replies')
       .select(
-        'id, post_id, parent_id, user_id, content, image_url, created_at, reply_count, like_count, username, profiles(username, name, image_url, banner_url)'
+        'id, post_id, parent_id, user_id, content, image_url, video_url, created_at, reply_count, like_count, username, profiles(username, name, image_url, banner_url)'
       )
 
 
@@ -413,7 +430,7 @@ export default function PostDetailScreen() {
 
 
   const handleReply = async () => {
-    if ((!replyText.trim() && !replyImage) || !user) return;
+    if ((!replyText.trim() && !replyImage && !replyVideo) || !user) return;
 
     const newReply: Reply = {
       id: `temp-${Date.now()}`,
@@ -422,6 +439,7 @@ export default function PostDetailScreen() {
       user_id: user.id,
       content: replyText,
       image_url: replyImage ?? undefined,
+      video_url: replyVideo ?? undefined,
       created_at: new Date().toISOString(),
       username: profile.name || profile.username,
       reply_count: 0,
@@ -454,6 +472,25 @@ export default function PostDetailScreen() {
     replyEvents.emit('replyAdded', post.id);
     setReplyText('');
     setReplyImage(null);
+    setReplyVideo(null);
+
+    let uploadedUrl = null;
+    if (replyVideo) {
+      try {
+        const ext = replyVideo.split('.').pop() || 'mp4';
+        const path = `${user.id}-${Date.now()}.${ext}`;
+        const resp = await fetch(replyVideo);
+        const blob = await resp.blob();
+        const { error: uploadError } = await supabase.storage
+          .from('reply-videos')
+          .upload(path, blob);
+        if (!uploadError) {
+          uploadedUrl = supabase.storage.from('reply-videos').getPublicUrl(path).data.publicUrl;
+        }
+      } catch (e) {
+        console.error('Video upload failed', e);
+      }
+    }
 
     let { data, error } = await supabase
 
@@ -465,6 +502,7 @@ export default function PostDetailScreen() {
             user_id: user.id,
             content: replyText,
             image_url: replyImage,
+            video_url: uploadedUrl,
             username: profile.name || profile.username,
           },
         ])
@@ -599,8 +637,18 @@ export default function PostDetailScreen() {
         {replyImage && (
           <Image source={{ uri: replyImage }} style={styles.preview} />
         )}
+        {!replyImage && replyVideo && (
+          <Video
+            source={{ uri: replyVideo }}
+            style={styles.preview}
+            useNativeControls
+            isMuted
+            resizeMode="contain"
+          />
+        )}
         <View style={styles.buttonRow}>
           <Button title="Add Image" onPress={pickImage} />
+          <Button title="Add Video" onPress={pickVideo} />
           <Button title="Post" onPress={handleReply} />
         </View>
       </View>
