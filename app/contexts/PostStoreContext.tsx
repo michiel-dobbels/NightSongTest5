@@ -1,4 +1,10 @@
-import React, { createContext, useContext, useEffect, useState } from 'react';
+import React, {
+  createContext,
+  useContext,
+  useEffect,
+  useState,
+  useRef,
+} from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { supabase } from '../../lib/supabase';
 import { likeEvents } from '../likeEvents';
@@ -32,10 +38,19 @@ const PostStoreContext = createContext<PostStore | undefined>(undefined);
 export const PostStoreProvider: React.FC<{ children: React.ReactNode }> = ({
   children,
 }) => {
-  const { user } = useAuth() as any;
+  const { user, updatePost } = useAuth() as any;
   const [posts, setPosts] = useState<Record<string, PostState>>({});
+  const lastLoadedUserIdRef = useRef<string | null>(null);
 
   useEffect(() => {
+    if (user?.id && lastLoadedUserIdRef.current === user.id) {
+      return;
+    }
+    if (!user) {
+      setPosts({});
+      lastLoadedUserIdRef.current = null;
+      return;
+    }
     const load = async () => {
       try {
         const likeStored = await AsyncStorage.getItem(LIKE_COUNT_KEY);
@@ -72,13 +87,18 @@ export const PostStoreProvider: React.FC<{ children: React.ReactNode }> = ({
               liked: prev[id]?.liked ?? !!likedMap[id],
             };
           });
+          if (JSON.stringify(prev) === JSON.stringify(merged)) {
+            return prev;
+          }
           return merged;
         });
       } catch (e) {
         console.error('Failed to load post store', e);
       }
     };
-    load();
+    load().then(() => {
+      if (user?.id) lastLoadedUserIdRef.current = user.id;
+    });
   }, [user]);
 
   const initialize = async (items: ItemInfo[]) => {
@@ -147,6 +167,7 @@ export const PostStoreProvider: React.FC<{ children: React.ReactNode }> = ({
     setPosts(prev => ({ ...prev, [id]: { likeCount: newCount, liked: newLiked } }));
     if (!isReply) {
       likeEvents.emit('likeChanged', { id, count: newCount, liked: newLiked });
+      updatePost(id, { like_count: newCount, liked: newLiked });
     }
 
     try {
@@ -212,6 +233,7 @@ export const PostStoreProvider: React.FC<{ children: React.ReactNode }> = ({
         await AsyncStorage.setItem(LIKE_COUNT_KEY, JSON.stringify(likeMap));
         if (!isReply) {
           likeEvents.emit('likeChanged', { id, count, liked: newLiked });
+          updatePost(id, { like_count: count, liked: newLiked });
         }
       }
     } catch (e) {
