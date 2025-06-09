@@ -132,12 +132,12 @@ export function AuthProvider({ children }) {
   }, [user]);
 
   useEffect(() => {
-    const onLikeChanged = ({ id, count }) => {
+    const onLikeChanged = ({ id, count, liked }) => {
       setMyPosts(prev => {
         const found = prev.find(p => p.id === id);
         if (!found) return prev;
         const updated = prev.map(p =>
-          p.id === id ? { ...p, like_count: count } : p,
+          p.id === id ? { ...p, like_count: count, liked } : p,
         );
         AsyncStorage.setItem('cached_posts', JSON.stringify(updated));
         return updated;

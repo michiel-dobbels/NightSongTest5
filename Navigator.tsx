@@ -23,7 +23,11 @@ export default function Navigator() {
           <Stack.Screen name="Tabs" component={TopTabsNavigator} />
           <Stack.Screen name="PostDetail" component={PostDetailScreen} />
           <Stack.Screen name="ReplyDetail" component={ReplyDetailScreen} />
-          <Stack.Screen name="Profile" component={ProfileScreen} />
+          <Stack.Screen
+            name="Profile"
+            component={ProfileScreen}
+            options={{ unmountOnBlur: false }}
+          />
           <Stack.Screen name="UserProfile" component={UserProfileScreen} />
           <Stack.Screen name="FollowList" component={FollowListScreen} />
         </>

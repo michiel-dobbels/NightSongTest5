@@ -30,7 +30,6 @@ import { getLikeCounts } from '../../lib/getLikeCounts';
 import PostCard, { Post } from '../components/PostCard';
 import { replyEvents } from '../replyEvents';
 import { postEvents } from '../postEvents';
-import { likeEvents } from '../likeEvents';
 import { CONFIRM_ACTION } from '../constants/ui';
 
 
@@ -57,7 +56,6 @@ export default function ProfileScreen() {
     bannerImageUri,
     setBannerImageUri,
     myPosts: posts,
-    fetchMyPosts,
     removePost,
   } = useAuth() as any;
   const { initialize, remove, posts: storePosts } = usePostStore();
@@ -145,23 +143,9 @@ export default function ProfileScreen() {
     };
   }, []);
 
-  useEffect(() => {
-    const onLikeChanged = ({ id, count }: { id: string; count: number }) => {
-      setMyPosts(prev => {
-        const updated = prev.map(p => (p.id === id ? { ...p, like_count: count } : p));
-        AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
-        return updated;
-      });
-    };
-    likeEvents.on('likeChanged', onLikeChanged);
-    return () => {
-      likeEvents.off('likeChanged', onLikeChanged);
-    };
-  }, []);
 
   useFocusEffect(
     useCallback(() => {
-      fetchMyPosts();
       const syncCounts = async () => {
         const stored = await AsyncStorage.getItem(COUNT_STORAGE_KEY);
         if (stored) {
@@ -173,7 +157,7 @@ export default function ProfileScreen() {
         }
       };
       syncCounts();
-    }, [fetchMyPosts]),
+    }, []),
   );
 
   const confirmDeletePost = (id: string) => {
@@ -196,8 +180,8 @@ export default function ProfileScreen() {
       return rest;
     });
     remove(id);
-    await removePost(id);
     await supabase.from('posts').delete().eq('id', id);
+    await removePost(id);
 
   };
 
