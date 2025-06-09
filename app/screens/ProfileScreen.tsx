@@ -146,9 +146,9 @@ export default function ProfileScreen() {
   }, []);
 
   useEffect(() => {
-    const onLikeChanged = ({ id, count }: { id: string; count: number }) => {
+    const onLikeChanged = ({ id, count, liked }: { id: string; count: number; liked: boolean }) => {
       setMyPosts(prev => {
-        const updated = prev.map(p => (p.id === id ? { ...p, like_count: count } : p));
+        const updated = prev.map(p => (p.id === id ? { ...p, like_count: count, liked } : p));
         AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
         return updated;
       });
@@ -196,8 +196,8 @@ export default function ProfileScreen() {
       return rest;
     });
     remove(id);
-    await removePost(id);
     await supabase.from('posts').delete().eq('id', id);
+    await removePost(id);
 
   };
 
