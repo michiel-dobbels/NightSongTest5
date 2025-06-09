@@ -16,6 +16,7 @@ import {
   KeyboardAvoidingView,
   Platform,
 } from 'react-native';
+import { Video } from 'expo-av';
 import * as ImagePicker from 'expo-image-picker';
 import * as FileSystem from 'expo-file-system';
 import { useNavigation } from '@react-navigation/native';
@@ -66,6 +67,7 @@ export default function ProfileScreen() {
   const [activePostId, setActivePostId] = useState<string | null>(null);
   const [replyText, setReplyText] = useState('');
   const [replyImage, setReplyImage] = useState<string | null>(null);
+  const [replyVideo, setReplyVideo] = useState<string | null>(null);
 
   const { followers, following } = useFollowCounts(profile?.id ?? null);
 
@@ -147,6 +149,7 @@ export default function ProfileScreen() {
     setActivePostId(postId);
     setReplyText('');
     setReplyImage(null);
+    setReplyVideo(null);
     setReplyModalVisible(true);
   };
 
@@ -163,8 +166,23 @@ export default function ProfileScreen() {
     }
   };
 
+  const pickReplyVideo = async () => {
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Videos,
+    });
+    if (!result.canceled) {
+      const uri = result.assets[0].uri;
+      const info = await FileSystem.getInfoAsync(uri);
+      if (info.size && info.size > 20 * 1024 * 1024) {
+        Alert.alert('Video too large', 'Please select a video under 20MB.');
+        return;
+      }
+      setReplyVideo(uri);
+    }
+  };
+
   const handleReplySubmit = async () => {
-    if (!activePostId || (!replyText.trim() && !replyImage) || !profile) {
+    if (!activePostId || (!replyText.trim() && !replyImage && !replyVideo) || !profile) {
       setReplyModalVisible(false);
       return;
     }
@@ -178,6 +196,7 @@ export default function ProfileScreen() {
       user_id: profile.id,
       content: replyText,
       image_url: replyImage ?? undefined,
+      video_url: replyVideo ?? undefined,
       created_at: new Date().toISOString(),
       username: profile.name || profile.username,
       reply_count: 0,
@@ -209,6 +228,25 @@ export default function ProfileScreen() {
 
     setReplyText('');
     setReplyImage(null);
+    setReplyVideo(null);
+
+    let uploadedUrl = null;
+    if (replyVideo) {
+      try {
+        const ext = replyVideo.split('.').pop() || 'mp4';
+        const path = `${profile.id}-${Date.now()}.${ext}`;
+        const resp = await fetch(replyVideo);
+        const blob = await resp.blob();
+        const { error: uploadError } = await supabase.storage
+          .from('reply-videos')
+          .upload(path, blob);
+        if (!uploadError) {
+          uploadedUrl = supabase.storage.from('reply-videos').getPublicUrl(path).data.publicUrl;
+        }
+      } catch (e) {
+        console.error('Video upload failed', e);
+      }
+    }
 
     let { data, error } = await supabase
       .from('replies')
@@ -218,6 +256,7 @@ export default function ProfileScreen() {
         user_id: profile.id,
         content: replyText,
         image_url: replyImage,
+        video_url: uploadedUrl,
         username: profile.name || profile.username,
       })
       .select()
@@ -384,8 +423,18 @@ export default function ProfileScreen() {
             {replyImage && (
               <Image source={{ uri: replyImage }} style={styles.preview} />
             )}
+            {!replyImage && replyVideo && (
+              <Video
+                source={{ uri: replyVideo }}
+                style={styles.preview}
+                useNativeControls
+                isMuted
+                resizeMode="contain"
+              />
+            )}
             <View style={styles.buttonRow}>
               <Button title="Add Image" onPress={pickReplyImage} />
+              <Button title="Add Video" onPress={pickReplyVideo} />
               <Button title="Post" onPress={handleReplySubmit} />
             </View>
           </View>

@@ -1,5 +1,6 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, Image, StyleSheet } from 'react-native';
+import { Video } from 'expo-av';
 import useLike from '../hooks/useLike';
 import { Ionicons } from '@expo/vector-icons';
 import { colors } from '../styles/colors';
@@ -8,6 +9,7 @@ export interface Post {
   id: string;
   content: string;
   image_url?: string;
+  video_url?: string;
   user_id: string;
   created_at: string;
   username?: string;
@@ -88,6 +90,15 @@ export default function PostCard({
             {post.image_url && (
               <Image source={{ uri: post.image_url }} style={styles.postImage} />
             )}
+            {!post.image_url && post.video_url && (
+              <Video
+                source={{ uri: post.video_url }}
+                style={styles.postVideo}
+                useNativeControls
+                isMuted
+                resizeMode="contain"
+              />
+            )}
           </View>
         </View>
         <TouchableOpacity style={styles.replyCountContainer} onPress={onOpenReplies}>
@@ -148,6 +159,12 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   postImage: {
+    width: '100%',
+    height: 200,
+    borderRadius: 6,
+    marginTop: 8,
+  },
+  postVideo: {
     width: '100%',
     height: 200,
     borderRadius: 6,
