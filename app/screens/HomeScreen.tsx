@@ -14,6 +14,7 @@ import {
   KeyboardAvoidingView,
   Platform,
 } from 'react-native';
+import { Video } from 'expo-av';
 import * as ImagePicker from 'expo-image-picker';
 import * as FileSystem from 'expo-file-system';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
@@ -41,7 +42,7 @@ const PAGE_SIZE = 10;
 
 
 export interface HomeScreenRef {
-  createPost: (text: string, imageUri?: string) => Promise<void>;
+  createPost: (text: string, imageUri?: string, videoUri?: string) => Promise<void>;
 }
 
 interface HomeScreenProps {
@@ -70,6 +71,7 @@ const HomeScreen = forwardRef<HomeScreenRef, HomeScreenProps>(
   const [activePostId, setActivePostId] = useState<string | null>(null);
   const [replyText, setReplyText] = useState('');
   const [replyImage, setReplyImage] = useState<string | null>(null);
+  const [replyVideo, setReplyVideo] = useState<string | null>(null);
 
   const confirmDeletePost = (id: string) => {
     Alert.alert("Delete Post", "Are you sure you want to delete this post?", [
@@ -102,6 +104,7 @@ const HomeScreen = forwardRef<HomeScreenRef, HomeScreenProps>(
     setActivePostId(postId);
     setReplyText('');
     setReplyImage(null);
+    setReplyVideo(null);
     setReplyModalVisible(true);
   };
 
@@ -120,10 +123,25 @@ const HomeScreen = forwardRef<HomeScreenRef, HomeScreenProps>(
     }
   };
 
+  const pickReplyVideo = async () => {
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Videos,
+    });
+    if (!result.canceled) {
+      const uri = result.assets[0].uri;
+      const info = await FileSystem.getInfoAsync(uri);
+      if (info.size && info.size > 20 * 1024 * 1024) {
+        Alert.alert('Video too large', 'Please select a video under 20MB.');
+        return;
+      }
+      setReplyVideo(uri);
+    }
+  };
+
   const handleReplySubmit = async () => {
     if (
       !activePostId ||
-      (!replyText.trim() && !replyImage) ||
+      (!replyText.trim() && !replyImage && !replyVideo) ||
       !user
     ) {
 
@@ -140,6 +158,7 @@ const HomeScreen = forwardRef<HomeScreenRef, HomeScreenProps>(
       user_id: user.id,
       content: replyText,
       image_url: replyImage ?? undefined,
+      video_url: replyVideo ?? undefined,
       created_at: new Date().toISOString(),
       username: profile.name || profile.username,
       reply_count: 0,
@@ -172,6 +191,25 @@ const HomeScreen = forwardRef<HomeScreenRef, HomeScreenProps>(
 
     setReplyText('');
     setReplyImage(null);
+    setReplyVideo(null);
+
+    let uploadedUrl = null;
+    if (replyVideo) {
+      try {
+        const ext = replyVideo.split('.').pop() || 'mp4';
+        const path = `${user.id}-${Date.now()}.${ext}`;
+        const resp = await fetch(replyVideo);
+        const blob = await resp.blob();
+        const { error: uploadError } = await supabase.storage
+          .from('reply-videos')
+          .upload(path, blob);
+        if (!uploadError) {
+          uploadedUrl = supabase.storage.from('reply-videos').getPublicUrl(path).data.publicUrl;
+        }
+      } catch (e) {
+        console.error('Video upload failed', e);
+      }
+    }
 
     let { data, error } = await supabase
       .from('replies')
@@ -181,6 +219,7 @@ const HomeScreen = forwardRef<HomeScreenRef, HomeScreenProps>(
         user_id: user.id,
         content: replyText,
         image_url: replyImage,
+        video_url: uploadedUrl,
         username: profile.name || profile.username,
       })
       .select()
@@ -225,7 +264,7 @@ const HomeScreen = forwardRef<HomeScreenRef, HomeScreenProps>(
     const { data, error } = await supabase
       .from('posts')
       .select(
-        'id, content, image_url, user_id, created_at, reply_count, like_count, profiles(username, name, image_url, banner_url)',
+        'id, content, image_url, video_url, user_id, created_at, reply_count, like_count, profiles(username, name, image_url, banner_url)'
       )
       .order('created_at', { ascending: false })
       .range(0, PAGE_SIZE - 1);
@@ -295,8 +334,8 @@ const HomeScreen = forwardRef<HomeScreenRef, HomeScreenProps>(
 
 
 
-  const createPost = async (text: string, imageUri?: string) => {
-    if (!text.trim() && !imageUri) return;
+  const createPost = async (text: string, imageUri?: string, videoUri?: string) => {
+    if (!text.trim() && !imageUri && !videoUri) return;
 
 
     if (!user) return;
@@ -305,6 +344,7 @@ const HomeScreen = forwardRef<HomeScreenRef, HomeScreenProps>(
       id: `temp-${Date.now()}`,
       content: text,
       image_url: imageUri,
+      video_url: videoUri ?? undefined,
       username: profile.name || profile.username,
       user_id: user.id,
       created_at: new Date().toISOString(),
@@ -338,6 +378,7 @@ const HomeScreen = forwardRef<HomeScreenRef, HomeScreenProps>(
       content: text,
       created_at: newPost.created_at,
       image_url: imageUri,
+      video_url: videoUri ?? undefined,
       username: profile.name || profile.username,
     });
 
@@ -345,6 +386,26 @@ const HomeScreen = forwardRef<HomeScreenRef, HomeScreenProps>(
       setPostText('');
     }
 
+
+    let uploadedVideoUrl: string | null = null;
+    if (videoUri) {
+      try {
+        const ext = videoUri.split('.').pop() || 'mp4';
+        const path = `${user.id}-${Date.now()}.${ext}`;
+        const resp = await fetch(videoUri);
+        const blob = await resp.blob();
+        const { error: uploadError } = await supabase.storage
+          .from('post-videos')
+          .upload(path, blob);
+        if (!uploadError) {
+          uploadedVideoUrl = supabase.storage
+            .from('post-videos')
+            .getPublicUrl(path).data.publicUrl;
+        }
+      } catch (e) {
+        console.error('Video upload failed', e);
+      }
+    }
 
     let { data, error } = await supabase
       .from('posts')
@@ -354,6 +415,7 @@ const HomeScreen = forwardRef<HomeScreenRef, HomeScreenProps>(
           user_id: user.id,
           username: profile.name || profile.username,
           image_url: imageUri,
+          video_url: uploadedVideoUrl,
         },
       ])
 
@@ -373,7 +435,14 @@ const HomeScreen = forwardRef<HomeScreenRef, HomeScreenProps>(
           const updated = prev
             .map((p) =>
               p.id === newPost.id
-                ? { ...p, id: data.id, created_at: data.created_at, reply_count: 0 }
+                ? {
+                    ...p,
+                    id: data.id,
+                    created_at: data.created_at,
+                    reply_count: 0,
+                    video_url: data.video_url,
+                    image_url: data.image_url,
+                  }
                 : p
             )
             .slice(0, PAGE_SIZE);
@@ -386,6 +455,7 @@ const HomeScreen = forwardRef<HomeScreenRef, HomeScreenProps>(
           content: data.content,
           created_at: data.created_at,
           image_url: data.image_url,
+          video_url: data.video_url,
           username: data.username,
         });
         setReplyCounts(prev => {
@@ -617,12 +687,8 @@ const HomeScreen = forwardRef<HomeScreenRef, HomeScreenProps>(
               onProfilePress={() =>
                 isMe
                   ? navigation.navigate('Profile')
-                  : navigation.navigate('UserProfile', {
+                  : navigation.navigate('OtherUserProfile', {
                       userId: item.user_id,
-                      avatarUrl: avatarUri,
-                      bannerUrl: item.profiles?.banner_url,
-                      name: displayName,
-                      username: userName,
                     })
               }
               onDelete={() => confirmDeletePost(item.id)}
@@ -647,8 +713,18 @@ const HomeScreen = forwardRef<HomeScreenRef, HomeScreenProps>(
             {replyImage && (
               <Image source={{ uri: replyImage }} style={styles.preview} />
             )}
+            {!replyImage && replyVideo && (
+              <Video
+                source={{ uri: replyVideo }}
+                style={styles.preview}
+                useNativeControls
+                isMuted
+                resizeMode="contain"
+              />
+            )}
             <View style={styles.buttonRow}>
               <Button title="Add Image" onPress={pickReplyImage} />
+              <Button title="Add Video" onPress={pickReplyVideo} />
               <Button title="Post" onPress={handleReplySubmit} />
             </View>
           </View>

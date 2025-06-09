@@ -13,6 +13,7 @@ import {
   Alert,
   Image,
 } from 'react-native';
+import { Video } from 'expo-av';
 import * as ImagePicker from 'expo-image-picker';
 import * as FileSystem from 'expo-file-system';
 import { Ionicons } from '@expo/vector-icons';
@@ -53,6 +54,7 @@ interface Reply {
   user_id: string;
   content: string;
   image_url?: string;
+  video_url?: string;
   created_at: string;
   reply_count?: number;
   like_count?: number;
@@ -70,6 +72,7 @@ interface Post {
   id: string;
   content: string;
   image_url?: string;
+  video_url?: string;
   user_id: string;
   created_at: string;
   reply_count?: number;
@@ -121,6 +124,7 @@ export default function ReplyDetailScreen() {
 
   const [replyText, setReplyText] = useState('');
   const [replyImage, setReplyImage] = useState<string | null>(null);
+  const [replyVideo, setReplyVideo] = useState<string | null>(null);
   const [replies, setReplies] = useState<Reply[]>([]);
   const [allReplies, setAllReplies] = useState<Reply[]>([]);
   const [replyCounts, setReplyCounts] = useState<{ [key: string]: number }>({});
@@ -174,6 +178,21 @@ export default function ReplyDetailScreen() {
       const uri = result.assets[0].uri;
       const base64 = await FileSystem.readAsStringAsync(uri, { encoding: 'base64' });
       setReplyImage(`data:image/jpeg;base64,${base64}`);
+    }
+  };
+
+  const pickVideo = async () => {
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Videos,
+    });
+    if (!result.canceled) {
+      const uri = result.assets[0].uri;
+      const info = await FileSystem.getInfoAsync(uri);
+      if (info.size && info.size > 20 * 1024 * 1024) {
+        Alert.alert('Video too large', 'Please select a video under 20MB.');
+        return;
+      }
+      setReplyVideo(uri);
     }
   };
 
@@ -233,7 +252,7 @@ export default function ReplyDetailScreen() {
     const { data, error } = await supabase
       .from('replies')
       .select(
-        'id, post_id, parent_id, user_id, content, image_url, created_at, reply_count, like_count, username, profiles(username, name, image_url, banner_url)'
+        'id, post_id, parent_id, user_id, content, image_url, video_url, created_at, reply_count, like_count, username, profiles(username, name, image_url, banner_url)'
       )
 
 
@@ -448,7 +467,7 @@ export default function ReplyDetailScreen() {
   }, []);
 
   const handleReply = async () => {
-    if ((!replyText.trim() && !replyImage) || !user) return;
+    if ((!replyText.trim() && !replyImage && !replyVideo) || !user) return;
 
     const newReply: Reply = {
       id: `temp-${Date.now()}`,
@@ -457,6 +476,7 @@ export default function ReplyDetailScreen() {
       user_id: user.id,
       content: replyText,
       image_url: replyImage ?? undefined,
+      video_url: replyVideo ?? undefined,
       created_at: new Date().toISOString(),
       reply_count: 0,
       username: profile.name || profile.username,
@@ -489,6 +509,25 @@ export default function ReplyDetailScreen() {
     initialize([{ id: newReply.id, like_count: 0 }]);
     setReplyText('');
     setReplyImage(null);
+    setReplyVideo(null);
+
+    let uploadedUrl = null;
+    if (replyVideo) {
+      try {
+        const ext = replyVideo.split('.').pop() || 'mp4';
+        const path = `${user.id}-${Date.now()}.${ext}`;
+        const resp = await fetch(replyVideo);
+        const blob = await resp.blob();
+        const { error: uploadError } = await supabase.storage
+          .from('reply-videos')
+          .upload(path, blob);
+        if (!uploadError) {
+          uploadedUrl = supabase.storage.from('reply-videos').getPublicUrl(path).data.publicUrl;
+        }
+      } catch (e) {
+        console.error('Video upload failed', e);
+      }
+    }
 
     let { data, error } = await supabase
       .from('replies')
@@ -499,6 +538,7 @@ export default function ReplyDetailScreen() {
           user_id: user.id,
           content: replyText,
           image_url: replyImage,
+          video_url: uploadedUrl,
           username: profile.name || profile.username,
         },
       ])
@@ -583,18 +623,13 @@ export default function ReplyDetailScreen() {
                 )}
                 <View style={styles.row}>
                   <TouchableOpacity
-                    onPress={() =>
-                      user?.id === originalPost.user_id
-                        ? navigation.navigate('Profile')
-                        : navigation.navigate('UserProfile', {
-                            userId: originalPost.user_id,
-                            avatarUrl: originalPost.profiles?.image_url,
-                            bannerUrl: originalPost.profiles?.banner_url,
-
-                            name: originalName,
-                            username: originalUserName,
-                          })
-                    }
+                  onPress={() =>
+                    user?.id === originalPost.user_id
+                      ? navigation.navigate('Profile')
+                      : navigation.navigate('OtherUserProfile', {
+                          userId: originalPost.user_id,
+                        })
+                  }
                   >
                     {user?.id === originalPost.user_id && profileImageUri ? (
                       <Image source={{ uri: profileImageUri }} style={styles.avatar} />
@@ -615,6 +650,15 @@ export default function ReplyDetailScreen() {
                     <Text style={styles.postContent}>{originalPost.content}</Text>
                     {originalPost.image_url && (
                       <Image source={{ uri: originalPost.image_url }} style={styles.postImage} />
+                    )}
+                    {!originalPost.image_url && originalPost.video_url && (
+                      <Video
+                        source={{ uri: originalPost.video_url }}
+                        style={styles.postVideo}
+                        useNativeControls
+                        isMuted
+                        resizeMode="contain"
+                      />
                     )}
                   </View>
                 </View>
@@ -655,13 +699,8 @@ export default function ReplyDetailScreen() {
                       onPress={() =>
                         isMe
                           ? navigation.navigate('Profile')
-                          : navigation.navigate('UserProfile', {
+                          : navigation.navigate('OtherUserProfile', {
                               userId: a.user_id,
-                              avatarUrl: avatarUri,
-                              bannerUrl: a.profiles?.banner_url,
-
-                              name: ancestorName,
-                              username: ancestorUserName,
                             })
                       }
                     >
@@ -684,6 +723,15 @@ export default function ReplyDetailScreen() {
                     <Text style={styles.postContent}>{a.content}</Text>
                     {a.image_url && (
                       <Image source={{ uri: a.image_url }} style={styles.postImage} />
+                    )}
+                    {!a.image_url && a.video_url && (
+                      <Video
+                        source={{ uri: a.video_url }}
+                        style={styles.postVideo}
+                        useNativeControls
+                        isMuted
+                        resizeMode="contain"
+                      />
                     )}
                   </View>
                 </View>
@@ -716,13 +764,8 @@ export default function ReplyDetailScreen() {
                   onPress={() =>
                     user?.id === parent.user_id
                       ? navigation.navigate('Profile')
-                      : navigation.navigate('UserProfile', {
+                      : navigation.navigate('OtherUserProfile', {
                           userId: parent.user_id,
-                          avatarUrl: parent.profiles?.image_url,
-                          bannerUrl: parent.profiles?.banner_url,
-
-                          name,
-                          username: parentUserName,
                         })
                   }
                 >
@@ -745,6 +788,15 @@ export default function ReplyDetailScreen() {
                   <Text style={styles.postContent}>{parent.content}</Text>
                   {parent.image_url && (
                     <Image source={{ uri: parent.image_url }} style={styles.postImage} />
+                  )}
+                  {!parent.image_url && parent.video_url && (
+                    <Video
+                      source={{ uri: parent.video_url }}
+                      style={styles.postVideo}
+                      useNativeControls
+                      isMuted
+                      resizeMode="contain"
+                    />
                   )}
                 </View>
               </View>
@@ -796,13 +848,8 @@ export default function ReplyDetailScreen() {
                     onPress={() =>
                       isMe
                         ? navigation.navigate('Profile')
-                        : navigation.navigate('UserProfile', {
+                        : navigation.navigate('OtherUserProfile', {
                             userId: item.user_id,
-                            avatarUrl: avatarUri,
-                            bannerUrl: item.profiles?.banner_url,
-
-                            name: childName,
-                            username: childUserName,
                           })
                     }
                   >
@@ -825,6 +872,15 @@ export default function ReplyDetailScreen() {
                     <Text style={styles.postContent}>{item.content}</Text>
                     {item.image_url && (
                       <Image source={{ uri: item.image_url }} style={styles.postImage} />
+                    )}
+                    {!item.image_url && item.video_url && (
+                      <Video
+                        source={{ uri: item.video_url }}
+                        style={styles.postVideo}
+                        useNativeControls
+                        isMuted
+                        resizeMode="contain"
+                      />
                     )}
                   </View>
                 </View>
@@ -856,8 +912,18 @@ export default function ReplyDetailScreen() {
         {replyImage && (
           <Image source={{ uri: replyImage }} style={styles.preview} />
         )}
+        {!replyImage && replyVideo && (
+          <Video
+            source={{ uri: replyVideo }}
+            style={styles.preview}
+            useNativeControls
+            isMuted
+            resizeMode="contain"
+          />
+        )}
         <View style={styles.buttonRow}>
           <Button title="Add Image" onPress={pickImage} />
+          <Button title="Add Video" onPress={pickVideo} />
           <Button title="Post" onPress={handleReply} />
         </View>
       </View>
@@ -942,6 +1008,12 @@ const styles = StyleSheet.create({
   },
 
   postImage: {
+    width: '100%',
+    height: 200,
+    borderRadius: 6,
+    marginTop: 8,
+  },
+  postVideo: {
     width: '100%',
     height: 200,
     borderRadius: 6,
