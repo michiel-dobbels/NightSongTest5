@@ -32,7 +32,7 @@ const PostStoreContext = createContext<PostStore | undefined>(undefined);
 export const PostStoreProvider: React.FC<{ children: React.ReactNode }> = ({
   children,
 }) => {
-  const { user } = useAuth() as any;
+  const { user, updatePost } = useAuth() as any;
   const [posts, setPosts] = useState<Record<string, PostState>>({});
 
   useEffect(() => {
@@ -147,6 +147,7 @@ export const PostStoreProvider: React.FC<{ children: React.ReactNode }> = ({
     setPosts(prev => ({ ...prev, [id]: { likeCount: newCount, liked: newLiked } }));
     if (!isReply) {
       likeEvents.emit('likeChanged', { id, count: newCount, liked: newLiked });
+      updatePost(id, { like_count: newCount, liked: newLiked });
     }
 
     try {
@@ -212,6 +213,7 @@ export const PostStoreProvider: React.FC<{ children: React.ReactNode }> = ({
         await AsyncStorage.setItem(LIKE_COUNT_KEY, JSON.stringify(likeMap));
         if (!isReply) {
           likeEvents.emit('likeChanged', { id, count, liked: newLiked });
+          updatePost(id, { like_count: count, liked: newLiked });
         }
       }
     } catch (e) {

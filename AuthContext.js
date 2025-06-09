@@ -4,6 +4,7 @@ import React, {
   useEffect,
   useState,
   useCallback,
+  useRef,
 } from 'react';
 import { supabase } from './lib/supabase';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -20,6 +21,7 @@ export function AuthProvider({ children }) {
   const [profileImageUri, setProfileImageUriState] = useState(null);
   const [bannerImageUri, setBannerImageUriState] = useState(null);
   const [myPosts, setMyPosts] = useState([]);
+  const lastFetchedUserIdRef = useRef(null);
 
   // Helper ensures a profile exists for the given user so posts can
   // reference it without foreign-key errors
@@ -128,8 +130,10 @@ export function AuthProvider({ children }) {
       if (bannerStored) setBannerImageUriState(bannerStored);
     };
     loadImage();
-    fetchMyPosts();
-  }, [user]);
+    if (user?.id && lastFetchedUserIdRef.current !== user.id) {
+      fetchMyPosts();
+    }
+  }, [user, fetchMyPosts]);
 
   useEffect(() => {
     const onLikeChanged = ({ id, count, liked }) => {
@@ -223,6 +227,7 @@ export function AuthProvider({ children }) {
     setProfileImageUriState(null);
     setBannerImageUriState(null);
     setMyPosts([]);
+    lastFetchedUserIdRef.current = null;
   };
 
   const setProfileImageUri = async (uri) => {
@@ -290,15 +295,30 @@ export function AuthProvider({ children }) {
       .order('created_at', { ascending: false });
     if (!error && data) {
       setMyPosts(prev => {
+        const prevMap = Object.fromEntries(prev.map(p => [p.id, p]));
         const temps = prev.filter(p => String(p.id).startsWith('temp-'));
-        const merged = [...temps, ...data];
+        const merged = [
+          ...temps,
+          ...data.map(p => {
+            const existing = prevMap[p.id];
+            return existing
+              ? { ...p, like_count: existing.like_count, liked: existing.liked }
+              : p;
+          }),
+        ];
         const seen = new Set();
-        return merged.filter(p => {
+        const filtered = merged.filter(p => {
           if (seen.has(p.id)) return false;
           seen.add(p.id);
           return true;
         });
+
+        if (JSON.stringify(prev) === JSON.stringify(filtered)) {
+          return prev;
+        }
+        return filtered;
       });
+      lastFetchedUserIdRef.current = id;
     }
 
   }, [user]);
