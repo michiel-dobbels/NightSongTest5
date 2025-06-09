@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, TouchableOpacity, Image, StyleSheet } from 'react-native';
+import { View, Text, TouchableOpacity, Image, StyleSheet, TouchableWithoutFeedback } from 'react-native';
 import { Video } from 'expo-av';
 import useLike from '../hooks/useLike';
 import { Ionicons } from '@expo/vector-icons';
@@ -91,13 +91,18 @@ export default function PostCard({
               <Image source={{ uri: post.image_url }} style={styles.postImage} />
             )}
             {!post.image_url && post.video_url && (
-              <Video
-                source={{ uri: post.video_url }}
-                style={styles.postVideo}
-                useNativeControls
-                isMuted
-                resizeMode="contain"
-              />
+              <TouchableWithoutFeedback onPressIn={e => e.stopPropagation()}>
+                <View>
+                  <Video
+                    source={{ uri: post.video_url }}
+                    style={styles.postVideo}
+                    useNativeControls
+                    isMuted
+                    resizeMode="contain"
+                    onTouchStart={e => e.stopPropagation()}
+                  />
+                </View>
+              </TouchableWithoutFeedback>
             )}
           </View>
         </View>
