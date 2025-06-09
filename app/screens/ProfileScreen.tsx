@@ -29,6 +29,7 @@ import { supabase } from '../../lib/supabase';
 import { getLikeCounts } from '../../lib/getLikeCounts';
 import PostCard, { Post } from '../components/PostCard';
 import { replyEvents } from '../replyEvents';
+import { likeEvents } from '../likeEvents';
 
 import { CONFIRM_ACTION } from '../constants/ui';
 
@@ -56,6 +57,7 @@ export default function ProfileScreen() {
     setBannerImageUri,
     myPosts,
     removePost,
+    updatePost,
   } = useAuth() as any;
   const { initialize, remove, posts: storePosts } = usePostStore();
 
@@ -107,6 +109,16 @@ export default function ProfileScreen() {
       replyEvents.off('replyAdded', onReplyAdded);
     };
   }, []);
+
+  useEffect(() => {
+    const onLikeChanged = ({ id, count, liked }: { id: string; count: number; liked: boolean }) => {
+      updatePost(id, { like_count: count, liked });
+    };
+    likeEvents.on('likeChanged', onLikeChanged);
+    return () => {
+      likeEvents.off('likeChanged', onLikeChanged);
+    };
+  }, [updatePost]);
 
 
 
@@ -350,7 +362,7 @@ export default function ProfileScreen() {
             bannerUrl={bannerImageUri ?? undefined}
             replyCount={replyCounts[item.id] ?? item.reply_count ?? 0}
             onPress={() => navigation.navigate('PostDetail', { post: item })}
-            onProfilePress={() => navigation.navigate('Profile')}
+            onProfilePress={() => navigation.navigate('Tabs', { screen: 'Profile' })}
             onDelete={() => confirmDeletePost(item.id)}
             onOpenReplies={() => openReplyModal(item.id)}
           />
