@@ -579,7 +579,7 @@ export default function ReplyDetailScreen() {
                   <TouchableOpacity
                     onPress={() =>
                       user?.id === originalPost.user_id
-                        ? navigation.navigate('Profile')
+                        ? navigation.navigate('Tabs', { screen: 'Profile' })
                         : navigation.navigate('UserProfile', {
                             userId: originalPost.user_id,
                             avatarUrl: originalPost.profiles?.image_url,
@@ -648,7 +648,7 @@ export default function ReplyDetailScreen() {
                     <TouchableOpacity
                       onPress={() =>
                         isMe
-                          ? navigation.navigate('Profile')
+                          ? navigation.navigate('Tabs', { screen: 'Profile' })
                           : navigation.navigate('UserProfile', {
                               userId: a.user_id,
                               avatarUrl: avatarUri,
@@ -709,7 +709,7 @@ export default function ReplyDetailScreen() {
                 <TouchableOpacity
                   onPress={() =>
                     user?.id === parent.user_id
-                      ? navigation.navigate('Profile')
+                      ? navigation.navigate('Tabs', { screen: 'Profile' })
                       : navigation.navigate('UserProfile', {
                           userId: parent.user_id,
                           avatarUrl: parent.profiles?.image_url,
@@ -789,7 +789,7 @@ export default function ReplyDetailScreen() {
                   <TouchableOpacity
                     onPress={() =>
                       isMe
-                        ? navigation.navigate('Profile')
+                        ? navigation.navigate('Tabs', { screen: 'Profile' })
                         : navigation.navigate('UserProfile', {
                             userId: item.user_id,
                             avatarUrl: avatarUri,

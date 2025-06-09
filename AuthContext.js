@@ -10,6 +10,7 @@ import { supabase } from './lib/supabase';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { postEvents } from './app/postEvents';
 import { likeEvents } from './app/likeEvents';
+import { replyEvents } from './app/replyEvents';
 
 
 const AuthContext = createContext();
@@ -150,6 +151,26 @@ export function AuthProvider({ children }) {
     likeEvents.on('likeChanged', onLikeChanged);
     return () => {
       likeEvents.off('likeChanged', onLikeChanged);
+    };
+  }, []);
+
+  useEffect(() => {
+    const onReplyAdded = (postId) => {
+      setMyPosts(prev => {
+        const found = prev.find(p => p.id === postId);
+        if (!found) return prev;
+        const updated = prev.map(p =>
+          p.id === postId
+            ? { ...p, reply_count: (p.reply_count ?? 0) + 1 }
+            : p,
+        );
+        AsyncStorage.setItem('cached_posts', JSON.stringify(updated));
+        return updated;
+      });
+    };
+    replyEvents.on('replyAdded', onReplyAdded);
+    return () => {
+      replyEvents.off('replyAdded', onReplyAdded);
     };
   }, []);
 
@@ -336,11 +357,15 @@ export function AuthProvider({ children }) {
         p.id === tempId ? { ...p, ...updated } : p
       );
       const seen = new Set();
-      return updatedList.filter(p => {
+      const deduped = updatedList.filter(p => {
         if (seen.has(p.id)) return false;
         seen.add(p.id);
         return true;
       });
+      AsyncStorage.setItem('cached_posts', JSON.stringify(deduped)).catch(e =>
+        console.error('Failed to update cached posts', e),
+      );
+      return deduped;
     });
   };
 
