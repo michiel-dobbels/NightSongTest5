@@ -85,10 +85,7 @@ const HomeScreen = forwardRef<HomeScreenRef, HomeScreenProps>(
       return rest;
     });
     remove(id);
-    await removePost(id);
-
     await supabase.from('posts').delete().eq('id', id);
-    remove(id);
     await removePost(id);
   };
 
