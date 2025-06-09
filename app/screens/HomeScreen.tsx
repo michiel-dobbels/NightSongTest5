@@ -27,6 +27,7 @@ import { colors } from '../styles/colors';
 import { replyEvents } from '../replyEvents';
 import { postEvents } from '../postEvents';
 import { likeEvents } from '../likeEvents';
+import { CONFIRM_ACTION } from '../constants/ui';
 
 import PostCard, { Post } from '../components/PostCard';
 
@@ -66,7 +67,7 @@ const HomeScreen = forwardRef<HomeScreenRef, HomeScreenProps>(
 
   const confirmDeletePost = (id: string) => {
     Alert.alert("Delete Post", "Are you sure you want to delete this post?", [
-      { text: "Cancel", style: "cancel" },
+      CONFIRM_ACTION,
       { text: "Delete", style: "destructive", onPress: () => handleDeletePost(id) }
     ]);
   };

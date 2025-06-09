@@ -26,6 +26,7 @@ import { replyEvents } from '../replyEvents';
 import { usePostStore } from '../contexts/PostStoreContext';
 import { postEvents } from '../postEvents';
 import PostCard, { Post } from '../components/PostCard';
+import { CONFIRM_ACTION } from '../constants/ui';
 
 const REPLY_STORAGE_PREFIX = 'cached_replies_';
 const COUNT_STORAGE_KEY = 'cached_reply_counts';
@@ -75,7 +76,7 @@ export default function PostDetailScreen() {
 
   const confirmDeletePost = (id: string) => {
     Alert.alert('Delete Post', 'Are you sure you want to delete this post?', [
-      { text: 'Confirm', style: 'cancel' },
+      CONFIRM_ACTION,
       {
         text: 'Delete',
         style: 'destructive',
@@ -108,7 +109,7 @@ export default function PostDetailScreen() {
 
   const confirmDeleteReply = (id: string) => {
     Alert.alert('Delete Post', 'Are you sure you want to delete this post?', [
-      { text: 'Confirm', style: 'cancel' },
+      CONFIRM_ACTION,
       {
         text: 'Delete',
         style: 'destructive',
