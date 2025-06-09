@@ -16,6 +16,7 @@ export default function OtherUserProfileScreen() {
   const route = useRoute();
   const navigation = useNavigation();
   const { user } = useAuth();
+
   const { initialize } = usePostStore();
   const { userId: routeUserId, username: routeUsername } = route.params || {};
 
@@ -118,6 +119,7 @@ export default function OtherUserProfileScreen() {
 
   const renderHeader = () => (
     <View style={styles.headerContainer}>
+
       {profile.banner_url ? (
         <Image source={{ uri: profile.banner_url }} style={styles.banner} />
       ) : (
@@ -183,6 +185,7 @@ export default function OtherUserProfileScreen() {
       )}
     />
   );
+
 }
 
 const styles = StyleSheet.create({
@@ -195,6 +198,7 @@ const styles = StyleSheet.create({
   },
   headerContainer: {
     padding: 20,
+
   },
   backButton: { alignSelf: 'flex-start', marginBottom: 20 },
   profileRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 20 },
