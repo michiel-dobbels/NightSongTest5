@@ -55,7 +55,6 @@ export default function ProfileScreen() {
     bannerImageUri,
     setBannerImageUri,
     myPosts,
-    fetchMyPosts,
     removePost,
   } = useAuth() as any;
   const { initialize, remove, posts: storePosts } = usePostStore();
@@ -112,7 +111,6 @@ export default function ProfileScreen() {
 
   useFocusEffect(
     useCallback(() => {
-      fetchMyPosts();
       const syncCounts = async () => {
         const stored = await AsyncStorage.getItem(COUNT_STORAGE_KEY);
         if (stored) {
@@ -124,7 +122,7 @@ export default function ProfileScreen() {
         }
       };
       syncCounts();
-    }, [fetchMyPosts]),
+    }, []),
   );
 
   const confirmDeletePost = (id: string) => {
