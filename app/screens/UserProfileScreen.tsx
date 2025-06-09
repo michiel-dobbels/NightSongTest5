@@ -64,7 +64,7 @@ export default function UserProfileScreen() {
   const [posts, setPosts] = useState<Post[]>([]);
   const { initialize, remove } = usePostStore();
 
-  const { user } = useAuth() as any;
+  const { user } = useAuth()!;
 
   const name = profile?.name ?? initialName ?? null;
   const username = profile?.username ?? initialUsername ?? null;

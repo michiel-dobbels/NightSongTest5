@@ -58,7 +58,7 @@ export default function ProfileScreen() {
     myPosts,
     removePost,
     updatePost,
-  } = useAuth() as any;
+  } = useAuth()!;
   const { initialize, remove, posts: storePosts } = usePostStore();
 
   const [replyCounts, setReplyCounts] = useState<{ [key: string]: number }>({});

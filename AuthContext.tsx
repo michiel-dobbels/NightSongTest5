@@ -6,27 +6,57 @@ import React, {
   useCallback,
   useRef,
 } from 'react';
+import { User } from '@supabase/supabase-js';
 import { supabase } from './lib/supabase';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { postEvents } from './app/postEvents';
 import { likeEvents } from './app/likeEvents';
 import { replyEvents } from './app/replyEvents';
+import { Post } from './app/components/PostCard';
 
+export interface Profile {
+  id: string;
+  username: string;
+  name: string | null;
+  email?: string | null;
+}
 
-const AuthContext = createContext();
+export interface AuthContextValue {
+  user: User | null;
+  profile: Profile | null;
+  loading: boolean;
+  profileImageUri: string | null;
+  setProfileImageUri: (uri: string | null) => Promise<void>;
+  bannerImageUri: string | null;
+  setBannerImageUri: (uri: string | null) => Promise<void>;
+  myPosts: Post[];
+  addPost: (post: Post) => void;
+  updatePost: (tempId: string, updated: Partial<Post>) => void;
+  removePost: (postId: string) => Promise<void>;
+  signUp: (
+    email: string,
+    password: string,
+    username: string,
+    name: string,
+  ) => Promise<{ error: any }>;
+  signIn: (email: string, password: string) => Promise<{ error: any }>;
+  signOut: () => Promise<void>;
+}
 
-export function AuthProvider({ children }) {
-  const [user, setUser] = useState(null);
-  const [profile, setProfile] = useState(null); // 🧠 includes username
+const AuthContext = createContext<AuthContextValue | undefined>(undefined);
+
+export function AuthProvider({ children }: { children: React.ReactNode }) {
+  const [user, setUser] = useState<User | null>(null);
+  const [profile, setProfile] = useState<Profile | null>(null); // 🧠 includes username
   const [loading, setLoading] = useState(true);
-  const [profileImageUri, setProfileImageUriState] = useState(null);
-  const [bannerImageUri, setBannerImageUriState] = useState(null);
-  const [myPosts, setMyPosts] = useState([]);
-  const lastFetchedUserIdRef = useRef(null);
+  const [profileImageUri, setProfileImageUriState] = useState<string | null>(null);
+  const [bannerImageUri, setBannerImageUriState] = useState<string | null>(null);
+  const [myPosts, setMyPosts] = useState<Post[]>([]);
+  const lastFetchedUserIdRef = useRef<string | null>(null);
 
   // Helper ensures a profile exists for the given user so posts can
   // reference it without foreign-key errors
-  const ensureProfile = async (authUser) => {
+  const ensureProfile = async (authUser: User | null): Promise<Profile | null> => {
     if (!authUser) return null;
 
     // Try to load an existing profile first
@@ -175,7 +205,10 @@ export function AuthProvider({ children }) {
   }, []);
 
   // 🔐 Sign in
-  async function signIn(email, password) {
+  async function signIn(
+    email: string,
+    password: string,
+  ): Promise<{ error: any }> {
     const { user, error } = await supabase.auth.signIn({
       email,
       password,
@@ -193,7 +226,12 @@ export function AuthProvider({ children }) {
   }
 
   // 🔐 Sign up
-  const signUp = async (email, password, username, name) => {
+  const signUp = async (
+    email: string,
+    password: string,
+    username: string,
+    name: string,
+  ): Promise<{ error: any }> => {
     if (!username || !name) {
       return { error: { message: 'Username and name are required' } };
 
@@ -251,7 +289,7 @@ export function AuthProvider({ children }) {
     lastFetchedUserIdRef.current = null;
   };
 
-  const setProfileImageUri = async (uri) => {
+  const setProfileImageUri = async (uri: string | null): Promise<void> => {
     setProfileImageUriState(uri);
     const authUser = supabase.auth.user();
     const id = authUser?.id || user?.id;
@@ -272,7 +310,7 @@ export function AuthProvider({ children }) {
     }
   };
 
-  const setBannerImageUri = async (uri) => {
+  const setBannerImageUri = async (uri: string | null): Promise<void> => {
     setBannerImageUriState(uri);
     const authUser = supabase.auth.user();
     const id = authUser?.id || user?.id;
@@ -344,14 +382,14 @@ export function AuthProvider({ children }) {
 
   }, [user]);
 
-  const addPost = (post) => {
+  const addPost = (post: Post): void => {
     setMyPosts(prev => {
       const withoutDuplicate = prev.filter(p => p.id !== post.id);
       return [post, ...withoutDuplicate];
     });
   };
 
-  const updatePost = (tempId, updated) => {
+  const updatePost = (tempId: string, updated: Partial<Post>): void => {
     setMyPosts(prev => {
       const updatedList = prev.map(p =>
         p.id === tempId ? { ...p, ...updated } : p
@@ -365,7 +403,7 @@ export function AuthProvider({ children }) {
     });
   };
 
-  const removePost = async (postId) => {
+  const removePost = async (postId: string): Promise<void> => {
     setMyPosts(prev => prev.filter(p => p.id !== postId));
     try {
       const stored = await AsyncStorage.getItem('cached_posts');
@@ -404,7 +442,7 @@ export function AuthProvider({ children }) {
 
 
   // 🔍 Fetch profile by ID
-  const fetchProfile = async (userId) => {
+  const fetchProfile = async (userId: string): Promise<Profile | null> => {
     const { data, error } = await supabase
       .from('profiles')
       .select('*')
@@ -479,6 +517,6 @@ export function AuthProvider({ children }) {
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
 
-export function useAuth() {
+export function useAuth(): AuthContextValue | undefined {
   return useContext(AuthContext);
 }

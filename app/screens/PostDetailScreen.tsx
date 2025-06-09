@@ -59,7 +59,13 @@ interface Reply {
 export default function PostDetailScreen() {
   const route = useRoute<any>();
   const navigation = useNavigation<any>();
-  const { user, profile, profileImageUri, bannerImageUri, removePost } = useAuth() as any;
+  const {
+    user,
+    profile,
+    profileImageUri,
+    bannerImageUri,
+    removePost,
+  } = useAuth()!;
   const { initialize, remove } = usePostStore();
   const post = route.params.post as Post;
   const fromProfile = route.params?.fromProfile ?? false;

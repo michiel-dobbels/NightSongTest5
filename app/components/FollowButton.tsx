@@ -10,7 +10,7 @@ interface FollowButtonProps {
 
 export default function FollowButton({ targetUserId, onToggle }: FollowButtonProps) {
 
-  const { user } = useAuth() as any;
+  const { user } = useAuth()!;
   const [following, setFollowing] = useState<boolean | null>(null);
 
   useEffect(() => {

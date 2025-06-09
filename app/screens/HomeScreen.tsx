@@ -51,9 +51,15 @@ interface HomeScreenProps {
 const HomeScreen = forwardRef<HomeScreenRef, HomeScreenProps>(
   ({ hideInput }, ref) => {
     const navigation = useNavigation<any>();
-  const { user, profile, profileImageUri, bannerImageUri, addPost, updatePost, removePost } =
-
-    useAuth() as any;
+    const {
+      user,
+      profile,
+      profileImageUri,
+      bannerImageUri,
+      addPost,
+      updatePost,
+      removePost,
+    } = useAuth()!;
   const { initialize, mergeLiked, remove } = usePostStore();
   const [postText, setPostText] = useState('');
   const [posts, setPosts] = useState<Post[]>([]);

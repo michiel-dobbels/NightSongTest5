@@ -12,7 +12,7 @@ import { useAuth } from './AuthContext';
 const Stack = createNativeStackNavigator();
 
 export default function Navigator() {
-  const { user, loading } = useAuth();
+  const { user, loading } = useAuth()!;
 
   if (loading) return null;
 

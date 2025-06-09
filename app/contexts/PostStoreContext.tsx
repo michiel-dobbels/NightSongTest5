@@ -38,7 +38,7 @@ const PostStoreContext = createContext<PostStore | undefined>(undefined);
 export const PostStoreProvider: React.FC<{ children: React.ReactNode }> = ({
   children,
 }) => {
-  const { user, updatePost } = useAuth() as any;
+  const { user, updatePost } = useAuth()!;
   const [posts, setPosts] = useState<Record<string, PostState>>({});
   const lastLoadedUserIdRef = useRef<string | null>(null);
 

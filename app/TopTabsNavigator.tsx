@@ -80,7 +80,7 @@ function HeaderTabBar(
 }
 
 export default function TopTabsNavigator() {
-  const { profile, user, signOut } = useAuth() as any;
+  const { profile, user, signOut } = useAuth()!;
   
 
   const insets = useSafeAreaInsets();

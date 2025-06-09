@@ -104,7 +104,13 @@ function LikeInfo({ id, isPost = false }: { id: string; isPost?: boolean }) {
 export default function ReplyDetailScreen() {
   const route = useRoute<any>();
   const navigation = useNavigation<any>();
-  const { user, profile, profileImageUri, bannerImageUri, removePost } = useAuth() as any;
+  const {
+    user,
+    profile,
+    profileImageUri,
+    bannerImageUri,
+    removePost,
+  } = useAuth()!;
   const { initialize, remove } = usePostStore();
   const parent = route.params.reply as Reply;
   const originalPost = route.params.originalPost as Post | undefined;
