@@ -18,7 +18,7 @@ import {
 } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 import * as FileSystem from 'expo-file-system';
-import { useNavigation, useFocusEffect } from '@react-navigation/native';
+import { useNavigation } from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 import { useAuth } from '../../AuthContext';
@@ -55,7 +55,6 @@ export default function ProfileScreen() {
     bannerImageUri,
     setBannerImageUri,
     myPosts,
-    fetchMyPosts,
     removePost,
   } = useAuth() as any;
   const { initialize, remove, posts: storePosts } = usePostStore();
@@ -110,22 +109,6 @@ export default function ProfileScreen() {
   }, []);
 
 
-  useFocusEffect(
-    useCallback(() => {
-      fetchMyPosts();
-      const syncCounts = async () => {
-        const stored = await AsyncStorage.getItem(COUNT_STORAGE_KEY);
-        if (stored) {
-          try {
-            setReplyCounts(JSON.parse(stored));
-          } catch (e) {
-            console.error('Failed to parse cached counts', e);
-          }
-        }
-      };
-      syncCounts();
-    }, [fetchMyPosts]),
-  );
 
   const confirmDeletePost = (id: string) => {
     Alert.alert('Delete Post', 'Are you sure you want to delete this post?', [
