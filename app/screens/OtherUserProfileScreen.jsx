@@ -116,8 +116,9 @@ export default function OtherUserProfileScreen() {
     );
   }
 
-  return (
-    <View style={styles.container}>
+  const renderHeader = () => (
+    <View style={styles.headerContainer}>
+
       {profile.banner_url ? (
         <Image source={{ uri: profile.banner_url }} style={styles.banner} />
       ) : (
@@ -158,32 +159,45 @@ export default function OtherUserProfileScreen() {
           <Text style={styles.statsText}>{following ?? 0} Following</Text>
         </TouchableOpacity>
       </View>
-      <FlatList
-        data={posts}
-        keyExtractor={item => item.id}
-        renderItem={({ item }) => (
-          <PostCard
-            post={item}
-            isOwner={false}
-            avatarUri={profile.image_url || undefined}
-            bannerUrl={item.profiles?.banner_url || undefined}
-            replyCount={item.reply_count ?? 0}
-            onPress={() => navigation.navigate('PostDetail', { post: item })}
-            onProfilePress={() => {}}
-            onDelete={() => {}}
-            onOpenReplies={() => navigation.navigate('PostDetail', { post: item })}
-          />
-        )}
-      />
     </View>
   );
+
+  return (
+    <FlatList
+      style={styles.container}
+      contentContainerStyle={styles.contentContainer}
+      data={posts}
+      ListHeaderComponent={renderHeader}
+      keyExtractor={item => item.id}
+      renderItem={({ item }) => (
+        <PostCard
+          post={item}
+          isOwner={false}
+          avatarUri={profile.image_url || undefined}
+          bannerUrl={item.profiles?.banner_url || undefined}
+          replyCount={item.reply_count ?? 0}
+          onPress={() => navigation.navigate('PostDetail', { post: item })}
+          onProfilePress={() => {}}
+          onDelete={() => {}}
+          onOpenReplies={() => navigation.navigate('PostDetail', { post: item })}
+        />
+      )}
+    />
+  );
+
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    padding: 20,
     backgroundColor: colors.background,
+  },
+  contentContainer: {
+    paddingBottom: 0,
+  },
+  headerContainer: {
+    padding: 20,
+
   },
   backButton: { alignSelf: 'flex-start', marginBottom: 20 },
   profileRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 20 },
