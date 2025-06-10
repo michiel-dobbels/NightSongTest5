@@ -19,7 +19,7 @@ import {
 import { Video } from 'expo-av';
 import * as ImagePicker from 'expo-image-picker';
 import * as FileSystem from 'expo-file-system';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 import { useAuth } from '../../AuthContext';
@@ -29,6 +29,8 @@ import { colors } from '../styles/colors';
 import { supabase } from '../../lib/supabase';
 import { getLikeCounts } from '../../lib/getLikeCounts';
 import PostCard, { Post } from '../components/PostCard';
+import ReplyCard, { Reply } from '../components/ReplyCard';
+import { createMaterialTopTabNavigator } from '@react-navigation/material-top-tabs';
 import { replyEvents } from '../replyEvents';
 import { likeEvents } from '../likeEvents';
 
@@ -37,6 +39,8 @@ import { CONFIRM_ACTION } from '../constants/ui';
 
 const COUNT_STORAGE_KEY = 'cached_reply_counts';
 const REPLY_STORAGE_PREFIX = 'cached_replies_';
+
+const Tab = createMaterialTopTabNavigator();
 
 
 
@@ -68,6 +72,7 @@ export default function ProfileScreen() {
   const [replyText, setReplyText] = useState('');
   const [replyImage, setReplyImage] = useState<string | null>(null);
   const [replyVideo, setReplyVideo] = useState<string | null>(null);
+  const [replies, setReplies] = useState<Reply[]>([]);
 
   const { followers, following } = useFollowCounts(profile?.id ?? null);
 
@@ -330,6 +335,25 @@ export default function ProfileScreen() {
     }
   };
 
+  const fetchReplies = useCallback(async () => {
+    if (!profile?.id) return;
+    const { data, error } = await supabase
+      .from('replies')
+      .select(
+        'id, post_id, parent_id, user_id, content, image_url, video_url, created_at, reply_count, like_count, username, profiles(username, name, image_url, banner_url)'
+      )
+      .eq('user_id', profile.id)
+      .order('created_at', { ascending: false });
+    if (!error && data) {
+      const list = data as Reply[];
+      setReplies(list);
+      const counts = await getLikeCounts(list.map(r => r.id));
+      initialize(list.map(r => ({ id: r.id, like_count: counts[r.id] })));
+    } else if (error) {
+      console.error('Failed to fetch replies', error);
+    }
+  }, [profile?.id, initialize]);
+
   if (!profile) return null;
 
   const renderHeader = () => (
@@ -385,28 +409,75 @@ export default function ProfileScreen() {
     </View>
   );
 
-  return (
-    <View style={{ flex: 1 }}>
+  const PostsTab = () => (
+    <FlatList
+      style={styles.container}
+      contentContainerStyle={styles.contentContainer}
+      data={myPosts}
+      keyExtractor={item => item.id}
+      ListHeaderComponent={renderHeader}
+      renderItem={({ item }) => (
+        <PostCard
+          post={item as Post}
+          isOwner={true}
+          avatarUri={profileImageUri ?? undefined}
+          bannerUrl={bannerImageUri ?? undefined}
+          replyCount={replyCounts[item.id] ?? item.reply_count ?? 0}
+          onPress={() => navigation.navigate('PostDetail', { post: item })}
+          onProfilePress={() => navigation.navigate('Profile')}
+          onDelete={() => confirmDeletePost(item.id)}
+          onOpenReplies={() => openReplyModal(item.id)}
+        />
+      )}
+    />
+  );
+
+  const RepliesTab = () => {
+    useFocusEffect(
+      useCallback(() => {
+        fetchReplies();
+      }, [fetchReplies]),
+    );
+    return (
       <FlatList
         style={styles.container}
         contentContainerStyle={styles.contentContainer}
-        data={myPosts}
-        ListHeaderComponent={renderHeader}
+        data={replies}
         keyExtractor={item => item.id}
+        ListHeaderComponent={renderHeader}
         renderItem={({ item }) => (
-          <PostCard
-            post={item as Post}
+          <ReplyCard
+            reply={item}
             isOwner={true}
             avatarUri={profileImageUri ?? undefined}
             bannerUrl={bannerImageUri ?? undefined}
-            replyCount={replyCounts[item.id] ?? item.reply_count ?? 0}
-            onPress={() => navigation.navigate('PostDetail', { post: item })}
+            replyCount={item.reply_count ?? 0}
+            onPress={() =>
+              navigation.navigate('ReplyDetail', { reply: item })
+            }
             onProfilePress={() => navigation.navigate('Profile')}
-            onDelete={() => confirmDeletePost(item.id)}
-            onOpenReplies={() => openReplyModal(item.id)}
+            onDelete={() => {}}
+            onOpenReplies={() =>
+              navigation.navigate('ReplyDetail', { reply: item })
+            }
           />
         )}
       />
+    );
+  };
+
+  return (
+    <View style={{ flex: 1 }}>
+      <Tab.Navigator
+        screenOptions={{
+          tabBarStyle: { backgroundColor: colors.background },
+          tabBarLabelStyle: { color: 'white', fontWeight: 'bold' },
+          tabBarIndicatorStyle: { backgroundColor: '#7814db' },
+        }}
+      >
+        <Tab.Screen name="Posts" component={PostsTab} />
+        <Tab.Screen name="Replies" component={RepliesTab} />
+      </Tab.Navigator>
       <Modal visible={replyModalVisible} animationType="slide" transparent>
         <KeyboardAvoidingView
           behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
