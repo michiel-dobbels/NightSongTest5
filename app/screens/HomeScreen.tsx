@@ -32,6 +32,44 @@ import { CONFIRM_ACTION } from '../constants/ui';
 
 import PostCard, { Post } from '../components/PostCard';
 
+interface PostItemProps {
+  item: Post;
+  isMe: boolean;
+  avatarUri?: string;
+  bannerUrl?: string;
+  replyCount: number;
+  onPress: () => void;
+  onProfilePress: () => void;
+  onDelete: () => void;
+  onOpenReplies: () => void;
+}
+
+const PostItem = React.memo(function PostItem({
+  item,
+  isMe,
+  avatarUri,
+  bannerUrl,
+  replyCount,
+  onPress,
+  onProfilePress,
+  onDelete,
+  onOpenReplies,
+}: PostItemProps) {
+  return (
+    <PostCard
+      post={item}
+      isOwner={isMe}
+      avatarUri={avatarUri}
+      bannerUrl={bannerUrl}
+      replyCount={replyCount}
+      onPress={onPress}
+      onProfilePress={onProfilePress}
+      onDelete={onDelete}
+      onOpenReplies={onOpenReplies}
+    />
+  );
+});
+
 const STORAGE_KEY = 'cached_posts';
 const COUNT_STORAGE_KEY = 'cached_reply_counts';
 const LIKE_COUNT_KEY = 'cached_like_counts';
@@ -72,6 +110,34 @@ const HomeScreen = forwardRef<HomeScreenRef, HomeScreenProps>(
   const [replyText, setReplyText] = useState('');
   const [replyImage, setReplyImage] = useState<string | null>(null);
   const [replyVideo, setReplyVideo] = useState<string | null>(null);
+
+
+  const renderItem = useCallback(
+    ({ item }: { item: Post }) => {
+      const isMe = user?.id === item.user_id;
+      const avatarUri = isMe ? profileImageUri : item.profiles?.image_url || undefined;
+      const bannerUrl = isMe ? undefined : item.profiles?.banner_url || undefined;
+
+      return (
+        <PostItem
+          item={item}
+          isMe={isMe}
+          avatarUri={avatarUri}
+          bannerUrl={bannerUrl}
+          replyCount={replyCounts[item.id] || 0}
+          onPress={() => navigation.navigate('PostDetail', { post: item })}
+          onProfilePress={() =>
+            isMe
+              ? navigation.navigate('Profile')
+              : navigation.navigate('OtherUserProfile', { userId: item.user_id })
+          }
+          onDelete={() => confirmDeletePost(item.id)}
+          onOpenReplies={() => openReplyModal(item.id)}
+        />
+      );
+    },
+    [replyCounts, navigation, profileImageUri, user?.id],
+  );
 
   const confirmDeletePost = (id: string) => {
     Alert.alert("Delete Post", "Are you sure you want to delete this post?", [
@@ -260,34 +326,26 @@ const HomeScreen = forwardRef<HomeScreenRef, HomeScreenProps>(
 
 
 
-  const fetchPosts = async (offset = 0, append = false) => {
+  const fetchPosts = useCallback(async (offset = 0, append = false) => {
     const { data, error } = await supabase
       .from('posts')
       .select(
         'id, content, image_url, video_url, user_id, created_at, reply_count, like_count, profiles(username, name, image_url, banner_url)'
       )
       .order('created_at', { ascending: false })
-      .range(0, PAGE_SIZE - 1);
+      .range(offset, offset + PAGE_SIZE - 1);
 
     if (!error && data) {
       const replyEntries = (data as any[]).map(p => [p.id, p.reply_count ?? 0]);
-      const slice = (data as Post[]).slice(0, PAGE_SIZE);
+      const slice = data as Post[];
 
-      // Preserve any optimistic posts that are not yet returned from the server
       setPosts(prev => {
         const temps = prev.filter(p => p.id.startsWith('temp-'));
-        const merged = [...temps, ...slice];
-        const unique: Post[] = [];
-        const seen = new Set();
-        for (const p of merged) {
-          if (!seen.has(p.id) && unique.length < PAGE_SIZE) {
-            unique.push(p);
-            seen.add(p.id);
-          }
-        }
-        AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(unique));
-        return unique;
+        const merged = append ? [...prev, ...slice] : [...temps, ...slice];
+        AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(merged));
+        return merged;
       });
+      setHasMore(slice.length === PAGE_SIZE);
 
       const replyCountsMap = Object.fromEntries(replyEntries);
       setReplyCounts(prev => {
@@ -330,7 +388,7 @@ const HomeScreen = forwardRef<HomeScreenRef, HomeScreenProps>(
 
       }
     }
-  };
+  }, [user?.id, initialize, mergeLiked, updatePost]);
 
 
 
@@ -645,7 +703,7 @@ const HomeScreen = forwardRef<HomeScreenRef, HomeScreenProps>(
       };
       syncCounts();
       fetchPosts(0);
-    }, []),
+    }, [fetchPosts]),
   );
 
   return (
@@ -667,35 +725,20 @@ const HomeScreen = forwardRef<HomeScreenRef, HomeScreenProps>(
       <FlatList
         data={posts}
         keyExtractor={(item) => item.id}
-        
-        renderItem={({ item }) => {
-          const displayName =
-            item.profiles?.name || item.profiles?.username || item.username;
-          const userName = item.profiles?.username || item.username;
-          const isMe = user?.id === item.user_id;
-          const avatarUri = isMe ? profileImageUri : item.profiles?.image_url || undefined;
-          const bannerUrl = isMe ? undefined : item.profiles?.banner_url || undefined;
-
-          return (
-            <PostCard
-              post={item}
-              isOwner={isMe}
-              avatarUri={avatarUri}
-              bannerUrl={bannerUrl}
-              replyCount={replyCounts[item.id] || 0}
-              onPress={() => navigation.navigate('PostDetail', { post: item })}
-              onProfilePress={() =>
-                isMe
-                  ? navigation.navigate('Profile')
-                  : navigation.navigate('OtherUserProfile', {
-                      userId: item.user_id,
-                    })
-              }
-              onDelete={() => confirmDeletePost(item.id)}
-              onOpenReplies={() => openReplyModal(item.id)}
-            />
-          );
+        removeClippedSubviews
+        initialNumToRender={10}
+        windowSize={5}
+        onEndReached={() => {
+          if (hasMore && !loadingMore) {
+            setLoadingMore(true);
+            fetchPosts(posts.length, true).finally(() => setLoadingMore(false));
+          }
         }}
+        onEndReachedThreshold={0.5}
+        ListFooterComponent={loadingMore ? (
+          <ActivityIndicator color="white" style={{ marginVertical: 10 }} />
+        ) : null}
+        renderItem={renderItem}
       />
       <Modal visible={replyModalVisible} animationType="slide" transparent>
         <KeyboardAvoidingView

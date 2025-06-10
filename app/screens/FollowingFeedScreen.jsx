@@ -2,6 +2,31 @@ import React, { useState, useCallback, useEffect } from 'react';
 import { View, FlatList, ActivityIndicator, StyleSheet } from 'react-native';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import PostCard from '../components/PostCard';
+
+const PostItem = React.memo(function PostItem({
+  item,
+  isMe,
+  avatarUri,
+  bannerUrl,
+  replyCount,
+  onPress,
+  onProfilePress,
+  onOpenReplies,
+}) {
+  return (
+    <PostCard
+      post={item}
+      isOwner={isMe}
+      avatarUri={avatarUri}
+      bannerUrl={bannerUrl}
+      replyCount={replyCount}
+      onPress={onPress}
+      onProfilePress={onProfilePress}
+      onDelete={() => {}}
+      onOpenReplies={onOpenReplies}
+    />
+  );
+});
 import { colors } from '../styles/colors';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../AuthContext';
@@ -10,6 +35,8 @@ import { getLikeCounts } from '../../lib/getLikeCounts';
 import { likeEvents } from '../likeEvents';
 import { postEvents } from '../postEvents';
 
+const PAGE_SIZE = 10;
+
 export default function FollowingFeedScreen() {
   const { user, profileImageUri } = useAuth();
   const navigation = useNavigation();
@@ -17,10 +44,13 @@ export default function FollowingFeedScreen() {
   const [posts, setPosts] = useState([]);
   const [replyCounts, setReplyCounts] = useState({});
   const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [hasMore, setHasMore] = useState(true);
 
-  const fetchPosts = async () => {
+  const fetchPosts = useCallback(async (offset = 0, append = false) => {
     if (!user) return;
-    setLoading(true);
+    if (offset === 0) setLoading(true);
+    else setLoadingMore(true);
     const { data: followData, error: followError } = await supabase
       .from('follows')
       .select('following_id')
@@ -48,30 +78,26 @@ export default function FollowingFeedScreen() {
 
       )
       .in('user_id', ids)
-      .order('created_at', { ascending: false });
+      .order('created_at', { ascending: false })
+      .range(offset, offset + PAGE_SIZE - 1);
 
     if (!error && data) {
-      const unique = [];
-      const seen = new Set();
-      data.forEach(p => {
-        if (!seen.has(p.id)) {
-          seen.add(p.id);
-          unique.push(p);
-        }
-      });
-      setPosts(unique);
+      const slice = data;
+      setPosts(prev => (append ? [...prev, ...slice] : slice));
+      setHasMore(slice.length === PAGE_SIZE);
       const counts = {};
-      unique.forEach(p => {
+      slice.forEach(p => {
         counts[p.id] = p.reply_count ?? 0;
       });
-      setReplyCounts(counts);
-      const likeCounts = await getLikeCounts(unique.map(p => p.id));
-      initialize(unique.map(p => ({ id: p.id, like_count: likeCounts[p.id] })));
+      setReplyCounts(prev => (append ? { ...prev, ...counts } : counts));
+      const likeCounts = await getLikeCounts(slice.map(p => p.id));
+      initialize(slice.map(p => ({ id: p.id, like_count: likeCounts[p.id] })));
     } else if (error) {
       console.error('Failed to fetch posts', error);
     }
-    setLoading(false);
-  };
+    if (offset === 0) setLoading(false);
+    else setLoadingMore(false);
+  }, [user?.id, initialize]);
 
   useEffect(() => {
     const onLikeChanged = ({ id, count }) => {
@@ -94,8 +120,8 @@ export default function FollowingFeedScreen() {
 
   useFocusEffect(
     useCallback(() => {
-      fetchPosts();
-    }, [user?.id])
+      fetchPosts(0);
+    }, [fetchPosts])
   );
 
   return (
@@ -104,14 +130,26 @@ export default function FollowingFeedScreen() {
       <FlatList
         data={posts}
         keyExtractor={item => item.id}
+        removeClippedSubviews
+        initialNumToRender={10}
+        windowSize={5}
+        onEndReached={() => {
+          if (hasMore && !loadingMore) {
+            fetchPosts(posts.length, true);
+          }
+        }}
+        onEndReachedThreshold={0.5}
+        ListFooterComponent={loadingMore ? (
+          <ActivityIndicator color="white" style={{ marginVertical: 10 }} />
+        ) : null}
         renderItem={({ item }) => {
           const isMe = user?.id === item.user_id;
           const avatarUri = isMe ? profileImageUri : item.profiles?.image_url || undefined;
           const bannerUrl = isMe ? undefined : item.profiles?.banner_url || undefined;
           return (
-            <PostCard
-              post={item}
-              isOwner={isMe}
+            <PostItem
+              item={item}
+              isMe={isMe}
               avatarUri={avatarUri}
               bannerUrl={bannerUrl}
               replyCount={replyCounts[item.id] || 0}
@@ -121,7 +159,6 @@ export default function FollowingFeedScreen() {
                   ? navigation.navigate('Profile')
                   : navigation.navigate('OtherUserProfile', { userId: item.user_id })
               }
-              onDelete={() => {}}
               onOpenReplies={() => navigation.navigate('PostDetail', { post: item })}
             />
           );
