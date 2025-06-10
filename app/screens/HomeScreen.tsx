@@ -32,6 +32,44 @@ import { CONFIRM_ACTION } from '../constants/ui';
 
 import PostCard, { Post } from '../components/PostCard';
 
+interface PostItemProps {
+  item: Post;
+  isMe: boolean;
+  avatarUri?: string;
+  bannerUrl?: string;
+  replyCount: number;
+  onPress: () => void;
+  onProfilePress: () => void;
+  onDelete: () => void;
+  onOpenReplies: () => void;
+}
+
+const PostItem = React.memo(function PostItem({
+  item,
+  isMe,
+  avatarUri,
+  bannerUrl,
+  replyCount,
+  onPress,
+  onProfilePress,
+  onDelete,
+  onOpenReplies,
+}: PostItemProps) {
+  return (
+    <PostCard
+      post={item}
+      isOwner={isMe}
+      avatarUri={avatarUri}
+      bannerUrl={bannerUrl}
+      replyCount={replyCount}
+      onPress={onPress}
+      onProfilePress={onProfilePress}
+      onDelete={onDelete}
+      onOpenReplies={onOpenReplies}
+    />
+  );
+});
+
 const STORAGE_KEY = 'cached_posts';
 const COUNT_STORAGE_KEY = 'cached_reply_counts';
 const LIKE_COUNT_KEY = 'cached_like_counts';
@@ -72,6 +110,34 @@ const HomeScreen = forwardRef<HomeScreenRef, HomeScreenProps>(
   const [replyText, setReplyText] = useState('');
   const [replyImage, setReplyImage] = useState<string | null>(null);
   const [replyVideo, setReplyVideo] = useState<string | null>(null);
+
+
+  const renderItem = useCallback(
+    ({ item }: { item: Post }) => {
+      const isMe = user?.id === item.user_id;
+      const avatarUri = isMe ? profileImageUri : item.profiles?.image_url || undefined;
+      const bannerUrl = isMe ? undefined : item.profiles?.banner_url || undefined;
+
+      return (
+        <PostItem
+          item={item}
+          isMe={isMe}
+          avatarUri={avatarUri}
+          bannerUrl={bannerUrl}
+          replyCount={replyCounts[item.id] || 0}
+          onPress={() => navigation.navigate('PostDetail', { post: item })}
+          onProfilePress={() =>
+            isMe
+              ? navigation.navigate('Profile')
+              : navigation.navigate('OtherUserProfile', { userId: item.user_id })
+          }
+          onDelete={() => confirmDeletePost(item.id)}
+          onOpenReplies={() => openReplyModal(item.id)}
+        />
+      );
+    },
+    [replyCounts, navigation, profileImageUri, user?.id],
+  );
 
   const confirmDeletePost = (id: string) => {
     Alert.alert("Delete Post", "Are you sure you want to delete this post?", [
@@ -260,7 +326,7 @@ const HomeScreen = forwardRef<HomeScreenRef, HomeScreenProps>(
 
 
 
-  const fetchPosts = async (offset = 0, append = false) => {
+  const fetchPosts = useCallback(async (offset = 0, append = false) => {
     const { data, error } = await supabase
       .from('posts')
       .select(
@@ -322,7 +388,7 @@ const HomeScreen = forwardRef<HomeScreenRef, HomeScreenProps>(
 
       }
     }
-  };
+  }, [user?.id, initialize, mergeLiked, updatePost]);
 
 
 
@@ -637,7 +703,7 @@ const HomeScreen = forwardRef<HomeScreenRef, HomeScreenProps>(
       };
       syncCounts();
       fetchPosts(0);
-    }, []),
+    }, [fetchPosts]),
   );
 
   return (
@@ -659,46 +725,22 @@ const HomeScreen = forwardRef<HomeScreenRef, HomeScreenProps>(
       <FlatList
         data={posts}
         keyExtractor={(item) => item.id}
+        removeClippedSubviews
+        initialNumToRender={10}
+        windowSize={5}
 
         onEndReached={() => {
           if (hasMore && !loadingMore) {
             setLoadingMore(true);
             fetchPosts(posts.length, true).finally(() => setLoadingMore(false));
           }
+
         }}
         onEndReachedThreshold={0.5}
         ListFooterComponent={loadingMore ? (
           <ActivityIndicator color="white" style={{ marginVertical: 10 }} />
         ) : null}
-
-        renderItem={({ item }) => {
-          const displayName =
-            item.profiles?.name || item.profiles?.username || item.username;
-          const userName = item.profiles?.username || item.username;
-          const isMe = user?.id === item.user_id;
-          const avatarUri = isMe ? profileImageUri : item.profiles?.image_url || undefined;
-          const bannerUrl = isMe ? undefined : item.profiles?.banner_url || undefined;
-
-          return (
-            <PostCard
-              post={item}
-              isOwner={isMe}
-              avatarUri={avatarUri}
-              bannerUrl={bannerUrl}
-              replyCount={replyCounts[item.id] || 0}
-              onPress={() => navigation.navigate('PostDetail', { post: item })}
-              onProfilePress={() =>
-                isMe
-                  ? navigation.navigate('Profile')
-                  : navigation.navigate('OtherUserProfile', {
-                      userId: item.user_id,
-                    })
-              }
-              onDelete={() => confirmDeletePost(item.id)}
-              onOpenReplies={() => openReplyModal(item.id)}
-            />
-          );
-        }}
+        renderItem={renderItem}
       />
       <Modal visible={replyModalVisible} animationType="slide" transparent>
         <KeyboardAvoidingView

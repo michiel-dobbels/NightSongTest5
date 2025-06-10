@@ -43,6 +43,42 @@ const COUNT_STORAGE_KEY = 'cached_reply_counts';
 const REPLY_STORAGE_PREFIX = 'cached_replies_';
 const PAGE_SIZE = 10;
 
+interface PostItemProps {
+  item: Post;
+  avatarUri?: string;
+  bannerUrl?: string;
+  replyCount: number;
+  onPress: () => void;
+  onProfilePress: () => void;
+  onDelete: () => void;
+  onOpenReplies: () => void;
+}
+
+const PostItem = React.memo(function PostItem({
+  item,
+  avatarUri,
+  bannerUrl,
+  replyCount,
+  onPress,
+  onProfilePress,
+  onDelete,
+  onOpenReplies,
+}: PostItemProps) {
+  return (
+    <PostCard
+      post={item}
+      isOwner={true}
+      avatarUri={avatarUri}
+      bannerUrl={bannerUrl}
+      replyCount={replyCount}
+      onPress={onPress}
+      onProfilePress={onProfilePress}
+      onDelete={onDelete}
+      onOpenReplies={onOpenReplies}
+    />
+  );
+});
+
 
 
 export default function ProfileScreen() {
@@ -489,9 +525,8 @@ export default function ProfileScreen() {
 
   const renderItem = ({ item }: { item: any }) =>
     activeTab === 'posts' ? (
-      <PostCard
-        post={item as Post}
-        isOwner={true}
+      <PostItem
+        item={item as Post}
         avatarUri={profileImageUri ?? undefined}
         bannerUrl={bannerImageUri ?? undefined}
         replyCount={replyCounts[item.id] ?? item.reply_count ?? 0}
@@ -525,6 +560,10 @@ export default function ProfileScreen() {
         contentContainerStyle={styles.contentContainer}
         data={data}
         keyExtractor={(item: any) => item.id}
+        removeClippedSubviews
+        initialNumToRender={10}
+        windowSize={5}
+
         onEndReached={() => {
           if (activeTab === 'posts' && postsHasMore && !postsLoadingMore) {
             fetchPostsPage(posts.length, true);

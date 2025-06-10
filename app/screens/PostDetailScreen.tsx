@@ -199,51 +199,43 @@ export default function PostDetailScreen() {
     };
   }, []);
 
-  useFocusEffect(
-    useCallback(() => {
-      const refreshCounts = async () => {
-        const stored = await AsyncStorage.getItem(COUNT_STORAGE_KEY);
-        if (stored) {
-          try {
-            setReplyCounts(prev => ({ ...prev, ...JSON.parse(stored) }));
-          } catch (e) {
-            console.error('Failed to parse cached counts', e);
-          }
+  const refreshCounts = useCallback(async () => {
+    const stored = await AsyncStorage.getItem(COUNT_STORAGE_KEY);
+    if (stored) {
+      try {
+        setReplyCounts(prev => ({ ...prev, ...JSON.parse(stored) }));
+      } catch (e) {
+        console.error('Failed to parse cached counts', e);
+      }
+    }
+    const likeStored = await AsyncStorage.getItem(LIKE_COUNT_KEY);
+    if (likeStored) {
+      try {
+        const parsed = JSON.parse(likeStored);
+        initialize(
+          Object.entries(parsed).map(([id, c]) => ({
+            id,
+            like_count: c as number,
+          })),
+        );
+      } catch (e) {
+        console.error('Failed to parse cached like counts', e);
+      }
+    }
+    if (user) {
+      const likedStored = await AsyncStorage.getItem(`${LIKED_KEY_PREFIX}${user.id}`);
+      if (likedStored) {
+        try {
+          JSON.parse(likedStored);
+        } catch (e) {
+          console.error('Failed to parse cached likes', e);
         }
-        const likeStored = await AsyncStorage.getItem(LIKE_COUNT_KEY);
-        if (likeStored) {
-          try {
-            const parsed = JSON.parse(likeStored);
-            initialize(
-              Object.entries(parsed).map(([id, c]) => ({
-                id,
-                like_count: c as number,
-              })),
-            );
-          } catch (e) {
-            console.error('Failed to parse cached like counts', e);
-          }
-        }
-        if (user) {
-          const likedStored = await AsyncStorage.getItem(`${LIKED_KEY_PREFIX}${user.id}`);
-          if (likedStored) {
-            try {
-              JSON.parse(likedStored);
-            } catch (e) {
-              console.error('Failed to parse cached likes', e);
-            }
 
-          }
-        }
-      };
-      refreshCounts();
-      fetchReplies();
-    }, []),
-  );
+      }
+    }
+  }, [initialize, user?.id]);
 
-
-
-  const fetchReplies = async () => {
+  const fetchReplies = useCallback(async () => {
     const { data, error } = await supabase
       .from('replies')
       .select(
@@ -325,7 +317,14 @@ export default function PostDetailScreen() {
 
 
     }
-  };
+  }, [post.id, initialize, user?.id]);
+
+  useFocusEffect(
+    useCallback(() => {
+      refreshCounts();
+      fetchReplies();
+    }, [refreshCounts, fetchReplies])
+  );
 
   useEffect(() => {
     const loadCached = async () => {

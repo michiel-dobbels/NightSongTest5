@@ -2,6 +2,31 @@ import React, { useState, useCallback, useEffect } from 'react';
 import { View, FlatList, ActivityIndicator, StyleSheet } from 'react-native';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import PostCard from '../components/PostCard';
+
+const PostItem = React.memo(function PostItem({
+  item,
+  isMe,
+  avatarUri,
+  bannerUrl,
+  replyCount,
+  onPress,
+  onProfilePress,
+  onOpenReplies,
+}) {
+  return (
+    <PostCard
+      post={item}
+      isOwner={isMe}
+      avatarUri={avatarUri}
+      bannerUrl={bannerUrl}
+      replyCount={replyCount}
+      onPress={onPress}
+      onProfilePress={onProfilePress}
+      onDelete={() => {}}
+      onOpenReplies={onOpenReplies}
+    />
+  );
+});
 import { colors } from '../styles/colors';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../AuthContext';
@@ -22,7 +47,8 @@ export default function FollowingFeedScreen() {
   const [loadingMore, setLoadingMore] = useState(false);
   const [hasMore, setHasMore] = useState(true);
 
-  const fetchPosts = async (offset = 0, append = false) => {
+  const fetchPosts = useCallback(async (offset = 0, append = false) => {
+
     if (!user) return;
     if (offset === 0) setLoading(true);
     else setLoadingMore(true);
@@ -72,7 +98,8 @@ export default function FollowingFeedScreen() {
     }
     if (offset === 0) setLoading(false);
     else setLoadingMore(false);
-  };
+  }, [user?.id, initialize]);
+
 
   useEffect(() => {
     const onLikeChanged = ({ id, count }) => {
@@ -96,7 +123,8 @@ export default function FollowingFeedScreen() {
   useFocusEffect(
     useCallback(() => {
       fetchPosts(0);
-    }, [user?.id])
+    }, [fetchPosts])
+
   );
 
   return (
@@ -105,6 +133,10 @@ export default function FollowingFeedScreen() {
       <FlatList
         data={posts}
         keyExtractor={item => item.id}
+        removeClippedSubviews
+        initialNumToRender={10}
+        windowSize={5}
+
         onEndReached={() => {
           if (hasMore && !loadingMore) {
             fetchPosts(posts.length, true);
@@ -119,9 +151,9 @@ export default function FollowingFeedScreen() {
           const avatarUri = isMe ? profileImageUri : item.profiles?.image_url || undefined;
           const bannerUrl = isMe ? undefined : item.profiles?.banner_url || undefined;
           return (
-            <PostCard
-              post={item}
-              isOwner={isMe}
+            <PostItem
+              item={item}
+              isMe={isMe}
               avatarUri={avatarUri}
               bannerUrl={bannerUrl}
               replyCount={replyCounts[item.id] || 0}
@@ -131,7 +163,6 @@ export default function FollowingFeedScreen() {
                   ? navigation.navigate('Profile')
                   : navigation.navigate('OtherUserProfile', { userId: item.user_id })
               }
-              onDelete={() => {}}
               onOpenReplies={() => navigation.navigate('PostDetail', { post: item })}
             />
           );

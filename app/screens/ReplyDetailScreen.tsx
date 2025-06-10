@@ -248,7 +248,7 @@ export default function ReplyDetailScreen() {
   
 
 
-  const fetchReplies = async () => {
+  const fetchReplies = useCallback(async () => {
     const { data, error } = await supabase
       .from('replies')
       .select(
@@ -328,7 +328,7 @@ export default function ReplyDetailScreen() {
       }
 
     }
-  };
+  }, [parent.post_id, parent.id, initialize, user?.id]);
 
   useEffect(() => {
     const loadCached = async () => {
@@ -409,46 +409,46 @@ export default function ReplyDetailScreen() {
     loadCached();
   }, []);
 
+  const refreshCounts = useCallback(async () => {
+    const stored = await AsyncStorage.getItem(COUNT_STORAGE_KEY);
+    if (stored) {
+      try {
+        setReplyCounts(prev => ({ ...prev, ...JSON.parse(stored) }));
+      } catch (e) {
+        console.error('Failed to parse cached counts', e);
+      }
+    }
+    const likeStored = await AsyncStorage.getItem(LIKE_COUNT_KEY);
+    if (likeStored) {
+      try {
+        initialize(
+          Object.entries(JSON.parse(likeStored)).map(([id, c]) => ({
+            id,
+            like_count: c as number,
+          })),
+        );
+      } catch (e) {
+        console.error('Failed to parse cached like counts', e);
+      }
+    }
+    if (user) {
+      const likedStored = await AsyncStorage.getItem(`${LIKED_KEY_PREFIX}${user.id}`);
+      if (likedStored) {
+        try {
+          JSON.parse(likedStored);
+        } catch (e) {
+          console.error('Failed to parse cached likes', e);
+        }
+
+      }
+    }
+  }, [initialize, user?.id]);
+
   useFocusEffect(
     useCallback(() => {
-      const refreshCounts = async () => {
-        const stored = await AsyncStorage.getItem(COUNT_STORAGE_KEY);
-        if (stored) {
-          try {
-            setReplyCounts(prev => ({ ...prev, ...JSON.parse(stored) }));
-          } catch (e) {
-            console.error('Failed to parse cached counts', e);
-          }
-        }
-        const likeStored = await AsyncStorage.getItem(LIKE_COUNT_KEY);
-        if (likeStored) {
-          try {
-            initialize(
-              Object.entries(JSON.parse(likeStored)).map(([id, c]) => ({
-                id,
-                like_count: c as number,
-              })),
-            );
-          } catch (e) {
-            console.error('Failed to parse cached like counts', e);
-          }
-        }
-        if (user) {
-          const likedStored = await AsyncStorage.getItem(`${LIKED_KEY_PREFIX}${user.id}`);
-          if (likedStored) {
-            try {
-              JSON.parse(likedStored);
-            } catch (e) {
-              console.error('Failed to parse cached likes', e);
-            }
-
-          }
-        }
-      };
       refreshCounts();
       fetchReplies();
-
-    }, []),
+    }, [refreshCounts, fetchReplies]),
   );
 
   useEffect(() => {
