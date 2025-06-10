@@ -44,6 +44,7 @@ export interface PostCardProps {
   onProfilePress: () => void;
   onDelete: () => void;
   onOpenReplies: () => void;
+  showThreadLine?: boolean;
 }
 
 export default function PostCard({
@@ -55,6 +56,7 @@ export default function PostCard({
   onProfilePress,
   onDelete,
   onOpenReplies,
+  showThreadLine = false,
 }: PostCardProps) {
   const displayName = post.profiles?.name || post.profiles?.username || post.username;
   const userName = post.profiles?.username || post.username;
@@ -64,6 +66,7 @@ export default function PostCard({
   return (
     <TouchableOpacity onPress={onPress}>
       <View style={styles.post}>
+        {showThreadLine && <View style={styles.threadLine} pointerEvents="none" />}
         {isOwner && (
           <TouchableOpacity onPress={onDelete} style={styles.deleteButton}>
             <Text style={styles.deleteText}>X</Text>
@@ -174,6 +177,15 @@ const styles = StyleSheet.create({
     height: 200,
     borderRadius: 6,
     marginTop: 8,
+  },
+  threadLine: {
+    position: 'absolute',
+    left: 26,
+    top: 0,
+    bottom: -10,
+    width: 2,
+    backgroundColor: '#66538f',
+    zIndex: -1,
   },
 });
 

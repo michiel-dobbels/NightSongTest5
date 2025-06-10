@@ -30,6 +30,7 @@ import { supabase } from '../../lib/supabase';
 import { getLikeCounts } from '../../lib/getLikeCounts';
 import PostCard, { Post } from '../components/PostCard';
 import ReplyCard, { Reply } from '../components/ReplyCard';
+import ReplyThread from '../components/ReplyThread';
 
 import { replyEvents } from '../replyEvents';
 import { likeEvents } from '../likeEvents';
@@ -39,18 +40,6 @@ import { CONFIRM_ACTION } from '../constants/ui';
 
 const COUNT_STORAGE_KEY = 'cached_reply_counts';
 const REPLY_STORAGE_PREFIX = 'cached_replies_';
-
-const Tab = createMaterialTopTabNavigator();
-
-
-
-
-
-
-
-
-
-
 
 
 export default function ProfileScreen() {
@@ -453,18 +442,20 @@ export default function ProfileScreen() {
         onOpenReplies={() => openReplyModal(item.id)}
       />
     ) : (
-      <ReplyCard
+      <ReplyThread
         reply={item as Reply}
         isOwner={true}
         avatarUri={profileImageUri ?? undefined}
         bannerUrl={bannerImageUri ?? undefined}
-        replyCount={item.reply_count ?? 0}
-        onPress={() => navigation.navigate('ReplyDetail', { reply: item })}
-        onProfilePress={() => navigation.navigate('Profile')}
-        onDelete={() => {}}
-        onOpenReplies={() =>
-          navigation.navigate('ReplyDetail', { reply: item })
+        onPress={r =>
+          navigation.navigate('ReplyDetail', { reply: r, originalPost: undefined, ancestors: [] })
         }
+        onProfilePress={id =>
+          id === profile?.id
+            ? navigation.navigate('Profile')
+            : navigation.navigate('OtherUserProfile', { userId: id })
+        }
+        onDelete={() => {}}
       />
     );
 
@@ -489,21 +480,6 @@ export default function ProfileScreen() {
         )}
         renderItem={renderItem}
       />
-    );
-  };
-
-  return (
-    <View style={{ flex: 1 }}>
-      <Tab.Navigator
-        screenOptions={{
-          tabBarStyle: { backgroundColor: colors.background },
-          tabBarLabelStyle: { color: 'white', fontWeight: 'bold' },
-          tabBarIndicatorStyle: { backgroundColor: '#7814db' },
-        }}
-      >
-        <Tab.Screen name="Posts" component={PostsTab} />
-        <Tab.Screen name="Replies" component={RepliesTab} />
-      </Tab.Navigator>
       <Modal visible={replyModalVisible} animationType="slide" transparent>
         <KeyboardAvoidingView
           behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
