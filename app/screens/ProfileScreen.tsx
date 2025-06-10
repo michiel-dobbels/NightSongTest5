@@ -28,7 +28,7 @@ import { useFollowCounts } from '../hooks/useFollowCounts';
 import { colors } from '../styles/colors';
 import { supabase } from '../../lib/supabase';
 import { getLikeCounts } from '../../lib/getLikeCounts';
-import PostCard, { Post } from '../components/PostCard';
+import ProfileTabsNavigator from '../components/ProfileTabsNavigator';
 import { replyEvents } from '../replyEvents';
 import { likeEvents } from '../likeEvents';
 
@@ -386,26 +386,12 @@ export default function ProfileScreen() {
   );
 
   return (
-    <View style={{ flex: 1 }}>
-      <FlatList
-        style={styles.container}
-        contentContainerStyle={styles.contentContainer}
-        data={myPosts}
-        ListHeaderComponent={renderHeader}
-        keyExtractor={item => item.id}
-        renderItem={({ item }) => (
-          <PostCard
-            post={item as Post}
-            isOwner={true}
-            avatarUri={profileImageUri ?? undefined}
-            bannerUrl={bannerImageUri ?? undefined}
-            replyCount={replyCounts[item.id] ?? item.reply_count ?? 0}
-            onPress={() => navigation.navigate('PostDetail', { post: item })}
-            onProfilePress={() => navigation.navigate('Profile')}
-            onDelete={() => confirmDeletePost(item.id)}
-            onOpenReplies={() => openReplyModal(item.id)}
-          />
-        )}
+    <View style={styles.container}>
+      {renderHeader()}
+      <ProfileTabsNavigator
+        userId={profile.id}
+        avatarUrl={profileImageUri}
+        bannerUrl={bannerImageUri}
       />
       <Modal visible={replyModalVisible} animationType="slide" transparent>
         <KeyboardAvoidingView

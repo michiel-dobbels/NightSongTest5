@@ -10,6 +10,7 @@ interface FollowingListScreenProps {
 interface Profile {
   id: string;
   username: string | null;
+  name: string | null;
   avatar_url: string | null;
 }
 
@@ -36,10 +37,19 @@ export default function FollowingListScreen({ userId }: FollowingListScreenProps
         return;
       }
 
-      const { data: profileData, error: profileError } = await supabase
+      let { data: profileData, error: profileError } = await supabase
         .from('profiles')
-        .select('id, username, image_url')
+        .select('id, username, name, image_url')
         .in('id', ids);
+
+      if (profileError?.code === '42703') {
+        const retry = await supabase
+          .from('profiles')
+          .select('id, username, display_name:name, avatar_url')
+          .in('id', ids);
+        profileData = retry.data as any;
+        profileError = retry.error;
+      }
 
       if (profileError) {
         console.error('Failed to fetch profiles', profileError);
@@ -50,7 +60,12 @@ export default function FollowingListScreen({ userId }: FollowingListScreenProps
         const formatted = profileData.map(p => ({
           id: p.id,
           username: p.username,
-          avatar_url: p.image_url,
+          name:
+            (p as any).name ??
+            (p as any).display_name ??
+            (p as any).full_name ??
+            null,
+          avatar_url: (p as any).image_url ?? (p as any).avatar_url ?? null,
         }));
         setProfiles(formatted);
       }
@@ -70,7 +85,12 @@ export default function FollowingListScreen({ userId }: FollowingListScreenProps
       ) : (
         <View style={[styles.avatar, styles.placeholder]} />
       )}
-      <Text style={styles.username}>{item.username}</Text>
+      <View>
+        {item.name && <Text style={styles.fullName}>{item.name}</Text>}
+        {item.username && (
+          <Text style={styles.username}>@{item.username}</Text>
+        )}
+      </View>
     </View>
   );
 
@@ -105,8 +125,15 @@ const styles = StyleSheet.create({
   placeholder: {
     backgroundColor: '#555',
   },
-  username: {
+  fullName: {
     color: 'white',
     fontSize: 16,
+    fontWeight: 'bold',
+  },
+  username: {
+    color: 'white',
+    fontSize: 14,
+    opacity: 0.8,
+    marginTop: 2,
   },
 });

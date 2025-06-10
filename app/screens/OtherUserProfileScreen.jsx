@@ -1,27 +1,21 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import { View, Text, StyleSheet, Image, ActivityIndicator, FlatList, Button, TouchableOpacity } from 'react-native';
-import { useRoute, useNavigation, useFocusEffect } from '@react-navigation/native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, StyleSheet, Image, ActivityIndicator, Button, TouchableOpacity } from 'react-native';
+import { useRoute, useNavigation } from '@react-navigation/native';
 import { supabase } from '../../lib/supabase';
 import { colors } from '../styles/colors';
 import FollowButton from '../components/FollowButton';
-import PostCard from '../components/PostCard';
+import ProfileTabsNavigator from '../components/ProfileTabsNavigator';
 import { useAuth } from '../../AuthContext';
 import { useFollowCounts } from '../hooks/useFollowCounts';
-import { usePostStore } from '../contexts/PostStoreContext';
-import { likeEvents } from '../likeEvents';
-import { postEvents } from '../postEvents';
-import { getLikeCounts } from '../../lib/getLikeCounts';
 
 export default function OtherUserProfileScreen() {
   const route = useRoute();
   const navigation = useNavigation();
   const { user } = useAuth();
 
-  const { initialize } = usePostStore();
   const { userId: routeUserId, username: routeUsername } = route.params || {};
 
   const [profile, setProfile] = useState(null);
-  const [posts, setPosts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
 
@@ -56,48 +50,6 @@ export default function OtherUserProfileScreen() {
     return () => { isMounted = false; };
   }, [routeUserId, routeUsername]);
 
-  useFocusEffect(
-    useCallback(() => {
-      if (!idToLoad) return;
-      const loadPosts = async () => {
-        const { data, error } = await supabase
-          .from('posts')
-          .select('id, content, image_url, video_url, user_id, created_at, reply_count, like_count, username, profiles(username, name, image_url, banner_url)')
-
-          .eq('user_id', idToLoad)
-          .order('created_at', { ascending: false });
-        if (!error && data) {
-          const seen = new Set();
-          const unique = data.filter(p => {
-            if (seen.has(p.id)) return false;
-            seen.add(p.id);
-            return true;
-          });
-          setPosts(unique);
-          const counts = await getLikeCounts(unique.map(p => p.id));
-          initialize(unique.map(p => ({ id: p.id, like_count: counts[p.id] })));
-        } else if (error) {
-          console.error('Failed to fetch posts', error);
-        }
-      };
-      loadPosts();
-    }, [idToLoad, initialize])
-  );
-
-  useEffect(() => {
-    const onLikeChanged = ({ id, count }) => {
-      setPosts(prev => prev.map(p => (p.id === id ? { ...p, like_count: count } : p)));
-    };
-    likeEvents.on('likeChanged', onLikeChanged);
-    const onPostDeleted = postId => {
-      setPosts(prev => prev.filter(p => p.id !== postId));
-    };
-    postEvents.on('postDeleted', onPostDeleted);
-    return () => {
-      likeEvents.off('likeChanged', onLikeChanged);
-      postEvents.off('postDeleted', onPostDeleted);
-    };
-  }, []);
 
   if (loading) {
     return (
@@ -165,26 +117,14 @@ export default function OtherUserProfileScreen() {
   );
 
   return (
-    <FlatList
-      style={styles.container}
-      contentContainerStyle={styles.contentContainer}
-      data={posts}
-      ListHeaderComponent={renderHeader}
-      keyExtractor={item => item.id}
-      renderItem={({ item }) => (
-        <PostCard
-          post={item}
-          isOwner={false}
-          avatarUri={profile.image_url || undefined}
-          bannerUrl={item.profiles?.banner_url || undefined}
-          replyCount={item.reply_count ?? 0}
-          onPress={() => navigation.navigate('PostDetail', { post: item })}
-          onProfilePress={() => {}}
-          onDelete={() => {}}
-          onOpenReplies={() => navigation.navigate('PostDetail', { post: item })}
-        />
-      )}
-    />
+    <View style={styles.container}>
+      {renderHeader()}
+      <ProfileTabsNavigator
+        userId={profile.id}
+        avatarUrl={profile.image_url}
+        bannerUrl={profile.banner_url}
+      />
+    </View>
   );
 
 }
@@ -193,9 +133,6 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: colors.background,
-  },
-  contentContainer: {
-    paddingBottom: 0,
   },
   headerContainer: {
     padding: 20,

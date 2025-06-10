@@ -11,6 +11,7 @@ import {
   TouchableOpacity,
 } from 'react-native';
 import { useRoute, useNavigation, useFocusEffect } from '@react-navigation/native';
+import { createMaterialTopTabNavigator } from '@react-navigation/material-top-tabs';
 import { supabase } from '../../lib/supabase';
 import { colors } from '../styles/colors';
 import { useFollowCounts } from '../hooks/useFollowCounts';
@@ -20,8 +21,11 @@ import PostCard, { Post } from '../components/PostCard';
 import { usePostStore } from '../contexts/PostStoreContext';
 import { likeEvents } from '../likeEvents';
 import { postEvents } from '../postEvents';
+import { getUserReplies, ReplyThread } from '../../lib/getUserReplies';
 
 import { getLikeCounts } from '../../lib/getLikeCounts';
+
+const Tab = createMaterialTopTabNavigator();
 
 
 interface Profile {
@@ -62,6 +66,7 @@ export default function UserProfileScreen() {
     }[]>([]);
 
   const [posts, setPosts] = useState<Post[]>([]);
+  const [replyThreads, setReplyThreads] = useState<ReplyThread[]>([]);
   const { initialize, remove } = usePostStore();
 
   const { user } = useAuth()!;
@@ -116,6 +121,137 @@ export default function UserProfileScreen() {
     fetchProfile();
   }, [userId]);
 
+  const renderHeader = () => (
+    <>
+      {profile!.banner_url || bannerUrl ? (
+        <Image
+          source={{ uri: profile!.banner_url || bannerUrl! }}
+          style={styles.banner}
+        />
+      ) : (
+        <View style={[styles.banner, styles.placeholder]} />
+      )}
+      <View style={styles.backButton}>
+        <Button title="Back" onPress={() => navigation.goBack()} />
+      </View>
+      <View style={styles.profileRow}>
+        {profile!.image_url || avatarUrl ? (
+          <Image
+            source={{ uri: profile!.image_url || avatarUrl! }}
+            style={styles.avatar}
+          />
+        ) : (
+          <View style={[styles.avatar, styles.placeholder]} />
+        )}
+        <View style={styles.textContainer}>
+          {name && <Text style={styles.name}>{name}</Text>}
+          {username && <Text style={styles.username}>@{username}</Text>}
+        </View>
+        {user && user.id !== userId && (
+          <View style={{ marginLeft: 10 }}>
+            <FollowButton targetUserId={userId} onToggle={refresh} />
+          </View>
+        )}
+      </View>
+      <View style={styles.statsRow}>
+        <TouchableOpacity
+          onPress={() =>
+            navigation.navigate('FollowList', {
+              userId,
+              mode: 'followers',
+            })
+          }
+        >
+          <Text style={styles.statsText}>{followers ?? 0} Followers</Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          onPress={() =>
+            navigation.navigate('FollowList', {
+              userId,
+              mode: 'following',
+            })
+          }
+        >
+          <Text style={styles.statsText}>{following ?? 0} Following</Text>
+        </TouchableOpacity>
+      </View>
+    </>
+  );
+
+  const ReplyItem = ({ item }: { item: ReplyThread }) => (
+    <View style={{ marginBottom: 16 }}>
+      {item.post && (
+        <PostCard
+          post={item.post as Post}
+          isOwner={false}
+          avatarUri={item.post.profiles?.image_url || undefined}
+          bannerUrl={item.post.profiles?.banner_url || undefined}
+          replyCount={item.post.reply_count ?? 0}
+          onPress={() => navigation.navigate('PostDetail', { post: item.post })}
+          onProfilePress={() =>
+            navigation.navigate('OtherUserProfile', { userId: item.post.user_id })
+          }
+          onDelete={() => {}}
+          onOpenReplies={() => navigation.navigate('PostDetail', { post: item.post })}
+        />
+      )}
+      {item.parent && (
+        <View style={styles.threadChild}>
+          <PostCard
+            post={item.parent as any}
+            isOwner={false}
+            avatarUri={item.parent.profiles?.image_url || undefined}
+            bannerUrl={item.parent.profiles?.banner_url || undefined}
+            replyCount={item.parent.reply_count ?? 0}
+            onPress={() =>
+              navigation.navigate('ReplyDetail', {
+                reply: item.parent,
+                originalPost: item.post,
+                ancestors: [],
+              })
+            }
+            onProfilePress={() =>
+              navigation.navigate('OtherUserProfile', { userId: item.parent!.user_id })
+            }
+            onDelete={() => {}}
+            onOpenReplies={() =>
+              navigation.navigate('ReplyDetail', { reply: item.parent, originalPost: item.post })
+            }
+          />
+        </View>
+      )}
+      <View style={styles.threadChild}>
+        <PostCard
+          post={item.reply as any}
+          isOwner={user?.id === item.reply.user_id}
+          avatarUri={item.reply.profiles?.image_url || undefined}
+          bannerUrl={item.reply.profiles?.banner_url || undefined}
+          replyCount={item.reply.reply_count ?? 0}
+          onPress={() =>
+            navigation.navigate('ReplyDetail', {
+              reply: item.reply,
+              originalPost: item.post,
+              ancestors: item.parent ? [item.parent] : [],
+            })
+          }
+          onProfilePress={() =>
+            item.reply.user_id === user?.id
+              ? navigation.navigate('Profile')
+              : navigation.navigate('OtherUserProfile', { userId: item.reply.user_id })
+          }
+          onDelete={() => {}}
+          onOpenReplies={() =>
+            navigation.navigate('ReplyDetail', {
+              reply: item.reply,
+              originalPost: item.post,
+              ancestors: item.parent ? [item.parent] : [],
+            })
+          }
+        />
+      </View>
+    </View>
+  );
+
   useFocusEffect(
     useCallback(() => {
       const loadPosts = async () => {
@@ -144,6 +280,20 @@ export default function UserProfileScreen() {
       };
       loadPosts();
     }, [userId, initialize])
+  );
+
+  useFocusEffect(
+    useCallback(() => {
+      const loadReplies = async () => {
+        try {
+          const threads = await getUserReplies(userId);
+          setReplyThreads(threads);
+        } catch (e) {
+          console.error('Failed to fetch replies', e);
+        }
+      };
+      loadReplies();
+    }, [userId])
   );
 
   useEffect(() => {
@@ -345,78 +495,46 @@ export default function UserProfileScreen() {
 
   return (
     <View style={styles.container}>
-      {profile.banner_url || bannerUrl ? (
-        <Image
-          source={{ uri: profile.banner_url || bannerUrl! }}
-          style={styles.banner}
-        />
-
-      ) : (
-        <View style={[styles.banner, styles.placeholder]} />
-      )}
-      <View style={styles.backButton}>
-        <Button title="Back" onPress={() => navigation.goBack()} />
-      </View>
-      <View style={styles.profileRow}>
-        {profile.image_url || avatarUrl ? (
-          <Image
-            source={{ uri: profile.image_url || avatarUrl! }}
-            style={styles.avatar}
-          />
-        ) : (
-          <View style={[styles.avatar, styles.placeholder]} />
-        )}
-        <View style={styles.textContainer}>
-          {name && <Text style={styles.name}>{name}</Text>}
-          {username && <Text style={styles.username}>@{username}</Text>}
-        </View>
-        {user && user.id !== userId && (
-          <View style={{ marginLeft: 10 }}>
-            <FollowButton targetUserId={userId} onToggle={refresh} />
-          </View>
-        )}
-      </View>
-      <View style={styles.statsRow}>
-        <TouchableOpacity
-          onPress={() =>
-            navigation.navigate('FollowList', {
-              userId,
-              mode: 'followers',
-            })
-          }
-        >
-          <Text style={styles.statsText}>{followers ?? 0} Followers</Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          onPress={() =>
-            navigation.navigate('FollowList', {
-              userId,
-              mode: 'following',
-            })
-          }
-        >
-          <Text style={styles.statsText}>{following ?? 0} Following</Text>
-        </TouchableOpacity>
-      </View>
-
-      <Text style={styles.sectionTitle}>Posts</Text>
-      <FlatList
-        data={posts}
-        keyExtractor={item => item.id}
-        renderItem={({ item }) => (
-          <PostCard
-            post={item as Post}
-            isOwner={false}
-            avatarUri={profile.image_url || avatarUrl || undefined}
-            bannerUrl={item.profiles?.banner_url || bannerUrl || undefined}
-            replyCount={item.reply_count ?? 0}
-            onPress={() => navigation.navigate('PostDetail', { post: item })}
-            onProfilePress={() => {}}
-            onDelete={() => {}}
-            onOpenReplies={() => navigation.navigate('PostDetail', { post: item })}
-          />
-        )}
-      />
+      <Tab.Navigator
+        screenOptions={{
+          tabBarStyle: { backgroundColor: 'transparent' },
+          tabBarLabelStyle: { color: 'white', fontWeight: 'bold' },
+          tabBarIndicatorStyle: { backgroundColor: '#7814db' },
+        }}
+      >
+        <Tab.Screen name="Posts">
+          {() => (
+            <FlatList
+              data={posts}
+              keyExtractor={item => item.id}
+              ListHeaderComponent={renderHeader}
+              renderItem={({ item }) => (
+                <PostCard
+                  post={item as Post}
+                  isOwner={false}
+                  avatarUri={profile.image_url || avatarUrl || undefined}
+                  bannerUrl={item.profiles?.banner_url || bannerUrl || undefined}
+                  replyCount={item.reply_count ?? 0}
+                  onPress={() => navigation.navigate('PostDetail', { post: item })}
+                  onProfilePress={() => {}}
+                  onDelete={() => {}}
+                  onOpenReplies={() => navigation.navigate('PostDetail', { post: item })}
+                />
+              )}
+            />
+          )}
+        </Tab.Screen>
+        <Tab.Screen name="Replies">
+          {() => (
+            <FlatList
+              data={replyThreads}
+              keyExtractor={item => item.reply.id}
+              ListHeaderComponent={renderHeader}
+              renderItem={ReplyItem}
+            />
+          )}
+        </Tab.Screen>
+      </Tab.Navigator>
 
       <Text style={styles.sectionTitle}>Following</Text>
       <FlatList
@@ -478,5 +596,11 @@ const styles = StyleSheet.create({
   followingAvatar: { width: 40, height: 40, borderRadius: 20, marginRight: 12 },
   followingName: { color: 'white', fontSize: 16, fontWeight: 'bold' },
   followingUsername: { color: 'white', fontSize: 16 },
+  threadChild: {
+    marginLeft: 20,
+    borderLeftWidth: 1,
+    borderLeftColor: '#555',
+    paddingLeft: 10,
+  },
 
 });
