@@ -30,7 +30,7 @@ import { supabase } from '../../lib/supabase';
 import { getLikeCounts } from '../../lib/getLikeCounts';
 import PostCard, { Post } from '../components/PostCard';
 import ReplyCard, { Reply } from '../components/ReplyCard';
-import { createMaterialTopTabNavigator } from '@react-navigation/material-top-tabs';
+
 import { replyEvents } from '../replyEvents';
 import { likeEvents } from '../likeEvents';
 
@@ -41,6 +41,7 @@ const COUNT_STORAGE_KEY = 'cached_reply_counts';
 const REPLY_STORAGE_PREFIX = 'cached_replies_';
 
 const Tab = createMaterialTopTabNavigator();
+
 
 
 
@@ -409,59 +410,84 @@ export default function ProfileScreen() {
     </View>
   );
 
-  const PostsTab = () => (
-    <FlatList
-      style={styles.container}
-      contentContainerStyle={styles.contentContainer}
-      data={myPosts}
-      keyExtractor={item => item.id}
-      ListHeaderComponent={renderHeader}
-      renderItem={({ item }) => (
-        <PostCard
-          post={item as Post}
-          isOwner={true}
-          avatarUri={profileImageUri ?? undefined}
-          bannerUrl={bannerImageUri ?? undefined}
-          replyCount={replyCounts[item.id] ?? item.reply_count ?? 0}
-          onPress={() => navigation.navigate('PostDetail', { post: item })}
-          onProfilePress={() => navigation.navigate('Profile')}
-          onDelete={() => confirmDeletePost(item.id)}
-          onOpenReplies={() => openReplyModal(item.id)}
-        />
-      )}
-    />
+  const [activeTab, setActiveTab] = useState<'posts' | 'replies'>('posts');
+
+  useFocusEffect(
+    useCallback(() => {
+      if (activeTab === 'replies') {
+        fetchReplies();
+      }
+    }, [activeTab, fetchReplies]),
   );
 
-  const RepliesTab = () => {
-    useFocusEffect(
-      useCallback(() => {
-        fetchReplies();
-      }, [fetchReplies]),
+  const renderTabs = () => (
+    <View style={styles.tabBar}>
+      <TouchableOpacity
+        style={[styles.tabItem, activeTab === 'posts' && styles.activeTab]}
+        onPress={() => setActiveTab('posts')}
+      >
+        <Text style={styles.tabLabel}>Posts</Text>
+      </TouchableOpacity>
+      <TouchableOpacity
+        style={[styles.tabItem, activeTab === 'replies' && styles.activeTab]}
+        onPress={() => setActiveTab('replies')}
+      >
+        <Text style={styles.tabLabel}>Replies</Text>
+      </TouchableOpacity>
+    </View>
+  );
+
+  const data = activeTab === 'posts' ? myPosts : replies;
+
+  const renderItem = ({ item }: { item: any }) =>
+    activeTab === 'posts' ? (
+      <PostCard
+        post={item as Post}
+        isOwner={true}
+        avatarUri={profileImageUri ?? undefined}
+        bannerUrl={bannerImageUri ?? undefined}
+        replyCount={replyCounts[item.id] ?? item.reply_count ?? 0}
+        onPress={() => navigation.navigate('PostDetail', { post: item })}
+        onProfilePress={() => navigation.navigate('Profile')}
+        onDelete={() => confirmDeletePost(item.id)}
+        onOpenReplies={() => openReplyModal(item.id)}
+      />
+    ) : (
+      <ReplyCard
+        reply={item as Reply}
+        isOwner={true}
+        avatarUri={profileImageUri ?? undefined}
+        bannerUrl={bannerImageUri ?? undefined}
+        replyCount={item.reply_count ?? 0}
+        onPress={() => navigation.navigate('ReplyDetail', { reply: item })}
+        onProfilePress={() => navigation.navigate('Profile')}
+        onDelete={() => {}}
+        onOpenReplies={() =>
+          navigation.navigate('ReplyDetail', { reply: item })
+        }
+      />
     );
-    return (
+
+  return (
+    <View style={{ flex: 1 }}>
       <FlatList
         style={styles.container}
         contentContainerStyle={styles.contentContainer}
-        data={replies}
-        keyExtractor={item => item.id}
-        ListHeaderComponent={renderHeader}
-        renderItem={({ item }) => (
-          <ReplyCard
-            reply={item}
-            isOwner={true}
-            avatarUri={profileImageUri ?? undefined}
-            bannerUrl={bannerImageUri ?? undefined}
-            replyCount={item.reply_count ?? 0}
-            onPress={() =>
-              navigation.navigate('ReplyDetail', { reply: item })
-            }
-            onProfilePress={() => navigation.navigate('Profile')}
-            onDelete={() => {}}
-            onOpenReplies={() =>
-              navigation.navigate('ReplyDetail', { reply: item })
-            }
-          />
+        data={data}
+        keyExtractor={(item: any) => item.id}
+        ListHeaderComponent={() => (
+          <>
+            {renderHeader()}
+            {renderTabs()}
+          </>
         )}
+        ListEmptyComponent={() => (
+          <Text style={styles.emptyText}>
+            {activeTab === 'posts' ? 'No posts yet.' : 'No replies yet.'}
+          </Text>
+
+        )}
+        renderItem={renderItem}
       />
     );
   };
@@ -596,6 +622,29 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     marginBottom: 10,
+  },
+  tabBar: {
+    flexDirection: 'row',
+    borderBottomColor: '#ffffff30',
+    borderBottomWidth: StyleSheet.hairlineWidth,
+  },
+  tabItem: {
+    flex: 1,
+    paddingVertical: 12,
+    alignItems: 'center',
+  },
+  tabLabel: {
+    color: 'white',
+    fontWeight: 'bold',
+  },
+  activeTab: {
+    borderBottomColor: '#7814db',
+    borderBottomWidth: 2,
+  },
+  emptyText: {
+    color: 'white',
+    textAlign: 'center',
+    padding: 20,
   },
 
 
