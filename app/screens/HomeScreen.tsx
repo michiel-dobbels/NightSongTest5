@@ -267,27 +267,19 @@ const HomeScreen = forwardRef<HomeScreenRef, HomeScreenProps>(
         'id, content, image_url, video_url, user_id, created_at, reply_count, like_count, profiles(username, name, image_url, banner_url)'
       )
       .order('created_at', { ascending: false })
-      .range(0, PAGE_SIZE - 1);
+      .range(offset, offset + PAGE_SIZE - 1);
 
     if (!error && data) {
       const replyEntries = (data as any[]).map(p => [p.id, p.reply_count ?? 0]);
-      const slice = (data as Post[]).slice(0, PAGE_SIZE);
+      const slice = data as Post[];
 
-      // Preserve any optimistic posts that are not yet returned from the server
       setPosts(prev => {
         const temps = prev.filter(p => p.id.startsWith('temp-'));
-        const merged = [...temps, ...slice];
-        const unique: Post[] = [];
-        const seen = new Set();
-        for (const p of merged) {
-          if (!seen.has(p.id) && unique.length < PAGE_SIZE) {
-            unique.push(p);
-            seen.add(p.id);
-          }
-        }
-        AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(unique));
-        return unique;
+        const merged = append ? [...prev, ...slice] : [...temps, ...slice];
+        AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(merged));
+        return merged;
       });
+      setHasMore(slice.length === PAGE_SIZE);
 
       const replyCountsMap = Object.fromEntries(replyEntries);
       setReplyCounts(prev => {
@@ -667,7 +659,18 @@ const HomeScreen = forwardRef<HomeScreenRef, HomeScreenProps>(
       <FlatList
         data={posts}
         keyExtractor={(item) => item.id}
-        
+
+        onEndReached={() => {
+          if (hasMore && !loadingMore) {
+            setLoadingMore(true);
+            fetchPosts(posts.length, true).finally(() => setLoadingMore(false));
+          }
+        }}
+        onEndReachedThreshold={0.5}
+        ListFooterComponent={loadingMore ? (
+          <ActivityIndicator color="white" style={{ marginVertical: 10 }} />
+        ) : null}
+
         renderItem={({ item }) => {
           const displayName =
             item.profiles?.name || item.profiles?.username || item.username;

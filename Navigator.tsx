@@ -1,13 +1,15 @@
-import React from 'react';
+import React, { Suspense } from 'react';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import AuthPage from './AuthPage';
 import TopTabsNavigator from './app/TopTabsNavigator';
-import PostDetailScreen from './app/screens/PostDetailScreen';
-import ReplyDetailScreen from './app/screens/ReplyDetailScreen';
-import ProfileScreen from './app/screens/ProfileScreen';
-import UserProfileScreen from './app/screens/UserProfileScreen';
-import OtherUserProfileScreen from './app/screens/OtherUserProfileScreen';
-import FollowListScreen from './app/screens/FollowListScreen';
+import LoadingScreen from './app/components/LoadingScreen';
+
+const PostDetailScreen = React.lazy(() => import('./app/screens/PostDetailScreen'));
+const ReplyDetailScreen = React.lazy(() => import('./app/screens/ReplyDetailScreen'));
+const ProfileScreen = React.lazy(() => import('./app/screens/ProfileScreen'));
+const UserProfileScreen = React.lazy(() => import('./app/screens/UserProfileScreen'));
+const OtherUserProfileScreen = React.lazy(() => import('./app/screens/OtherUserProfileScreen'));
+const FollowListScreen = React.lazy(() => import('./app/screens/FollowListScreen'));
 import { useAuth } from './AuthContext';
 
 const Stack = createNativeStackNavigator();
@@ -18,7 +20,8 @@ export default function Navigator() {
   if (loading) return null;
 
   return (
-    <Stack.Navigator screenOptions={{ headerShown: false, detachInactiveScreens: false }}>
+    <Suspense fallback={<LoadingScreen />}>
+      <Stack.Navigator screenOptions={{ headerShown: false, detachInactiveScreens: false }}>
       {user ? (
         <>
           <Stack.Screen name="Tabs" component={TopTabsNavigator} />
@@ -32,6 +35,7 @@ export default function Navigator() {
       ) : (
         <Stack.Screen name="Auth" component={AuthPage} />
       )}
-    </Stack.Navigator>
+      </Stack.Navigator>
+    </Suspense>
   );
 }

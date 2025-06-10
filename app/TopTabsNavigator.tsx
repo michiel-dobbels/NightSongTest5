@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, Suspense } from 'react';
 import {
   createMaterialTopTabNavigator,
   MaterialTopTabBar,
@@ -29,7 +29,9 @@ import {
 import { useAuth } from '../AuthContext';
 import { useNavigation } from '@react-navigation/native';
 import HomeScreen, { HomeScreenRef } from './screens/HomeScreen';
-import FollowingFeedScreen from './screens/FollowingFeedScreen';
+import LoadingScreen from './components/LoadingScreen';
+
+const FollowingFeedScreen = React.lazy(() => import('./screens/FollowingFeedScreen'));
 import { supabase } from '../lib/supabase';
 import { colors } from './styles/colors';
 import * as ImagePicker from 'expo-image-picker';
@@ -223,7 +225,13 @@ export default function TopTabsNavigator() {
         }}
       >
         <Tab.Screen name="For you" component={ForYouScreen} />
-        <Tab.Screen name="Following" component={FollowingFeedScreen} />
+        <Tab.Screen name="Following">
+          {() => (
+            <Suspense fallback={<LoadingScreen />}>
+              <FollowingFeedScreen />
+            </Suspense>
+          )}
+        </Tab.Screen>
         </Tab.Navigator>
 
         <TouchableOpacity

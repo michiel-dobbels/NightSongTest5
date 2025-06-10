@@ -15,7 +15,8 @@ interface ReplyThreadProps {
   onDelete: () => void;
 }
 
-export default function ReplyThread({
+function ReplyThread({
+
   reply,
   isOwner,
   avatarUri,
@@ -120,6 +121,8 @@ export default function ReplyThread({
     </View>
   );
 }
+
+export default React.memo(ReplyThread);
 
 const styles = StyleSheet.create({
   wrapper: {

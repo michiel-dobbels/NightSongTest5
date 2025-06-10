@@ -47,7 +47,7 @@ export interface PostCardProps {
   showThreadLine?: boolean;
 }
 
-export default function PostCard({
+function PostCard({
   post,
   isOwner,
   avatarUri,
@@ -121,6 +121,8 @@ export default function PostCard({
     </TouchableOpacity>
   );
 }
+
+export default React.memo(PostCard);
 
 const styles = StyleSheet.create({
   post: {
