@@ -68,6 +68,7 @@ export default function ReplyThread({
     <View>
       {post && (
         <View style={[styles.wrapper, styles.longReply]}>
+
           <PostCard
             post={post}
             isOwner={false}
@@ -79,11 +80,13 @@ export default function ReplyThread({
             onDelete={() => {}}
             onOpenReplies={() => {}}
             showThreadLine
+
           />
         </View>
       )}
       {parent && (
         <View style={[styles.wrapper, styles.longReply]}>
+
           <ReplyCard
             reply={parent}
             isOwner={false}
@@ -99,6 +102,7 @@ export default function ReplyThread({
         </View>
       )}
       <View style={styles.wrapper}>
+
         <ReplyCard
           reply={reply}
           isOwner={isOwner}
@@ -110,6 +114,7 @@ export default function ReplyThread({
           onDelete={onDelete}
           onOpenReplies={() => {}}
           showThreadLine
+
         />
       </View>
     </View>
@@ -118,9 +123,11 @@ export default function ReplyThread({
 
 const styles = StyleSheet.create({
   wrapper: {
+
     position: 'relative',
   },
   longReply: {
     paddingBottom: 30,
   },
+
 });
