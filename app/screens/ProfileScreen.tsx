@@ -30,6 +30,7 @@ import { supabase } from '../../lib/supabase';
 import { getLikeCounts } from '../../lib/getLikeCounts';
 import PostCard, { Post } from '../components/PostCard';
 import ReplyCard, { Reply } from '../components/ReplyCard';
+import ReplyThread from '../components/ReplyThread';
 
 import { replyEvents } from '../replyEvents';
 import { likeEvents } from '../likeEvents';
@@ -441,18 +442,20 @@ export default function ProfileScreen() {
         onOpenReplies={() => openReplyModal(item.id)}
       />
     ) : (
-      <ReplyCard
+      <ReplyThread
         reply={item as Reply}
         isOwner={true}
         avatarUri={profileImageUri ?? undefined}
         bannerUrl={bannerImageUri ?? undefined}
-        replyCount={item.reply_count ?? 0}
-        onPress={() => navigation.navigate('ReplyDetail', { reply: item })}
-        onProfilePress={() => navigation.navigate('Profile')}
-        onDelete={() => {}}
-        onOpenReplies={() =>
-          navigation.navigate('ReplyDetail', { reply: item })
+        onPress={r =>
+          navigation.navigate('ReplyDetail', { reply: r, originalPost: undefined, ancestors: [] })
         }
+        onProfilePress={id =>
+          id === profile?.id
+            ? navigation.navigate('Profile')
+            : navigation.navigate('OtherUserProfile', { userId: id })
+        }
+        onDelete={() => {}}
       />
     );
 
