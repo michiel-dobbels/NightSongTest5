@@ -40,18 +40,6 @@ import { CONFIRM_ACTION } from '../constants/ui';
 const COUNT_STORAGE_KEY = 'cached_reply_counts';
 const REPLY_STORAGE_PREFIX = 'cached_replies_';
 
-const Tab = createMaterialTopTabNavigator();
-
-
-
-
-
-
-
-
-
-
-
 
 export default function ProfileScreen() {
   const navigation = useNavigation<any>();
@@ -489,21 +477,6 @@ export default function ProfileScreen() {
         )}
         renderItem={renderItem}
       />
-    );
-  };
-
-  return (
-    <View style={{ flex: 1 }}>
-      <Tab.Navigator
-        screenOptions={{
-          tabBarStyle: { backgroundColor: colors.background },
-          tabBarLabelStyle: { color: 'white', fontWeight: 'bold' },
-          tabBarIndicatorStyle: { backgroundColor: '#7814db' },
-        }}
-      >
-        <Tab.Screen name="Posts" component={PostsTab} />
-        <Tab.Screen name="Replies" component={RepliesTab} />
-      </Tab.Navigator>
       <Modal visible={replyModalVisible} animationType="slide" transparent>
         <KeyboardAvoidingView
           behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
