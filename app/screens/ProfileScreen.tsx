@@ -19,7 +19,7 @@ import {
 import { Video } from 'expo-av';
 import * as ImagePicker from 'expo-image-picker';
 import * as FileSystem from 'expo-file-system';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 import { useAuth } from '../../AuthContext';
@@ -29,6 +29,7 @@ import { colors } from '../styles/colors';
 import { supabase } from '../../lib/supabase';
 import { getLikeCounts } from '../../lib/getLikeCounts';
 import PostCard, { Post } from '../components/PostCard';
+import ReplyCard, { Reply } from '../components/ReplyCard';
 import { replyEvents } from '../replyEvents';
 import { likeEvents } from '../likeEvents';
 
@@ -37,6 +38,7 @@ import { CONFIRM_ACTION } from '../constants/ui';
 
 const COUNT_STORAGE_KEY = 'cached_reply_counts';
 const REPLY_STORAGE_PREFIX = 'cached_replies_';
+
 
 
 
@@ -68,6 +70,7 @@ export default function ProfileScreen() {
   const [replyText, setReplyText] = useState('');
   const [replyImage, setReplyImage] = useState<string | null>(null);
   const [replyVideo, setReplyVideo] = useState<string | null>(null);
+  const [replies, setReplies] = useState<Reply[]>([]);
 
   const { followers, following } = useFollowCounts(profile?.id ?? null);
 
@@ -330,6 +333,25 @@ export default function ProfileScreen() {
     }
   };
 
+  const fetchReplies = useCallback(async () => {
+    if (!profile?.id) return;
+    const { data, error } = await supabase
+      .from('replies')
+      .select(
+        'id, post_id, parent_id, user_id, content, image_url, video_url, created_at, reply_count, like_count, username, profiles(username, name, image_url, banner_url)'
+      )
+      .eq('user_id', profile.id)
+      .order('created_at', { ascending: false });
+    if (!error && data) {
+      const list = data as Reply[];
+      setReplies(list);
+      const counts = await getLikeCounts(list.map(r => r.id));
+      initialize(list.map(r => ({ id: r.id, like_count: counts[r.id] })));
+    } else if (error) {
+      console.error('Failed to fetch replies', error);
+    }
+  }, [profile?.id, initialize]);
+
   if (!profile) return null;
 
   const renderHeader = () => (
@@ -385,27 +407,83 @@ export default function ProfileScreen() {
     </View>
   );
 
+  const [activeTab, setActiveTab] = useState<'posts' | 'replies'>('posts');
+
+  useFocusEffect(
+    useCallback(() => {
+      if (activeTab === 'replies') {
+        fetchReplies();
+      }
+    }, [activeTab, fetchReplies]),
+  );
+
+  const renderTabs = () => (
+    <View style={styles.tabBar}>
+      <TouchableOpacity
+        style={[styles.tabItem, activeTab === 'posts' && styles.activeTab]}
+        onPress={() => setActiveTab('posts')}
+      >
+        <Text style={styles.tabLabel}>Posts</Text>
+      </TouchableOpacity>
+      <TouchableOpacity
+        style={[styles.tabItem, activeTab === 'replies' && styles.activeTab]}
+        onPress={() => setActiveTab('replies')}
+      >
+        <Text style={styles.tabLabel}>Replies</Text>
+      </TouchableOpacity>
+    </View>
+  );
+
+  const data = activeTab === 'posts' ? myPosts : replies;
+
+  const renderItem = ({ item }: { item: any }) =>
+    activeTab === 'posts' ? (
+      <PostCard
+        post={item as Post}
+        isOwner={true}
+        avatarUri={profileImageUri ?? undefined}
+        bannerUrl={bannerImageUri ?? undefined}
+        replyCount={replyCounts[item.id] ?? item.reply_count ?? 0}
+        onPress={() => navigation.navigate('PostDetail', { post: item })}
+        onProfilePress={() => navigation.navigate('Profile')}
+        onDelete={() => confirmDeletePost(item.id)}
+        onOpenReplies={() => openReplyModal(item.id)}
+      />
+    ) : (
+      <ReplyCard
+        reply={item as Reply}
+        isOwner={true}
+        avatarUri={profileImageUri ?? undefined}
+        bannerUrl={bannerImageUri ?? undefined}
+        replyCount={item.reply_count ?? 0}
+        onPress={() => navigation.navigate('ReplyDetail', { reply: item })}
+        onProfilePress={() => navigation.navigate('Profile')}
+        onDelete={() => {}}
+        onOpenReplies={() =>
+          navigation.navigate('ReplyDetail', { reply: item })
+        }
+      />
+    );
+
   return (
     <View style={{ flex: 1 }}>
       <FlatList
         style={styles.container}
         contentContainerStyle={styles.contentContainer}
-        data={myPosts}
-        ListHeaderComponent={renderHeader}
-        keyExtractor={item => item.id}
-        renderItem={({ item }) => (
-          <PostCard
-            post={item as Post}
-            isOwner={true}
-            avatarUri={profileImageUri ?? undefined}
-            bannerUrl={bannerImageUri ?? undefined}
-            replyCount={replyCounts[item.id] ?? item.reply_count ?? 0}
-            onPress={() => navigation.navigate('PostDetail', { post: item })}
-            onProfilePress={() => navigation.navigate('Profile')}
-            onDelete={() => confirmDeletePost(item.id)}
-            onOpenReplies={() => openReplyModal(item.id)}
-          />
+        data={data}
+        keyExtractor={(item: any) => item.id}
+        ListHeaderComponent={() => (
+          <>
+            {renderHeader()}
+            {renderTabs()}
+          </>
         )}
+        ListEmptyComponent={() => (
+          <Text style={styles.emptyText}>
+            {activeTab === 'posts' ? 'No posts yet.' : 'No replies yet.'}
+          </Text>
+        )}
+        renderItem={renderItem}
       />
       <Modal visible={replyModalVisible} animationType="slide" transparent>
         <KeyboardAvoidingView
@@ -525,6 +603,29 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     marginBottom: 10,
+  },
+  tabBar: {
+    flexDirection: 'row',
+    borderBottomColor: '#ffffff30',
+    borderBottomWidth: StyleSheet.hairlineWidth,
+  },
+  tabItem: {
+    flex: 1,
+    paddingVertical: 12,
+    alignItems: 'center',
+  },
+  tabLabel: {
+    color: 'white',
+    fontWeight: 'bold',
+  },
+  activeTab: {
+    borderBottomColor: '#7814db',
+    borderBottomWidth: 2,
+  },
+  emptyText: {
+    color: 'white',
+    textAlign: 'center',
+    padding: 20,
   },
 
 
