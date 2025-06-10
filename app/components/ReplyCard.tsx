@@ -10,6 +10,8 @@ export interface ReplyCardProps extends Omit<PostCardProps, 'post'> {
   reply: Reply;
 }
 
-export default function ReplyCard({ reply, ...props }: ReplyCardProps) {
+function ReplyCard({ reply, ...props }: ReplyCardProps) {
   return <PostCard post={reply} {...props} />;
 }
+
+export default React.memo(ReplyCard);

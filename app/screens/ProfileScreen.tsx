@@ -7,6 +7,7 @@ import {
   Button,
   StyleSheet,
   Image,
+  ActivityIndicator,
   TouchableOpacity,
   Dimensions,
   FlatList,
@@ -30,6 +31,7 @@ import { supabase } from '../../lib/supabase';
 import { getLikeCounts } from '../../lib/getLikeCounts';
 import PostCard, { Post } from '../components/PostCard';
 import ReplyCard, { Reply } from '../components/ReplyCard';
+import ReplyThread from '../components/ReplyThread';
 
 import { replyEvents } from '../replyEvents';
 import { likeEvents } from '../likeEvents';
@@ -39,18 +41,7 @@ import { CONFIRM_ACTION } from '../constants/ui';
 
 const COUNT_STORAGE_KEY = 'cached_reply_counts';
 const REPLY_STORAGE_PREFIX = 'cached_replies_';
-
-const Tab = createMaterialTopTabNavigator();
-
-
-
-
-
-
-
-
-
-
+const PAGE_SIZE = 10;
 
 
 export default function ProfileScreen() {
@@ -74,6 +65,11 @@ export default function ProfileScreen() {
   const [replyImage, setReplyImage] = useState<string | null>(null);
   const [replyVideo, setReplyVideo] = useState<string | null>(null);
   const [replies, setReplies] = useState<Reply[]>([]);
+  const [posts, setPosts] = useState<Post[]>([]);
+  const [postsLoadingMore, setPostsLoadingMore] = useState(false);
+  const [postsHasMore, setPostsHasMore] = useState(true);
+  const [repliesLoadingMore, setRepliesLoadingMore] = useState(false);
+  const [repliesHasMore, setRepliesHasMore] = useState(true);
 
   const { followers, following } = useFollowCounts(profile?.id ?? null);
 
@@ -336,24 +332,73 @@ export default function ProfileScreen() {
     }
   };
 
-  const fetchReplies = useCallback(async () => {
-    if (!profile?.id) return;
-    const { data, error } = await supabase
-      .from('replies')
-      .select(
-        'id, post_id, parent_id, user_id, content, image_url, video_url, created_at, reply_count, like_count, username, profiles(username, name, image_url, banner_url)'
-      )
-      .eq('user_id', profile.id)
-      .order('created_at', { ascending: false });
-    if (!error && data) {
-      const list = data as Reply[];
-      setReplies(list);
-      const counts = await getLikeCounts(list.map(r => r.id));
-      initialize(list.map(r => ({ id: r.id, like_count: counts[r.id] })));
-    } else if (error) {
-      console.error('Failed to fetch replies', error);
-    }
-  }, [profile?.id, initialize]);
+  const fetchPostsPage = useCallback(
+    async (offset = 0, append = false) => {
+      if (!profile?.id) return;
+      if (offset === 0) setPostsLoadingMore(true);
+      else setPostsLoadingMore(true);
+      const { data, error } = await supabase
+        .from('posts')
+        .select(
+          'id, content, image_url, video_url, user_id, created_at, reply_count, like_count, username, profiles(username, name, image_url, banner_url)'
+        )
+        .eq('user_id', profile.id)
+        .order('created_at', { ascending: false })
+        .range(offset, offset + PAGE_SIZE - 1);
+      if (!error && data) {
+        const list = data as Post[];
+        setPosts(prev => (append ? [...prev, ...list] : list));
+        setReplyCounts(prev => {
+          const counts = { ...prev };
+          list.forEach(p => {
+            counts[p.id] = p.reply_count ?? 0;
+          });
+          return counts;
+        });
+        setPostsHasMore(list.length === PAGE_SIZE);
+        const counts = await getLikeCounts(list.map(p => p.id));
+        initialize(list.map(p => ({ id: p.id, like_count: counts[p.id] })));
+      } else if (error) {
+        console.error('Failed to fetch posts', error);
+      }
+      setPostsLoadingMore(false);
+    },
+    [profile?.id, initialize]
+  );
+
+  const fetchReplies = useCallback(
+    async (offset = 0, append = false) => {
+      if (!profile?.id) return;
+      if (offset === 0) setRepliesLoadingMore(true);
+      else setRepliesLoadingMore(true);
+      const { data, error } = await supabase
+        .from('replies')
+        .select(
+          'id, post_id, parent_id, user_id, content, image_url, video_url, created_at, reply_count, like_count, username, profiles(username, name, image_url, banner_url)'
+        )
+        .eq('user_id', profile.id)
+        .order('created_at', { ascending: false })
+        .range(offset, offset + PAGE_SIZE - 1);
+      if (!error && data) {
+        const list = data as Reply[];
+        setReplies(prev => (append ? [...prev, ...list] : list));
+        setRepliesHasMore(list.length === PAGE_SIZE);
+        setReplyCounts(prev => {
+          const counts = { ...prev };
+          list.forEach(r => {
+            counts[r.id] = r.reply_count ?? 0;
+          });
+          return counts;
+        });
+        const counts = await getLikeCounts(list.map(r => r.id));
+        initialize(list.map(r => ({ id: r.id, like_count: counts[r.id] })));
+      } else if (error) {
+        console.error('Failed to fetch replies', error);
+      }
+      setRepliesLoadingMore(false);
+    },
+    [profile?.id, initialize]
+  );
 
   if (!profile) return null;
 
@@ -415,9 +460,11 @@ export default function ProfileScreen() {
   useFocusEffect(
     useCallback(() => {
       if (activeTab === 'replies') {
-        fetchReplies();
+        fetchReplies(0);
+      } else {
+        fetchPostsPage(0);
       }
-    }, [activeTab, fetchReplies]),
+    }, [activeTab, fetchReplies, fetchPostsPage])
   );
 
   const renderTabs = () => (
@@ -437,7 +484,7 @@ export default function ProfileScreen() {
     </View>
   );
 
-  const data = activeTab === 'posts' ? myPosts : replies;
+  const data = activeTab === 'posts' ? posts : replies;
 
   const renderItem = ({ item }: { item: any }) =>
     activeTab === 'posts' ? (
@@ -453,18 +500,20 @@ export default function ProfileScreen() {
         onOpenReplies={() => openReplyModal(item.id)}
       />
     ) : (
-      <ReplyCard
+      <ReplyThread
         reply={item as Reply}
         isOwner={true}
         avatarUri={profileImageUri ?? undefined}
         bannerUrl={bannerImageUri ?? undefined}
-        replyCount={item.reply_count ?? 0}
-        onPress={() => navigation.navigate('ReplyDetail', { reply: item })}
-        onProfilePress={() => navigation.navigate('Profile')}
-        onDelete={() => {}}
-        onOpenReplies={() =>
-          navigation.navigate('ReplyDetail', { reply: item })
+        onPress={r =>
+          navigation.navigate('ReplyDetail', { reply: r, originalPost: undefined, ancestors: [] })
         }
+        onProfilePress={id =>
+          id === profile?.id
+            ? navigation.navigate('Profile')
+            : navigation.navigate('OtherUserProfile', { userId: id })
+        }
+        onDelete={() => {}}
       />
     );
 
@@ -475,6 +524,21 @@ export default function ProfileScreen() {
         contentContainerStyle={styles.contentContainer}
         data={data}
         keyExtractor={(item: any) => item.id}
+        onEndReached={() => {
+          if (activeTab === 'posts' && postsHasMore && !postsLoadingMore) {
+            fetchPostsPage(posts.length, true);
+          }
+          if (activeTab === 'replies' && repliesHasMore && !repliesLoadingMore) {
+            fetchReplies(replies.length, true);
+          }
+        }}
+        onEndReachedThreshold={0.5}
+        ListFooterComponent={
+          (activeTab === 'posts' && postsLoadingMore) ||
+          (activeTab === 'replies' && repliesLoadingMore) ? (
+            <ActivityIndicator color="white" style={{ marginVertical: 10 }} />
+          ) : null
+        }
         ListHeaderComponent={() => (
           <>
             {renderHeader()}
@@ -489,21 +553,6 @@ export default function ProfileScreen() {
         )}
         renderItem={renderItem}
       />
-    );
-  };
-
-  return (
-    <View style={{ flex: 1 }}>
-      <Tab.Navigator
-        screenOptions={{
-          tabBarStyle: { backgroundColor: colors.background },
-          tabBarLabelStyle: { color: 'white', fontWeight: 'bold' },
-          tabBarIndicatorStyle: { backgroundColor: '#7814db' },
-        }}
-      >
-        <Tab.Screen name="Posts" component={PostsTab} />
-        <Tab.Screen name="Replies" component={RepliesTab} />
-      </Tab.Navigator>
       <Modal visible={replyModalVisible} animationType="slide" transparent>
         <KeyboardAvoidingView
           behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
