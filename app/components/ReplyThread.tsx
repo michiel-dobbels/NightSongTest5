@@ -16,6 +16,7 @@ interface ReplyThreadProps {
 }
 
 function ReplyThread({
+
   reply,
   isOwner,
   avatarUri,
@@ -68,6 +69,7 @@ function ReplyThread({
     <View>
       {post && (
         <View style={[styles.wrapper, styles.longReply]}>
+
           <PostCard
             post={post}
             isOwner={false}
@@ -79,11 +81,13 @@ function ReplyThread({
             onDelete={() => {}}
             onOpenReplies={() => {}}
             showThreadLine
+
           />
         </View>
       )}
       {parent && (
         <View style={[styles.wrapper, styles.longReply]}>
+
           <ReplyCard
             reply={parent}
             isOwner={false}
@@ -99,6 +103,7 @@ function ReplyThread({
         </View>
       )}
       <View style={styles.wrapper}>
+
         <ReplyCard
           reply={reply}
           isOwner={isOwner}
@@ -110,6 +115,7 @@ function ReplyThread({
           onDelete={onDelete}
           onOpenReplies={() => {}}
           showThreadLine
+
         />
       </View>
     </View>
@@ -120,9 +126,11 @@ export default React.memo(ReplyThread);
 
 const styles = StyleSheet.create({
   wrapper: {
+
     position: 'relative',
   },
   longReply: {
     paddingBottom: 30,
   },
+
 });

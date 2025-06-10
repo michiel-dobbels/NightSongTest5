@@ -80,6 +80,7 @@ const PostItem = React.memo(function PostItem({
 });
 
 
+
 export default function ProfileScreen() {
   const navigation = useNavigation<any>();
   const {
@@ -562,6 +563,7 @@ export default function ProfileScreen() {
         removeClippedSubviews
         initialNumToRender={10}
         windowSize={5}
+
         onEndReached={() => {
           if (activeTab === 'posts' && postsHasMore && !postsLoadingMore) {
             fetchPostsPage(posts.length, true);

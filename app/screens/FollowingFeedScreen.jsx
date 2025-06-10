@@ -48,6 +48,7 @@ export default function FollowingFeedScreen() {
   const [hasMore, setHasMore] = useState(true);
 
   const fetchPosts = useCallback(async (offset = 0, append = false) => {
+
     if (!user) return;
     if (offset === 0) setLoading(true);
     else setLoadingMore(true);
@@ -99,6 +100,7 @@ export default function FollowingFeedScreen() {
     else setLoadingMore(false);
   }, [user?.id, initialize]);
 
+
   useEffect(() => {
     const onLikeChanged = ({ id, count }) => {
       setPosts(prev => prev.map(p => (p.id === id ? { ...p, like_count: count } : p)));
@@ -122,6 +124,7 @@ export default function FollowingFeedScreen() {
     useCallback(() => {
       fetchPosts(0);
     }, [fetchPosts])
+
   );
 
   return (
@@ -133,6 +136,7 @@ export default function FollowingFeedScreen() {
         removeClippedSubviews
         initialNumToRender={10}
         windowSize={5}
+
         onEndReached={() => {
           if (hasMore && !loadingMore) {
             fetchPosts(posts.length, true);

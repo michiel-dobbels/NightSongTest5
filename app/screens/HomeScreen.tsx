@@ -728,11 +728,13 @@ const HomeScreen = forwardRef<HomeScreenRef, HomeScreenProps>(
         removeClippedSubviews
         initialNumToRender={10}
         windowSize={5}
+
         onEndReached={() => {
           if (hasMore && !loadingMore) {
             setLoadingMore(true);
             fetchPosts(posts.length, true).finally(() => setLoadingMore(false));
           }
+
         }}
         onEndReachedThreshold={0.5}
         ListFooterComponent={loadingMore ? (
