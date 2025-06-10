@@ -30,6 +30,7 @@ import { supabase } from '../../lib/supabase';
 import { getLikeCounts } from '../../lib/getLikeCounts';
 import PostCard, { Post } from '../components/PostCard';
 import ReplyCard, { Reply } from '../components/ReplyCard';
+
 import { replyEvents } from '../replyEvents';
 import { likeEvents } from '../likeEvents';
 
@@ -38,6 +39,8 @@ import { CONFIRM_ACTION } from '../constants/ui';
 
 const COUNT_STORAGE_KEY = 'cached_reply_counts';
 const REPLY_STORAGE_PREFIX = 'cached_replies_';
+
+const Tab = createMaterialTopTabNavigator();
 
 
 
@@ -482,9 +485,25 @@ export default function ProfileScreen() {
           <Text style={styles.emptyText}>
             {activeTab === 'posts' ? 'No posts yet.' : 'No replies yet.'}
           </Text>
+
         )}
         renderItem={renderItem}
       />
+    );
+  };
+
+  return (
+    <View style={{ flex: 1 }}>
+      <Tab.Navigator
+        screenOptions={{
+          tabBarStyle: { backgroundColor: colors.background },
+          tabBarLabelStyle: { color: 'white', fontWeight: 'bold' },
+          tabBarIndicatorStyle: { backgroundColor: '#7814db' },
+        }}
+      >
+        <Tab.Screen name="Posts" component={PostsTab} />
+        <Tab.Screen name="Replies" component={RepliesTab} />
+      </Tab.Navigator>
       <Modal visible={replyModalVisible} animationType="slide" transparent>
         <KeyboardAvoidingView
           behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
