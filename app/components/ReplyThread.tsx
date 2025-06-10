@@ -67,8 +67,8 @@ export default function ReplyThread({
   return (
     <View>
       {post && (
-        <View style={[styles.post, styles.longReply]}>
-          <View style={styles.threadLine} pointerEvents="none" />
+        <View style={[styles.wrapper, styles.longReply]}>
+
           <PostCard
             post={post}
             isOwner={false}
@@ -79,12 +79,14 @@ export default function ReplyThread({
             onProfilePress={() => navigateToProfile(post.user_id)}
             onDelete={() => {}}
             onOpenReplies={() => {}}
+            showThreadLine
+
           />
         </View>
       )}
       {parent && (
-        <View style={[styles.post, styles.longReply]}>
-          <View style={styles.threadLine} pointerEvents="none" />
+        <View style={[styles.wrapper, styles.longReply]}>
+
           <ReplyCard
             reply={parent}
             isOwner={false}
@@ -95,10 +97,12 @@ export default function ReplyThread({
             onProfilePress={() => navigateToProfile(parent.user_id)}
             onDelete={() => {}}
             onOpenReplies={() => {}}
+            showThreadLine
           />
         </View>
       )}
-      <View style={[styles.post, styles.longReply]}>
+      <View style={styles.wrapper}>
+
         <ReplyCard
           reply={reply}
           isOwner={isOwner}
@@ -109,6 +113,8 @@ export default function ReplyThread({
           onProfilePress={() => navigateToProfile(reply.user_id)}
           onDelete={onDelete}
           onOpenReplies={() => {}}
+          showThreadLine
+
         />
       </View>
     </View>
@@ -116,25 +122,12 @@ export default function ReplyThread({
 }
 
 const styles = StyleSheet.create({
-  post: {
-    backgroundColor: '#ffffff10',
-    borderRadius: 0,
-    padding: 10,
-    marginBottom: 0,
-    borderBottomColor: 'gray',
-    borderBottomWidth: StyleSheet.hairlineWidth,
+  wrapper: {
+
     position: 'relative',
   },
   longReply: {
     paddingBottom: 30,
   },
-  threadLine: {
-    position: 'absolute',
-    left: 26,
-    top: 0,
-    bottom: -10,
-    width: 2,
-    backgroundColor: '#66538f',
-    zIndex: -1,
-  },
+
 });
