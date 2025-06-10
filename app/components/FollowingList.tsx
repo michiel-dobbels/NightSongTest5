@@ -68,5 +68,6 @@ const styles = StyleSheet.create({
     color: colors.text,
     fontSize: 14,
     opacity: 0.8,
+    marginTop: 2,
   },
 });
