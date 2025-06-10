@@ -43,6 +43,42 @@ const COUNT_STORAGE_KEY = 'cached_reply_counts';
 const REPLY_STORAGE_PREFIX = 'cached_replies_';
 const PAGE_SIZE = 10;
 
+interface PostItemProps {
+  item: Post;
+  avatarUri?: string;
+  bannerUrl?: string;
+  replyCount: number;
+  onPress: () => void;
+  onProfilePress: () => void;
+  onDelete: () => void;
+  onOpenReplies: () => void;
+}
+
+const PostItem = React.memo(function PostItem({
+  item,
+  avatarUri,
+  bannerUrl,
+  replyCount,
+  onPress,
+  onProfilePress,
+  onDelete,
+  onOpenReplies,
+}: PostItemProps) {
+  return (
+    <PostCard
+      post={item}
+      isOwner={true}
+      avatarUri={avatarUri}
+      bannerUrl={bannerUrl}
+      replyCount={replyCount}
+      onPress={onPress}
+      onProfilePress={onProfilePress}
+      onDelete={onDelete}
+      onOpenReplies={onOpenReplies}
+    />
+  );
+});
+
 
 
 export default function ProfileScreen() {
@@ -463,9 +499,11 @@ export default function ProfileScreen() {
       if (activeTab === 'replies') {
         fetchReplies(0);
       } else {
-        fetchPostsPage(0);
-      }
-    }, [activeTab, fetchReplies, fetchPostsPage])
+      <PostItem
+        item={item as Post}
+        removeClippedSubviews
+        initialNumToRender={10}
+        windowSize={5}
   );
 
   const renderTabs = () => (
