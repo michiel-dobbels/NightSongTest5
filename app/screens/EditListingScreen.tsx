@@ -9,7 +9,7 @@ import {
 } from 'react-native';
 import { useRoute, useNavigation } from '@react-navigation/native';
 import * as ImagePicker from 'expo-image-picker';
-import { supabase } from '../../lib/supabase';
+import { supabase, MARKET_BUCKET } from '../../lib/supabase';
 import { colors } from '../styles/colors';
 
 const SCREEN_HEIGHT = Dimensions.get('window').height;
@@ -50,9 +50,9 @@ export default function EditListingScreen() {
       const path = `${listing.id}-${Date.now()}.${ext}`;
       const resp = await fetch(image);
       const blob = await resp.blob();
-      const { error } = await supabase.storage.from('marketplace').upload(path, blob, { upsert: true });
+      const { error } = await supabase.storage.from(MARKET_BUCKET).upload(path, blob, { upsert: true });
       if (!error) {
-        url = supabase.storage.from('marketplace').getPublicUrl(path).data.publicUrl;
+        url = supabase.storage.from(MARKET_BUCKET).getPublicUrl(path).data.publicUrl;
       }
     }
     await supabase
