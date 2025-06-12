@@ -353,9 +353,15 @@ const HomeScreen = forwardRef<HomeScreenRef, HomeScreenProps>(
 
       setPosts(prev => {
         const temps = prev.filter(p => p.id.startsWith('temp-'));
-        const merged = append ? [...prev, ...slice] : [...temps, ...slice];
-        AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(merged));
-        return merged;
+        const combined = append ? [...prev, ...slice] : [...temps, ...slice];
+        const seen = new Set<string>();
+        const deduped = combined.filter(p => {
+          if (seen.has(p.id)) return false;
+          seen.add(p.id);
+          return true;
+        });
+        AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(deduped));
+        return deduped;
       });
       setHasMore(slice.length === PAGE_SIZE);
 

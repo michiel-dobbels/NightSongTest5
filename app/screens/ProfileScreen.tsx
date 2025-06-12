@@ -384,7 +384,15 @@ export default function ProfileScreen() {
         .range(offset, offset + PAGE_SIZE - 1);
       if (!error && data) {
         const list = data as Post[];
-        setPosts(prev => (append ? [...prev, ...list] : list));
+        setPosts(prev => {
+          const combined = append ? [...prev, ...list] : list;
+          const seen = new Set<string>();
+          return combined.filter(p => {
+            if (seen.has(p.id)) return false;
+            seen.add(p.id);
+            return true;
+          });
+        });
         setReplyCounts(prev => {
           const counts = { ...prev };
           list.forEach(p => {
@@ -418,7 +426,15 @@ export default function ProfileScreen() {
         .range(offset, offset + PAGE_SIZE - 1);
       if (!error && data) {
         const list = data as Reply[];
-        setReplies(prev => (append ? [...prev, ...list] : list));
+        setReplies(prev => {
+          const combined = append ? [...prev, ...list] : list;
+          const seen = new Set<string>();
+          return combined.filter(r => {
+            if (seen.has(r.id)) return false;
+            seen.add(r.id);
+            return true;
+          });
+        });
         setRepliesHasMore(list.length === PAGE_SIZE);
         setReplyCounts(prev => {
           const counts = { ...prev };
