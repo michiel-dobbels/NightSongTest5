@@ -1,10 +1,13 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, FlatList, Image, TouchableOpacity, StyleSheet, ActivityIndicator } from 'react-native';
+import { View, Text, FlatList, Image, TouchableOpacity, StyleSheet, ActivityIndicator, Dimensions } from 'react-native';
 
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import { supabase } from '../../lib/supabase';
 import { colors } from '../styles/colors';
+
+const { height } = Dimensions.get('window');
+
 
 export interface MarketListing {
   id: string;
@@ -134,7 +137,7 @@ const styles = StyleSheet.create({
   addButton: {
     position: 'absolute',
     right: 16,
-    bottom: 16,
+    bottom: height * 0.15,
 
     backgroundColor: colors.accent,
     width: 56,
