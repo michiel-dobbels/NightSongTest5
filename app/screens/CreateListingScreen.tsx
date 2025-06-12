@@ -8,10 +8,16 @@ import { colors } from '../styles/colors';
 export default function CreateListingScreen() {
   const { user } = useAuth()!;
   const [title, setTitle] = useState('');
+  const [description, setDescription] = useState('');
   const [price, setPrice] = useState('');
+  const [location, setLocation] = useState('');
   const [brand, setBrand] = useState('');
   const [model, setModel] = useState('');
   const [year, setYear] = useState('');
+  const [mileage, setMileage] = useState('');
+  const [vehicleType, setVehicleType] = useState('');
+  const [fuelType, setFuelType] = useState('');
+  const [transmission, setTransmission] = useState('');
   const [image, setImage] = useState<string | null>(null);
 
   const pickImage = async () => {
@@ -37,17 +43,29 @@ export default function CreateListingScreen() {
     await supabase.from('market_listings').insert({
       user_id: user.id,
       title,
+      description,
       price: parseFloat(price),
+      location,
       brand,
       model,
       year: parseInt(year, 10),
+      mileage: mileage ? parseInt(mileage, 10) : null,
+      vehicle_type: vehicleType || null,
+      fuel_type: fuelType || null,
+      transmission: transmission || null,
       image_urls: publicUrl ? [publicUrl] : [],
     });
     setTitle('');
+    setDescription('');
     setPrice('');
+    setLocation('');
     setBrand('');
     setModel('');
     setYear('');
+    setMileage('');
+    setVehicleType('');
+    setFuelType('');
+    setTransmission('');
     setImage(null);
   };
 
@@ -91,6 +109,50 @@ export default function CreateListingScreen() {
         value={year}
         onChangeText={setYear}
         keyboardType="numeric"
+      />
+      <TextInput
+        placeholder="Description"
+        placeholderTextColor={colors.muted}
+        style={styles.input}
+        value={description}
+        onChangeText={setDescription}
+        multiline
+      />
+      <TextInput
+        placeholder="Location"
+        placeholderTextColor={colors.muted}
+        style={styles.input}
+        value={location}
+        onChangeText={setLocation}
+      />
+      <TextInput
+        placeholder="Mileage"
+        placeholderTextColor={colors.muted}
+        style={styles.input}
+        value={mileage}
+        onChangeText={setMileage}
+        keyboardType="numeric"
+      />
+      <TextInput
+        placeholder="Vehicle Type"
+        placeholderTextColor={colors.muted}
+        style={styles.input}
+        value={vehicleType}
+        onChangeText={setVehicleType}
+      />
+      <TextInput
+        placeholder="Fuel Type"
+        placeholderTextColor={colors.muted}
+        style={styles.input}
+        value={fuelType}
+        onChangeText={setFuelType}
+      />
+      <TextInput
+        placeholder="Transmission"
+        placeholderTextColor={colors.muted}
+        style={styles.input}
+        value={transmission}
+        onChangeText={setTransmission}
       />
       <Button title="Create Listing" onPress={handleCreate} color={colors.accent} />
     </ScrollView>

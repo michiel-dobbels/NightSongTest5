@@ -19,6 +19,16 @@ export default function MarketListingDetailScreen() {
       <Text style={styles.title}>
         {listing.brand} {listing.model} {listing.year}
       </Text>
+      {listing.location && <Text style={styles.desc}>{listing.location}</Text>}
+      {listing.mileage !== null && (
+        <Text style={styles.desc}>{`Mileage: ${listing.mileage}`}</Text>
+      )}
+      {listing.fuel_type && (
+        <Text style={styles.desc}>{`Fuel: ${listing.fuel_type}`}</Text>
+      )}
+      {listing.transmission && (
+        <Text style={styles.desc}>{`Transmission: ${listing.transmission}`}</Text>
+      )}
       <Text style={styles.desc}>{listing.description}</Text>
       <Button
         title="Edit Listing"
