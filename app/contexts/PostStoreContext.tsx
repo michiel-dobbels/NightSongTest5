@@ -166,6 +166,7 @@ export const PostStoreProvider: React.FC<{ children: React.ReactNode }> = ({
     }
   }, [user?.id]);
 
+
   const toggleLike = useCallback(async (id: string, isReply: boolean = false) => {
     if (!user) return;
     const current = postsRef.current[id] || { likeCount: 0, liked: false };
@@ -247,6 +248,7 @@ export const PostStoreProvider: React.FC<{ children: React.ReactNode }> = ({
       console.error('Failed to toggle like', e);
     }
   }, [user?.id, updatePost]);
+
 
   const remove = useCallback((id: string) => {
     setPosts(prev => {
