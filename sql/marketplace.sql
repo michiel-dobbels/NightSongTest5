@@ -77,3 +77,13 @@ create trigger market_favorite_insert
 create trigger market_favorite_delete
   after delete on public.market_favorites
   for each row execute procedure public.decrement_listing_favorites();
+
+-- Simple helper to increment views when a listing is opened
+create or replace function public.increment_listing_views(p_listing_id uuid)
+returns void as $$
+begin
+  update public.market_listings
+  set views = views + 1
+  where id = p_listing_id;
+end;
+$$ language plpgsql;

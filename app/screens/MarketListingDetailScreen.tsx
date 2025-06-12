@@ -1,12 +1,19 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { ScrollView, Text, Image, StyleSheet, Button } from 'react-native';
 import { useRoute, useNavigation } from '@react-navigation/native';
 import { colors } from '../styles/colors';
+import { supabase } from '../../lib/supabase';
 
 export default function MarketListingDetailScreen() {
   const { params } = useRoute<any>();
   const navigation = useNavigation<any>();
   const listing = params?.listing;
+
+  useEffect(() => {
+    if (listing?.id) {
+      supabase.rpc('increment_listing_views', { p_listing_id: listing.id });
+    }
+  }, [listing?.id]);
 
   if (!listing) return null;
 
