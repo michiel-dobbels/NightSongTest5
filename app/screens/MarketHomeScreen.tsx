@@ -57,6 +57,7 @@ const mockListings: Listing[] = [
   },
 ];
 
+
 interface Listing {
   id: string;
   image_urls: string[] | null;

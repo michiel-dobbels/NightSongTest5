@@ -18,7 +18,7 @@ import * as ImagePicker from 'expo-image-picker';
 import * as FileSystem from 'expo-file-system';
 import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { useRoute, useNavigation, useFocusEffect } from '@react-navigation/native';
+import { useRoute, useNavigation } from '@react-navigation/native';
 
 import { supabase } from '../../lib/supabase';
 import { getLikeCounts } from '../../lib/getLikeCounts';
@@ -444,12 +444,10 @@ export default function ReplyDetailScreen() {
     }
   }, [initialize, user?.id]);
 
-  useFocusEffect(
-    useCallback(() => {
-      refreshCounts();
-      fetchReplies();
-    }, [refreshCounts, fetchReplies]),
-  );
+  useEffect(() => {
+    refreshCounts();
+    fetchReplies();
+  }, [refreshCounts, fetchReplies]);
 
   useEffect(() => {
     const show = Keyboard.addListener(

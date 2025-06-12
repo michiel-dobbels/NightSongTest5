@@ -20,7 +20,7 @@ import {
 import { Video } from 'expo-av';
 import * as ImagePicker from 'expo-image-picker';
 import * as FileSystem from 'expo-file-system';
-import { useNavigation, useFocusEffect } from '@react-navigation/native';
+import { useNavigation } from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 import { useAuth } from '../../AuthContext';
@@ -510,15 +510,13 @@ export default function ProfileScreen() {
 
   const [activeTab, setActiveTab] = useState<'posts' | 'replies'>('posts');
 
-  useFocusEffect(
-    useCallback(() => {
-      if (activeTab === 'replies') {
-        fetchReplies(0);
-      } else {
-        fetchPostsPage(0);
-      }
-    }, [activeTab, fetchReplies, fetchPostsPage])
-  );
+  useEffect(() => {
+    if (activeTab === 'replies') {
+      fetchReplies(0);
+    } else {
+      fetchPostsPage(0);
+    }
+  }, [activeTab, fetchReplies, fetchPostsPage]);
 
   const renderTabs = () => (
     <View style={styles.tabBar}>
