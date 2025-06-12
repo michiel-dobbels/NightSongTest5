@@ -1,16 +1,51 @@
-import React from 'react';
+import React, { Suspense } from 'react';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
+import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { Ionicons } from '@expo/vector-icons';
 import { Dimensions } from 'react-native';
 
-import HomeScreen from './HomeScreen';
+import TopTabsNavigator from '../app/TopTabsNavigator';
 import SearchScreen from './SearchScreen';
 import MarketScreen from './MarketScreen';
 import VideoScreen from './VideoScreen';
 import NotificationsScreen from './NotificationsScreen';
 
 const Tab = createBottomTabNavigator();
+const Stack = createNativeStackNavigator();
+
+const PostDetailScreen = React.lazy(() =>
+  import('../app/screens/PostDetailScreen'),
+);
+const ReplyDetailScreen = React.lazy(() =>
+  import('../app/screens/ReplyDetailScreen'),
+);
+const ProfileScreen = React.lazy(() => import('../app/screens/ProfileScreen'));
+const UserProfileScreen = React.lazy(() =>
+  import('../app/screens/UserProfileScreen'),
+);
+const OtherUserProfileScreen = React.lazy(() =>
+  import('../app/screens/OtherUserProfileScreen'),
+);
+const FollowListScreen = React.lazy(() =>
+  import('../app/screens/FollowListScreen'),
+);
 const { height } = Dimensions.get('window');
+
+function HomeStackScreen() {
+  return (
+    <Suspense fallback={null}>
+      <Stack.Navigator screenOptions={{ headerShown: false }}>
+        <Stack.Screen name="TopTabs" component={TopTabsNavigator} />
+        <Stack.Screen name="PostDetail" component={PostDetailScreen} />
+        <Stack.Screen name="ReplyDetail" component={ReplyDetailScreen} />
+        <Stack.Screen name="Profile" component={ProfileScreen} />
+        <Stack.Screen name="UserProfile" component={UserProfileScreen} />
+        <Stack.Screen name="OtherUserProfile" component={OtherUserProfileScreen} />
+        <Stack.Screen name="FollowList" component={FollowListScreen} />
+      </Stack.Navigator>
+    </Suspense>
+  );
+}
 
 export default function BottomTabsNavigator() {
   return (
@@ -43,7 +78,7 @@ export default function BottomTabsNavigator() {
         },
       })}
     >
-      <Tab.Screen name="Home" component={HomeScreen} />
+      <Tab.Screen name="Home" component={HomeStackScreen} />
       <Tab.Screen name="Search" component={SearchScreen} />
       <Tab.Screen name="Market" component={MarketScreen} />
       <Tab.Screen name="Video" component={VideoScreen} />
