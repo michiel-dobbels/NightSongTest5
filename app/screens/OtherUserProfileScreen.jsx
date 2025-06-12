@@ -110,7 +110,7 @@ export default function OtherUserProfileScreen() {
   if (notFound || !profile) {
     return (
       <View style={[styles.container, styles.center]}>
-        <Text style={{ color: 'white' }}>Profile not found.</Text>
+        <Text style={{ color: colors.text }}>Profile not found.</Text>
         <View style={styles.backButton}>
           <Button title="Back" onPress={() => navigation.goBack()} />
         </View>
@@ -205,12 +205,12 @@ const styles = StyleSheet.create({
   profileRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 20 },
   banner: { width: '100%', height: 200, marginBottom: 20 },
   avatar: { width: 80, height: 80, borderRadius: 40 },
-  placeholder: { backgroundColor: '#ffffff20' },
+  placeholder: { backgroundColor: '#555' },
   textContainer: { marginLeft: 15 },
-  username: { color: 'white', fontSize: 24, fontWeight: 'bold' },
-  name: { color: 'white', fontSize: 20, marginTop: 4 },
+  username: { color: colors.text, fontSize: 24, fontWeight: 'bold' },
+  name: { color: colors.text, fontSize: 20, marginTop: 4 },
   center: { justifyContent: 'center', alignItems: 'center' },
   statsRow: { flexDirection: 'row', marginLeft: 15, marginBottom: 20 },
-  statsText: { color: 'white', marginRight: 15 },
+  statsText: { color: colors.text, marginRight: 15 },
 });
 
