@@ -1,6 +1,7 @@
 import React, { Suspense } from 'react';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import AuthPage from './AuthPage';
+
 import BottomTabsNavigator from './bottomtabs/BottomTabsNavigator';
 import LoadingScreen from './app/components/LoadingScreen';
 import { useAuth } from './AuthContext';
@@ -22,6 +23,7 @@ export default function Navigator() {
         ) : (
           <Stack.Screen name="Auth" component={AuthPage} />
         )}
+
       </Stack.Navigator>
     </Suspense>
   );

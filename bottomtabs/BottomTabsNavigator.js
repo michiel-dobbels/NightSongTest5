@@ -5,6 +5,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { Dimensions } from 'react-native';
 
 import TopTabsNavigator from '../app/TopTabsNavigator';
+
 import SearchScreen from './SearchScreen';
 import MarketScreen from './MarketScreen';
 import VideoScreen from './VideoScreen';
@@ -47,6 +48,7 @@ function HomeStackScreen() {
   );
 }
 
+
 export default function BottomTabsNavigator() {
   return (
     <Tab.Navigator
@@ -79,6 +81,7 @@ export default function BottomTabsNavigator() {
       })}
     >
       <Tab.Screen name="Home" component={HomeStackScreen} />
+
       <Tab.Screen name="Search" component={SearchScreen} />
       <Tab.Screen name="Market" component={MarketScreen} />
       <Tab.Screen name="Video" component={VideoScreen} />
