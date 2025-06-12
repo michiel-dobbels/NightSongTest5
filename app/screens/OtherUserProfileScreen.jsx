@@ -1,6 +1,6 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, Image, ActivityIndicator, FlatList, Button, TouchableOpacity } from 'react-native';
-import { useRoute, useNavigation, useFocusEffect } from '@react-navigation/native';
+import { useRoute, useNavigation } from '@react-navigation/native';
 import { supabase } from '../../lib/supabase';
 import { colors } from '../styles/colors';
 import FollowButton from '../components/FollowButton';
@@ -56,33 +56,30 @@ export default function OtherUserProfileScreen() {
     return () => { isMounted = false; };
   }, [routeUserId, routeUsername]);
 
-  useFocusEffect(
-    useCallback(() => {
-      if (!idToLoad) return;
-      const loadPosts = async () => {
-        const { data, error } = await supabase
-          .from('posts')
-          .select('id, content, image_url, video_url, user_id, created_at, reply_count, like_count, username, profiles(username, name, image_url, banner_url)')
-
-          .eq('user_id', idToLoad)
-          .order('created_at', { ascending: false });
-        if (!error && data) {
-          const seen = new Set();
-          const unique = data.filter(p => {
-            if (seen.has(p.id)) return false;
-            seen.add(p.id);
-            return true;
-          });
-          setPosts(unique);
-          const counts = await getLikeCounts(unique.map(p => p.id));
-          initialize(unique.map(p => ({ id: p.id, like_count: counts[p.id] })));
-        } else if (error) {
-          console.error('Failed to fetch posts', error);
-        }
-      };
-      loadPosts();
-    }, [idToLoad, initialize])
-  );
+  useEffect(() => {
+    if (!idToLoad) return;
+    const loadPosts = async () => {
+      const { data, error } = await supabase
+        .from('posts')
+        .select('id, content, image_url, video_url, user_id, created_at, reply_count, like_count, username, profiles(username, name, image_url, banner_url)')
+        .eq('user_id', idToLoad)
+        .order('created_at', { ascending: false });
+      if (!error && data) {
+        const seen = new Set();
+        const unique = data.filter(p => {
+          if (seen.has(p.id)) return false;
+          seen.add(p.id);
+          return true;
+        });
+        setPosts(unique);
+        const counts = await getLikeCounts(unique.map(p => p.id));
+        initialize(unique.map(p => ({ id: p.id, like_count: counts[p.id] })));
+      } else if (error) {
+        console.error('Failed to fetch posts', error);
+      }
+    };
+    loadPosts();
+  }, [idToLoad, initialize]);
 
   useEffect(() => {
     const onLikeChanged = ({ id, count }) => {

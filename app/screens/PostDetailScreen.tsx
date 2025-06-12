@@ -17,7 +17,7 @@ import { Video } from 'expo-av';
 import * as ImagePicker from 'expo-image-picker';
 import * as FileSystem from 'expo-file-system';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { useRoute, useNavigation, useFocusEffect } from '@react-navigation/native';
+import { useRoute, useNavigation } from '@react-navigation/native';
 
 import { supabase } from '../../lib/supabase';
 import { getLikeCounts } from '../../lib/getLikeCounts';
@@ -319,12 +319,10 @@ export default function PostDetailScreen() {
     }
   }, [post.id, initialize, user?.id]);
 
-  useFocusEffect(
-    useCallback(() => {
-      refreshCounts();
-      fetchReplies();
-    }, [refreshCounts, fetchReplies])
-  );
+  useEffect(() => {
+    refreshCounts();
+    fetchReplies();
+  }, [refreshCounts, fetchReplies]);
 
   useEffect(() => {
     const loadCached = async () => {
