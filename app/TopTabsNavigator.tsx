@@ -44,6 +44,9 @@ const TAB_BAR_HEIGHT = 48;
 const HEADER_BOTTOM_PADDING = 0;
 const BLUR_BACKGROUND_COLOR = 'rgba(29,21,43,0.6)';
 const SCREEN_WIDTH = Dimensions.get('window').width;
+const SCREEN_HEIGHT = Dimensions.get('window').height;
+const BOTTOM_NAV_HEIGHT = SCREEN_HEIGHT * 0.1;
+const FAB_BOTTOM_OFFSET = (BOTTOM_NAV_HEIGHT + 10) * 0.75;
 const DRAWER_WIDTH = SCREEN_WIDTH * 0.8;
 
 
@@ -333,7 +336,7 @@ const styles = StyleSheet.create({
   },
   fab: {
     position: 'absolute',
-    bottom: 20,
+    bottom: FAB_BOTTOM_OFFSET,
     right: 20,
     backgroundColor: colors.accent,
     width: 56,
