@@ -36,6 +36,12 @@ export default function MarketListingDetailScreen() {
       {listing.transmission && (
         <Text style={styles.desc}>{`Transmission: ${listing.transmission}`}</Text>
       )}
+      {listing.views !== undefined && (
+        <Text style={styles.desc}>{`Views: ${listing.views}`}</Text>
+      )}
+      {listing.favorites !== undefined && (
+        <Text style={styles.desc}>{`Favorites: ${listing.favorites}`}</Text>
+      )}
       <Text style={styles.desc}>{listing.description}</Text>
       <Button
         title="Edit Listing"
