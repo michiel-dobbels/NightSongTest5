@@ -11,10 +11,16 @@ export default function EditListingScreen() {
   const listing = params?.listing;
 
   const [title, setTitle] = useState(listing?.title || '');
+  const [description, setDescription] = useState(listing?.description || '');
   const [price, setPrice] = useState(String(listing?.price ?? ''));
+  const [location, setLocation] = useState(listing?.location || '');
   const [brand, setBrand] = useState(listing?.brand || '');
   const [model, setModel] = useState(listing?.model || '');
   const [year, setYear] = useState(String(listing?.year ?? ''));
+  const [mileage, setMileage] = useState(String(listing?.mileage ?? ''));
+  const [vehicleType, setVehicleType] = useState(listing?.vehicle_type || '');
+  const [fuelType, setFuelType] = useState(listing?.fuel_type || '');
+  const [transmission, setTransmission] = useState(listing?.transmission || '');
   const [image, setImage] = useState<string | null>(listing?.image_urls?.[0] || null);
 
   const pickImage = async () => {
@@ -40,10 +46,16 @@ export default function EditListingScreen() {
       .from('market_listings')
       .update({
         title,
+        description,
         price: parseFloat(price),
+        location,
         brand,
         model,
         year: parseInt(year, 10),
+        mileage: mileage ? parseInt(mileage, 10) : null,
+        vehicle_type: vehicleType || null,
+        fuel_type: fuelType || null,
+        transmission: transmission || null,
         image_urls: url ? [url] : [],
       })
       .eq('id', listing.id);
@@ -90,6 +102,50 @@ export default function EditListingScreen() {
         value={year}
         onChangeText={setYear}
         keyboardType="numeric"
+      />
+      <TextInput
+        placeholder="Description"
+        placeholderTextColor={colors.muted}
+        style={styles.input}
+        value={description}
+        onChangeText={setDescription}
+        multiline
+      />
+      <TextInput
+        placeholder="Location"
+        placeholderTextColor={colors.muted}
+        style={styles.input}
+        value={location}
+        onChangeText={setLocation}
+      />
+      <TextInput
+        placeholder="Mileage"
+        placeholderTextColor={colors.muted}
+        style={styles.input}
+        value={mileage}
+        onChangeText={setMileage}
+        keyboardType="numeric"
+      />
+      <TextInput
+        placeholder="Vehicle Type"
+        placeholderTextColor={colors.muted}
+        style={styles.input}
+        value={vehicleType}
+        onChangeText={setVehicleType}
+      />
+      <TextInput
+        placeholder="Fuel Type"
+        placeholderTextColor={colors.muted}
+        style={styles.input}
+        value={fuelType}
+        onChangeText={setFuelType}
+      />
+      <TextInput
+        placeholder="Transmission"
+        placeholderTextColor={colors.muted}
+        style={styles.input}
+        value={transmission}
+        onChangeText={setTransmission}
       />
       <Button title="Save" onPress={handleSave} color={colors.accent} />
     </ScrollView>

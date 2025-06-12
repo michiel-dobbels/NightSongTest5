@@ -12,6 +12,11 @@ interface Listing {
   model: string | null;
   year: number | null;
   description?: string | null;
+  location?: string | null;
+  mileage?: number | null;
+  vehicle_type?: string | null;
+  fuel_type?: string | null;
+  transmission?: string | null;
 }
 
 export default function MarketHomeScreen() {
