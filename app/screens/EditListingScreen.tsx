@@ -1,9 +1,21 @@
 import React, { useState } from 'react';
-import { ScrollView, TextInput, Button, StyleSheet, Image } from 'react-native';
+import {
+  ScrollView,
+  TextInput,
+  Button,
+  StyleSheet,
+  Image,
+  Dimensions,
+} from 'react-native';
 import { useRoute, useNavigation } from '@react-navigation/native';
 import * as ImagePicker from 'expo-image-picker';
 import { supabase } from '../../lib/supabase';
 import { colors } from '../styles/colors';
+
+const SCREEN_HEIGHT = Dimensions.get('window').height;
+const TOP_OFFSET = SCREEN_HEIGHT * 0.2;
+const BOTTOM_NAV_HEIGHT = SCREEN_HEIGHT * 0.1;
+const BOTTOM_OFFSET = BOTTOM_NAV_HEIGHT * 1.5;
 
 export default function EditListingScreen() {
   const { params } = useRoute<any>();
@@ -63,7 +75,7 @@ export default function EditListingScreen() {
   };
 
   return (
-    <ScrollView style={styles.container}>
+    <ScrollView style={styles.container} contentContainerStyle={{ paddingBottom: BOTTOM_OFFSET }}>
       <Button title="Change Image" onPress={pickImage} color={colors.accent} />
       {image && <Image source={{ uri: image }} style={styles.image} />}
       <TextInput
@@ -153,7 +165,12 @@ export default function EditListingScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, padding: 16, backgroundColor: colors.background },
+  container: {
+    flex: 1,
+    padding: 16,
+    paddingTop: TOP_OFFSET,
+    backgroundColor: colors.background,
+  },
   input: {
     backgroundColor: '#333',
     color: colors.text,
