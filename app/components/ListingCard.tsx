@@ -19,7 +19,11 @@ export default function ListingCard({
   return (
     <TouchableOpacity style={styles.card} onPress={onPress}>
       {listing.image_urls?.[0] && (
-        <Image source={{ uri: listing.image_urls[0] }} style={styles.image} />
+        <Image
+          source={{ uri: listing.image_urls[0] }}
+          style={styles.image}
+          resizeMode="cover"
+        />
       )}
       <Text style={styles.price}>{`€ ${listing.price ?? ''}`}</Text>
       <Text style={styles.title} numberOfLines={1} ellipsizeMode="tail">

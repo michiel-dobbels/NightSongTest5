@@ -15,6 +15,7 @@ import { useNavigation } from '@react-navigation/native';
 import { useAuth } from '../../AuthContext';
 import { supabase, MARKET_BUCKET } from '../../lib/supabase';
 import { colors } from '../styles/colors';
+import ListingCard, { Listing } from '../components/ListingCard';
 
 const SCREEN_HEIGHT = Dimensions.get('window').height;
 const TOP_OFFSET = SCREEN_HEIGHT * 0.2;
@@ -27,6 +28,7 @@ export default function CreateListingScreen() {
   const [title, setTitle] = useState('');
   const [price, setPrice] = useState('');
   const [image, setImage] = useState<string | null>(null);
+  const [createdListing, setCreatedListing] = useState<Listing | null>(null);
 
   const processAsset = async (
     asset: ImagePicker.ImagePickerAsset,
@@ -83,22 +85,28 @@ export default function CreateListingScreen() {
   };
 
   const handleCreate = async () => {
-    if (!user) return;
+    if (!user || !title || !price || !image) return;
     let publicUrl: string | null = null;
-    if (image) {
-      try {
-        publicUrl = await uploadImage(image);
-      } catch (err) {
-        console.error('Image upload failed', err);
-      }
+    try {
+      publicUrl = await uploadImage(image);
+    } catch (err) {
+      console.error('Image upload failed', err);
     }
-    await supabase.from('market_listings').insert({
-      user_id: user.id,
-      title,
-      price: price ? parseFloat(price) : null,
-      image_urls: publicUrl ? [publicUrl] : [],
-    });
-    navigation.goBack();
+    const { data, error } = await supabase
+      .from('market_listings')
+      .insert({
+        user_id: user.id,
+        title,
+        price: parseFloat(price),
+        image_urls: publicUrl ? [publicUrl] : [],
+      })
+      .select()
+      .single();
+    if (error) {
+      console.error('Create listing failed', error);
+      return;
+    }
+    setCreatedListing(data as Listing);
   };
 
   return (
@@ -127,6 +135,11 @@ export default function CreateListingScreen() {
         keyboardType="numeric"
       />
       <Button title="Create Listing" onPress={handleCreate} color={colors.accent} />
+      {createdListing && (
+        <View style={{ marginTop: 20 }}>
+          <ListingCard listing={createdListing} onPress={() => {}} />
+        </View>
+      )}
     </ScrollView>
   );
 }
