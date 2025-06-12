@@ -13,7 +13,9 @@ import { supabase } from '../../lib/supabase';
 import { colors } from '../styles/colors';
 
 const SCREEN_HEIGHT = Dimensions.get('window').height;
-const FAB_BOTTOM_OFFSET = (SCREEN_HEIGHT * 0.1 + 10) * 0.75;
+const BOTTOM_NAV_HEIGHT = SCREEN_HEIGHT * 0.1;
+const FAB_BOTTOM_OFFSET = (BOTTOM_NAV_HEIGHT + 10) * 0.75;
+
 
 interface Listing {
   id: string;
