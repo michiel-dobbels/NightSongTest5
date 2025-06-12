@@ -2,6 +2,8 @@ import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { colors } from '../styles/colors';
 
+
+
 export default function MarketHeader() {
   return (
     <View style={styles.headerWrapper}>
@@ -15,6 +17,7 @@ export default function MarketHeader() {
         </TouchableOpacity>
         <TouchableOpacity style={styles.inactiveTab}>
           <Text style={styles.inactiveText}>Categories</Text>
+
         </TouchableOpacity>
       </View>
     </View>
@@ -24,6 +27,7 @@ export default function MarketHeader() {
 const styles = StyleSheet.create({
   headerWrapper: {
     backgroundColor: colors.background,
+
     paddingTop: 50,
     paddingHorizontal: 20,
     paddingBottom: 10,
@@ -32,6 +36,7 @@ const styles = StyleSheet.create({
     fontSize: 28,
     fontWeight: 'bold',
     color: colors.text,
+
   },
   buttonRow: {
     flexDirection: 'row',
@@ -40,6 +45,7 @@ const styles = StyleSheet.create({
   },
   tabButton: {
     backgroundColor: colors.accent,
+
     paddingVertical: 6,
     paddingHorizontal: 12,
     borderRadius: 12,
@@ -55,6 +61,7 @@ const styles = StyleSheet.create({
   },
   inactiveText: {
     color: colors.muted,
+
     fontWeight: '500',
   },
 });
