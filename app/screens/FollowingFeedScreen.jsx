@@ -1,6 +1,6 @@
 import React, { useState, useCallback, useEffect } from 'react';
 import { View, FlatList, ActivityIndicator, StyleSheet } from 'react-native';
-import { useFocusEffect, useNavigation } from '@react-navigation/native';
+import { useNavigation } from '@react-navigation/native';
 import PostCard from '../components/PostCard';
 
 const PostItem = React.memo(function PostItem({
@@ -128,12 +128,9 @@ export default function FollowingFeedScreen() {
     };
   }, []);
 
-  useFocusEffect(
-    useCallback(() => {
-      fetchPosts(0);
-    }, [fetchPosts])
-
-  );
+  useEffect(() => {
+    fetchPosts(0);
+  }, [fetchPosts]);
 
   return (
     <View style={styles.container}>
