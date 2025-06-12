@@ -16,6 +16,7 @@ const SCREEN_HEIGHT = Dimensions.get('window').height;
 const BOTTOM_NAV_HEIGHT = SCREEN_HEIGHT * 0.1;
 const FAB_BOTTOM_OFFSET = (BOTTOM_NAV_HEIGHT + 10) * 0.75;
 
+
 interface Listing {
   id: string;
   image_urls: string[] | null;

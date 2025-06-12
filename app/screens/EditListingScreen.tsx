@@ -17,6 +17,7 @@ const TOP_OFFSET = SCREEN_HEIGHT * 0.2;
 const BOTTOM_NAV_HEIGHT = SCREEN_HEIGHT * 0.1;
 const BOTTOM_OFFSET = BOTTOM_NAV_HEIGHT * 1.5;
 
+
 export default function EditListingScreen() {
   const { params } = useRoute<any>();
   const navigation = useNavigation<any>();
