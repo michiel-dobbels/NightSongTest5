@@ -14,7 +14,7 @@ export default function FollowButton({ targetUserId, onToggle }: FollowButtonPro
   const [following, setFollowing] = useState<boolean | null>(null);
 
   useEffect(() => {
-    if (!user) return;
+    if (!user?.id) return;
     let isMounted = true;
     const checkFollow = async () => {
       const { data, error } = await supabase
@@ -33,7 +33,7 @@ export default function FollowButton({ targetUserId, onToggle }: FollowButtonPro
     return () => {
       isMounted = false;
     };
-  }, [user, targetUserId]);
+  }, [user?.id, targetUserId]);
 
   const toggleFollow = async () => {
     if (!user) return;

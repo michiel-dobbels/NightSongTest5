@@ -164,7 +164,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     if (user?.id && lastFetchedUserIdRef.current !== user.id) {
       fetchMyPosts();
     }
-  }, [user, fetchMyPosts]);
+  }, [user?.id, fetchMyPosts]);
 
   useEffect(() => {
     const onLikeChanged = ({ id, count, liked }) => {
@@ -289,7 +289,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     lastFetchedUserIdRef.current = null;
   };
 
-  const setProfileImageUri = async (uri: string | null): Promise<void> => {
+  const setProfileImageUri = useCallback(async (uri: string | null): Promise<void> => {
     setProfileImageUriState(uri);
     const authUser = supabase.auth.user();
     const id = authUser?.id || user?.id;
@@ -308,9 +308,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     if (user && authUser !== user) {
       await supabase.from('profiles').update({ image_url: uri }).eq('id', user.id);
     }
-  };
+  }, [user?.id]);
 
-  const setBannerImageUri = async (uri: string | null): Promise<void> => {
+  const setBannerImageUri = useCallback(async (uri: string | null): Promise<void> => {
     setBannerImageUriState(uri);
     const authUser = supabase.auth.user();
     const id = authUser?.id || user?.id;
@@ -337,7 +337,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         .eq('id', user.id);
       if (error) console.error('Failed to update banner_url:', error);
     }
-  };
+  }, [user?.id]);
 
   const fetchMyPosts = useCallback(async () => {
     const id = user?.id;
@@ -380,16 +380,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       lastFetchedUserIdRef.current = id;
     }
 
-  }, [user]);
+  }, [user?.id]);
 
-  const addPost = (post: Post): void => {
+  const addPost = useCallback((post: Post): void => {
     setMyPosts(prev => {
       const withoutDuplicate = prev.filter(p => p.id !== post.id);
       return [post, ...withoutDuplicate];
     });
-  };
+  }, []);
 
-  const updatePost = (tempId: string, updated: Partial<Post>): void => {
+  const updatePost = useCallback((tempId: string, updated: Partial<Post>): void => {
     setMyPosts(prev => {
       const updatedList = prev.map(p =>
         p.id === tempId ? { ...p, ...updated } : p
@@ -401,9 +401,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         return true;
       });
     });
-  };
+  }, []);
 
-  const removePost = async (postId: string): Promise<void> => {
+  const removePost = useCallback(async (postId: string): Promise<void> => {
     setMyPosts(prev => prev.filter(p => p.id !== postId));
     try {
       const stored = await AsyncStorage.getItem('cached_posts');
@@ -416,7 +416,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       console.error('Failed to update cached posts', e);
     }
     postEvents.emit('postDeleted', postId);
-  };
+  }, []);
 
   useEffect(() => {
     const onPostDeleted = (postId) => {

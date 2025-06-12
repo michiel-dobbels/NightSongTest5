@@ -84,7 +84,15 @@ export default function FollowingFeedScreen() {
 
     if (!error && data) {
       const slice = data;
-      setPosts(prev => (append ? [...prev, ...slice] : slice));
+      setPosts(prev => {
+        const combined = append ? [...prev, ...slice] : slice;
+        const seen = new Set();
+        return combined.filter(p => {
+          if (seen.has(p.id)) return false;
+          seen.add(p.id);
+          return true;
+        });
+      });
       setHasMore(slice.length === PAGE_SIZE);
       const counts = {};
       slice.forEach(p => {
