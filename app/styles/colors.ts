@@ -1,7 +1,7 @@
 export const colors = {
   background: '#2c2c54',
-  text: '#f0f0f0',
+  text: '#FFFFFF',
   accent: '#0070f3',
-  muted: '#cccccc',
+
 };
   
