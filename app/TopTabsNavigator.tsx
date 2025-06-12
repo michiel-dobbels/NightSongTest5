@@ -45,6 +45,7 @@ const HEADER_BOTTOM_PADDING = 0;
 const BLUR_BACKGROUND_COLOR = 'rgba(29,21,43,0.6)';
 const SCREEN_WIDTH = Dimensions.get('window').width;
 const DRAWER_WIDTH = SCREEN_WIDTH * 0.8;
+const BOTTOM_NAV_HEIGHT = Dimensions.get('window').height * 0.1;
 
 
 function HeaderTabBar(
@@ -328,7 +329,7 @@ const styles = StyleSheet.create({
   },
   fab: {
     position: 'absolute',
-    bottom: 20,
+    bottom: BOTTOM_NAV_HEIGHT + 20,
     right: 20,
     backgroundColor: colors.accent,
     width: 56,
