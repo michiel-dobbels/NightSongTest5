@@ -129,7 +129,7 @@ export default function FollowingFeedScreen() {
 
   return (
     <View style={styles.container}>
-      {loading && <ActivityIndicator color="white" style={{ marginTop: 20 }} />}
+      {loading && <ActivityIndicator color={colors.accent} style={{ marginTop: 20 }} />}
       <FlatList
         data={posts}
         keyExtractor={item => item.id}
@@ -144,7 +144,7 @@ export default function FollowingFeedScreen() {
         }}
         onEndReachedThreshold={0.5}
         ListFooterComponent={loadingMore ? (
-          <ActivityIndicator color="white" style={{ marginVertical: 10 }} />
+          <ActivityIndicator color={colors.accent} style={{ marginVertical: 10 }} />
         ) : null}
         renderItem={({ item }) => {
           const isMe = user?.id === item.user_id;
