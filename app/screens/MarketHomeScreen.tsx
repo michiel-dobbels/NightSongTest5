@@ -17,6 +17,10 @@ interface Listing {
   vehicle_type?: string | null;
   fuel_type?: string | null;
   transmission?: string | null;
+  is_boosted?: boolean | null;
+  views?: number | null;
+  favorites?: number | null;
+  search_index?: string | null;
 }
 
 export default function MarketHomeScreen() {
