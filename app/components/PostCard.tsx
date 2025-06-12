@@ -110,7 +110,7 @@ function PostCard({
           </View>
         </View>
         <TouchableOpacity style={styles.replyCountContainer} onPress={onOpenReplies}>
-          <Ionicons name="chatbubble-outline" size={18} color="#66538f" style={{ marginRight: 2 }} />
+          <Ionicons name="chatbubble-outline" size={18} color={colors.accent} style={{ marginRight: 2 }} />
           <Text style={styles.replyCountLarge}>{replyCount}</Text>
         </TouchableOpacity>
         <TouchableOpacity style={styles.likeContainer} onPress={toggleLike}>
@@ -126,12 +126,12 @@ export default React.memo(PostCard);
 
 const styles = StyleSheet.create({
   post: {
-    backgroundColor: '#ffffff10',
+    backgroundColor: colors.background,
     borderRadius: 0,
     padding: 10,
     paddingBottom: 30,
     marginBottom: 0,
-    borderBottomColor: 'gray',
+    borderBottomColor: colors.secondaryText,
     borderBottomWidth: StyleSheet.hairlineWidth,
     position: 'relative',
   },
@@ -147,7 +147,7 @@ const styles = StyleSheet.create({
   deleteText: { color: 'white', fontSize: 18 },
   postContent: { color: 'white' },
   username: { fontWeight: 'bold', color: 'white' },
-  timestamp: { fontSize: 10, color: 'gray' },
+  timestamp: { fontSize: 10, color: colors.secondaryText },
   headerRow: { flexDirection: 'row', alignItems: 'center' },
   timestampMargin: { marginLeft: 6 },
   replyCountContainer: {
@@ -157,8 +157,8 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
   },
-  replyCountLarge: { fontSize: 15, color: 'gray' },
-  likeCountLarge: { fontSize: 15, color: 'gray' },
+  replyCountLarge: { fontSize: 15, color: colors.secondaryText },
+  likeCountLarge: { fontSize: 15, color: colors.secondaryText },
   likedLikeCount: { color: 'red' },
   likeContainer: {
     position: 'absolute',
@@ -186,7 +186,7 @@ const styles = StyleSheet.create({
     top: 0,
     bottom: -10,
     width: 2,
-    backgroundColor: '#66538f',
+    backgroundColor: colors.accent,
     zIndex: -1,
   },
 });

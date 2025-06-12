@@ -42,7 +42,7 @@ import { Video } from 'expo-av';
 const Tab = createMaterialTopTabNavigator();
 const TAB_BAR_HEIGHT = 48;
 const HEADER_BOTTOM_PADDING = 0;
-const BLUR_BACKGROUND_COLOR = 'rgba(29,21,43,0.6)';
+const BLUR_BACKGROUND_COLOR = 'rgba(44,44,84,0.6)';
 const SCREEN_WIDTH = Dimensions.get('window').width;
 const DRAWER_WIDTH = SCREEN_WIDTH * 0.8;
 
@@ -216,11 +216,11 @@ export default function TopTabsNavigator() {
             marginTop: 0,
           },
           tabBarLabelStyle: {
-            color: 'white',
+            color: colors.text,
             fontWeight: 'bold',
           },
           tabBarIndicatorStyle: {
-            backgroundColor: '#7814db',
+            backgroundColor: colors.accent,
           },
         }}
       >
@@ -302,7 +302,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   modalContent: {
-    backgroundColor: '#1d152b',
+    backgroundColor: colors.background,
     padding: 20,
     borderRadius: 8,
     width: '80%',
@@ -328,7 +328,7 @@ const styles = StyleSheet.create({
     position: 'absolute',
     bottom: 20,
     right: 20,
-    backgroundColor: '#7814db',
+    backgroundColor: colors.accent,
     width: 56,
     height: 56,
     borderRadius: 28,
@@ -342,7 +342,7 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     paddingBottom: HEADER_BOTTOM_PADDING,
-    backgroundColor: 'rgba(29,21,43,0.6)',
+    backgroundColor: BLUR_BACKGROUND_COLOR,
     zIndex: 20,
   },
 
@@ -355,13 +355,13 @@ const styles = StyleSheet.create({
     top: 0,
     bottom: 0,
     width: DRAWER_WIDTH,
-    backgroundColor: '#1d152b',
+    backgroundColor: colors.background,
     paddingTop: 100,
     paddingHorizontal: 20,
     zIndex: 30,
   },
   menuItem: {
-    color: 'white',
+    color: colors.text,
     paddingVertical: 10,
     fontSize: 16,
   },
