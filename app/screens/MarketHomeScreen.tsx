@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { View, FlatList, Text, TouchableOpacity, Image, StyleSheet, Button } from 'react-native';
+import { View, FlatList, Text, TouchableOpacity, Image, StyleSheet } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { supabase } from '../../lib/supabase';
 import { colors } from '../styles/colors';
@@ -57,13 +57,12 @@ export default function MarketHomeScreen() {
         renderItem={renderItem}
         contentContainerStyle={{ padding: 10 }}
       />
-      <View style={styles.createButton}>
-        <Button
-          title="Create"
-          onPress={() => navigation.navigate('CreateListing')}
-          color={colors.accent}
-        />
-      </View>
+      <TouchableOpacity
+        onPress={() => navigation.navigate('CreateListing')}
+        style={styles.fab}
+      >
+        <Text style={{ color: colors.text, fontSize: 24 }}>+</Text>
+      </TouchableOpacity>
     </View>
   );
 }
@@ -79,9 +78,16 @@ const styles = StyleSheet.create({
   image: { width: '100%', height: 150, borderRadius: 6 },
   price: { color: colors.accent, fontSize: 18, marginTop: 6 },
   title: { color: colors.text, marginTop: 4 },
-  createButton: {
+  fab: {
     position: 'absolute',
     bottom: 20,
     right: 20,
+    backgroundColor: colors.accent,
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 100,
   },
 });
