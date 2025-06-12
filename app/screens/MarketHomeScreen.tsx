@@ -16,11 +16,53 @@ const SCREEN_HEIGHT = Dimensions.get('window').height;
 const BOTTOM_NAV_HEIGHT = SCREEN_HEIGHT * 0.1;
 const FAB_BOTTOM_OFFSET = (BOTTOM_NAV_HEIGHT + 10) * 0.75;
 
+const mockListings: Listing[] = [
+  {
+    id: '1',
+    title: 'iPhone 16 Pro Max',
+    price: 110,
+    image_urls: ['https://example.com/iphone.jpg'],
+    brand: null,
+    model: null,
+    year: null,
+    description: null,
+    location: null,
+    mileage: null,
+    vehicle_type: null,
+    fuel_type: null,
+    transmission: null,
+    is_boosted: null,
+    views: null,
+    favorites: null,
+    search_index: null,
+  },
+  {
+    id: '2',
+    title: 'MacBook Air',
+    price: 320,
+    image_urls: ['https://example.com/macbook.jpg'],
+    brand: null,
+    model: null,
+    year: null,
+    description: null,
+    location: null,
+    mileage: null,
+    vehicle_type: null,
+    fuel_type: null,
+    transmission: null,
+    is_boosted: null,
+    views: null,
+    favorites: null,
+    search_index: null,
+  },
+];
+
 
 interface Listing {
   id: string;
   image_urls: string[] | null;
   price: number | null;
+  title: string | null;
   brand: string | null;
   model: string | null;
   year: number | null;
@@ -37,7 +79,7 @@ interface Listing {
 }
 
 export default function MarketHomeScreen() {
-  const [listings, setListings] = useState<Listing[]>([]);
+  const [listings, setListings] = useState<Listing[]>(mockListings);
   const navigation = useNavigation<any>();
 
   useEffect(() => {
@@ -46,7 +88,7 @@ export default function MarketHomeScreen() {
         .from('market_listings')
         .select('*')
         .order('created_at', { ascending: false });
-      if (data) setListings(data as Listing[]);
+      if (data && data.length > 0) setListings(data as Listing[]);
     };
     load();
   }, []);
@@ -59,9 +101,9 @@ export default function MarketHomeScreen() {
       {item.image_urls && item.image_urls[0] && (
         <Image source={{ uri: item.image_urls[0] }} style={styles.image} />
       )}
-      <Text style={styles.price}>{`$${item.price ?? ''}`}</Text>
-      <Text style={styles.title}>
-        {item.brand} {item.model} {item.year}
+      <Text style={styles.price}>{`€ ${item.price ?? ''}`}</Text>
+      <Text style={styles.title} numberOfLines={1} ellipsizeMode="tail">
+        {item.title || ''}
       </Text>
     </TouchableOpacity>
   );
@@ -72,7 +114,10 @@ export default function MarketHomeScreen() {
         data={listings}
         keyExtractor={item => item.id}
         renderItem={renderItem}
+        numColumns={2}
+        columnWrapperStyle={{ justifyContent: 'space-between' }}
         contentContainerStyle={{ padding: 10 }}
+        showsVerticalScrollIndicator={false}
       />
       <TouchableOpacity
         onPress={() => navigation.navigate('CreateListing')}
@@ -91,8 +136,9 @@ const styles = StyleSheet.create({
     padding: 10,
     borderRadius: 8,
     marginBottom: 12,
+    width: '48%',
   },
-  image: { width: '100%', height: 150, borderRadius: 6 },
+  image: { width: '100%', aspectRatio: 1, borderRadius: 6 },
   price: { color: colors.accent, fontSize: 18, marginTop: 6 },
   title: { color: colors.text, marginTop: 4 },
   fab: {
