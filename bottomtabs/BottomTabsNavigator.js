@@ -6,10 +6,13 @@ import { Dimensions } from 'react-native';
 
 import TopTabsNavigator from '../app/TopTabsNavigator';
 
-import SearchScreen from './SearchScreen';
 import MarketScreen from './MarketScreen';
 import VideoScreen from './VideoScreen';
 import NotificationsScreen from './NotificationsScreen';
+
+// Future search features will live in dedicated screens:
+// - A post and reply search for forum content
+// - A product search for the marketplace
 
 const Tab = createBottomTabNavigator();
 const Stack = createNativeStackNavigator();
@@ -72,7 +75,6 @@ export default function BottomTabsNavigator() {
         tabBarIcon: ({ focused, color, size }) => {
           let iconName = 'home-outline';
           if (route.name === 'Home') iconName = 'home-outline';
-          else if (route.name === 'Search') iconName = 'search-outline';
           else if (route.name === 'Market') iconName = 'car-outline';
           else if (route.name === 'Video') iconName = 'play-circle-outline';
           else if (route.name === 'Notifications') iconName = 'notifications-outline';
@@ -82,7 +84,6 @@ export default function BottomTabsNavigator() {
     >
       <Tab.Screen name="Home" component={HomeStackScreen} />
 
-      <Tab.Screen name="Search" component={SearchScreen} />
       <Tab.Screen name="Market" component={MarketScreen} />
       <Tab.Screen name="Video" component={VideoScreen} />
       <Tab.Screen name="Notifications" component={NotificationsScreen} />
