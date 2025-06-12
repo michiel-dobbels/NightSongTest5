@@ -511,6 +511,13 @@ const HomeScreen = forwardRef<HomeScreenRef, HomeScreenProps>(
       error = null;
     }
 
+    if (!error && uploadedVideoUrl) {
+      await supabase.from('videos').insert({
+        user_id: user.id,
+        video_url: uploadedVideoUrl,
+      });
+    }
+
     if (!error) {
       if (data) {
         // Update the optimistic post with the real data from Supabase
