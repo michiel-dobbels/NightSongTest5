@@ -1,8 +1,19 @@
 import React, { useEffect, useState } from 'react';
-import { View, FlatList, Text, TouchableOpacity, Image, StyleSheet } from 'react-native';
+import {
+  View,
+  FlatList,
+  Text,
+  TouchableOpacity,
+  Image,
+  StyleSheet,
+  Dimensions,
+} from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { supabase } from '../../lib/supabase';
 import { colors } from '../styles/colors';
+
+const SCREEN_HEIGHT = Dimensions.get('window').height;
+const FAB_BOTTOM_OFFSET = (SCREEN_HEIGHT * 0.1 + 10) * 0.75;
 
 interface Listing {
   id: string;
@@ -84,7 +95,7 @@ const styles = StyleSheet.create({
   title: { color: colors.text, marginTop: 4 },
   fab: {
     position: 'absolute',
-    bottom: 20,
+    bottom: FAB_BOTTOM_OFFSET,
     right: 20,
     backgroundColor: colors.accent,
     width: 56,
