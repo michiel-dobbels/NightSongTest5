@@ -106,7 +106,7 @@ export const PostStoreProvider: React.FC<{ children: React.ReactNode }> = ({
     load().then(() => {
       if (user?.id) lastLoadedUserIdRef.current = user.id;
     });
-  }, [user]);
+  }, [user?.id]);
 
   const initialize = useCallback(async (items: ItemInfo[]) => {
     setPosts(prev => {
@@ -164,7 +164,8 @@ export const PostStoreProvider: React.FC<{ children: React.ReactNode }> = ({
     } catch (e) {
       console.error('Failed to persist liked state', e);
     }
-  }, [user]);
+  }, [user?.id]);
+
 
   const toggleLike = useCallback(async (id: string, isReply: boolean = false) => {
     if (!user) return;
@@ -246,7 +247,8 @@ export const PostStoreProvider: React.FC<{ children: React.ReactNode }> = ({
     } catch (e) {
       console.error('Failed to toggle like', e);
     }
-  }, [user, updatePost]);
+  }, [user?.id, updatePost]);
+
 
   const remove = useCallback((id: string) => {
     setPosts(prev => {
