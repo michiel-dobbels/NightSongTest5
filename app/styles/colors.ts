@@ -1,5 +1,6 @@
 export const colors = {
-    background: '#1d152b',
-    text: '#FFFFFF',
-  };
+  background: '#2c2c54',
+  text: '#FFFFFF',
+  accent: '#0070f3',
+};
   
