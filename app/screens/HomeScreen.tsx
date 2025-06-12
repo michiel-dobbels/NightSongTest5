@@ -105,6 +105,8 @@ const HomeScreen = forwardRef<HomeScreenRef, HomeScreenProps>(
   const [replyCounts, setReplyCounts] = useState<{ [key: string]: number }>({});
   const [loadingMore, setLoadingMore] = useState(false);
   const [hasMore, setHasMore] = useState(true);
+  const [loading, setLoading] = useState(false);
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [replyModalVisible, setReplyModalVisible] = useState(false);
   const [activePostId, setActivePostId] = useState<string | null>(null);
   const [replyText, setReplyText] = useState('');
@@ -327,17 +329,27 @@ const HomeScreen = forwardRef<HomeScreenRef, HomeScreenProps>(
 
 
   const fetchPosts = useCallback(async (offset = 0, append = false) => {
-    const { data, error } = await supabase
-      .from('posts')
-      .select(
-        'id, content, image_url, video_url, user_id, created_at, reply_count, like_count, profiles(username, name, image_url, banner_url)'
-      )
-      .order('created_at', { ascending: false })
-      .range(offset, offset + PAGE_SIZE - 1);
+    try {
+      if (offset === 0) {
+        setErrorMsg(null);
+        setLoading(true);
+      }
 
-    if (!error && data) {
-      const replyEntries = (data as any[]).map(p => [p.id, p.reply_count ?? 0]);
-      const slice = data as Post[];
+      const { data, error } = await supabase
+        .from('posts')
+        .select(
+          'id, content, image_url, video_url, user_id, created_at, reply_count, like_count, profiles(username, name, image_url, banner_url)'
+        )
+        .order('created_at', { ascending: false })
+        .limit(PAGE_SIZE)
+        .range(offset, offset + PAGE_SIZE - 1);
+
+      if (error) throw error;
+
+      if (data) {
+        setErrorMsg(null);
+        const replyEntries = (data as any[]).map(p => [p.id, p.reply_count ?? 0]);
+        const slice = data as Post[];
 
       setPosts(prev => {
         const temps = prev.filter(p => p.id.startsWith('temp-'));
@@ -388,7 +400,20 @@ const HomeScreen = forwardRef<HomeScreenRef, HomeScreenProps>(
 
       }
     }
+    } catch (e: any) {
+      console.error('Failed to fetch posts', e);
+      setErrorMsg(e.message ?? 'Failed to load posts');
+    } finally {
+      setLoading(false);
+    }
   }, [user?.id, initialize, mergeLiked, updatePost]);
+
+  const fetchMore = useCallback(() => {
+    if (hasMore && !loadingMore) {
+      setLoadingMore(true);
+      fetchPosts(posts.length, true).finally(() => setLoadingMore(false));
+    }
+  }, [hasMore, loadingMore, fetchPosts, posts.length]);
 
 
 
@@ -702,7 +727,9 @@ const HomeScreen = forwardRef<HomeScreenRef, HomeScreenProps>(
         }
       };
       syncCounts();
-      fetchPosts(0);
+      if (posts.length === 0) {
+        fetchPosts(0);
+      }
     }, [fetchPosts]),
   );
 
@@ -728,14 +755,17 @@ const HomeScreen = forwardRef<HomeScreenRef, HomeScreenProps>(
         removeClippedSubviews
         initialNumToRender={10}
         windowSize={5}
+        ListEmptyComponent={
+          loading ? (
+            <ActivityIndicator color="white" style={{ marginTop: 20 }} />
+          ) : errorMsg ? (
+            <TouchableOpacity onPress={() => fetchPosts(0)}>
+              <Text style={styles.errorText}>Failed to load posts. Tap to retry.</Text>
+            </TouchableOpacity>
+          ) : null
+        }
 
-        onEndReached={() => {
-          if (hasMore && !loadingMore) {
-            setLoadingMore(true);
-            fetchPosts(posts.length, true).finally(() => setLoadingMore(false));
-          }
-
-        }}
+        onEndReached={fetchMore}
         onEndReachedThreshold={0.5}
         ListFooterComponent={loadingMore ? (
           <ActivityIndicator color="white" style={{ marginVertical: 10 }} />
@@ -812,6 +842,11 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     marginBottom: 10,
+  },
+  errorText: {
+    color: 'white',
+    textAlign: 'center',
+    marginTop: 20,
   },
 
 
