@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { View, StyleSheet, Dimensions, FlatList } from 'react-native';
-import { Video } from 'expo-av';
+import Video from 'react-native-video';
+
 import { supabase } from '../lib/supabase';
 import { colors } from '../app/styles/colors';
 
@@ -35,9 +36,10 @@ export default function VideoScreen() {
         source={{ uri: item.video_url }}
         style={styles.video}
         resizeMode="contain"
-        shouldPlay={currentIndex === index}
-        isLooping
-        isMuted={false}
+        paused={currentIndex !== index}
+        repeat
+        muted={false}
+
       />
     </View>
   );
