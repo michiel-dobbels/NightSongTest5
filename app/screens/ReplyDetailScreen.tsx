@@ -666,7 +666,7 @@ export default function ReplyDetailScreen() {
                   <Ionicons
                     name="chatbubble-outline"
                     size={18}
-                    color="#66538f"
+                    color={colors.accent}
                     style={{ marginRight: 2 }}
                   />
                   <Text style={styles.replyCountLarge}>{replyCounts[originalPost.id] || 0}</Text>
@@ -739,7 +739,7 @@ export default function ReplyDetailScreen() {
                   <Ionicons
                     name="chatbubble-outline"
                     size={18}
-                    color="#66538f"
+                    color={colors.accent}
                     style={{ marginRight: 2 }}
                   />
                   <Text style={styles.replyCountLarge}>{replyCounts[a.id] || 0}</Text>
@@ -804,7 +804,7 @@ export default function ReplyDetailScreen() {
             <Ionicons
               name="chatbubble-outline"
               size={18}
-              color="#66538f"
+              color={colors.accent}
               style={{ marginRight: 2 }}
             />
             <Text style={styles.replyCountLarge}>{replyCounts[parent.id] || 0}</Text>
@@ -888,7 +888,7 @@ export default function ReplyDetailScreen() {
                   <Ionicons
                     name="chatbubble-outline"
                     size={18}
-                    color="#66538f"
+                    color={colors.accent}
                     style={{ marginRight: 2 }}
                   />
                   <Text style={styles.replyCountLarge}>{replyCounts[item.id] || 0}</Text>
@@ -940,11 +940,11 @@ const styles = StyleSheet.create({
     backgroundColor: colors.background,
   },
   post: {
-    backgroundColor: '#ffffff10',
+    backgroundColor: colors.background,
     borderRadius: 0,
     padding: 10,
     marginBottom: 0,
-    borderBottomColor: 'gray',
+    borderBottomColor: colors.secondaryText,
     borderBottomWidth: StyleSheet.hairlineWidth,
 
     position: 'relative',
@@ -953,11 +953,11 @@ const styles = StyleSheet.create({
   avatar: { width: 48, height: 48, borderRadius: 24, marginRight: 8 },
   placeholder: { backgroundColor: '#555' },
   reply: {
-    backgroundColor: '#ffffff10',
+    backgroundColor: colors.background,
     borderRadius: 0,
     padding: 10,
     marginTop: 0,
-    borderBottomColor: 'gray',
+    borderBottomColor: colors.secondaryText,
     borderBottomWidth: StyleSheet.hairlineWidth,
 
     position: 'relative',
@@ -972,17 +972,17 @@ const styles = StyleSheet.create({
     top: 0,
     bottom: -10,
     width: 2,
-    backgroundColor: '#66538f',
+    backgroundColor: colors.accent,
     zIndex: -1,
   },
   highlightPost: {
-    borderColor: '#4f1fde',
+    borderColor: colors.accent,
     borderWidth: 2,
 
   },
-  postContent: { color: 'white' },
-  username: { fontWeight: 'bold', color: 'white' },
-  timestamp: { fontSize: 10, color: 'gray' },
+  postContent: { color: colors.text },
+  username: { fontWeight: 'bold', color: colors.text },
+  timestamp: { fontSize: 10, color: colors.secondaryText },
   headerRow: { flexDirection: 'row', alignItems: 'center' },
   timestampMargin: { marginLeft: 6 },
   replyCountContainer: {
@@ -994,9 +994,9 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
   },
-  replyCount: { fontSize: 10, color: 'gray' },
-  replyCountLarge: { fontSize: 15, color: 'gray' },
-  likeCountLarge: { fontSize: 15, color: 'gray' },
+  replyCount: { fontSize: 10, color: colors.secondaryText },
+  replyCountLarge: { fontSize: 15, color: colors.secondaryText },
+  likeCountLarge: { fontSize: 15, color: colors.secondaryText },
   likedLikeCount: { color: 'red' },
   likeContainer: {
     position: 'absolute',
