@@ -818,10 +818,11 @@ const styles = StyleSheet.create({
     backgroundColor: colors.background,
   },
   input: {
-    backgroundColor: 'white',
+    backgroundColor: colors.background,
     padding: 10,
     borderRadius: 6,
     marginBottom: 10,
+    color: colors.text,
   },
   modalOverlay: {
     flex: 1,
@@ -844,7 +845,7 @@ const styles = StyleSheet.create({
     marginBottom: 10,
   },
   errorText: {
-    color: 'white',
+    color: colors.text,
     textAlign: 'center',
     marginTop: 20,
   },
