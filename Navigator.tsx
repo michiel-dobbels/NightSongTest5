@@ -2,6 +2,7 @@ import React, { Suspense } from 'react';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import AuthPage from './AuthPage';
 import TopTabsNavigator from './app/TopTabsNavigator';
+import BottomTabsNavigator from './bottomtabs/BottomTabsNavigator';
 import LoadingScreen from './app/components/LoadingScreen';
 
 const PostDetailScreen = React.lazy(() => import('./app/screens/PostDetailScreen'));
@@ -25,6 +26,7 @@ export default function Navigator() {
       {user ? (
         <>
           <Stack.Screen name="Tabs" component={TopTabsNavigator} />
+          <Stack.Screen name="BottomTabs" component={BottomTabsNavigator} />
           <Stack.Screen name="PostDetail" component={PostDetailScreen} />
           <Stack.Screen name="ReplyDetail" component={ReplyDetailScreen} />
           <Stack.Screen name="Profile" component={ProfileScreen} />
