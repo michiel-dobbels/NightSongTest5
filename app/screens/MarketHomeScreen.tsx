@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useState } from 'react';
 import {
   View,
   FlatList,
@@ -8,7 +8,7 @@ import {
   StyleSheet,
   Dimensions,
 } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { supabase } from '../../lib/supabase';
 import { colors } from '../styles/colors';
 import MarketHeader from '../components/MarketHeader';
@@ -17,46 +17,7 @@ const SCREEN_HEIGHT = Dimensions.get('window').height;
 const BOTTOM_NAV_HEIGHT = SCREEN_HEIGHT * 0.1;
 const FAB_BOTTOM_OFFSET = (BOTTOM_NAV_HEIGHT + 10) * 1.11;
 
-const mockListings: Listing[] = [
-  {
-    id: '1',
-    title: 'iPhone 16 Pro Max',
-    price: 110,
-    image_urls: ['https://example.com/iphone.jpg'],
-    brand: null,
-    model: null,
-    year: null,
-    description: null,
-    location: null,
-    mileage: null,
-    vehicle_type: null,
-    fuel_type: null,
-    transmission: null,
-    is_boosted: null,
-    views: null,
-    favorites: null,
-    search_index: null,
-  },
-  {
-    id: '2',
-    title: 'MacBook Air',
-    price: 320,
-    image_urls: ['https://example.com/macbook.jpg'],
-    brand: null,
-    model: null,
-    year: null,
-    description: null,
-    location: null,
-    mileage: null,
-    vehicle_type: null,
-    fuel_type: null,
-    transmission: null,
-    is_boosted: null,
-    views: null,
-    favorites: null,
-    search_index: null,
-  },
-];
+
 
 
 interface Listing {
@@ -80,19 +41,22 @@ interface Listing {
 }
 
 export default function MarketHomeScreen() {
-  const [listings, setListings] = useState<Listing[]>(mockListings);
+  const [listings, setListings] = useState<Listing[]>([]);
   const navigation = useNavigation<any>();
 
-  useEffect(() => {
-    const load = async () => {
-      const { data } = await supabase
-        .from('market_listings')
-        .select('*')
-        .order('created_at', { ascending: false });
-      if (data && data.length > 0) setListings(data as Listing[]);
-    };
-    load();
-  }, []);
+  const load = async () => {
+    const { data } = await supabase
+      .from('market_listings')
+      .select('*')
+      .order('created_at', { ascending: false });
+    setListings((data as Listing[]) ?? []);
+  };
+
+  useFocusEffect(
+    useCallback(() => {
+      load();
+    }, []),
+  );
 
   const renderItem = ({ item }: { item: Listing }) => (
     <TouchableOpacity
@@ -112,15 +76,21 @@ export default function MarketHomeScreen() {
   return (
     <View style={styles.container}>
       <MarketHeader />
-      <FlatList
-        data={listings}
-        keyExtractor={item => item.id}
-        renderItem={renderItem}
-        numColumns={2}
-        columnWrapperStyle={{ justifyContent: 'space-between' }}
-        contentContainerStyle={{ padding: 10 }}
-        showsVerticalScrollIndicator={false}
-      />
+      {listings.length === 0 ? (
+        <View style={styles.emptyWrapper}>
+          <Text style={styles.emptyText}>No listings yet</Text>
+        </View>
+      ) : (
+        <FlatList
+          data={listings}
+          keyExtractor={item => item.id}
+          renderItem={renderItem}
+          numColumns={2}
+          columnWrapperStyle={{ justifyContent: 'space-between' }}
+          contentContainerStyle={{ padding: 10 }}
+          showsVerticalScrollIndicator={false}
+        />
+      )}
       <TouchableOpacity
         onPress={() => navigation.navigate('CreateListing')}
         style={styles.fab}
@@ -155,4 +125,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     zIndex: 100,
   },
+  emptyWrapper: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  emptyText: { color: colors.text, marginTop: 20 },
 });
