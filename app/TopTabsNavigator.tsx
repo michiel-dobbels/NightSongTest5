@@ -65,6 +65,13 @@ function HeaderTabBar(
       style={[styles.headerBlur, { paddingTop: insetsTop + 10 }]}
     >
       <StatusBar barStyle="light-content" translucent backgroundColor="transparent" />
+      <View style={{ alignItems: 'center', marginBottom: 10 }}>
+        <Image
+          source={require('../assets/logo.png')}
+          style={styles.logo}
+          resizeMode="contain"
+        />
+      </View>
       <Text style={{ color: colors.text, textAlign: 'center' }}>{welcomeText}</Text>
       <View style={{ flexDirection: 'row', justifyContent: 'center', marginTop: 10 }}>
         <Button title="Profile" onPress={onProfile} />
@@ -378,5 +385,9 @@ const styles = StyleSheet.create({
     bottom: 0,
     backgroundColor: 'black',
     zIndex: 25,
+  },
+  logo: {
+    width: 120,
+    height: 40,
   },
 });
