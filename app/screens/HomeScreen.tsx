@@ -17,7 +17,7 @@ import {
 import { Video } from 'expo-av';
 import * as ImagePicker from 'expo-image-picker';
 import * as FileSystem from 'expo-file-system';
-import { useNavigation, useFocusEffect } from '@react-navigation/native';
+import { useNavigation } from '@react-navigation/native';
 import { useCallback } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { supabase } from '../../lib/supabase';
@@ -701,50 +701,46 @@ const HomeScreen = forwardRef<HomeScreenRef, HomeScreenProps>(
     loadCached();
   }, []);
 
-  useFocusEffect(
-    useCallback(() => {
-      const syncCounts = async () => {
-        const stored = await AsyncStorage.getItem(COUNT_STORAGE_KEY);
-        if (stored) {
-          try {
-            setReplyCounts(JSON.parse(stored));
-          } catch (e) {
-            console.error('Failed to parse cached counts', e);
-          }
+  useEffect(() => {
+    const syncCounts = async () => {
+      const stored = await AsyncStorage.getItem(COUNT_STORAGE_KEY);
+      if (stored) {
+        try {
+          setReplyCounts(JSON.parse(stored));
+        } catch (e) {
+          console.error('Failed to parse cached counts', e);
         }
-        const likeStored = await AsyncStorage.getItem(LIKE_COUNT_KEY);
-        if (likeStored) {
-          try {
-            const parsed = JSON.parse(likeStored);
-            initialize(
-              Object.entries(parsed).map(([id, c]) => ({
-                id,
-                like_count: c as number,
-              })),
-            );
-          } catch (e) {
-            console.error('Failed to parse cached like counts', e);
-          }
-        }
-        if (user) {
-          const likedStored = await AsyncStorage.getItem(`${LIKED_KEY_PREFIX}${user.id}`);
-          if (likedStored) {
-            try {
-              const map = JSON.parse(likedStored);
-              mergeLiked(map);
-            } catch (e) {
-              console.error('Failed to parse cached likes', e);
-            }
-
-          }
-        }
-      };
-      syncCounts();
-      if (posts.length === 0) {
-        fetchPosts(0);
       }
-    }, [fetchPosts]),
-  );
+      const likeStored = await AsyncStorage.getItem(LIKE_COUNT_KEY);
+      if (likeStored) {
+        try {
+          const parsed = JSON.parse(likeStored);
+          initialize(
+            Object.entries(parsed).map(([id, c]) => ({
+              id,
+              like_count: c as number,
+            })),
+          );
+        } catch (e) {
+          console.error('Failed to parse cached like counts', e);
+        }
+      }
+      if (user) {
+        const likedStored = await AsyncStorage.getItem(`${LIKED_KEY_PREFIX}${user.id}`);
+        if (likedStored) {
+          try {
+            const map = JSON.parse(likedStored);
+            mergeLiked(map);
+          } catch (e) {
+            console.error('Failed to parse cached likes', e);
+          }
+
+        }
+      }
+    };
+    syncCounts();
+    fetchPosts(0);
+  }, [fetchPosts]);
 
   return (
     
