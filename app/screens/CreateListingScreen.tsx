@@ -7,6 +7,7 @@ import {
   Image,
   Dimensions,
   View,
+  Text,
 } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 import { useNavigation } from '@react-navigation/native';
@@ -25,6 +26,7 @@ export default function CreateListingScreen() {
   const [title, setTitle] = useState('');
   const [price, setPrice] = useState('');
   const [image, setImage] = useState<string | null>(null);
+  const [createdListing, setCreatedListing] = useState<any | null>(null);
 
   const pickFromGallery = async () => {
     const res = await ImagePicker.launchImageLibraryAsync({
@@ -52,22 +54,27 @@ export default function CreateListingScreen() {
   };
 
   const handleCreate = async () => {
-    if (!user) return;
+    if (!user || !title || !price || !image) return;
+
     let publicUrl: string | null = null;
-    if (image) {
-      try {
-        publicUrl = await uploadImage(image);
-      } catch (err) {
-        console.error('Image upload failed', err);
-      }
+    try {
+      publicUrl = await uploadImage(image);
+    } catch (err) {
+      console.error('Image upload failed', err);
     }
-    await supabase.from('market_listings').insert({
-      user_id: user.id,
-      title,
-      price: price ? parseFloat(price) : null,
-      image_urls: publicUrl ? [publicUrl] : [],
-    });
-    navigation.goBack();
+
+    const { data } = await supabase
+      .from('market_listings')
+      .insert({
+        user_id: user.id,
+        title,
+        price: parseFloat(price),
+        image_urls: publicUrl ? [publicUrl] : [],
+      })
+      .select('*')
+      .single();
+
+    setCreatedListing(data);
   };
 
   return (
@@ -79,7 +86,9 @@ export default function CreateListingScreen() {
         <Button title="Take Photo" onPress={takePhoto} color={colors.accent} />
         <Button title="Pick Image" onPress={pickFromGallery} color={colors.accent} />
       </View>
-      {image && <Image source={{ uri: image }} style={styles.image} />}
+      {image && (
+        <Image source={{ uri: image }} style={styles.image} resizeMode="cover" />
+      )}
       <TextInput
         placeholder="Title"
         placeholderTextColor={colors.muted}
@@ -96,6 +105,26 @@ export default function CreateListingScreen() {
         keyboardType="numeric"
       />
       <Button title="Create Listing" onPress={handleCreate} color={colors.accent} />
+
+      {createdListing && (
+        <View style={styles.previewCard}>
+          {createdListing.image_urls?.[0] && (
+            <Image
+              source={{ uri: createdListing.image_urls[0] }}
+              style={styles.previewImage}
+              resizeMode="cover"
+            />
+          )}
+          <Text style={styles.previewPrice}>{`€ ${createdListing.price ?? ''}`}</Text>
+          <Text
+            style={styles.previewTitle}
+            numberOfLines={1}
+            ellipsizeMode="tail"
+          >
+            {createdListing.title}
+          </Text>
+        </View>
+      )}
     </ScrollView>
   );
 }
@@ -115,6 +144,15 @@ const styles = StyleSheet.create({
     marginTop: 10,
   },
   image: { width: '100%', height: 200, marginTop: 10, borderRadius: 6 },
+  previewCard: {
+    backgroundColor: '#333',
+    padding: 10,
+    borderRadius: 8,
+    marginTop: 20,
+  },
+  previewImage: { width: '100%', aspectRatio: 1, borderRadius: 6 },
+  previewPrice: { color: colors.accent, fontSize: 18, marginTop: 6 },
+  previewTitle: { color: colors.text, marginTop: 4 },
   buttonRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
