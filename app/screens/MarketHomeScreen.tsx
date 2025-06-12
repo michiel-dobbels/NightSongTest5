@@ -11,6 +11,7 @@ import {
 import { useNavigation } from '@react-navigation/native';
 import { supabase } from '../../lib/supabase';
 import { colors } from '../styles/colors';
+import MarketHeader from '../components/MarketHeader';
 
 const SCREEN_HEIGHT = Dimensions.get('window').height;
 const BOTTOM_NAV_HEIGHT = SCREEN_HEIGHT * 0.1;
@@ -110,6 +111,7 @@ export default function MarketHomeScreen() {
 
   return (
     <View style={styles.container}>
+      <MarketHeader />
       <FlatList
         data={listings}
         keyExtractor={item => item.id}
