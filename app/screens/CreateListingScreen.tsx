@@ -14,6 +14,9 @@ import { colors } from '../styles/colors';
 
 const SCREEN_HEIGHT = Dimensions.get('window').height;
 const TOP_OFFSET = SCREEN_HEIGHT * 0.2;
+const BOTTOM_NAV_HEIGHT = SCREEN_HEIGHT * 0.1;
+const BOTTOM_OFFSET = BOTTOM_NAV_HEIGHT * 1.5;
+
 
 export default function CreateListingScreen() {
   const { user } = useAuth()!;
@@ -80,7 +83,7 @@ export default function CreateListingScreen() {
   };
 
   return (
-    <ScrollView style={styles.container}>
+    <ScrollView style={styles.container} contentContainerStyle={{ paddingBottom: BOTTOM_OFFSET }}>
       <Button title="Pick Image" onPress={pickImage} color={colors.accent} />
       {image && <Image source={{ uri: image }} style={styles.image} />}
       <TextInput
