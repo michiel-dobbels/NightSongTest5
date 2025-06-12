@@ -48,6 +48,7 @@ export default function CreateListingScreen() {
     const { error } = await supabase.storage.from(MARKET_BUCKET).upload(path, blob);
     if (error) throw error;
     return supabase.storage.from(MARKET_BUCKET).getPublicUrl(path).data.publicUrl;
+
   };
 
   const handleCreate = async () => {

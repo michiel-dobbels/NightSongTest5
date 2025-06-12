@@ -36,6 +36,7 @@ const mockListings: Listing[] = [
   },
 ];
 
+
 export default function MarketHomeScreen() {
   const [listings, setListings] = useState<Listing[]>([]);
   const navigation = useNavigation<any>();
@@ -73,6 +74,7 @@ export default function MarketHomeScreen() {
         contentContainerStyle={{ padding: 10 }}
         showsVerticalScrollIndicator={false}
       />
+
       <TouchableOpacity
         onPress={() => navigation.navigate('CreateListing')}
         style={styles.fab}
@@ -97,4 +99,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     zIndex: 100,
   },
+  emptyWrapper: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  emptyText: { color: colors.text, marginTop: 20 },
 });
