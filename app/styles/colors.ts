@@ -4,4 +4,4 @@ export const colors = {
   accent: '#0070f3',
   muted: '#cccccc',
 };
-  
+
