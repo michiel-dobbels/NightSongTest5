@@ -658,39 +658,40 @@ const styles = StyleSheet.create({
     borderRadius: 40,
   },
   placeholder: {
-    backgroundColor: '#ffffff20',
+    backgroundColor: '#555',
   },
   textContainer: {
     marginLeft: 15,
   },
   username: {
-    color: 'white',
+    color: colors.text,
     fontSize: 24,
     fontWeight: 'bold',
   },
   name: {
-    color: 'white',
+    color: colors.text,
     fontSize: 20,
     marginTop: 4,
   },
   uploadLink: {
     marginTop: 20,
     padding: 10,
-    backgroundColor: '#ffffff10',
+    backgroundColor: colors.background,
     borderRadius: 6,
     alignSelf: 'flex-start',
   },
-  uploadText: { color: 'white' },
+  uploadText: { color: colors.text },
   statsRow: { flexDirection: 'row', marginLeft: 15, marginBottom: 20 },
-  statsText: { color: 'white', marginRight: 15 },
+  statsText: { color: colors.text, marginRight: 15 },
   headerContainer: {
     padding: 20,
   },
   input: {
-    backgroundColor: 'white',
+    backgroundColor: colors.background,
     padding: 10,
     borderRadius: 6,
     marginBottom: 10,
+    color: colors.text,
   },
   modalOverlay: {
     flex: 1,
@@ -714,7 +715,7 @@ const styles = StyleSheet.create({
   },
   tabBar: {
     flexDirection: 'row',
-    borderBottomColor: '#ffffff30',
+    borderBottomColor: '#444',
     borderBottomWidth: StyleSheet.hairlineWidth,
   },
   tabItem: {
@@ -723,15 +724,15 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   tabLabel: {
-    color: 'white',
+    color: colors.text,
     fontWeight: 'bold',
   },
   activeTab: {
-    borderBottomColor: '#7814db',
+    borderBottomColor: colors.accent,
     borderBottomWidth: 2,
   },
   emptyText: {
-    color: 'white',
+    color: colors.text,
     textAlign: 'center',
     padding: 20,
   },

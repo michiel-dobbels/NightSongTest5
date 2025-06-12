@@ -47,7 +47,9 @@ const SCREEN_WIDTH = Dimensions.get('window').width;
 const { height } = Dimensions.get('window');
 const BOTTOM_NAV_HEIGHT = height * 0.1;
 const FAB_OFFSET = BOTTOM_NAV_HEIGHT + height * 0.05;
+
 const DRAWER_WIDTH = SCREEN_WIDTH * 0.8;
+const BOTTOM_NAV_HEIGHT = Dimensions.get('window').height * 0.1;
 
 
 function HeaderTabBar(
@@ -66,7 +68,7 @@ function HeaderTabBar(
       style={[styles.headerBlur, { paddingTop: insetsTop + 10 }]}
     >
       <StatusBar barStyle="light-content" translucent backgroundColor="transparent" />
-      <Text style={{ color: 'white', textAlign: 'center' }}>{welcomeText}</Text>
+      <Text style={{ color: colors.text, textAlign: 'center' }}>{welcomeText}</Text>
       <View style={{ flexDirection: 'row', justifyContent: 'center', marginTop: 10 }}>
         <Button title="Profile" onPress={onProfile} />
         <Button title="Logout" onPress={signOut} />
@@ -219,12 +221,13 @@ export default function TopTabsNavigator() {
             marginTop: 0,
           },
           tabBarLabelStyle: {
-            color: 'white',
+            color: colors.text,
             fontWeight: 'bold',
           },
           tabBarIndicatorStyle: {
-            backgroundColor: '#7814db',
+            backgroundColor: colors.accent,
           },
+          tabBarActiveTintColor: colors.accent,
         }}
       >
         <Tab.Screen name="For you" component={ForYouScreen} />
@@ -241,7 +244,7 @@ export default function TopTabsNavigator() {
           onPress={() => setModalVisible(true)}
           style={styles.fab}
         >
-          <Text style={{ color: 'white', fontSize: 24 }}>+</Text>
+          <Text style={{ color: colors.text, fontSize: 24 }}>+</Text>
         </TouchableOpacity>
 
         <Modal visible={modalVisible} animationType="slide" transparent>
@@ -305,16 +308,17 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   modalContent: {
-    backgroundColor: '#1d152b',
+    backgroundColor: colors.background,
     padding: 20,
     borderRadius: 8,
     width: '80%',
   },
   input: {
-    backgroundColor: 'white',
+    backgroundColor: colors.background,
     padding: 10,
     borderRadius: 6,
     marginBottom: 10,
+    color: colors.text,
   },
   preview: {
     width: '100%',
@@ -330,8 +334,9 @@ const styles = StyleSheet.create({
   fab: {
     position: 'absolute',
     bottom: FAB_OFFSET,
+
     right: 20,
-    backgroundColor: '#7814db',
+    backgroundColor: colors.accent,
     width: 56,
     height: 56,
     borderRadius: 28,
@@ -358,13 +363,13 @@ const styles = StyleSheet.create({
     top: 0,
     bottom: 0,
     width: DRAWER_WIDTH,
-    backgroundColor: '#1d152b',
+    backgroundColor: colors.background,
     paddingTop: 100,
     paddingHorizontal: 20,
     zIndex: 30,
   },
   menuItem: {
-    color: 'white',
+    color: colors.text,
     paddingVertical: 10,
     fontSize: 16,
   },

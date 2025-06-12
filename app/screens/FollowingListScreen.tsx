@@ -106,7 +106,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#555',
   },
   username: {
-    color: 'white',
+    color: colors.text,
     fontSize: 16,
   },
 });
