@@ -4,6 +4,8 @@ import React, {
   useEffect,
   useState,
   useRef,
+  useCallback,
+  useMemo,
 } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { supabase } from '../../lib/supabase';
@@ -40,7 +42,12 @@ export const PostStoreProvider: React.FC<{ children: React.ReactNode }> = ({
 }) => {
   const { user, updatePost } = useAuth()!;
   const [posts, setPosts] = useState<Record<string, PostState>>({});
+  const postsRef = useRef<Record<string, PostState>>({});
   const lastLoadedUserIdRef = useRef<string | null>(null);
+
+  useEffect(() => {
+    postsRef.current = posts;
+  }, [posts]);
 
   useEffect(() => {
     if (user?.id && lastLoadedUserIdRef.current === user.id) {
@@ -101,7 +108,7 @@ export const PostStoreProvider: React.FC<{ children: React.ReactNode }> = ({
     });
   }, [user]);
 
-  const initialize = async (items: ItemInfo[]) => {
+  const initialize = useCallback(async (items: ItemInfo[]) => {
     setPosts(prev => {
       const updated = { ...prev };
       items.forEach(item => {
@@ -128,9 +135,9 @@ export const PostStoreProvider: React.FC<{ children: React.ReactNode }> = ({
     } catch (e) {
       console.error('Failed to persist like counts', e);
     }
-  };
+  }, []);
 
-  const mergeLiked = async (likedMap: Record<string, boolean>) => {
+  const mergeLiked = useCallback(async (likedMap: Record<string, boolean>) => {
     if (!user) return;
     setPosts(prev => {
       const updated = { ...prev };
@@ -157,11 +164,11 @@ export const PostStoreProvider: React.FC<{ children: React.ReactNode }> = ({
     } catch (e) {
       console.error('Failed to persist liked state', e);
     }
-  };
+  }, [user]);
 
-  const toggleLike = async (id: string, isReply: boolean = false) => {
+  const toggleLike = useCallback(async (id: string, isReply: boolean = false) => {
     if (!user) return;
-    const current = posts[id] || { likeCount: 0, liked: false };
+    const current = postsRef.current[id] || { likeCount: 0, liked: false };
     const newLiked = !current.liked;
     let newCount = current.likeCount + (newLiked ? 1 : -1);
     setPosts(prev => ({ ...prev, [id]: { likeCount: newCount, liked: newLiked } }));
@@ -239,18 +246,23 @@ export const PostStoreProvider: React.FC<{ children: React.ReactNode }> = ({
     } catch (e) {
       console.error('Failed to toggle like', e);
     }
-  };
+  }, [user, updatePost]);
 
-  const remove = (id: string) => {
+  const remove = useCallback((id: string) => {
     setPosts(prev => {
       const { [id]: _omit, ...rest } = prev;
       return rest;
     });
     postEvents.emit('postDeleted', id);
-  };
+  }, []);
+
+  const value = useMemo(
+    () => ({ posts, initialize, mergeLiked, toggleLike, remove }),
+    [posts, initialize, mergeLiked, toggleLike, remove],
+  );
 
   return (
-    <PostStoreContext.Provider value={{ posts, initialize, mergeLiked, toggleLike, remove }}>
+    <PostStoreContext.Provider value={value}>
       {children}
     </PostStoreContext.Provider>
   );
