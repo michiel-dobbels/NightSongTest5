@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { View, TextInput, Button, Text, StyleSheet, Alert } from 'react-native';
+import { colors } from '../app/styles/colors';
 import { supabase } from '../lib/supabase';
 
 export default function SignInScreen({ navigation }) {
@@ -47,7 +48,24 @@ export default function SignInScreen({ navigation }) {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, justifyContent: 'center', padding: 24 },
-  title: { fontSize: 24, textAlign: 'center', marginBottom: 16 },
-  input: { borderWidth: 1, borderColor: '#ccc', padding: 10, marginBottom: 12, borderRadius: 6 },
+  container: {
+    flex: 1,
+    justifyContent: 'center',
+    padding: 24,
+    backgroundColor: colors.background,
+  },
+  title: {
+    fontSize: 24,
+    textAlign: 'center',
+    marginBottom: 16,
+    color: colors.text,
+  },
+  input: {
+    borderWidth: 1,
+    borderColor: colors.secondaryText,
+    padding: 10,
+    marginBottom: 12,
+    borderRadius: 6,
+    color: colors.text,
+  },
 });
