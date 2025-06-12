@@ -164,7 +164,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     if (user?.id && lastFetchedUserIdRef.current !== user.id) {
       fetchMyPosts();
     }
-  }, [user, fetchMyPosts]);
+  }, [user?.id, fetchMyPosts]);
 
   useEffect(() => {
     const onLikeChanged = ({ id, count, liked }) => {
@@ -380,7 +380,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       lastFetchedUserIdRef.current = id;
     }
 
-  }, [user]);
+  }, [user?.id]);
 
   const addPost = (post: Post): void => {
     setMyPosts(prev => {
