@@ -10,6 +10,7 @@ import {
 } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 import { manipulateAsync, SaveFormat } from 'expo-image-manipulator';
+
 import { useNavigation } from '@react-navigation/native';
 import { useAuth } from '../../AuthContext';
 import { supabase, MARKET_BUCKET } from '../../lib/supabase';
@@ -49,6 +50,7 @@ export default function CreateListingScreen() {
     return cropped.uri;
   };
 
+
   const pickFromGallery = async () => {
     const res = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
@@ -57,6 +59,7 @@ export default function CreateListingScreen() {
       const uri = await processAsset(res.assets[0]);
       setImage(uri);
     }
+
   };
 
   const takePhoto = async () => {
