@@ -121,6 +121,7 @@ export default function CreateListingScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.background },
   content: { padding: 16, paddingTop: '10%' },
+
   input: {
     backgroundColor: '#444',
     color: colors.text,

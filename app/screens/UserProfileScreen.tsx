@@ -334,7 +334,7 @@ export default function UserProfileScreen() {
           </TouchableOpacity>
 
         </View>
-        <Text style={{ color: 'white', marginTop: 10 }}>Profile not found.</Text>
+        <Text style={{ color: colors.text, marginTop: 10 }}>Profile not found.</Text>
         <View style={styles.backButton}>
           <Button title="Back" onPress={() => navigation.goBack()} />
         </View>
@@ -466,17 +466,17 @@ const styles = StyleSheet.create({
     height: 80,
     borderRadius: 40,
   },
-  placeholder: { backgroundColor: '#ffffff20' },
+  placeholder: { backgroundColor: '#555' },
   textContainer: { marginLeft: 15 },
-  username: { color: 'white', fontSize: 24, fontWeight: 'bold' },
-  name: { color: 'white', fontSize: 20, marginTop: 4 },
+  username: { color: colors.text, fontSize: 24, fontWeight: 'bold' },
+  name: { color: colors.text, fontSize: 20, marginTop: 4 },
   center: { justifyContent: 'center', alignItems: 'center' },
   statsRow: { flexDirection: 'row', marginLeft: 15, marginBottom: 20 },
-  statsText: { color: 'white', marginRight: 15 },
-  sectionTitle: { color: 'white', fontSize: 18, marginBottom: 10 },
+  statsText: { color: colors.text, marginRight: 15 },
+  sectionTitle: { color: colors.text, fontSize: 18, marginBottom: 10 },
   followingRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 12 },
   followingAvatar: { width: 40, height: 40, borderRadius: 20, marginRight: 12 },
-  followingName: { color: 'white', fontSize: 16, fontWeight: 'bold' },
-  followingUsername: { color: 'white', fontSize: 16 },
+  followingName: { color: colors.text, fontSize: 16, fontWeight: 'bold' },
+  followingUsername: { color: colors.text, fontSize: 16 },
 
 });

@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { View, Text, TextInput, Button, TouchableOpacity, StyleSheet, Alert } from 'react-native';
+import { colors } from './app/styles/colors';
 
 import { useAuth } from './AuthContext';
 import { useNavigation } from '@react-navigation/native';
@@ -125,11 +126,13 @@ const styles = StyleSheet.create({
   container: {
     padding: 20,
     marginTop: 80,
+    backgroundColor: colors.background,
   },
   title: {
     fontSize: 28,
     marginBottom: 20,
     textAlign: 'center',
+    color: colors.text,
   },
   input: {
     width: '100%',
@@ -138,6 +141,8 @@ const styles = StyleSheet.create({
     borderColor: '#aaa',
     marginBottom: 12,
     borderRadius: 5,
+    color: colors.text,
+    backgroundColor: colors.background,
   },
   error: {
     color: 'red',
@@ -147,6 +152,6 @@ const styles = StyleSheet.create({
   toggle: {
     marginTop: 20,
     textAlign: 'center',
-    color: 'blue',
+    color: colors.accent,
   },
 });
