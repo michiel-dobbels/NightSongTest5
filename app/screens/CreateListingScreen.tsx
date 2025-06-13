@@ -42,6 +42,7 @@ const [createdListing, setCreatedListing] = useState<any | null>(null);
       return asset.uri;
     }
     const size = Math.min(asset.width, asset.height);
+
     const result = await ImageManipulator.manipulateAsync(
       asset.uri,
       [
