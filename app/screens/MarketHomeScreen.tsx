@@ -81,12 +81,18 @@ export default function MarketHomeScreen() {
           resizeMode="cover"
         />
       ) : (
-        <View style={styles.placeholderImage} />
+        <View style={[styles.image, styles.placeholderImage]} />
       )}
-      <Text style={styles.price}>{`€ ${item.price ?? ''}`}</Text>
-      <Text style={styles.title} numberOfLines={1} ellipsizeMode="tail">
-        {item.title || ''}
-      </Text>
+      <View style={styles.overlay}>
+        <Text style={styles.overlayPrice}>{`€ ${item.price ?? ''}`}</Text>
+        <Text
+          style={styles.overlayTitle}
+          numberOfLines={1}
+          ellipsizeMode="tail"
+        >
+          {item.title || ''}
+        </Text>
+      </View>
     </TouchableOpacity>
   );
 
@@ -144,15 +150,29 @@ export default function MarketHomeScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.background },
   card: {
-    backgroundColor: '#333',
-    padding: 10,
-    borderRadius: 8,
-    marginBottom: 12,
     width: '48%',
+    aspectRatio: 1,
+    borderRadius: 10,
+    overflow: 'hidden',
+    backgroundColor: '#333',
+    marginBottom: 12,
+    shadowColor: '#000',
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+    shadowOffset: { width: 0, height: 2 },
+    elevation: 3,
   },
-  image: { width: '100%', aspectRatio: 1, borderRadius: 6 },
-  price: { color: colors.accent, fontSize: 18, marginTop: 6 },
-  title: { color: colors.text, marginTop: 4 },
+  image: { width: '100%', height: '100%' },
+  overlay: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    width: '100%',
+    padding: 6,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+  },
+  overlayPrice: { color: '#fff', fontWeight: 'bold' },
+  overlayTitle: { color: '#fff', fontSize: 12 },
   fab: {
     position: 'absolute',
     bottom: FAB_BOTTOM_OFFSET,
@@ -172,16 +192,16 @@ const styles = StyleSheet.create({
   },
   emptyText: { color: colors.text, marginTop: 20 },
   placeholderCard: {
-    backgroundColor: '#333',
-    padding: 10,
-    borderRadius: 8,
-    marginBottom: 12,
     width: '48%',
+    aspectRatio: 1,
+    borderRadius: 10,
+    overflow: 'hidden',
+    backgroundColor: '#333',
+    marginBottom: 12,
   },
   placeholderImage: {
     width: '100%',
-    aspectRatio: 1,
-    borderRadius: 6,
+    height: '100%',
     backgroundColor: '#555',
   },
   placeholderLine: {
