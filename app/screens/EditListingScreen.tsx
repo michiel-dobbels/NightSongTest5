@@ -36,10 +36,17 @@ export default function EditListingScreen() {
   const [transmission, setTransmission] = useState(listing?.transmission || '');
   const [image, setImage] = useState<string | null>(listing?.image_urls?.[0] || null);
 
+  const processImage = async (
+    asset: ImagePicker.ImagePickerAsset,
+  ): Promise<string> => {
+    return asset.uri;
+  };
+
   const pickImage = async () => {
     const res = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ImagePicker.MediaTypeOptions.Images });
     if (!res.canceled) {
-      setImage(res.assets[0].uri);
+      const uri = await processImage(res.assets[0]);
+      setImage(uri);
     }
   };
 

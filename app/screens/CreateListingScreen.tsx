@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   ScrollView,
   TextInput,
@@ -10,7 +10,6 @@ import {
   Text,
 } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
-import * as ImageManipulator from 'expo-image-manipulator';
 import { useNavigation } from '@react-navigation/native';
 import { useAuth } from '../../AuthContext';
 import { supabase, MARKET_BUCKET } from '../../lib/supabase';
@@ -29,27 +28,15 @@ export default function CreateListingScreen() {
   const [image, setImage] = useState<string | null>(null);
 const [createdListing, setCreatedListing] = useState<any | null>(null);
 
+  useEffect(() => {
+    console.log('image state changed', image);
+  }, [image]);
+
   const processImage = async (
     asset: ImagePicker.ImagePickerAsset,
   ): Promise<string> => {
-    const width = asset.width || 0;
-    const height = asset.height || 0;
-    const size = Math.min(width, height);
-    const result = await ImageManipulator.manipulateAsync(
-      asset.uri,
-      [
-        {
-          crop: {
-            originX: (width - size) / 2,
-            originY: (height - size) / 2,
-            width: size,
-            height: size,
-          },
-        },
-      ],
-      { compress: 0.9, format: ImageManipulator.SaveFormat.JPEG },
-    );
-    return result.uri;
+    console.log('picker asset uri', asset.uri);
+    return asset.uri;
   };
 
 
@@ -59,6 +46,7 @@ const [createdListing, setCreatedListing] = useState<any | null>(null);
     });
     if (!res.canceled) {
       const uri = await processImage(res.assets[0]);
+      console.log('setting image from gallery', uri);
       setImage(uri);
     }
   };
@@ -69,6 +57,7 @@ const [createdListing, setCreatedListing] = useState<any | null>(null);
     });
     if (!res.canceled) {
       const uri = await processImage(res.assets[0]);
+      console.log('setting image from camera', uri);
       setImage(uri);
     }
   };
@@ -78,7 +67,7 @@ const [createdListing, setCreatedListing] = useState<any | null>(null);
     const path = `${user!.id}-${Date.now()}.${ext}`;
     const resp = await fetch(uri);
     const blob = await resp.blob();
-    const { error } = await supabase.storage.from(MARKET_BUCKET).upload(path, blob);
+    const { error } = await supabase.storage.from(MARKET_BUCKET).upload(path, blob, { upsert: true });
     if (error) throw error;
     return supabase.storage.from(MARKET_BUCKET).getPublicUrl(path).data.publicUrl;
 
@@ -106,6 +95,7 @@ const [createdListing, setCreatedListing] = useState<any | null>(null);
       .single();
 
     setCreatedListing(data);
+    navigation.goBack();
   };
 
   return (

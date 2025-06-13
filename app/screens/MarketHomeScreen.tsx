@@ -1,4 +1,4 @@
-import React, { useCallback, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   View,
   FlatList,
@@ -8,7 +8,7 @@ import {
   StyleSheet,
   Dimensions,
 } from 'react-native';
-import { useNavigation, useFocusEffect } from '@react-navigation/native';
+import { useNavigation } from '@react-navigation/native';
 import { supabase } from '../../lib/supabase';
 import { colors } from '../styles/colors';
 import MarketHeader from '../components/MarketHeader';
@@ -52,11 +52,11 @@ export default function MarketHomeScreen() {
     setListings((data as Listing[]) ?? []);
   };
 
-  useFocusEffect(
-    useCallback(() => {
-      load();
-    }, []),
-  );
+  useEffect(() => {
+    load();
+    const unsubscribe = navigation.addListener('focus', load);
+    return unsubscribe;
+  }, [navigation]);
 
   const renderItem = ({ item }: { item: Listing }) => (
     <TouchableOpacity
@@ -64,7 +64,11 @@ export default function MarketHomeScreen() {
       onPress={() => navigation.navigate('ListingDetail', { listing: item })}
     >
       {item.image_urls && item.image_urls[0] && (
-        <Image source={{ uri: item.image_urls[0] }} style={styles.image} />
+        <Image
+          source={{ uri: item.image_urls[0] }}
+          style={styles.image}
+          resizeMode="cover"
+        />
       )}
       <Text style={styles.price}>{`€ ${item.price ?? ''}`}</Text>
       <Text style={styles.title} numberOfLines={1} ellipsizeMode="tail">
@@ -77,9 +81,26 @@ export default function MarketHomeScreen() {
     <View style={styles.container}>
       <MarketHeader />
       {listings.length === 0 ? (
-        <View style={styles.emptyWrapper}>
-          <Text style={styles.emptyText}>No listings yet</Text>
-        </View>
+        <FlatList
+          data={[1, 2, 3, 4, 5, 6]}
+          keyExtractor={item => item.toString()}
+          renderItem={() => (
+            <View style={styles.placeholderCard}>
+              <View style={styles.placeholderImage} />
+              <View style={styles.placeholderLine} />
+              <View style={styles.placeholderLineShort} />
+            </View>
+          )}
+          numColumns={2}
+          columnWrapperStyle={{ justifyContent: 'space-between' }}
+          contentContainerStyle={{ padding: 10 }}
+          showsVerticalScrollIndicator={false}
+          ListFooterComponent={
+            <View style={styles.emptyWrapper}>
+              <Text style={styles.emptyText}>No listings found</Text>
+            </View>
+          }
+        />
       ) : (
         <FlatList
           data={listings}
@@ -131,4 +152,30 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   emptyText: { color: colors.text, marginTop: 20 },
+  placeholderCard: {
+    backgroundColor: '#333',
+    padding: 10,
+    borderRadius: 8,
+    marginBottom: 12,
+    width: '48%',
+  },
+  placeholderImage: {
+    width: '100%',
+    aspectRatio: 1,
+    borderRadius: 6,
+    backgroundColor: '#555',
+  },
+  placeholderLine: {
+    height: 18,
+    backgroundColor: '#555',
+    borderRadius: 4,
+    marginTop: 6,
+  },
+  placeholderLineShort: {
+    height: 14,
+    backgroundColor: '#555',
+    borderRadius: 4,
+    marginTop: 4,
+    width: '80%',
+  },
 });
