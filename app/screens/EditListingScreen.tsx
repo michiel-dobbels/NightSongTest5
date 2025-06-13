@@ -9,6 +9,7 @@ import {
 } from 'react-native';
 import { useRoute, useNavigation } from '@react-navigation/native';
 import * as ImagePicker from 'expo-image-picker';
+import * as ImageManipulator from 'expo-image-manipulator';
 import { supabase, MARKET_BUCKET } from '../../lib/supabase';
 import { colors } from '../styles/colors';
 
@@ -40,6 +41,7 @@ export default function EditListingScreen() {
     asset: ImagePicker.ImagePickerAsset,
   ): Promise<string> => {
     return asset.uri;
+
   };
 
   const pickImage = async () => {

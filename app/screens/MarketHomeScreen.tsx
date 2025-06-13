@@ -83,6 +83,7 @@ export default function MarketHomeScreen() {
       {listings.length === 0 ? (
         <FlatList
           data={[1, 2, 3, 4, 5, 6]}
+
           keyExtractor={item => item.toString()}
           renderItem={() => (
             <View style={styles.placeholderCard}>

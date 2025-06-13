@@ -37,6 +37,7 @@ const [createdListing, setCreatedListing] = useState<any | null>(null);
   ): Promise<string> => {
     console.log('picker asset uri', asset.uri);
     return asset.uri;
+
   };
 
 
