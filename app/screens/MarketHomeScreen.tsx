@@ -38,6 +38,7 @@ interface Listing {
   views?: number | null;
   favorites?: number | null;
   search_index?: string | null;
+  isPlaceholder?: boolean;
 }
 
 export default function MarketHomeScreen() {
@@ -71,8 +72,12 @@ export default function MarketHomeScreen() {
 
   const renderItem = ({ item }: { item: Listing }) => (
     <TouchableOpacity
-      style={styles.card}
-      onPress={() => navigation.navigate('ListingDetail', { listing: item })}
+      style={[styles.card, item.isPlaceholder && styles.placeholderOpacity]}
+      onPress={() =>
+        !item.isPlaceholder &&
+        navigation.navigate('ListingDetail', { listing: item })
+      }
+      activeOpacity={item.isPlaceholder ? 1 : 0.2}
     >
       {item.image_urls && item.image_urls[0] ? (
         <Image
@@ -196,5 +201,8 @@ const styles = StyleSheet.create({
     borderRadius: 4,
     marginTop: 4,
     width: '80%',
+  },
+  placeholderOpacity: {
+    opacity: 0.5,
   },
 });

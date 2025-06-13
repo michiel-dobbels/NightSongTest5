@@ -83,6 +83,7 @@ const [createdListing, setCreatedListing] = useState<any | null>(null);
         id: Date.now().toString(),
         title,
         price: parseFloat(price),
+        isPlaceholder: true,
       },
     });
 
