@@ -168,6 +168,7 @@ const styles = StyleSheet.create({
     height: '100%',
     zIndex: 0,
   },
+
   textOverlay: {
     position: 'absolute',
     bottom: 0,
@@ -177,6 +178,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(0,0,0,0.5)',
     zIndex: 1,
   },
+
   price: { color: '#fff', fontSize: 18, fontWeight: 'bold' },
   title: { color: '#fff' },
   fab: {
