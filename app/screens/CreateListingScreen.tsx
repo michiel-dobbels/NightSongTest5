@@ -10,7 +10,6 @@ import {
   Text,
 } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
-import * as ImageManipulator from 'expo-image-manipulator';
 import { useNavigation } from '@react-navigation/native';
 import { useAuth } from '../../AuthContext';
 import { supabase, MARKET_BUCKET } from '../../lib/supabase';
@@ -37,28 +36,8 @@ const [createdListing, setCreatedListing] = useState<any | null>(null);
     asset: ImagePicker.ImagePickerAsset,
   ): Promise<string> => {
     console.log('picker asset uri', asset.uri);
-    if (!asset.width || !asset.height) {
-      console.warn('missing image dimensions', asset);
-      return asset.uri;
-    }
-    const size = Math.min(asset.width, asset.height);
+    return asset.uri;
 
-    const result = await ImageManipulator.manipulateAsync(
-      asset.uri,
-      [
-        {
-          crop: {
-            originX: (asset.width - size) / 2,
-            originY: (asset.height - size) / 2,
-            width: size,
-            height: size,
-          },
-        },
-      ],
-      { compress: 0.9, format: ImageManipulator.SaveFormat.JPEG },
-    );
-    console.log('processed image uri', result.uri);
-    return result.uri;
   };
 
 

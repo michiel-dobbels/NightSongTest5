@@ -64,7 +64,11 @@ export default function MarketHomeScreen() {
       onPress={() => navigation.navigate('ListingDetail', { listing: item })}
     >
       {item.image_urls && item.image_urls[0] && (
-        <Image source={{ uri: item.image_urls[0] }} style={styles.image} />
+        <Image
+          source={{ uri: item.image_urls[0] }}
+          style={styles.image}
+          resizeMode="cover"
+        />
       )}
       <Text style={styles.price}>{`€ ${item.price ?? ''}`}</Text>
       <Text style={styles.title} numberOfLines={1} ellipsizeMode="tail">

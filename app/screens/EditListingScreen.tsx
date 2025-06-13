@@ -40,24 +40,8 @@ export default function EditListingScreen() {
   const processImage = async (
     asset: ImagePicker.ImagePickerAsset,
   ): Promise<string> => {
-    const width = asset.width || 1;
-    const height = asset.height || 1;
-    const size = Math.min(width, height);
-    const result = await ImageManipulator.manipulateAsync(
-      asset.uri,
-      [
-        {
-          crop: {
-            originX: (width - size) / 2,
-            originY: (height - size) / 2,
-            width: size,
-            height: size,
-          },
-        },
-      ],
-      { compress: 0.9, format: ImageManipulator.SaveFormat.JPEG },
-    );
-    return result.uri;
+    return asset.uri;
+
   };
 
   const pickImage = async () => {
