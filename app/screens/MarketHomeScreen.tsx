@@ -8,7 +8,7 @@ import {
   StyleSheet,
   Dimensions,
 } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useRoute } from '@react-navigation/native';
 import { supabase } from '../../lib/supabase';
 import { colors } from '../styles/colors';
 import MarketHeader from '../components/MarketHeader';
@@ -43,6 +43,10 @@ interface Listing {
 export default function MarketHomeScreen() {
   const [listings, setListings] = useState<Listing[]>([]);
   const navigation = useNavigation<any>();
+  const route = useRoute<any>();
+  const [placeholderListing, setPlaceholderListing] = useState<
+    Partial<Listing> | null
+  >(null);
 
   const load = async () => {
     const { data } = await supabase
@@ -58,17 +62,26 @@ export default function MarketHomeScreen() {
     return unsubscribe;
   }, [navigation]);
 
+  useEffect(() => {
+    if (route.params?.placeholderListing) {
+      setPlaceholderListing(route.params.placeholderListing);
+      navigation.setParams({ placeholderListing: undefined });
+    }
+  }, [route.params?.placeholderListing]);
+
   const renderItem = ({ item }: { item: Listing }) => (
     <TouchableOpacity
       style={styles.card}
       onPress={() => navigation.navigate('ListingDetail', { listing: item })}
     >
-      {item.image_urls && item.image_urls[0] && (
+      {item.image_urls && item.image_urls[0] ? (
         <Image
           source={{ uri: item.image_urls[0] }}
           style={styles.image}
           resizeMode="cover"
         />
+      ) : (
+        <View style={styles.placeholderImage} />
       )}
       <Text style={styles.price}>{`€ ${item.price ?? ''}`}</Text>
       <Text style={styles.title} numberOfLines={1} ellipsizeMode="tail">
@@ -77,10 +90,14 @@ export default function MarketHomeScreen() {
     </TouchableOpacity>
   );
 
+  const dataToRender = placeholderListing
+    ? ([placeholderListing, ...listings] as Listing[])
+    : listings;
+
   return (
     <View style={styles.container}>
       <MarketHeader />
-      {listings.length === 0 ? (
+      {dataToRender.length === 0 ? (
         <FlatList
           data={[1, 2, 3, 4, 5, 6]}
 
@@ -105,7 +122,7 @@ export default function MarketHomeScreen() {
         />
       ) : (
         <FlatList
-          data={listings}
+          data={dataToRender}
           keyExtractor={item => item.id}
           renderItem={renderItem}
           numColumns={2}
