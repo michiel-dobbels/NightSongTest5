@@ -10,6 +10,7 @@ import {
   Text,
 } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
+import * as ImageManipulator from 'expo-image-manipulator';
 import { useNavigation } from '@react-navigation/native';
 import { useAuth } from '../../AuthContext';
 import { supabase, MARKET_BUCKET } from '../../lib/supabase';
@@ -26,20 +27,50 @@ export default function CreateListingScreen() {
   const [title, setTitle] = useState('');
   const [price, setPrice] = useState('');
   const [image, setImage] = useState<string | null>(null);
-  const [createdListing, setCreatedListing] = useState<any | null>(null);
+const [createdListing, setCreatedListing] = useState<any | null>(null);
+
+  const processImage = async (
+    asset: ImagePicker.ImagePickerAsset,
+  ): Promise<string> => {
+    const width = asset.width || 0;
+    const height = asset.height || 0;
+    const size = Math.min(width, height);
+    const result = await ImageManipulator.manipulateAsync(
+      asset.uri,
+      [
+        {
+          crop: {
+            originX: (width - size) / 2,
+            originY: (height - size) / 2,
+            width: size,
+            height: size,
+          },
+        },
+      ],
+      { compress: 0.9 },
+    );
+    return result.uri;
+  };
+
 
   const pickFromGallery = async () => {
     const res = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
     });
-    if (!res.canceled) setImage(res.assets[0].uri);
+    if (!res.canceled) {
+      const uri = await processImage(res.assets[0]);
+      setImage(uri);
+    }
   };
 
   const takePhoto = async () => {
     const res = await ImagePicker.launchCameraAsync({
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
     });
-    if (!res.canceled) setImage(res.assets[0].uri);
+    if (!res.canceled) {
+      const uri = await processImage(res.assets[0]);
+      setImage(uri);
+    }
   };
 
   const uploadImage = async (uri: string) => {
@@ -149,6 +180,10 @@ const styles = StyleSheet.create({
     padding: 10,
     borderRadius: 8,
     marginTop: 20,
+    marginBottom: 12,
+    width: '48%',
+    alignSelf: 'center',
+
   },
   previewImage: { width: '100%', aspectRatio: 1, borderRadius: 6 },
   previewPrice: { color: colors.accent, fontSize: 18, marginTop: 6 },
