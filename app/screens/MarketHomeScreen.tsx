@@ -170,6 +170,7 @@ const styles = StyleSheet.create({
     padding: 6,
     backgroundColor: 'rgba(0,0,0,0.5)',
   },
+
   price: { color: '#fff', fontSize: 18, fontWeight: 'bold' },
   title: { color: '#fff' },
   fab: {
