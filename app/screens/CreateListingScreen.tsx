@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   ScrollView,
   TextInput,
@@ -29,19 +29,27 @@ export default function CreateListingScreen() {
   const [image, setImage] = useState<string | null>(null);
 const [createdListing, setCreatedListing] = useState<any | null>(null);
 
+  useEffect(() => {
+    console.log('image state changed', image);
+  }, [image]);
+
   const processImage = async (
     asset: ImagePicker.ImagePickerAsset,
   ): Promise<string> => {
-    const width = asset.width || 1;
-    const height = asset.height || 1;
-    const size = Math.min(width, height);
+    console.log('picker asset uri', asset.uri);
+    if (!asset.width || !asset.height) {
+      console.warn('missing image dimensions', asset);
+      return asset.uri;
+    }
+    const size = Math.min(asset.width, asset.height);
+
     const result = await ImageManipulator.manipulateAsync(
       asset.uri,
       [
         {
           crop: {
-            originX: (width - size) / 2,
-            originY: (height - size) / 2,
+            originX: (asset.width - size) / 2,
+            originY: (asset.height - size) / 2,
             width: size,
             height: size,
           },
@@ -49,6 +57,7 @@ const [createdListing, setCreatedListing] = useState<any | null>(null);
       ],
       { compress: 0.9, format: ImageManipulator.SaveFormat.JPEG },
     );
+    console.log('processed image uri', result.uri);
     return result.uri;
   };
 
@@ -59,6 +68,7 @@ const [createdListing, setCreatedListing] = useState<any | null>(null);
     });
     if (!res.canceled) {
       const uri = await processImage(res.assets[0]);
+      console.log('setting image from gallery', uri);
       setImage(uri);
     }
   };
@@ -69,6 +79,7 @@ const [createdListing, setCreatedListing] = useState<any | null>(null);
     });
     if (!res.canceled) {
       const uri = await processImage(res.assets[0]);
+      console.log('setting image from camera', uri);
       setImage(uri);
     }
   };
