@@ -96,7 +96,13 @@ const [createdListing, setCreatedListing] = useState<any | null>(null);
       .single();
 
     setCreatedListing(data);
-    navigation.goBack();
+    navigation.navigate('MarketHome', {
+      placeholderListing: {
+        id: data?.id,
+        title: data?.title,
+        price: data?.price,
+      },
+    });
   };
 
   return (
