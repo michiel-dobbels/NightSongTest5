@@ -52,6 +52,7 @@ const [createdListing, setCreatedListing] = useState<any | null>(null);
     return result.uri;
   };
 
+
   const pickFromGallery = async () => {
     const res = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
@@ -174,6 +175,7 @@ const styles = StyleSheet.create({
     marginTop: 10,
   },
   image: { width: '100%', aspectRatio: 1, marginTop: 10, borderRadius: 6 },
+
   previewCard: {
     backgroundColor: '#333',
     padding: 10,
@@ -182,6 +184,7 @@ const styles = StyleSheet.create({
     marginBottom: 12,
     width: '48%',
     alignSelf: 'center',
+
   },
   previewImage: { width: '100%', aspectRatio: 1, borderRadius: 6 },
   previewPrice: { color: colors.accent, fontSize: 18, marginTop: 6 },
