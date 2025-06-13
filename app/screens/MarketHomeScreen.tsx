@@ -158,7 +158,10 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 2 },
     elevation: 5,
   },
-  image: { width: '100%', height: '100%', position: 'absolute' },
+  image: {
+    width: '100%',
+    height: '100%',
+  },
   textOverlay: {
     position: 'absolute',
     bottom: 0,
@@ -167,6 +170,7 @@ const styles = StyleSheet.create({
     padding: 6,
     backgroundColor: 'rgba(0,0,0,0.5)',
   },
+
   price: { color: '#fff', fontSize: 18, fontWeight: 'bold' },
   title: { color: '#fff' },
   fab: {
