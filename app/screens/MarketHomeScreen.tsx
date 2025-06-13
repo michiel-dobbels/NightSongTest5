@@ -83,6 +83,7 @@ export default function MarketHomeScreen() {
       {listings.length === 0 ? (
         <FlatList
           data={[1, 2, 3, 4, 5, 6]}
+
           keyExtractor={item => item.toString()}
           renderItem={() => (
             <View style={styles.placeholderCard}>
@@ -98,6 +99,7 @@ export default function MarketHomeScreen() {
           ListFooterComponent={
             <View style={styles.emptyWrapper}>
               <Text style={styles.emptyText}>No listings found</Text>
+
             </View>
           }
         />
