@@ -81,12 +81,14 @@ export default function MarketHomeScreen() {
           resizeMode="cover"
         />
       ) : (
-        <View style={styles.placeholderImage} />
+        <View style={[styles.image, styles.placeholderImage]} />
       )}
-      <Text style={styles.price}>{`€ ${item.price ?? ''}`}</Text>
-      <Text style={styles.title} numberOfLines={1} ellipsizeMode="tail">
-        {item.title || ''}
-      </Text>
+      <View style={styles.textOverlay}>
+        <Text style={styles.price}>{`€ ${item.price ?? ''}`}</Text>
+        <Text style={styles.title} numberOfLines={1} ellipsizeMode="tail">
+          {item.title || ''}
+        </Text>
+      </View>
     </TouchableOpacity>
   );
 
@@ -104,7 +106,7 @@ export default function MarketHomeScreen() {
           keyExtractor={item => item.toString()}
           renderItem={() => (
             <View style={styles.placeholderCard}>
-              <View style={styles.placeholderImage} />
+              <View style={[styles.image, styles.placeholderImage]} />
               <View style={styles.placeholderLine} />
               <View style={styles.placeholderLineShort} />
             </View>
@@ -144,15 +146,32 @@ export default function MarketHomeScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.background },
   card: {
-    backgroundColor: '#333',
-    padding: 10,
-    borderRadius: 8,
-    marginBottom: 12,
     width: '48%',
+    aspectRatio: 1,
+    borderRadius: 10,
+    overflow: 'hidden',
+    backgroundColor: '#333',
+    marginBottom: 12,
+    shadowColor: '#000',
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+    shadowOffset: { width: 0, height: 2 },
+    elevation: 5,
   },
-  image: { width: '100%', aspectRatio: 1, borderRadius: 6 },
-  price: { color: colors.accent, fontSize: 18, marginTop: 6 },
-  title: { color: colors.text, marginTop: 4 },
+  image: {
+    width: '100%',
+    height: '100%',
+  },
+  textOverlay: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    padding: 6,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+  },
+  price: { color: '#fff', fontSize: 18, fontWeight: 'bold' },
+  title: { color: '#fff' },
   fab: {
     position: 'absolute',
     bottom: FAB_BOTTOM_OFFSET,
@@ -174,14 +193,11 @@ const styles = StyleSheet.create({
   placeholderCard: {
     backgroundColor: '#333',
     padding: 10,
-    borderRadius: 8,
+    borderRadius: 10,
     marginBottom: 12,
     width: '48%',
   },
   placeholderImage: {
-    width: '100%',
-    aspectRatio: 1,
-    borderRadius: 6,
     backgroundColor: '#555',
   },
   placeholderLine: {
