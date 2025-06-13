@@ -9,6 +9,7 @@ import {
 } from 'react-native';
 import { useRoute, useNavigation } from '@react-navigation/native';
 import * as ImagePicker from 'expo-image-picker';
+import * as ImageManipulator from 'expo-image-manipulator';
 import { supabase, MARKET_BUCKET } from '../../lib/supabase';
 import { colors } from '../styles/colors';
 
@@ -36,10 +37,34 @@ export default function EditListingScreen() {
   const [transmission, setTransmission] = useState(listing?.transmission || '');
   const [image, setImage] = useState<string | null>(listing?.image_urls?.[0] || null);
 
+  const processImage = async (
+    asset: ImagePicker.ImagePickerAsset,
+  ): Promise<string> => {
+    const width = asset.width || 1;
+    const height = asset.height || 1;
+    const size = Math.min(width, height);
+    const result = await ImageManipulator.manipulateAsync(
+      asset.uri,
+      [
+        {
+          crop: {
+            originX: (width - size) / 2,
+            originY: (height - size) / 2,
+            width: size,
+            height: size,
+          },
+        },
+      ],
+      { compress: 0.9, format: ImageManipulator.SaveFormat.JPEG },
+    );
+    return result.uri;
+  };
+
   const pickImage = async () => {
     const res = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ImagePicker.MediaTypeOptions.Images });
     if (!res.canceled) {
-      setImage(res.assets[0].uri);
+      const uri = await processImage(res.assets[0]);
+      setImage(uri);
     }
   };
 
