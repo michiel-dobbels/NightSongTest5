@@ -63,9 +63,9 @@ const [createdListing, setCreatedListing] = useState<any | null>(null);
     }
   };
 
-  const uploadImage = async (uri: string) => {
+  const uploadImage = async (uri: string, userId: string) => {
     const ext = uri.split('.').pop();
-    const path = `${user!.id}-${Date.now()}.${ext}`;
+    const path = `${userId}-${Date.now()}.${ext}`;
     const resp = await fetch(uri);
     const blob = await resp.blob();
     const { error } = await supabase.storage.from(MARKET_BUCKET).upload(path, blob, { upsert: true });
@@ -83,12 +83,13 @@ const [createdListing, setCreatedListing] = useState<any | null>(null);
         id: Date.now().toString(),
         title,
         price: parseFloat(price),
+        isPlaceholder: true,
       },
     });
 
     let publicUrl: string | null = null;
     try {
-      publicUrl = await uploadImage(image);
+      publicUrl = await uploadImage(image, user.id);
     } catch (err) {
       console.error('Image upload failed', err);
     }
