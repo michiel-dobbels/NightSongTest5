@@ -106,6 +106,7 @@ const [createdListing, setCreatedListing] = useState<any | null>(null);
       .single();
 
     setCreatedListing(data);
+    navigation.goBack();
   };
 
   return (
