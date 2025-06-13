@@ -1,19 +1,19 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import {
   ScrollView,
   TextInput,
   Button,
   StyleSheet,
-  Image,
   Dimensions,
   View,
   Text,
 } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 import { useNavigation } from '@react-navigation/native';
-import { useAuth } from '../../AuthContext';                    
+import { useAuth } from '../../AuthContext';
 import { supabase, MARKET_BUCKET } from '../../lib/supabase';
 import { colors } from '../styles/colors';
+import ListingPreviewCard from '../components/ListingPreviewCard';
 
 
 
@@ -29,11 +29,6 @@ export default function CreateListingScreen() {
   const [title, setTitle] = useState('');
   const [price, setPrice] = useState('');
   const [image, setImage] = useState<string | null>(null);
-const [createdListing, setCreatedListing] = useState<any | null>(null);
-
-  useEffect(() => {
-    console.log('image state changed', image);
-  }, [image]);
 
   const processImage = async (
     asset: ImagePicker.ImagePickerAsset,
@@ -111,7 +106,7 @@ const [createdListing, setCreatedListing] = useState<any | null>(null);
         <Button title="Pick Image" onPress={pickFromGallery} color={colors.accent} />
       </View>
       {image && (
-        <Image source={{ uri: image }} style={styles.image} resizeMode="cover" />
+        <ListingPreviewCard imageUri={image} title={title} price={price} />
       )}
       <TextInput
         placeholder="Title"
@@ -129,26 +124,6 @@ const [createdListing, setCreatedListing] = useState<any | null>(null);
         keyboardType="numeric"
       />
       <Button title="Create Listing" onPress={handleCreate} color={colors.accent} />
-
-      {createdListing && (
-        <View style={styles.previewCard}>
-          {createdListing.image_urls?.[0] && (
-            <Image
-              source={{ uri: createdListing.image_urls[0] }}
-              style={styles.previewImage}
-              resizeMode="cover"
-            />
-          )}
-          <Text style={styles.previewPrice}>{`€ ${createdListing.price ?? ''}`}</Text>
-          <Text
-            style={styles.previewTitle}
-            numberOfLines={1}
-            ellipsizeMode="tail"
-          >
-            {createdListing.title}
-          </Text>
-        </View>
-      )}
     </ScrollView>
   );
 }
@@ -167,21 +142,6 @@ const styles = StyleSheet.create({
     borderRadius: 4,
     marginTop: 10,
   },
-  image: { width: '100%', aspectRatio: 1, marginTop: 10, borderRadius: 6 },
-
-  previewCard: {
-    backgroundColor: '#333',
-    padding: 10,
-    borderRadius: 8,
-    marginTop: 20,
-    marginBottom: 12,
-    width: '48%',
-    alignSelf: 'center',
-
-  },
-  previewImage: { width: '100%', aspectRatio: 1, borderRadius: 6 },
-  previewPrice: { color: colors.accent, fontSize: 18, marginTop: 6 },
-  previewTitle: { color: colors.text, marginTop: 4 },
   buttonRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
