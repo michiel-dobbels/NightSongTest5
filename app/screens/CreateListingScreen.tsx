@@ -32,8 +32,8 @@ const [createdListing, setCreatedListing] = useState<any | null>(null);
   const processImage = async (
     asset: ImagePicker.ImagePickerAsset,
   ): Promise<string> => {
-    const width = asset.width || 0;
-    const height = asset.height || 0;
+    const width = asset.width || 1;
+    const height = asset.height || 1;
     const size = Math.min(width, height);
     const result = await ImageManipulator.manipulateAsync(
       asset.uri,
@@ -78,7 +78,7 @@ const [createdListing, setCreatedListing] = useState<any | null>(null);
     const path = `${user!.id}-${Date.now()}.${ext}`;
     const resp = await fetch(uri);
     const blob = await resp.blob();
-    const { error } = await supabase.storage.from(MARKET_BUCKET).upload(path, blob);
+    const { error } = await supabase.storage.from(MARKET_BUCKET).upload(path, blob, { upsert: true });
     if (error) throw error;
     return supabase.storage.from(MARKET_BUCKET).getPublicUrl(path).data.publicUrl;
 
