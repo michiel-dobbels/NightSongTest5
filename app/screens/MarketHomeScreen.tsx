@@ -77,9 +77,26 @@ export default function MarketHomeScreen() {
     <View style={styles.container}>
       <MarketHeader />
       {listings.length === 0 ? (
-        <View style={styles.emptyWrapper}>
-          <Text style={styles.emptyText}>No listings yet</Text>
-        </View>
+        <FlatList
+          data={[1, 2, 3, 4]}
+          keyExtractor={item => item.toString()}
+          renderItem={() => (
+            <View style={styles.placeholderCard}>
+              <View style={styles.placeholderImage} />
+              <View style={styles.placeholderLine} />
+              <View style={styles.placeholderLineShort} />
+            </View>
+          )}
+          numColumns={2}
+          columnWrapperStyle={{ justifyContent: 'space-between' }}
+          contentContainerStyle={{ padding: 10 }}
+          showsVerticalScrollIndicator={false}
+          ListFooterComponent={
+            <View style={styles.emptyWrapper}>
+              <Text style={styles.emptyText}>No listings yet</Text>
+            </View>
+          }
+        />
       ) : (
         <FlatList
           data={listings}
@@ -131,4 +148,30 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   emptyText: { color: colors.text, marginTop: 20 },
+  placeholderCard: {
+    backgroundColor: '#333',
+    padding: 10,
+    borderRadius: 8,
+    marginBottom: 12,
+    width: '48%',
+  },
+  placeholderImage: {
+    width: '100%',
+    aspectRatio: 1,
+    borderRadius: 6,
+    backgroundColor: '#555',
+  },
+  placeholderLine: {
+    height: 18,
+    backgroundColor: '#555',
+    borderRadius: 4,
+    marginTop: 6,
+  },
+  placeholderLineShort: {
+    height: 14,
+    backgroundColor: '#555',
+    borderRadius: 4,
+    marginTop: 4,
+    width: '80%',
+  },
 });
