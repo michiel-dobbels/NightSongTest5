@@ -1,4 +1,4 @@
-import React, { useCallback, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   View,
   FlatList,
@@ -8,7 +8,7 @@ import {
   StyleSheet,
   Dimensions,
 } from 'react-native';
-import { useNavigation, useFocusEffect } from '@react-navigation/native';
+import { useNavigation } from '@react-navigation/native';
 import { supabase } from '../../lib/supabase';
 import { colors } from '../styles/colors';
 import MarketHeader from '../components/MarketHeader';
@@ -52,11 +52,11 @@ export default function MarketHomeScreen() {
     setListings((data as Listing[]) ?? []);
   };
 
-  useFocusEffect(
-    useCallback(() => {
-      load();
-    }, []),
-  );
+  useEffect(() => {
+    load();
+    const unsubscribe = navigation.addListener('focus', load);
+    return unsubscribe;
+  }, [navigation]);
 
   const renderItem = ({ item }: { item: Listing }) => (
     <TouchableOpacity
@@ -98,7 +98,8 @@ export default function MarketHomeScreen() {
           showsVerticalScrollIndicator={false}
           ListFooterComponent={
             <View style={styles.emptyWrapper}>
-              <Text style={styles.emptyText}>No listings yet</Text>
+              <Text style={styles.emptyText}>No listings found</Text>
+
             </View>
           }
         />
