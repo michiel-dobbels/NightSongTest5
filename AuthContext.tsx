@@ -6,13 +6,33 @@ import React, {
   useCallback,
   useRef,
 } from 'react';
-import { User } from '@supabase/supabase-js';
+import { User, Session } from '@supabase/supabase-js';
 import { supabase } from './lib/supabase';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { postEvents } from './app/postEvents';
 import { likeEvents } from './app/likeEvents';
 import { replyEvents } from './app/replyEvents';
-import { Post } from './app/components/PostCard';
+export interface Post {
+  id: string;
+  content: string;
+  image_url?: string;
+  video_url?: string;
+  user_id: string;
+  created_at: string;
+  username?: string;
+  reply_count?: number;
+  like_count?: number;
+  profiles?: {
+    username: string | null;
+    name: string | null;
+    image_url?: string | null;
+    banner_url?: string | null;
+  } | null;
+}
+
+export interface PostWithLike extends Post {
+  liked?: boolean;
+}
 
 export interface Profile {
   id: string;
@@ -29,9 +49,9 @@ export interface AuthContextValue {
   setProfileImageUri: (uri: string | null) => Promise<void>;
   bannerImageUri: string | null;
   setBannerImageUri: (uri: string | null) => Promise<void>;
-  myPosts: Post[];
-  addPost: (post: Post) => void;
-  updatePost: (tempId: string, updated: Partial<Post>) => void;
+  myPosts: PostWithLike[];
+  addPost: (post: PostWithLike) => void;
+  updatePost: (tempId: string, updated: Partial<PostWithLike>) => void;
   removePost: (postId: string) => Promise<void>;
   signUp: (
     email: string,
@@ -51,7 +71,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true);
   const [profileImageUri, setProfileImageUriState] = useState<string | null>(null);
   const [bannerImageUri, setBannerImageUriState] = useState<string | null>(null);
-  const [myPosts, setMyPosts] = useState<Post[]>([]);
+  const [myPosts, setMyPosts] = useState<PostWithLike[]>([]);
   const lastFetchedUserIdRef = useRef<string | null>(null);
 
   // Helper ensures a profile exists for the given user so posts can
@@ -127,7 +147,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     getSession();
 
-    const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
+    const { data: listener } = supabase.auth.onAuthStateChange((_event: string, session: Session | null) => {
       setUser(session?.user ?? null);
       if (session?.user) {
         // Refresh or create the profile for consistent posting
@@ -145,6 +165,52 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
     };
   }, []);
+
+  const fetchMyPosts = useCallback(async () => {
+    const id = user?.id;
+    if (!id) {
+      setMyPosts([]);
+      return;
+    }
+    const { data, error } = await supabase
+      .from('posts')
+      .select(
+        'id, content, image_url, username, created_at, reply_count, like_count'
+      )
+      .eq('user_id', id)
+      .order('created_at', { ascending: false });
+    if (!error && data) {
+      setMyPosts((prev: PostWithLike[]) => {
+        const prevMap: Record<string, PostWithLike> = {};
+        prev.forEach(p => {
+          prevMap[String(p.id)] = p;
+        });
+        const temps = prev.filter(p => String(p.id).indexOf('temp-') === 0);
+        const merged: PostWithLike[] = [
+          ...temps,
+          ...data.map(p => {
+            const existing = prevMap[String(p.id)];
+            return existing
+              ? { ...p, like_count: existing.like_count, liked: existing.liked }
+              : p;
+          }),
+        ];
+        const seen: Record<string, boolean> = {};
+        const filtered = merged.filter(p => {
+          if (seen[String(p.id)]) return false;
+          seen[String(p.id)] = true;
+          return true;
+        });
+
+        if (JSON.stringify(prev) === JSON.stringify(filtered)) {
+          return prev;
+        }
+        return filtered;
+      });
+      lastFetchedUserIdRef.current = id;
+    }
+
+  }, [user?.id]);
 
   useEffect(() => {
     const loadImage = async () => {
@@ -167,8 +233,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [user?.id, fetchMyPosts]);
 
   useEffect(() => {
-    const onLikeChanged = ({ id, count, liked }) => {
-      setMyPosts(prev => {
+    const onLikeChanged = ({ id, count, liked }: { id: string; count: number; liked: boolean }) => {
+      setMyPosts((prev: PostWithLike[]) => {
         const found = prev.find(p => p.id === id);
         if (!found) return prev;
         const updated = prev.map(p =>
@@ -185,8 +251,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   useEffect(() => {
-    const onReplyAdded = (postId) => {
-      setMyPosts(prev => {
+    const onReplyAdded = (postId: string) => {
+      setMyPosts((prev: PostWithLike[]) => {
         const found = prev.find(p => p.id === postId);
         if (!found) return prev;
         const updated = prev.map(p =>
@@ -339,72 +405,31 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }, [user?.id]);
 
-  const fetchMyPosts = useCallback(async () => {
-    const id = user?.id;
-    if (!id) {
-      setMyPosts([]);
-      return;
-    }
-    const { data, error } = await supabase
-      .from('posts')
-      .select(
-        'id, content, image_url, username, created_at, reply_count, like_count'
-      )
-      .eq('user_id', id)
-      .order('created_at', { ascending: false });
-    if (!error && data) {
-      setMyPosts(prev => {
-        const prevMap = Object.fromEntries(prev.map(p => [p.id, p]));
-        const temps = prev.filter(p => String(p.id).startsWith('temp-'));
-        const merged = [
-          ...temps,
-          ...data.map(p => {
-            const existing = prevMap[p.id];
-            return existing
-              ? { ...p, like_count: existing.like_count, liked: existing.liked }
-              : p;
-          }),
-        ];
-        const seen = new Set();
-        const filtered = merged.filter(p => {
-          if (seen.has(p.id)) return false;
-          seen.add(p.id);
-          return true;
-        });
 
-        if (JSON.stringify(prev) === JSON.stringify(filtered)) {
-          return prev;
-        }
-        return filtered;
-      });
-      lastFetchedUserIdRef.current = id;
-    }
-
-  }, [user?.id]);
-
-  const addPost = useCallback((post: Post): void => {
-    setMyPosts(prev => {
+  const addPost = useCallback((post: PostWithLike): void => {
+    setMyPosts((prev: PostWithLike[]) => {
       const withoutDuplicate = prev.filter(p => p.id !== post.id);
       return [post, ...withoutDuplicate];
     });
   }, []);
 
-  const updatePost = useCallback((tempId: string, updated: Partial<Post>): void => {
-    setMyPosts(prev => {
+  const updatePost = useCallback((tempId: string, updated: Partial<PostWithLike>): void => {
+    setMyPosts((prev: PostWithLike[]) => {
       const updatedList = prev.map(p =>
         p.id === tempId ? { ...p, ...updated } : p
       );
-      const seen = new Set();
+      const seen: Record<string | number, boolean> = {};
       return updatedList.filter(p => {
-        if (seen.has(p.id)) return false;
-        seen.add(p.id);
+        const key = String(p.id);
+        if (seen[key]) return false;
+        seen[key] = true;
         return true;
       });
     });
   }, []);
 
   const removePost = useCallback(async (postId: string): Promise<void> => {
-    setMyPosts(prev => prev.filter(p => p.id !== postId));
+    setMyPosts((prev: PostWithLike[]) => prev.filter(p => p.id !== postId));
     try {
       const stored = await AsyncStorage.getItem('cached_posts');
       if (stored) {
@@ -419,12 +444,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   useEffect(() => {
-    const onPostDeleted = (postId) => {
-      setMyPosts(prev => prev.filter(p => p.id !== postId));
-      AsyncStorage.getItem('cached_posts').then(stored => {
+    const onPostDeleted = (postId: string) => {
+      setMyPosts((prev: PostWithLike[]) => prev.filter(p => p.id !== postId));
+      AsyncStorage.getItem('cached_posts').then((stored: string | null) => {
         if (stored) {
           try {
-            const arr = JSON.parse(stored);
+            const arr: PostWithLike[] = JSON.parse(stored);
             const updated = arr.filter(p => p.id !== postId);
             AsyncStorage.setItem('cached_posts', JSON.stringify(updated));
           } catch (e) {
