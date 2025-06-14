@@ -70,15 +70,15 @@ const [createdListing, setCreatedListing] = useState<any | null>(null);
     const blob = await resp.blob();
     const { error } = await supabase.storage.from(MARKET_BUCKET).upload(path, blob, { upsert: true });
     if (error) throw error;
-    const { data, error: publicUrlError } = supabase.storage
+    const { data } = supabase.storage
       .from(MARKET_BUCKET)
       .getPublicUrl(path);
 
-    if (publicUrlError || !data?.publicURL) {
+    if (!data.publicUrl) {
       throw new Error('Failed to retrieve public URL');
     }
 
-    return data.publicURL;
+    return data.publicUrl;
 
 
   };
