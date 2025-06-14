@@ -149,14 +149,11 @@ export default function MarketHomeScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.background },
   card: {
-    backgroundColor: '#333',
-    padding: 10,
-    borderRadius: 8,
     marginBottom: 12,
     width: '48%',
   },
   image: { width: '100%', aspectRatio: 1, borderRadius: 6 },
-  price: { color: colors.accent, fontSize: 18, marginTop: 6 },
+  price: { color: colors.accent, fontSize: 18, marginTop: 6, fontWeight: 'bold' },
   title: { color: colors.text, marginTop: 4 },
   fab: {
     position: 'absolute',
@@ -177,9 +174,6 @@ const styles = StyleSheet.create({
   },
   emptyText: { color: colors.text, marginTop: 20 },
   placeholderCard: {
-    backgroundColor: '#333',
-    padding: 10,
-    borderRadius: 8,
     marginBottom: 12,
     width: '48%',
   },
