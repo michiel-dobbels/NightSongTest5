@@ -83,11 +83,11 @@ const [createdListing, setCreatedListing] = useState<any | null>(null);
       .from(BUCKET)
       .getPublicUrl(path);
 
-    if (urlError || !data?.publicURL) {
+    if (urlError || !data?.publicUrl) {
       throw new Error('Failed to retrieve public URL');
     }
 
-    return data.publicURL;
+    return data.publicUrl;
   };
 
 
