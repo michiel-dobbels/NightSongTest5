@@ -26,7 +26,6 @@ export default function CreateListingScreen() {
   const [title, setTitle] = useState('');
   const [price, setPrice] = useState('');
   const [image, setImage] = useState<string | null>(null);
-const [createdListing, setCreatedListing] = useState<any | null>(null);
 
   useEffect(() => {
     console.log('image state changed', image);
@@ -96,7 +95,11 @@ const [createdListing, setCreatedListing] = useState<any | null>(null);
       console.error('Image upload failed', err);
     }
 
-    const { error } = await supabase
+    const {
+      data: newListing,
+      error,
+    } = await supabase
+
       .from('market_listings')
       .insert({
         user_id: user.id,
@@ -107,8 +110,9 @@ const [createdListing, setCreatedListing] = useState<any | null>(null);
       .select('*')
       .single();
 
-    if (!error) {
-      navigation.navigate('MarketHome');
+    if (!error && newListing) {
+      navigation.navigate('MarketHome', { createdListing: newListing });
+
     }
   };
 
@@ -140,26 +144,6 @@ const [createdListing, setCreatedListing] = useState<any | null>(null);
         keyboardType="numeric"
       />
       <Button title="Create Listing" onPress={handleCreate} color={colors.accent} />
-
-      {createdListing && (
-        <View style={styles.previewCard}>
-          {createdListing.image_urls?.[0] && (
-            <Image
-              source={{ uri: createdListing.image_urls[0] }}
-              style={styles.previewImage}
-              resizeMode="cover"
-            />
-          )}
-          <Text style={styles.previewPrice}>{`€ ${createdListing.price ?? ''}`}</Text>
-          <Text
-            style={styles.previewTitle}
-            numberOfLines={1}
-            ellipsizeMode="tail"
-          >
-            {createdListing.title}
-          </Text>
-        </View>
-      )}
     </ScrollView>
   );
 }
@@ -180,19 +164,6 @@ const styles = StyleSheet.create({
   },
   image: { width: '100%', aspectRatio: 1, marginTop: 10, borderRadius: 6 },
 
-  previewCard: {
-    backgroundColor: '#333',
-    padding: 10,
-    borderRadius: 8,
-    marginTop: 20,
-    marginBottom: 12,
-    width: '48%',
-    alignSelf: 'center',
-
-  },
-  previewImage: { width: '100%', aspectRatio: 1, borderRadius: 6 },
-  previewPrice: { color: colors.accent, fontSize: 18, marginTop: 6 },
-  previewTitle: { color: colors.text, marginTop: 4 },
   buttonRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
