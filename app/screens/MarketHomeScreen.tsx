@@ -46,6 +46,7 @@ export default function MarketHomeScreen() {
   const navigation = useNavigation<any>();
   const route = useRoute<any>();
 
+
   const load = async () => {
     const { data } = await supabase
       .from('market_listings')
@@ -66,6 +67,7 @@ export default function MarketHomeScreen() {
         const exists = prev.some(l => l.id === route.params.createdListing.id);
         return exists ? prev : [route.params.createdListing, ...prev];
       });
+
       navigation.setParams({ createdListing: undefined });
     }
   }, [route.params?.createdListing]);
@@ -96,6 +98,7 @@ export default function MarketHomeScreen() {
   );
 
   const dataToRender = listings;
+
 
   return (
     <View style={styles.container}>
