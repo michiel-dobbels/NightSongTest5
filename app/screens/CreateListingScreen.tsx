@@ -106,6 +106,7 @@ export default function CreateListingScreen() {
         title,
         price: parseFloat(price),
         image_urls: publicUrl ? [publicUrl] : [],
+        created_at: new Date().toISOString(),
       })
       .select('*')
       .single();
