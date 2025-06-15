@@ -45,9 +45,10 @@ export default function MarketHomeScreen() {
   const [listings, setListings] = useState<Listing[]>([]);
   const navigation = useNavigation<any>();
   const route = useRoute<any>();
-  const [placeholderListing, setPlaceholderListing] = useState<
-    Partial<Listing> | null
-  >(null);
+  // Holds a new listing temporarily inserted before re-fetching the feed
+  const [createdListing, setCreatedListing] = useState<Partial<Listing> | null>(
+    null,
+  );
 
   const load = async () => {
     const { data } = await supabase
@@ -64,11 +65,11 @@ export default function MarketHomeScreen() {
   }, [navigation]);
 
   useEffect(() => {
-    if (route.params?.placeholderListing) {
-      setPlaceholderListing(route.params.placeholderListing);
-      navigation.setParams({ placeholderListing: undefined });
+    if (route.params?.createdListing) {
+      setCreatedListing(route.params.createdListing);
+      navigation.setParams({ createdListing: undefined });
     }
-  }, [route.params?.placeholderListing]);
+  }, [route.params?.createdListing]);
 
   const renderItem = ({ item }: { item: Listing }) => (
     <TouchableOpacity
@@ -95,8 +96,8 @@ export default function MarketHomeScreen() {
     </TouchableOpacity>
   );
 
-  const dataToRender = placeholderListing
-    ? ([placeholderListing, ...listings] as Listing[])
+  const dataToRender = createdListing
+    ? ([createdListing, ...listings] as Listing[])
     : listings;
 
   return (
