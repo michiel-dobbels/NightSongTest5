@@ -91,18 +91,12 @@ const [createdListing, setCreatedListing] = useState<any | null>(null);
   };
 
 
+  const [loading, setLoading] = useState(false);
+
   const handleCreate = async () => {
     if (!user || !title || !price || !image) return;
 
-    // Immediately show a placeholder on the home screen so users get feedback
-    navigation.navigate('MarketHome', {
-      placeholderListing: {
-        id: Date.now().toString(),
-        title,
-        price: parseFloat(price),
-        isPlaceholder: true,
-      },
-    });
+    setLoading(true);
 
     let publicUrl: string | null = null;
     try {
@@ -111,7 +105,7 @@ const [createdListing, setCreatedListing] = useState<any | null>(null);
       console.error('Image upload failed', err);
     }
 
-    await supabase
+    const { data: created } = await supabase
       .from('market_listings')
       .insert({
         user_id: user.id,
@@ -121,6 +115,10 @@ const [createdListing, setCreatedListing] = useState<any | null>(null);
       })
       .select('*')
       .single();
+
+    setLoading(false);
+
+    navigation.navigate('MarketHome', { newListing: created });
   };
 
   return (
@@ -150,7 +148,12 @@ const [createdListing, setCreatedListing] = useState<any | null>(null);
         onChangeText={setPrice}
         keyboardType="numeric"
       />
-      <Button title="Create Listing" onPress={handleCreate} color={colors.accent} />
+      <Button
+        title={loading ? 'Creating...' : 'Create Listing'}
+        onPress={handleCreate}
+        color={colors.accent}
+        disabled={loading}
+      />
 
       {createdListing && (
         <View style={styles.previewCard}>
