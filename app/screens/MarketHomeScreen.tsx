@@ -68,7 +68,11 @@ export default function MarketHomeScreen() {
       setPlaceholderListing(route.params.placeholderListing);
       navigation.setParams({ placeholderListing: undefined });
     }
-  }, [route.params?.placeholderListing]);
+    if (route.params?.newListing) {
+      setListings(prev => [route.params.newListing, ...prev]);
+      navigation.setParams({ newListing: undefined });
+    }
+  }, [route.params?.placeholderListing, route.params?.newListing]);
 
   const renderItem = ({ item }: { item: Listing }) => (
     <TouchableOpacity
