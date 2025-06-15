@@ -86,15 +86,8 @@ const [createdListing, setCreatedListing] = useState<any | null>(null);
   const handleCreate = async () => {
     if (!user || !title || !price || !image) return;
 
-    // Immediately show a placeholder on the home screen so users get feedback
-    navigation.navigate('MarketHome', {
-      placeholderListing: {
-        id: Date.now().toString(),
-        title,
-        price: parseFloat(price),
-        isPlaceholder: true,
-      },
-    });
+    // Wait for the upload and insert to finish before navigating so the image
+    // appears correctly in the feed
 
     let publicUrl: string | null = null;
     try {
@@ -103,7 +96,7 @@ const [createdListing, setCreatedListing] = useState<any | null>(null);
       console.error('Image upload failed', err);
     }
 
-    await supabase
+    const { error } = await supabase
       .from('market_listings')
       .insert({
         user_id: user.id,
@@ -113,6 +106,10 @@ const [createdListing, setCreatedListing] = useState<any | null>(null);
       })
       .select('*')
       .single();
+
+    if (!error) {
+      navigation.navigate('MarketHome');
+    }
   };
 
   return (
