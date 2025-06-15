@@ -65,11 +65,11 @@ export default function EditListingScreen() {
           .from(MARKET_BUCKET)
           .getPublicUrl(path);
 
-        if (!data.publicUrl) {
+        if (!data.publicURL) {
           throw new Error('Failed to retrieve public URL');
         }
 
-        url = data.publicUrl;
+        url = data.publicURL;
       }
     }
     await supabase
