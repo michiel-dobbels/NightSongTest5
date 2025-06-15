@@ -113,8 +113,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   // 🔁 Refresh session on mount
   useEffect(() => {
     const getSession = async () => {
-      // supabase-js v1 exposes `session()` to fetch the current session
-      const session = supabase.auth.session();
+      // supabase-js v2 exposes `getSession()` to fetch the current session
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
       setUser(session?.user ?? null);
 
       if (session?.user) {
@@ -148,11 +150,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     const loadImage = async () => {
-      const authUser = user ?? supabase.auth.user();
-      if (!authUser) return;
+      const {
+        data: { user: authUser },
+      } = await supabase.auth.getUser();
+      const effectiveUser = authUser ?? user;
+      if (!effectiveUser) return;
 
-      const profileKey = `profile_image_uri_${authUser.id}`;
-      const bannerKey = `banner_image_uri_${authUser.id}`;
+      const profileKey = `profile_image_uri_${effectiveUser.id}`;
+      const bannerKey = `banner_image_uri_${effectiveUser.id}`;
 
       const stored = await AsyncStorage.getItem(profileKey);
       if (stored) setProfileImageUriState(stored);
@@ -209,7 +214,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     email: string,
     password: string,
   ): Promise<{ error: any }> {
-    const { user, error } = await supabase.auth.signIn({
+    const {
+      data: { user },
+      error,
+    } = await supabase.auth.signInWithPassword({
       email,
       password,
     });
@@ -238,11 +246,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
 
 
-    const { user: newUser, session, error } = await supabase.auth.signUp(
-      { email, password },
-      { data: { username, name } }
-
-    );
+    const {
+      data: { user: newUser, session },
+      error,
+    } = await supabase.auth.signUp({
+      email,
+      password,
+      options: { data: { username, name } },
+    });
 
     if (error) {
       if (error.message && error.message.toLowerCase().includes('already')) {
@@ -291,7 +302,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const setProfileImageUri = useCallback(async (uri: string | null): Promise<void> => {
     setProfileImageUriState(uri);
-    const authUser = supabase.auth.user();
+    const {
+      data: { user: authUser },
+    } = await supabase.auth.getUser();
     const id = authUser?.id || user?.id;
     const key = id ? `profile_image_uri_${id}` : 'profile_image_uri';
 
@@ -312,7 +325,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const setBannerImageUri = useCallback(async (uri: string | null): Promise<void> => {
     setBannerImageUriState(uri);
-    const authUser = supabase.auth.user();
+    const {
+      data: { user: authUser },
+    } = await supabase.auth.getUser();
     const id = authUser?.id || user?.id;
     const key = id ? `banner_image_uri_${id}` : 'banner_image_uri';
 
@@ -450,7 +465,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       .single();
 
     if (!error && data) {
-      const authUser = supabase.auth.user();
+      const {
+        data: { user: authUser },
+      } = await supabase.auth.getUser();
       const meta = authUser?.user_metadata || {};
       const profileData = {
         ...data,

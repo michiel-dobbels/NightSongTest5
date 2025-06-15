@@ -8,7 +8,9 @@ export default function SignInScreen({ navigation }) {
   const [password, setPassword] = useState('');
 
   const handleSignIn = async () => {
-    const { error } = await supabase.auth.signIn({ email, password });
+    const {
+      error,
+    } = await supabase.auth.signInWithPassword({ email, password });
 
 
     if (error) {
