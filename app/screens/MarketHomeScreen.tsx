@@ -45,9 +45,6 @@ export default function MarketHomeScreen() {
   const [listings, setListings] = useState<Listing[]>([]);
   const navigation = useNavigation<any>();
   const route = useRoute<any>();
-  const [placeholderListing, setPlaceholderListing] = useState<
-    Partial<Listing> | null
-  >(null);
 
   const load = async () => {
     const { data } = await supabase
@@ -64,11 +61,14 @@ export default function MarketHomeScreen() {
   }, [navigation]);
 
   useEffect(() => {
-    if (route.params?.placeholderListing) {
-      setPlaceholderListing(route.params.placeholderListing);
-      navigation.setParams({ placeholderListing: undefined });
+    if (route.params?.createdListing) {
+      setListings(prev => {
+        const exists = prev.some(l => l.id === route.params.createdListing.id);
+        return exists ? prev : [route.params.createdListing, ...prev];
+      });
+      navigation.setParams({ createdListing: undefined });
     }
-  }, [route.params?.placeholderListing]);
+  }, [route.params?.createdListing]);
 
   const renderItem = ({ item }: { item: Listing }) => (
     <TouchableOpacity
@@ -95,9 +95,7 @@ export default function MarketHomeScreen() {
     </TouchableOpacity>
   );
 
-  const dataToRender = placeholderListing
-    ? ([placeholderListing, ...listings] as Listing[])
-    : listings;
+  const dataToRender = listings;
 
   return (
     <View style={styles.container}>
@@ -149,14 +147,11 @@ export default function MarketHomeScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.background },
   card: {
-    backgroundColor: '#333',
-    padding: 10,
-    borderRadius: 8,
     marginBottom: 12,
     width: '48%',
   },
   image: { width: '100%', aspectRatio: 1, borderRadius: 6 },
-  price: { color: colors.accent, fontSize: 18, marginTop: 6 },
+  price: { color: colors.accent, fontSize: 18, marginTop: 6, fontWeight: 'bold' },
   title: { color: colors.text, marginTop: 4 },
   fab: {
     position: 'absolute',
@@ -177,9 +172,6 @@ const styles = StyleSheet.create({
   },
   emptyText: { color: colors.text, marginTop: 20 },
   placeholderCard: {
-    backgroundColor: '#333',
-    padding: 10,
-    borderRadius: 8,
     marginBottom: 12,
     width: '48%',
   },
