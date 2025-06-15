@@ -99,6 +99,7 @@ export default function CreateListingScreen() {
       data: newListing,
       error,
     } = await supabase
+
       .from('market_listings')
       .insert({
         user_id: user.id,
@@ -111,6 +112,7 @@ export default function CreateListingScreen() {
 
     if (!error && newListing) {
       navigation.navigate('MarketHome', { createdListing: newListing });
+
     }
   };
 
