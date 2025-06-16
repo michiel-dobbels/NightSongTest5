@@ -96,15 +96,6 @@ export default function CreateListingScreen() {
   const handleCreate = async () => {
     if (!user || !title || !price || !image) return;
 
-    navigation.navigate('MarketHome', {
-      placeholderListing: {
-        id: Date.now().toString(),
-        title,
-        price: parseFloat(price),
-        isPlaceholder: true,
-      },
-    });
-
     try {
       const publicUrl = await uploadImage(image, user.id);
 
@@ -124,6 +115,7 @@ export default function CreateListingScreen() {
       if (error) throw error;
 
       setCreatedListing(data);
+      navigation.navigate('MarketHome');
     } catch (err) {
       console.error('Image or Listing creation failed:', err);
     }
