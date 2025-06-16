@@ -86,24 +86,15 @@ export default function CreateListingScreen() {
       .from(BUCKET)
       .getPublicUrl(path);
 
-    if (urlError || !data?.publicURL) {
+    if (urlError || !data?.publicUrl) {
       throw new Error('Failed to retrieve public URL');
     }
 
-    return data.publicURL;
+    return data.publicUrl;
   };
 
   const handleCreate = async () => {
     if (!user || !title || !price || !image) return;
-
-    navigation.navigate('MarketHome', {
-      placeholderListing: {
-        id: Date.now().toString(),
-        title,
-        price: parseFloat(price),
-        isPlaceholder: true,
-      },
-    });
 
     try {
       const publicUrl = await uploadImage(image, user.id);
@@ -115,7 +106,7 @@ export default function CreateListingScreen() {
             user_id: user.id,
             title,
             price: parseFloat(price),
-            image_url: publicUrl,
+            image_urls: [publicUrl],
           },
         ])
         .select('*')
@@ -124,13 +115,21 @@ export default function CreateListingScreen() {
       if (error) throw error;
 
       setCreatedListing(data);
+
+      navigation.navigate('MarketHome', {
+        placeholderListing: data,
+      });
     } catch (err) {
       console.error('Image or Listing creation failed:', err);
     }
   };
 
   return (
-    <ScrollView style={styles.container} contentContainerStyle={{ paddingBottom: BOTTOM_OFFSET }}>
+    <ScrollView
+      style={styles.container}
+      contentContainerStyle={{ paddingBottom: BOTTOM_OFFSET }}
+      keyboardShouldPersistTaps="always"
+    >
       <View style={styles.buttonRow}>
         <Button title="Take Photo" onPress={takePhoto} color={colors.accent} />
         <Button title="Pick Image" onPress={pickFromGallery} color={colors.accent} />
