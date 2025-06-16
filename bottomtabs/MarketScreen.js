@@ -9,7 +9,9 @@ const Stack = createNativeStackNavigator();
 
 export default function MarketScreen() {
   return (
-    <Stack.Navigator screenOptions={{ headerShown: false }}>
+    <Stack.Navigator
+      screenOptions={{ headerShown: false, detachInactiveScreens: false }}
+    >
       <Stack.Screen name="MarketHome" component={MarketHomeScreen} />
       <Stack.Screen name="ListingDetail" component={MarketListingDetailScreen} />
       <Stack.Screen name="CreateListing" component={CreateListingScreen} />
