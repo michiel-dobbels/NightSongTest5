@@ -8,6 +8,7 @@ import {
   StyleSheet,
   Dimensions,
 } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { supabase } from '../../lib/supabase';
 import { colors } from '../styles/colors';
@@ -80,19 +81,25 @@ export default function MarketHomeScreen() {
       activeOpacity={item.isPlaceholder ? 1 : 0.2}
     >
       {item.image_url ? (
-        <Image
-          source={{ uri: item.image_url }}
-          style={styles.image}
-          resizeMode="cover"
-        />
+        <View style={styles.imageWrapper}>
+          <Image
+            source={{ uri: item.image_url }}
+            style={styles.image}
+            resizeMode="cover"
+          />
+          <LinearGradient
+            colors={['rgba(0,0,0,0.8)', 'rgba(0,0,0,0)']}
+            style={styles.overlay}
+          >
+            <Text style={styles.price}>{`€ ${item.price ?? ''}`}</Text>
+            <Text style={styles.title} numberOfLines={1} ellipsizeMode="tail">
+              {item.title || ''}
+            </Text>
+          </LinearGradient>
+        </View>
       ) : (
         <View style={styles.placeholderImage} />
       )}
-
-      <Text style={styles.price}>{`€ ${item.price ?? ''}`}</Text>
-      <Text style={styles.title} numberOfLines={1} ellipsizeMode="tail">
-        {item.title || ''}
-      </Text>
     </TouchableOpacity>
   );
 
@@ -153,9 +160,22 @@ const styles = StyleSheet.create({
     marginBottom: 12,
     width: '48%',
   },
+  imageWrapper: { position: 'relative' },
   image: { width: '100%', aspectRatio: 1, borderRadius: 6 },
-  price: { color: colors.accent, fontSize: 18, marginTop: 6, fontWeight: 'bold' },
-  title: { color: colors.text, marginTop: 4 },
+  overlay: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    height: '40%',
+    paddingHorizontal: 6,
+    paddingBottom: 4,
+    justifyContent: 'flex-end',
+    borderBottomLeftRadius: 6,
+    borderBottomRightRadius: 6,
+  },
+  price: { color: colors.accent, fontSize: 16, fontWeight: 'bold' },
+  title: { color: colors.text, fontSize: 14 },
   fab: {
     position: 'absolute',
     bottom: FAB_BOTTOM_OFFSET,
