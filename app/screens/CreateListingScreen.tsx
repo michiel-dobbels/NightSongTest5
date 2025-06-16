@@ -26,7 +26,17 @@ export default function CreateListingScreen() {
 
   const navigation = useNavigation<any>();
   const [title, setTitle] = useState('');
+  const [description, setDescription] = useState('');
   const [price, setPrice] = useState('');
+  const [location, setLocation] = useState('');
+  const [brand, setBrand] = useState('');
+  const [model, setModel] = useState('');
+  const [year, setYear] = useState('');
+  const [mileage, setMileage] = useState('');
+  const [vehicleType, setVehicleType] = useState('');
+  const [fuelType, setFuelType] = useState('');
+  const [transmission, setTransmission] = useState('');
+
   const [images, setImages] = useState<string[]>([]);
   const [createdListing, setCreatedListing] = useState<any | null>(null);
 
@@ -40,7 +50,17 @@ export default function CreateListingScreen() {
           {
             user_id: user.id,
             title,
+            description,
             price: parseFloat(price),
+            location,
+            brand,
+            model,
+            year: year ? parseInt(year, 10) : null,
+            mileage: mileage ? parseInt(mileage, 10) : null,
+            vehicle_type: vehicleType || null,
+            fuel_type: fuelType || null,
+            transmission: transmission || null,
+
             image_urls: images,
           },
         ])
@@ -75,6 +95,73 @@ export default function CreateListingScreen() {
         value={price}
         onChangeText={setPrice}
         keyboardType="numeric"
+      />
+
+      <TextInput
+        placeholder="Brand"
+        placeholderTextColor={colors.muted}
+        style={styles.input}
+        value={brand}
+        onChangeText={setBrand}
+      />
+      <TextInput
+        placeholder="Model"
+        placeholderTextColor={colors.muted}
+        style={styles.input}
+        value={model}
+        onChangeText={setModel}
+      />
+      <TextInput
+        placeholder="Year"
+        placeholderTextColor={colors.muted}
+        style={styles.input}
+        value={year}
+        onChangeText={setYear}
+        keyboardType="numeric"
+      />
+      <TextInput
+        placeholder="Description"
+        placeholderTextColor={colors.muted}
+        style={styles.input}
+        value={description}
+        onChangeText={setDescription}
+        multiline
+      />
+      <TextInput
+        placeholder="Location"
+        placeholderTextColor={colors.muted}
+        style={styles.input}
+        value={location}
+        onChangeText={setLocation}
+      />
+      <TextInput
+        placeholder="Mileage"
+        placeholderTextColor={colors.muted}
+        style={styles.input}
+        value={mileage}
+        onChangeText={setMileage}
+        keyboardType="numeric"
+      />
+      <TextInput
+        placeholder="Vehicle Type"
+        placeholderTextColor={colors.muted}
+        style={styles.input}
+        value={vehicleType}
+        onChangeText={setVehicleType}
+      />
+      <TextInput
+        placeholder="Fuel Type"
+        placeholderTextColor={colors.muted}
+        style={styles.input}
+        value={fuelType}
+        onChangeText={setFuelType}
+      />
+      <TextInput
+        placeholder="Transmission"
+        placeholderTextColor={colors.muted}
+        style={styles.input}
+        value={transmission}
+        onChangeText={setTransmission}
       />
 
       <Button title="Create Listing" onPress={handleCreate} color={colors.accent} />

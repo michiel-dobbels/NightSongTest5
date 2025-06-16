@@ -22,10 +22,22 @@ export default function MarketListingDetailScreen() {
     <ScrollView style={styles.container}>
       <ImageCarousel images={listing.image_urls || []} height={250} />
       <Text style={styles.price}>{`$${listing.price ?? ''}`}</Text>
-      <Text style={styles.title}>
-        {listing.brand} {listing.model} {listing.year}
-      </Text>
-      {listing.location && <Text style={styles.desc}>{listing.location}</Text>}
+      {listing.title && <Text style={styles.title}>{listing.title}</Text>}
+      {listing.brand && (
+        <Text style={styles.desc}>{`Brand: ${listing.brand}`}</Text>
+      )}
+      {listing.model && (
+        <Text style={styles.desc}>{`Model: ${listing.model}`}</Text>
+      )}
+      {listing.year !== null && (
+        <Text style={styles.desc}>{`Year: ${listing.year}`}</Text>
+      )}
+      {listing.vehicle_type && (
+        <Text style={styles.desc}>{`Type: ${listing.vehicle_type}`}</Text>
+      )}
+      {listing.location && (
+        <Text style={styles.desc}>{`Location: ${listing.location}`}</Text>
+      )}
       {listing.mileage !== null && (
         <Text style={styles.desc}>{`Mileage: ${listing.mileage}`}</Text>
       )}
@@ -41,7 +53,9 @@ export default function MarketListingDetailScreen() {
       {listing.favorites !== undefined && (
         <Text style={styles.desc}>{`Favorites: ${listing.favorites}`}</Text>
       )}
-      <Text style={styles.desc}>{listing.description}</Text>
+      {listing.description && (
+        <Text style={styles.desc}>{listing.description}</Text>
+      )}
       <Button
         title="Edit Listing"
         onPress={() => navigation.navigate('EditListing', { listing })}
