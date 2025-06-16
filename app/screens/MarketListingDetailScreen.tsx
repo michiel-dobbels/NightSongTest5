@@ -15,6 +15,7 @@ import { useAuth } from '../../AuthContext';
 import { CONFIRM_ACTION } from '../constants/ui';
 import { listingEvents } from '../listingEvents';
 
+
 export default function MarketListingDetailScreen() {
   const { params } = useRoute<any>();
   const navigation = useNavigation<any>();
@@ -32,6 +33,7 @@ export default function MarketListingDetailScreen() {
     if (!listing?.id) return;
     await supabase.from('market_listings').delete().eq('id', listing.id);
     listingEvents.emit('listingDeleted', listing.id);
+
     navigation.goBack();
   };
 
