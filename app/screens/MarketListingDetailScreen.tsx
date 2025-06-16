@@ -1,8 +1,9 @@
 import React, { useEffect } from 'react';
-import { ScrollView, Text, Image, StyleSheet, Button } from 'react-native';
+import { ScrollView, Text, StyleSheet, Button } from 'react-native';
 import { useRoute, useNavigation } from '@react-navigation/native';
 import { colors } from '../styles/colors';
 import { supabase } from '../../lib/supabase';
+import ImageCarousel from '../components/ImageCarousel';
 
 export default function MarketListingDetailScreen() {
   const { params } = useRoute<any>();
@@ -19,9 +20,7 @@ export default function MarketListingDetailScreen() {
 
   return (
     <ScrollView style={styles.container}>
-      {listing.image_urls?.map((url: string) => (
-        <Image key={url} source={{ uri: url }} style={styles.image} />
-      ))}
+      <ImageCarousel images={listing.image_urls || []} height={250} />
       <Text style={styles.price}>{`$${listing.price ?? ''}`}</Text>
       <Text style={styles.title}>
         {listing.brand} {listing.model} {listing.year}
@@ -54,7 +53,6 @@ export default function MarketListingDetailScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.background, padding: 10 },
-  image: { width: '100%', height: 250, borderRadius: 8, marginBottom: 10 },
   price: { color: colors.accent, fontSize: 20, marginBottom: 6 },
   title: { color: colors.text, fontSize: 18, marginBottom: 10 },
   desc: { color: colors.text },
