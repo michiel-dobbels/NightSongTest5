@@ -80,19 +80,22 @@ export default function MarketHomeScreen() {
       activeOpacity={item.isPlaceholder ? 1 : 0.2}
     >
       {item.image_url ? (
-        <Image
-          source={{ uri: item.image_url }}
-          style={styles.image}
-          resizeMode="cover"
-        />
+        <View style={styles.imageWrapper}>
+          <Image
+            source={{ uri: item.image_url }}
+            style={styles.image}
+            resizeMode="cover"
+          />
+          <View style={styles.overlay}>
+            <Text style={styles.price}>{`€ ${item.price ?? ''}`}</Text>
+            <Text style={styles.title} numberOfLines={1} ellipsizeMode="tail">
+              {item.title || ''}
+            </Text>
+          </View>
+        </View>
       ) : (
         <View style={styles.placeholderImage} />
       )}
-
-      <Text style={styles.price}>{`€ ${item.price ?? ''}`}</Text>
-      <Text style={styles.title} numberOfLines={1} ellipsizeMode="tail">
-        {item.title || ''}
-      </Text>
     </TouchableOpacity>
   );
 
@@ -153,9 +156,21 @@ const styles = StyleSheet.create({
     marginBottom: 12,
     width: '48%',
   },
+  imageWrapper: { position: 'relative' },
   image: { width: '100%', aspectRatio: 1, borderRadius: 6 },
-  price: { color: colors.accent, fontSize: 18, marginTop: 6, fontWeight: 'bold' },
-  title: { color: colors.text, marginTop: 4 },
+  overlay: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    width: '100%',
+    backgroundColor: 'rgba(0,0,0,0.6)',
+    paddingVertical: 4,
+    paddingHorizontal: 6,
+    borderBottomLeftRadius: 6,
+    borderBottomRightRadius: 6,
+  },
+  price: { color: colors.accent, fontSize: 16, fontWeight: 'bold' },
+  title: { color: colors.text, fontSize: 14 },
   fab: {
     position: 'absolute',
     bottom: FAB_BOTTOM_OFFSET,
