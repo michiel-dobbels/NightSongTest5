@@ -93,11 +93,13 @@ export default function MarketHomeScreen() {
             end={{ x: 0, y: 0 }}
             style={styles.overlay}
           >
+
             <Text style={styles.price}>{`€ ${item.price ?? ''}`}</Text>
             <Text style={styles.title} numberOfLines={1} ellipsizeMode="tail">
               {item.title || ''}
             </Text>
           </LinearGradient>
+
         </View>
       ) : (
         <View style={styles.placeholderImage} />
@@ -173,6 +175,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 6,
     paddingBottom: 4,
     justifyContent: 'flex-end',
+
     borderBottomLeftRadius: 6,
     borderBottomRightRadius: 6,
   },
