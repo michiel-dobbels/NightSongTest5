@@ -1,20 +1,48 @@
 import React, { useEffect } from 'react';
-import { ScrollView, View, Text, StyleSheet, Button } from 'react-native';
+import {
+  ScrollView,
+  View,
+  Text,
+  StyleSheet,
+  Button,
+  Alert,
+} from 'react-native';
 import { useRoute, useNavigation } from '@react-navigation/native';
 import { colors } from '../styles/colors';
 import { supabase } from '../../lib/supabase';
 import ImageCarousel from '../components/ImageCarousel';
+import { useAuth } from '../../AuthContext';
+import { CONFIRM_ACTION } from '../constants/ui';
 
 export default function MarketListingDetailScreen() {
   const { params } = useRoute<any>();
   const navigation = useNavigation<any>();
   const listing = params?.listing;
+  const auth = useAuth();
+  const user = auth?.user;
 
   useEffect(() => {
     if (listing?.id) {
       supabase.rpc('increment_listing_views', { p_listing_id: listing.id });
     }
   }, [listing?.id]);
+
+  const handleDeleteListing = async () => {
+    if (!listing?.id) return;
+    await supabase.from('market_listings').delete().eq('id', listing.id);
+    navigation.goBack();
+  };
+
+  const confirmDeleteListing = () => {
+    Alert.alert(
+      'Delete Listing',
+      'Are you sure you want to delete this listing?',
+      [
+        CONFIRM_ACTION,
+        { text: 'Delete', style: 'destructive', onPress: handleDeleteListing },
+      ],
+    );
+  };
 
   if (!listing) return null;
 
@@ -62,6 +90,13 @@ export default function MarketListingDetailScreen() {
           onPress={() => navigation.navigate('EditListing', { listing })}
           color={colors.accent}
         />
+        {user?.id === listing.user_id && (
+          <Button
+            title="Delete Listing"
+            onPress={confirmDeleteListing}
+            color="red"
+          />
+        )}
       </View>
     </ScrollView>
   );
