@@ -1,20 +1,20 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import {
   ScrollView,
   TextInput,
   Button,
   StyleSheet,
-  Image,
   Dimensions,
   View,
   Text,
+  Image,
 } from 'react-native';
-import * as ImagePicker from 'expo-image-picker';
 import { useNavigation } from '@react-navigation/native';
 import { useAuth } from '../../AuthContext';
-import { supabase, MARKET_BUCKET } from '../../lib/supabase';
+import { supabase } from '../../lib/supabase';
 import { colors } from '../styles/colors';
-import * as FileSystem from 'expo-file-system';
+import ListingImagePicker from '../components/ListingImagePicker';
+
 const SCREEN_HEIGHT = Dimensions.get('window').height;
 const TOP_OFFSET = SCREEN_HEIGHT * 0.2;
 const BOTTOM_NAV_HEIGHT = SCREEN_HEIGHT * 0.1;
@@ -26,109 +26,40 @@ export default function CreateListingScreen() {
 
   const navigation = useNavigation<any>();
   const [title, setTitle] = useState('');
+  const [description, setDescription] = useState('');
   const [price, setPrice] = useState('');
-  const [image, setImage] = useState<string | null>(null);
+  const [location, setLocation] = useState('');
+  const [brand, setBrand] = useState('');
+  const [model, setModel] = useState('');
+  const [year, setYear] = useState('');
+  const [mileage, setMileage] = useState('');
+  const [vehicleType, setVehicleType] = useState('');
+  const [fuelType, setFuelType] = useState('');
+  const [transmission, setTransmission] = useState('');
+  const [images, setImages] = useState<string[]>([]);
   const [createdListing, setCreatedListing] = useState<any | null>(null);
 
-  useEffect(() => {
-    console.log('image state changed', image);
-  }, [image]);
-
-  const processImage = async (
-    asset: ImagePicker.ImagePickerAsset
-  ): Promise<string> => {
-    console.log('picker asset uri', asset.uri);
-    return asset.uri;
-  };
-
-  const pickFromGallery = async () => {
-    const res = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
-    });
-
-    if (!res.canceled) {
-      const uri = await processImage(res.assets[0]);
-      console.log('setting image from gallery', uri);
-      setImage(uri);
-    }
-  };
-
-  const takePhoto = async () => {
-    const res = await ImagePicker.launchCameraAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
-    });
-
-    if (!res.canceled) {
-      const uri = await processImage(res.assets[0]);
-      console.log('setting image from camera', uri);
-      setImage(uri);
-    }
-  };
-
-  
-
-const uploadImage = async (uri: string, userId: string): Promise<string> => {
-  const BUCKET = 'market-images';
-  const ext = uri.split('.').pop();
-  const path = `${userId}_${Date.now()}.${ext}`;
-
-  console.log('📤 About to upload to:', path);
-
-  const { uri: fileUri } = await FileSystem.getInfoAsync(uri);
-  if (!fileUri) throw new Error('File not found at provided URI');
-
-  const file = {
-    uri: fileUri,
-    name: path,
-    type: `image/${ext}`,
-  };
-
-  const formData = new FormData();
-  formData.append('file', file as any);
-
-  const { data, error: uploadError } = await supabase.storage
-    .from(BUCKET)
-    .upload(path, file as any, {
-      upsert: true,
-      contentType: `image/${ext}`,
-    });
-
-  if (uploadError) {
-    console.error('❌ Upload failed:', uploadError);
-    throw uploadError;
-  }
-
-  const { data: publicData, error: urlError } = supabase
-    .storage
-    .from(BUCKET)
-    .getPublicUrl(path);
-
-  if (urlError || !publicData?.publicURL) {
-    throw new Error('Failed to retrieve public URL');
-  }
-
-  console.log('🌐 Public URL:', publicData.publicURL);
-  return publicData.publicURL;
-};
-
-
-
-
-
   const handleCreate = async () => {
-    if (!user || !title || !price || !image) return;
+    if (!user || !title || !price || images.length === 0) return;
 
     try {
-      const publicUrl = await uploadImage(image, user.id);
-
       const { data, error } = await supabase
         .from('market_listings')
         .insert([
           {
             user_id: user.id,
             title,
+            description,
             price: parseFloat(price),
-            image_url: publicUrl,
+            location,
+            brand,
+            model,
+            year: year ? parseInt(year, 10) : null,
+            mileage: mileage ? parseInt(mileage, 10) : null,
+            vehicle_type: vehicleType || null,
+            fuel_type: fuelType || null,
+            transmission: transmission || null,
+            image_urls: images,
           },
         ])
         .select('*')
@@ -145,14 +76,7 @@ const uploadImage = async (uri: string, userId: string): Promise<string> => {
 
   return (
     <ScrollView style={styles.container} contentContainerStyle={{ paddingBottom: BOTTOM_OFFSET }}>
-      <View style={styles.buttonRow}>
-        <Button title="Take Photo" onPress={takePhoto} color={colors.accent} />
-        <Button title="Pick Image" onPress={pickFromGallery} color={colors.accent} />
-      </View>
-
-      {image && (
-        <Image source={{ uri: image }} style={styles.image} resizeMode="cover" />
-      )}
+      {user && <ListingImagePicker userId={user.id} onChange={setImages} />}
 
       <TextInput
         placeholder="Title"
@@ -171,13 +95,80 @@ const uploadImage = async (uri: string, userId: string): Promise<string> => {
         keyboardType="numeric"
       />
 
+      <TextInput
+        placeholder="Brand"
+        placeholderTextColor={colors.muted}
+        style={styles.input}
+        value={brand}
+        onChangeText={setBrand}
+      />
+      <TextInput
+        placeholder="Model"
+        placeholderTextColor={colors.muted}
+        style={styles.input}
+        value={model}
+        onChangeText={setModel}
+      />
+      <TextInput
+        placeholder="Year"
+        placeholderTextColor={colors.muted}
+        style={styles.input}
+        value={year}
+        onChangeText={setYear}
+        keyboardType="numeric"
+      />
+      <TextInput
+        placeholder="Description"
+        placeholderTextColor={colors.muted}
+        style={styles.input}
+        value={description}
+        onChangeText={setDescription}
+        multiline
+      />
+      <TextInput
+        placeholder="Location"
+        placeholderTextColor={colors.muted}
+        style={styles.input}
+        value={location}
+        onChangeText={setLocation}
+      />
+      <TextInput
+        placeholder="Mileage"
+        placeholderTextColor={colors.muted}
+        style={styles.input}
+        value={mileage}
+        onChangeText={setMileage}
+        keyboardType="numeric"
+      />
+      <TextInput
+        placeholder="Vehicle Type"
+        placeholderTextColor={colors.muted}
+        style={styles.input}
+        value={vehicleType}
+        onChangeText={setVehicleType}
+      />
+      <TextInput
+        placeholder="Fuel Type"
+        placeholderTextColor={colors.muted}
+        style={styles.input}
+        value={fuelType}
+        onChangeText={setFuelType}
+      />
+      <TextInput
+        placeholder="Transmission"
+        placeholderTextColor={colors.muted}
+        style={styles.input}
+        value={transmission}
+        onChangeText={setTransmission}
+      />
+
       <Button title="Create Listing" onPress={handleCreate} color={colors.accent} />
 
       {createdListing && (
         <View style={styles.previewCard}>
-          {createdListing.image_url?.[0] && (
+          {createdListing.image_urls?.[0] && (
             <Image
-              source={{ uri: createdListing.image_url[0] }}
+              source={{ uri: createdListing.image_urls[0] }}
               style={styles.previewImage}
               resizeMode="cover"
             />
@@ -206,12 +197,6 @@ const styles = StyleSheet.create({
     borderRadius: 4,
     marginTop: 10,
   },
-  image: {
-    width: '100%',
-    aspectRatio: 1,
-    marginTop: 10,
-    borderRadius: 6,
-  },
   previewCard: {
     backgroundColor: '#333',
     padding: 10,
@@ -234,11 +219,6 @@ const styles = StyleSheet.create({
   previewTitle: {
     color: colors.text,
     marginTop: 4,
-  },
-  buttonRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginBottom: 10,
   },
 });
 
