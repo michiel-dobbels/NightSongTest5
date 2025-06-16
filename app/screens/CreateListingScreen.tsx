@@ -86,11 +86,11 @@ export default function CreateListingScreen() {
       .from(BUCKET)
       .getPublicUrl(path);
 
-    if (urlError || !data?.publicUrl) {
+    if (urlError || !data?.publicURL) {
       throw new Error('Failed to retrieve public URL');
     }
 
-    return data.publicUrl;
+    return data.publicURL;
   };
 
   const handleCreate = async () => {
