@@ -36,6 +36,7 @@ export default function CreateListingScreen() {
   const [vehicleType, setVehicleType] = useState('');
   const [fuelType, setFuelType] = useState('');
   const [transmission, setTransmission] = useState('');
+
   const [images, setImages] = useState<string[]>([]);
   const [createdListing, setCreatedListing] = useState<any | null>(null);
 
@@ -59,6 +60,7 @@ export default function CreateListingScreen() {
             vehicle_type: vehicleType || null,
             fuel_type: fuelType || null,
             transmission: transmission || null,
+
             image_urls: images,
           },
         ])
