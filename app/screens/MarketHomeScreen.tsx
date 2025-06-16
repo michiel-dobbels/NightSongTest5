@@ -23,7 +23,7 @@ const FAB_BOTTOM_OFFSET = (BOTTOM_NAV_HEIGHT + 10) * 1.11;
 
 interface Listing {
   id: string;
-  image_url: string[] | null;
+  image_urls: string[] | null;
   price: number | null;
   title: string | null;
   brand: string | null;
@@ -80,10 +80,11 @@ export default function MarketHomeScreen() {
       }
       activeOpacity={item.isPlaceholder ? 1 : 0.2}
     >
-      {item.image_url ? (
+      {item.image_urls?.[0] ? (
         <View style={styles.imageWrapper}>
           <Image
-            source={{ uri: item.image_url }}
+            source={{ uri: item.image_urls[0] }}
+
             style={styles.image}
             resizeMode="cover"
           />
