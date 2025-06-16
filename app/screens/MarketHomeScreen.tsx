@@ -8,6 +8,7 @@ import {
   StyleSheet,
   Dimensions,
 } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { supabase } from '../../lib/supabase';
 import { colors } from '../styles/colors';
@@ -86,12 +87,17 @@ export default function MarketHomeScreen() {
             style={styles.image}
             resizeMode="cover"
           />
-          <View style={styles.overlay}>
+          <LinearGradient
+            colors={['rgba(0,0,0,0.8)', 'rgba(0,0,0,0)']}
+            style={styles.overlay}
+          >
+
             <Text style={styles.price}>{`€ ${item.price ?? ''}`}</Text>
             <Text style={styles.title} numberOfLines={1} ellipsizeMode="tail">
               {item.title || ''}
             </Text>
-          </View>
+          </LinearGradient>
+
         </View>
       ) : (
         <View style={styles.placeholderImage} />
@@ -162,10 +168,12 @@ const styles = StyleSheet.create({
     position: 'absolute',
     bottom: 0,
     left: 0,
-    width: '100%',
-    backgroundColor: 'rgba(0,0,0,0.6)',
-    paddingVertical: 4,
+    right: 0,
+    height: '40%',
     paddingHorizontal: 6,
+    paddingBottom: 4,
+    justifyContent: 'flex-end',
+
     borderBottomLeftRadius: 6,
     borderBottomRightRadius: 6,
   },
