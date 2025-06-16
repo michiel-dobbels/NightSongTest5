@@ -84,6 +84,7 @@ export default function MarketHomeScreen() {
         <View style={styles.imageWrapper}>
           <Image
             source={{ uri: item.image_urls[0] }}
+
             style={styles.image}
             resizeMode="cover"
           />
@@ -93,11 +94,13 @@ export default function MarketHomeScreen() {
             end={{ x: 0, y: 0 }}
             style={styles.overlay}
           >
+
             <Text style={styles.price}>{`€ ${item.price ?? ''}`}</Text>
             <Text style={styles.title} numberOfLines={1} ellipsizeMode="tail">
               {item.title || ''}
             </Text>
           </LinearGradient>
+
         </View>
       ) : (
         <View style={styles.placeholderImage} />
@@ -184,6 +187,7 @@ const styles = StyleSheet.create({
     textShadowOffset: { width: 0.5, height: 0.5 },
     textShadowRadius: 1,
   },
+
   title: { color: colors.text, fontSize: 14 },
   fab: {
     position: 'absolute',
