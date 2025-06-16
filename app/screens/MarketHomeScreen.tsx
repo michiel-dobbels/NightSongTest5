@@ -89,6 +89,8 @@ export default function MarketHomeScreen() {
           />
           <LinearGradient
             colors={['rgba(0,0,0,0.8)', 'rgba(0,0,0,0)']}
+            start={{ x: 0, y: 1 }}
+            end={{ x: 0, y: 0 }}
             style={styles.overlay}
           >
 
