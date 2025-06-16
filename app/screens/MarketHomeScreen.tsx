@@ -175,11 +175,18 @@ const styles = StyleSheet.create({
     paddingHorizontal: 6,
     paddingBottom: 4,
     justifyContent: 'flex-end',
-
     borderBottomLeftRadius: 6,
     borderBottomRightRadius: 6,
   },
-  price: { color: colors.accent, fontSize: 16, fontWeight: 'bold' },
+  price: {
+    color: colors.accent,
+    fontSize: 16,
+    fontWeight: 'bold',
+    textShadowColor: '#000',
+    textShadowOffset: { width: 0.5, height: 0.5 },
+    textShadowRadius: 1,
+  },
+
   title: { color: colors.text, fontSize: 14 },
   fab: {
     position: 'absolute',
