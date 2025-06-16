@@ -13,6 +13,7 @@ import { useNavigation, useRoute } from '@react-navigation/native';
 import { supabase } from '../../lib/supabase';
 import { colors } from '../styles/colors';
 import MarketHeader from '../components/MarketHeader';
+import { listingEvents } from '../listingEvents';
 
 const SCREEN_HEIGHT = Dimensions.get('window').height;
 const BOTTOM_NAV_HEIGHT = SCREEN_HEIGHT * 0.1;
@@ -63,6 +64,17 @@ export default function MarketHomeScreen() {
     const unsubscribe = navigation.addListener('focus', load);
     return unsubscribe;
   }, [navigation]);
+
+  useEffect(() => {
+    const onListingDeleted = (id: string) => {
+      setListings(prev => prev.filter(l => l.id !== id));
+      setPlaceholderListing(prev => (prev && prev.id === id ? null : prev));
+    };
+    listingEvents.on('listingDeleted', onListingDeleted);
+    return () => {
+      listingEvents.off('listingDeleted', onListingDeleted);
+    };
+  }, []);
 
   useEffect(() => {
     if (route.params?.placeholderListing) {
