@@ -71,6 +71,13 @@ export default function MarketHomeScreen() {
     }
   }, [route.params?.placeholderListing]);
 
+  useEffect(() => {
+    if (route.params?.deletedListingId) {
+      setListings(prev => prev.filter(l => l.id !== route.params.deletedListingId));
+      navigation.setParams({ deletedListingId: undefined });
+    }
+  }, [route.params?.deletedListingId]);
+
   const renderItem = ({ item }: { item: Listing }) => (
     <TouchableOpacity
       style={[styles.card, item.isPlaceholder && styles.placeholderOpacity]}
