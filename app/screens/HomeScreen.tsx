@@ -15,15 +15,23 @@ import {
   StyleSheet,
   Button,
   Alert,
+  Image,
+  Modal,
+  KeyboardAvoidingView,
+  Platform,
   ActivityIndicator,
 } from 'react-native';
+import { Video } from 'expo-av';
+import * as ImagePicker from 'expo-image-picker';
+import * as FileSystem from 'expo-file-system';
 import { useNavigation } from '@react-navigation/native';
 import { supabase } from '../../lib/supabase';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useAuth } from '../../AuthContext';
 import PostCard, { Post } from '../components/PostCard';
-
 import { colors } from '../styles/colors';
+import { replyEvents } from '../replyEvents';
+
 
 export interface HomeScreenRef {
   createPost: (
@@ -49,6 +57,11 @@ const HomeScreen = forwardRef<HomeScreenRef, { hideInput?: boolean }>(
   const [hasMore, setHasMore] = useState(true);
   const skipNextFetch = useRef(false);
   const listRef = useRef<FlatList>(null);
+  const [replyModalVisible, setReplyModalVisible] = useState(false);
+  const [activePostId, setActivePostId] = useState<string | null>(null);
+  const [replyText, setReplyText] = useState('');
+  const [replyImage, setReplyImage] = useState<string | null>(null);
+  const [replyVideo, setReplyVideo] = useState<string | null>(null);
 
 
   if (!user || !profile) {
@@ -70,6 +83,99 @@ const HomeScreen = forwardRef<HomeScreenRef, { hideInput?: boolean }>(
     }
     return result;
   };
+
+  const openReplyModal = (postId: string) => {
+    setActivePostId(postId);
+    setReplyText('');
+    setReplyImage(null);
+    setReplyVideo(null);
+    setReplyModalVisible(true);
+  };
+
+  const pickReplyImage = async () => {
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: true,
+      quality: 0.8,
+    });
+    if (!result.canceled) {
+      const uri = result.assets[0].uri;
+      const base64 = await FileSystem.readAsStringAsync(uri, { encoding: 'base64' });
+      setReplyImage(`data:image/jpeg;base64,${base64}`);
+      setReplyVideo(null);
+    }
+  };
+
+  const pickReplyVideo = async () => {
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Videos,
+    });
+    if (!result.canceled) {
+      const uri = result.assets[0].uri;
+      const info = await FileSystem.getInfoAsync(uri);
+      if (info.size && info.size > 20 * 1024 * 1024) {
+        Alert.alert('Video too large', 'Please select a video under 20MB.');
+        return;
+      }
+      setReplyVideo(uri);
+      setReplyImage(null);
+    }
+  };
+
+  const handleReplySubmit = async () => {
+    if (!activePostId || (!replyText.trim() && !replyImage && !replyVideo) || !profile) {
+      setReplyModalVisible(false);
+      return;
+    }
+
+    setReplyModalVisible(false);
+
+    setPosts(prev =>
+      prev.map(p =>
+        p.id === activePostId
+          ? { ...p, reply_count: (p.reply_count ?? 0) + 1 }
+          : p,
+      ),
+    );
+
+    let uploadedUrl: string | null = null;
+    if (replyVideo) {
+      try {
+        const ext = replyVideo.split('.').pop() || 'mp4';
+        const path = `${profile.id}-${Date.now()}.${ext}`;
+        const resp = await fetch(replyVideo);
+        const blob = await resp.blob();
+        const { error: uploadError } = await supabase.storage
+          .from('reply-videos')
+          .upload(path, blob);
+        if (!uploadError) {
+          uploadedUrl = supabase.storage.from('reply-videos').getPublicUrl(path).data.publicUrl;
+        }
+      } catch (e) {
+        console.error('Video upload failed', e);
+      }
+    }
+
+    const { error } = await supabase.from('replies').insert({
+      post_id: activePostId,
+      parent_id: null,
+      user_id: profile.id,
+      content: replyText,
+      image_url: replyImage,
+      video_url: uploadedUrl,
+      username: profile.name || profile.username,
+    });
+    if (error) {
+      console.error('Reply failed', error.message);
+    } else {
+      replyEvents.emit('replyAdded', activePostId);
+    }
+
+    setReplyText('');
+    setReplyImage(null);
+    setReplyVideo(null);
+  };
+
 
   const fetchPosts = useCallback(async (offset = 0, append = false) => {
     try {
@@ -127,6 +233,21 @@ const HomeScreen = forwardRef<HomeScreenRef, { hideInput?: boolean }>(
   useEffect(() => {
     loadCached();
   }, []);
+
+  useEffect(() => {
+    const onReplyAdded = (postId: string) => {
+      setPosts(prev =>
+        prev.map(p =>
+          p.id === postId ? { ...p, reply_count: (p.reply_count ?? 0) + 1 } : p,
+        ),
+      );
+    };
+    replyEvents.on('replyAdded', onReplyAdded);
+    return () => {
+      replyEvents.off('replyAdded', onReplyAdded);
+    };
+  }, []);
+
 
   const createPost = async (
     content: string,
@@ -245,7 +366,7 @@ const HomeScreen = forwardRef<HomeScreenRef, { hideInput?: boolean }>(
                     : navigation.navigate('OtherUserProfile', { userId: item.user_id })
                 }
                 onDelete={() => {}}
-                onOpenReplies={() => navigation.navigate('PostDetail', { post: item })}
+                onOpenReplies={() => openReplyModal(item.id)}
               />
             );
           }}
@@ -255,6 +376,37 @@ const HomeScreen = forwardRef<HomeScreenRef, { hideInput?: boolean }>(
           ListFooterComponent={loadingMore ? <ActivityIndicator /> : null}
         />
       )}
+      <Modal visible={replyModalVisible} animationType="slide" transparent>
+        <KeyboardAvoidingView
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          style={styles.modalOverlay}
+        >
+          <View style={styles.modalContent}>
+            <TextInput
+              placeholder="Write a reply"
+              value={replyText}
+              onChangeText={setReplyText}
+              style={styles.input}
+              multiline
+            />
+            {replyImage && <Image source={{ uri: replyImage }} style={styles.preview} />}
+            {!replyImage && replyVideo && (
+              <Video
+                source={{ uri: replyVideo }}
+                style={styles.preview}
+                useNativeControls
+                isMuted
+                resizeMode="contain"
+              />
+            )}
+            <View style={styles.buttonRow}>
+              <Button title="Add Image" onPress={pickReplyImage} />
+              <Button title="Add Video" onPress={pickReplyVideo} />
+              <Button title="Post" onPress={handleReplySubmit} />
+            </View>
+          </View>
+        </KeyboardAvoidingView>
+      </Modal>
     </View>
   );
 });
@@ -267,6 +419,26 @@ const styles = StyleSheet.create({
     padding: 10,
     marginBottom: 10,
     borderRadius: 5,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'flex-end',
+  },
+  modalContent: {
+    backgroundColor: colors.background,
+    padding: 20,
+  },
+  preview: {
+    width: '100%',
+    height: 200,
+    borderRadius: 6,
+    marginBottom: 10,
+  },
+  buttonRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 10,
   },
 });
 
