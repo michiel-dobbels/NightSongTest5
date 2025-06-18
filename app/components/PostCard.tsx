@@ -68,12 +68,23 @@ function PostCard({
       <View style={styles.post}>
         {showThreadLine && <View style={styles.threadLine} pointerEvents="none" />}
         {isOwner && (
-          <TouchableOpacity onPress={onDelete} style={styles.deleteButton}>
+          <TouchableOpacity
+            onPress={e => {
+              e.stopPropagation();
+              onDelete();
+            }}
+            style={styles.deleteButton}
+          >
             <Text style={styles.deleteText}>X</Text>
           </TouchableOpacity>
         )}
         <View style={styles.row}>
-          <TouchableOpacity onPress={onProfilePress}>
+          <TouchableOpacity
+            onPress={e => {
+              e.stopPropagation();
+              onProfilePress();
+            }}
+          >
             {avatarUri ? (
               <Image source={{ uri: avatarUri }} style={styles.avatar} />
             ) : (
@@ -109,11 +120,23 @@ function PostCard({
             )}
           </View>
         </View>
-        <TouchableOpacity style={styles.replyCountContainer} onPress={onOpenReplies}>
+        <TouchableOpacity
+          style={styles.replyCountContainer}
+          onPress={e => {
+            e.stopPropagation();
+            onOpenReplies();
+          }}
+        >
           <Ionicons name="chatbubble-outline" size={18} color={colors.accent} style={{ marginRight: 2 }} />
           <Text style={styles.replyCountLarge}>{replyCount}</Text>
         </TouchableOpacity>
-        <TouchableOpacity style={styles.likeContainer} onPress={toggleLike}>
+        <TouchableOpacity
+          style={styles.likeContainer}
+          onPress={e => {
+            e.stopPropagation();
+            toggleLike();
+          }}
+        >
           <Ionicons name={liked ? 'heart' : 'heart-outline'} size={18} color="red" style={{ marginRight: 2 }} />
           <Text style={[styles.likeCountLarge, liked && styles.likedLikeCount]}>{likeCount}</Text>
         </TouchableOpacity>
