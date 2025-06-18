@@ -51,7 +51,7 @@ const HomeScreen = forwardRef<HomeScreenRef, { hideInput?: boolean }>(
   const listRef = useRef<FlatList>(null);
 
 
-  if (!user) {
+  if (!user || !profile) {
     return (
       <View style={styles.container}>
         <Text style={{ color: 'white', padding: 20 }}>Loading...</Text>
@@ -133,7 +133,7 @@ const HomeScreen = forwardRef<HomeScreenRef, { hideInput?: boolean }>(
     image?: string,
     video?: string,
   ) => {
-    if (!content.trim()) return;
+    if (!content.trim() || !profile) return;
 
     skipNextFetch.current = true;
 
@@ -224,10 +224,11 @@ const HomeScreen = forwardRef<HomeScreenRef, { hideInput?: boolean }>(
           renderItem={({ item }) => {
             const isMe = item.user_id === user.id;
             const avatarUri = isMe
-              ? profile.image_url ?? undefined
+              ? profile?.image_url ?? undefined
               : item.profiles?.image_url ?? undefined;
             const bannerUrl = isMe
-              ? profile.banner_url ?? undefined
+              ? profile?.banner_url ?? undefined
+
               : item.profiles?.banner_url ?? undefined;
             return (
               <PostCard
