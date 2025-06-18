@@ -21,7 +21,8 @@ import { useNavigation } from '@react-navigation/native';
 import { supabase } from '../../lib/supabase';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useAuth } from '../../AuthContext';
-import { PostCard, Post } from '../components/PostCard';
+import PostCard, { Post } from '../components/PostCard';
+
 import { colors } from '../styles/colors';
 
 export interface HomeScreenRef {
