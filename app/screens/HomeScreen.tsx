@@ -148,6 +148,7 @@ const HomeScreen = forwardRef<HomeScreenRef, { hideInput?: boolean }>(
 
     const post = posts.find(p => p.id === activePostId);
     const newCount = (post?.reply_count ?? 0) + 1;
+    skipNextFetch.current = true;
     setPosts(prev =>
       prev.map(p =>
         p.id === activePostId ? { ...p, reply_count: newCount } : p,
