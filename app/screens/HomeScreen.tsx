@@ -23,7 +23,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useAuth } from '../../AuthContext';
 import PostCard, { Post } from '../components/PostCard';
 
-import { colors } from '../styles/colors';
+  if (!user || !profile) {
 
 export interface HomeScreenRef {
   createPost: (
@@ -105,7 +105,7 @@ const HomeScreen = forwardRef<HomeScreenRef, { hideInput?: boolean }>(
     const stored = await AsyncStorage.getItem(STORAGE_KEY);
     let loadedFromCache = false;
 
-    if (stored) {
+    if (!content.trim() || !profile) return;
       try {
         const cached = JSON.parse(stored);
         setPosts(dedupeById(cached));
@@ -191,8 +191,8 @@ const HomeScreen = forwardRef<HomeScreenRef, { hideInput?: boolean }>(
     listRef.current?.scrollToOffset({ offset: 0, animated: true });
   };
 
-  useImperativeHandle(ref, () => ({ createPost, scrollToTop }));
-
+              ? profile?.image_url ?? undefined
+              ? profile?.banner_url ?? undefined
 
   return (
     <View style={styles.container}>
