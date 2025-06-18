@@ -59,6 +59,18 @@ const HomeScreen = forwardRef<HomeScreenRef, { hideInput?: boolean }>(
     );
   }
 
+  const dedupeById = (arr: Post[]): Post[] => {
+    const seen = new Set<string>();
+    const result: Post[] = [];
+    for (const item of arr) {
+      if (!seen.has(item.id)) {
+        result.push(item);
+        seen.add(item.id);
+      }
+    }
+    return result;
+  };
+
   const fetchPosts = useCallback(async (offset = 0, append = false) => {
     try {
       if (offset === 0) setLoading(true);
@@ -73,8 +85,14 @@ const HomeScreen = forwardRef<HomeScreenRef, { hideInput?: boolean }>(
       if (error) throw error;
 
       if (data) {
-        setPosts(prev => append ? [...prev, ...data] : data);
-        await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+        setPosts(prev => {
+          const combined = append ? [...prev, ...data] : data;
+          const unique = dedupeById(combined);
+          AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(unique)).catch(
+            () => {},
+          );
+          return unique;
+        });
       }
     } catch (e) {
       console.error('Failed to fetch posts', e);
@@ -90,7 +108,7 @@ const HomeScreen = forwardRef<HomeScreenRef, { hideInput?: boolean }>(
     if (stored) {
       try {
         const cached = JSON.parse(stored);
-        setPosts(cached);
+        setPosts(dedupeById(cached));
         loadedFromCache = true;
       } catch (e) {
         console.error('Failed to parse cached posts', e);
@@ -133,7 +151,8 @@ const HomeScreen = forwardRef<HomeScreenRef, { hideInput?: boolean }>(
       profiles: profile,
     };
 
-    setPosts(prev => [newPost, ...prev]);
+    setPosts(prev => dedupeById([newPost, ...prev]));
+
 
     const { data, error } = await supabase
       .from('posts')
@@ -149,7 +168,7 @@ const HomeScreen = forwardRef<HomeScreenRef, { hideInput?: boolean }>(
       .single();
 
     if (!error && data) {
-      setPosts(prev => prev.map(p => (p.id === newPost.id ? data : p)));
+      setPosts(prev => dedupeById(prev.map(p => (p.id === newPost.id ? data : p))));
     }
   };
 
