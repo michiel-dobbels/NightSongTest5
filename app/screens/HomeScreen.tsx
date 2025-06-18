@@ -148,6 +148,7 @@ const HomeScreen = forwardRef<HomeScreenRef, { hideInput?: boolean }>(
 
     const post = posts.find(p => p.id === activePostId);
     const newCount = (post?.reply_count ?? 0) + 1;
+    skipNextFetch.current = true;
     setPosts(prev =>
       prev.map(p =>
         p.id === activePostId ? { ...p, reply_count: newCount } : p,
@@ -186,7 +187,7 @@ const HomeScreen = forwardRef<HomeScreenRef, { hideInput?: boolean }>(
     if (error) {
       console.error('Reply failed', error.message);
     } else {
-      replyEvents.emit('replyAdded', activePostId);
+      replyEvents.emit('replyAdded', activePostId, true);
     }
 
     setReplyText('');
@@ -253,7 +254,8 @@ const HomeScreen = forwardRef<HomeScreenRef, { hideInput?: boolean }>(
   }, []);
 
   useEffect(() => {
-    const onReplyAdded = (postId: string) => {
+    const onReplyAdded = (postId: string, fromSelf?: boolean) => {
+      if (fromSelf) return;
       setPosts(prev => {
         const updated = prev.map(p => {
           if (p.id === postId) {
