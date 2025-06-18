@@ -191,7 +191,10 @@ const HomeScreen = forwardRef<HomeScreenRef, { hideInput?: boolean }>(
           ref={flatListRef}
           data={posts}
           keyExtractor={item => item.id}
-          removeClippedSubviews
+          style={{ flex: 1 }}
+          contentContainerStyle={{ paddingBottom: 20 }}
+          removeClippedSubviews={false}
+
           initialNumToRender={10}
           windowSize={5}
           renderItem={({ item }) => (
