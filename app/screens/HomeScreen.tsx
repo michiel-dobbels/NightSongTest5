@@ -33,6 +33,7 @@ export interface HomeScreenRef {
   scrollToTop: () => void;
 }
 
+
 const STORAGE_KEY = 'cached_posts';
 const PAGE_SIZE = 10;
 
@@ -47,6 +48,7 @@ const HomeScreen = forwardRef<HomeScreenRef, { hideInput?: boolean }>(
   const [hasMore, setHasMore] = useState(true);
   const skipNextFetch = useRef(false);
   const listRef = useRef<FlatList>(null);
+
 
   if (!user) {
     return (
@@ -113,11 +115,13 @@ const HomeScreen = forwardRef<HomeScreenRef, { hideInput?: boolean }>(
     video?: string,
   ) => {
     if (!content.trim()) return;
+
     skipNextFetch.current = true;
 
     const newPost: Post = {
       id: `temp-${Date.now()}`,
       content,
+
       user_id: user.id,
       created_at: new Date().toISOString(),
       like_count: 0,
@@ -134,6 +138,7 @@ const HomeScreen = forwardRef<HomeScreenRef, { hideInput?: boolean }>(
       .from('posts')
       .insert({
         content,
+
         user_id: user.id,
         username: profile.username,
         image_url: image ?? null,
@@ -168,6 +173,7 @@ const HomeScreen = forwardRef<HomeScreenRef, { hideInput?: boolean }>(
 
   useImperativeHandle(ref, () => ({ createPost, scrollToTop }));
 
+
   return (
     <View style={styles.container}>
       {!hideInput && (
@@ -187,11 +193,13 @@ const HomeScreen = forwardRef<HomeScreenRef, { hideInput?: boolean }>(
       ) : (
         <FlatList
           ref={listRef}
+
           data={posts}
           keyExtractor={item => item.id}
           style={{ flex: 1 }}
           contentContainerStyle={{ paddingBottom: 20 }}
           removeClippedSubviews={false}
+
           initialNumToRender={10}
           windowSize={5}
           renderItem={({ item }) => (
