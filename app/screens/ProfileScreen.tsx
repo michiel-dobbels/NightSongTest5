@@ -138,7 +138,8 @@ export default function ProfileScreen() {
   }, []);
 
   useEffect(() => {
-    const onReplyAdded = (postId: string) => {
+    const onReplyAdded = (postId: string, fromSelf?: boolean) => {
+      if (fromSelf) return;
       setReplyCounts(prev => {
         const updated = { ...prev, [postId]: (prev[postId] || 0) + 1 };
         AsyncStorage.setItem(COUNT_STORAGE_KEY, JSON.stringify(updated));
@@ -323,7 +324,7 @@ export default function ProfileScreen() {
         return counts;
       });
       initialize([{ id: data.id, like_count: 0 }]);
-      replyEvents.emit('replyAdded', activePostId);
+      replyEvents.emit('replyAdded', activePostId, true);
     } else if (error) {
       console.error('Reply failed', error.message);
     }

@@ -148,6 +148,7 @@ const HomeScreen = forwardRef<HomeScreenRef, { hideInput?: boolean }>(
 
     const post = posts.find(p => p.id === activePostId);
     const newCount = (post?.reply_count ?? 0) + 1;
+    skipNextFetch.current = true;
     setPosts(prev =>
       prev.map(p =>
         p.id === activePostId ? { ...p, reply_count: newCount } : p,
@@ -186,7 +187,7 @@ const HomeScreen = forwardRef<HomeScreenRef, { hideInput?: boolean }>(
     if (error) {
       console.error('Reply failed', error.message);
     } else {
-      replyEvents.emit('replyAdded', activePostId);
+      replyEvents.emit('replyAdded', activePostId, true);
     }
 
     setReplyText('');
@@ -253,7 +254,8 @@ const HomeScreen = forwardRef<HomeScreenRef, { hideInput?: boolean }>(
   }, []);
 
   useEffect(() => {
-    const onReplyAdded = (postId: string) => {
+    const onReplyAdded = (postId: string, fromSelf?: boolean) => {
+      if (fromSelf) return;
       setPosts(prev => {
         const updated = prev.map(p => {
           if (p.id === postId) {
@@ -325,11 +327,22 @@ const HomeScreen = forwardRef<HomeScreenRef, { hideInput?: boolean }>(
 
   const handleLike = async (postId: string) => {
     skipNextFetch.current = true;
+    let likeCount = 0;
+    let replyCount = 0;
     setPosts(prev =>
-      prev.map(p =>
-        p.id === postId ? { ...p, like_count: (p.like_count || 0) + 1 } : p
-      )
+      prev.map(p => {
+        if (p.id === postId) {
+          likeCount = (p.like_count || 0) + 1;
+          replyCount = p.reply_count || 0;
+          return { ...p, like_count: likeCount };
+        }
+        return p;
+      })
     );
+    await updateCachedPost(postId, {
+      like_count: likeCount,
+      reply_count: replyCount,
+    });
     await supabase.from('likes').insert({ post_id: postId, user_id: user.id });
   };
 

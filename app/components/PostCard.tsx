@@ -44,6 +44,7 @@ export interface PostCardProps {
   onProfilePress: () => void;
   onDelete: () => void;
   onOpenReplies: () => void;
+  onLike?: () => void;
   showThreadLine?: boolean;
 }
 
@@ -56,6 +57,7 @@ function PostCard({
   onProfilePress,
   onDelete,
   onOpenReplies,
+  onLike,
   showThreadLine = false,
 }: PostCardProps) {
   const displayName = post.profiles?.name || post.profiles?.username || post.username;
@@ -134,6 +136,7 @@ function PostCard({
           style={styles.likeContainer}
           onPress={e => {
             e.stopPropagation();
+            if (onLike) onLike();
             toggleLike();
           }}
         >
