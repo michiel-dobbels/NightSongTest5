@@ -152,6 +152,11 @@ const HomeScreen = forwardRef(({ hideInput }, ref) => {
         <FlatList
           data={posts}
           keyExtractor={item => item.id}
+          style={{ flex: 1 }}
+          contentContainerStyle={{ paddingBottom: 20 }}
+          removeClippedSubviews={false}
+          initialNumToRender={10}
+          windowSize={5}
           renderItem={({ item }) => (
             <PostCard
               post={item}
