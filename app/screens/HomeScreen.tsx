@@ -219,17 +219,36 @@ const HomeScreen = forwardRef<HomeScreenRef, { hideInput?: boolean }>(
           style={{ flex: 1 }}
           contentContainerStyle={{ paddingBottom: 20 }}
           removeClippedSubviews={false}
-
           initialNumToRender={10}
           windowSize={5}
-          renderItem={({ item }) => (
-            <PostCard
-              post={item}
-              isOwner={item.user_id === user.id}
-              onLike={() => handleLike(item.id)}
-              onPress={() => navigation.navigate('PostDetail', { post: item })}
-            />
-          )}
+          renderItem={({ item }) => {
+            const isMe = item.user_id === user.id;
+            const avatarUri = isMe
+              ? profile.image_url ?? undefined
+              : item.profiles?.image_url ?? undefined;
+            const bannerUrl = isMe
+              ? profile.banner_url ?? undefined
+              : item.profiles?.banner_url ?? undefined;
+            return (
+              <PostCard
+                post={item}
+                isOwner={isMe}
+                avatarUri={avatarUri}
+                bannerUrl={bannerUrl}
+                replyCount={item.reply_count ?? 0}
+                onLike={() => handleLike(item.id)}
+                onPress={() => navigation.navigate('PostDetail', { post: item })}
+                onProfilePress={() =>
+                  isMe
+                    ? navigation.navigate('Profile')
+                    : navigation.navigate('OtherUserProfile', { userId: item.user_id })
+                }
+                onDelete={() => {}}
+                onOpenReplies={() => navigation.navigate('PostDetail', { post: item })}
+              />
+            );
+          }}
+
           onEndReached={() => fetchPosts(posts.length, true)}
           onEndReachedThreshold={0.5}
           ListFooterComponent={loadingMore ? <ActivityIndicator /> : null}
