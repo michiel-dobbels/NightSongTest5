@@ -23,6 +23,16 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useAuth } from '../../contexts/AuthContext';
 import { usePostStore } from '../contexts/PostStoreContext';
 import { PostCard, Post } from '../components/PostCard';
+import { colors } from '../styles/colors';
+
+export interface HomeScreenRef {
+  createPost: (
+    content: string,
+    image?: string,
+    video?: string,
+  ) => Promise<void>;
+  scrollToTop: () => void;
+}
 
 export interface HomeScreenRef {
   createPost: (
@@ -220,7 +230,7 @@ const HomeScreen = forwardRef<HomeScreenRef, { hideInput?: boolean }>(
 });
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#000', padding: 10 },
+  container: { flex: 1, backgroundColor: colors.background, padding: 10 },
   input: {
     backgroundColor: '#111',
     color: '#fff',
