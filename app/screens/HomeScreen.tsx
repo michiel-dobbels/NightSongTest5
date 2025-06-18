@@ -26,9 +26,10 @@ import { PostCard, Post } from '../components/PostCard';
 
 export interface HomeScreenRef {
   createPost: (
-    text: string,
-    image?: string | undefined,
-    video?: string | undefined,
+    content: string,
+    image?: string,
+    video?: string,
+
   ) => Promise<void>;
   scrollToTop: () => void;
 }
@@ -46,7 +47,8 @@ const HomeScreen = forwardRef<HomeScreenRef, { hideInput?: boolean }>(
   const [loadingMore, setLoadingMore] = useState(false);
   const [hasMore, setHasMore] = useState(true);
   const skipNextFetch = useRef(false);
-  const flatListRef = useRef<FlatList<Post>>(null);
+  const listRef = useRef<FlatList>(null);
+
 
   if (!user) {
     return (
@@ -108,16 +110,18 @@ const HomeScreen = forwardRef<HomeScreenRef, { hideInput?: boolean }>(
   }, []);
 
   const createPost = async (
-    text: string,
+    content: string,
     image?: string,
     video?: string,
   ) => {
-    if (!text.trim()) return;
+    if (!content.trim()) return;
+
     skipNextFetch.current = true;
 
     const newPost: Post = {
       id: `temp-${Date.now()}`,
-      content: text,
+      content,
+
       user_id: user.id,
       created_at: new Date().toISOString(),
       like_count: 0,
@@ -129,10 +133,12 @@ const HomeScreen = forwardRef<HomeScreenRef, { hideInput?: boolean }>(
     };
 
     setPosts(prev => [newPost, ...prev]);
+
     const { data, error } = await supabase
       .from('posts')
       .insert({
-        content: text,
+        content,
+
         user_id: user.id,
         username: profile.username,
         image_url: image ?? null,
@@ -162,13 +168,11 @@ const HomeScreen = forwardRef<HomeScreenRef, { hideInput?: boolean }>(
   };
 
   const scrollToTop = () => {
-    flatListRef.current?.scrollToOffset({ offset: 0, animated: true });
+    listRef.current?.scrollToOffset({ offset: 0, animated: true });
   };
 
-  useImperativeHandle(ref, () => ({
-    createPost,
-    scrollToTop,
-  }));
+  useImperativeHandle(ref, () => ({ createPost, scrollToTop }));
+
 
   return (
     <View style={styles.container}>
@@ -188,7 +192,8 @@ const HomeScreen = forwardRef<HomeScreenRef, { hideInput?: boolean }>(
         <ActivityIndicator color="white" style={{ marginTop: 20 }} />
       ) : (
         <FlatList
-          ref={flatListRef}
+          ref={listRef}
+
           data={posts}
           keyExtractor={item => item.id}
           style={{ flex: 1 }}
