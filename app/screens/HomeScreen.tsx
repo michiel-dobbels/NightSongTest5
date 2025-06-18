@@ -22,6 +22,7 @@ import { supabase } from '../../lib/supabase';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useAuth } from '../../AuthContext';
 import PostCard, { Post } from '../components/PostCard';
+
 import { colors } from '../styles/colors';
 
 export interface HomeScreenRef {
@@ -32,6 +33,7 @@ export interface HomeScreenRef {
   ) => Promise<void>;
   scrollToTop: () => void;
 }
+
 
 const STORAGE_KEY = 'cached_posts';
 const PAGE_SIZE = 10;
@@ -47,6 +49,7 @@ const HomeScreen = forwardRef<HomeScreenRef, { hideInput?: boolean }>(
   const [hasMore, setHasMore] = useState(true);
   const skipNextFetch = useRef(false);
   const listRef = useRef<FlatList>(null);
+
 
   if (!user || !profile) {
     return (
@@ -131,11 +134,13 @@ const HomeScreen = forwardRef<HomeScreenRef, { hideInput?: boolean }>(
     video?: string,
   ) => {
     if (!content.trim() || !profile) return;
+
     skipNextFetch.current = true;
 
     const newPost: Post = {
       id: `temp-${Date.now()}`,
       content,
+
       user_id: user.id,
       created_at: new Date().toISOString(),
       like_count: 0,
@@ -148,10 +153,12 @@ const HomeScreen = forwardRef<HomeScreenRef, { hideInput?: boolean }>(
 
     setPosts(prev => dedupeById([newPost, ...prev]));
 
+
     const { data, error } = await supabase
       .from('posts')
       .insert({
         content,
+
         user_id: user.id,
         username: profile.username,
         image_url: image ?? null,
@@ -186,6 +193,7 @@ const HomeScreen = forwardRef<HomeScreenRef, { hideInput?: boolean }>(
 
   useImperativeHandle(ref, () => ({ createPost, scrollToTop }));
 
+
   return (
     <View style={styles.container}>
       {!hideInput && (
@@ -205,6 +213,7 @@ const HomeScreen = forwardRef<HomeScreenRef, { hideInput?: boolean }>(
       ) : (
         <FlatList
           ref={listRef}
+
           data={posts}
           keyExtractor={item => item.id}
           style={{ flex: 1 }}
@@ -219,6 +228,7 @@ const HomeScreen = forwardRef<HomeScreenRef, { hideInput?: boolean }>(
               : item.profiles?.image_url ?? undefined;
             const bannerUrl = isMe
               ? profile?.banner_url ?? undefined
+
               : item.profiles?.banner_url ?? undefined;
             return (
               <PostCard
@@ -239,6 +249,7 @@ const HomeScreen = forwardRef<HomeScreenRef, { hideInput?: boolean }>(
               />
             );
           }}
+
           onEndReached={() => fetchPosts(posts.length, true)}
           onEndReachedThreshold={0.5}
           ListFooterComponent={loadingMore ? <ActivityIndicator /> : null}
