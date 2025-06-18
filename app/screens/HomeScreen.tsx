@@ -84,6 +84,22 @@ const HomeScreen = forwardRef<HomeScreenRef, { hideInput?: boolean }>(
     return result;
   };
 
+  const updateCachedPost = async (
+    id: string,
+    updated: Partial<Post>,
+  ): Promise<void> => {
+    try {
+      const stored = await AsyncStorage.getItem(STORAGE_KEY);
+      if (!stored) return;
+      const arr = JSON.parse(stored);
+      const newArr = arr.map((p: Post) => (p.id === id ? { ...p, ...updated } : p));
+      await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(newArr));
+    } catch (e) {
+      console.error('Failed to update cached posts', e);
+    }
+  };
+
+
   const openReplyModal = (postId: string) => {
     setActivePostId(postId);
     setReplyText('');
@@ -130,13 +146,15 @@ const HomeScreen = forwardRef<HomeScreenRef, { hideInput?: boolean }>(
 
     setReplyModalVisible(false);
 
+    const post = posts.find(p => p.id === activePostId);
+    const newCount = (post?.reply_count ?? 0) + 1;
     setPosts(prev =>
       prev.map(p =>
-        p.id === activePostId
-          ? { ...p, reply_count: (p.reply_count ?? 0) + 1 }
-          : p,
+        p.id === activePostId ? { ...p, reply_count: newCount } : p,
       ),
     );
+    updateCachedPost(activePostId, { reply_count: newCount });
+
 
     let uploadedUrl: string | null = null;
     if (replyVideo) {
@@ -236,11 +254,18 @@ const HomeScreen = forwardRef<HomeScreenRef, { hideInput?: boolean }>(
 
   useEffect(() => {
     const onReplyAdded = (postId: string) => {
-      setPosts(prev =>
-        prev.map(p =>
-          p.id === postId ? { ...p, reply_count: (p.reply_count ?? 0) + 1 } : p,
-        ),
-      );
+      setPosts(prev => {
+        const updated = prev.map(p => {
+          if (p.id === postId) {
+            const count = (p.reply_count ?? 0) + 1;
+            updateCachedPost(postId, { reply_count: count });
+            return { ...p, reply_count: count };
+          }
+          return p;
+        });
+        return updated;
+      });
+
     };
     replyEvents.on('replyAdded', onReplyAdded);
     return () => {
