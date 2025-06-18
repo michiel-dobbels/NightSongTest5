@@ -32,6 +32,7 @@ import PostCard, { Post } from '../components/PostCard';
 import { colors } from '../styles/colors';
 import { replyEvents } from '../replyEvents';
 
+
 export interface HomeScreenRef {
   createPost: (
     content: string,
@@ -40,6 +41,7 @@ export interface HomeScreenRef {
   ) => Promise<void>;
   scrollToTop: () => void;
 }
+
 
 const STORAGE_KEY = 'cached_posts';
 const PAGE_SIZE = 10;
@@ -60,6 +62,7 @@ const HomeScreen = forwardRef<HomeScreenRef, { hideInput?: boolean }>(
   const [replyText, setReplyText] = useState('');
   const [replyImage, setReplyImage] = useState<string | null>(null);
   const [replyVideo, setReplyVideo] = useState<string | null>(null);
+
 
   if (!user || !profile) {
     return (
@@ -95,6 +98,7 @@ const HomeScreen = forwardRef<HomeScreenRef, { hideInput?: boolean }>(
       console.error('Failed to update cached posts', e);
     }
   };
+
 
   const openReplyModal = (postId: string) => {
     setActivePostId(postId);
@@ -151,6 +155,7 @@ const HomeScreen = forwardRef<HomeScreenRef, { hideInput?: boolean }>(
     );
     updateCachedPost(activePostId, { reply_count: newCount });
 
+
     let uploadedUrl: string | null = null;
     if (replyVideo) {
       try {
@@ -188,6 +193,7 @@ const HomeScreen = forwardRef<HomeScreenRef, { hideInput?: boolean }>(
     setReplyImage(null);
     setReplyVideo(null);
   };
+
 
   const fetchPosts = useCallback(async (offset = 0, append = false) => {
     try {
@@ -259,6 +265,7 @@ const HomeScreen = forwardRef<HomeScreenRef, { hideInput?: boolean }>(
         });
         return updated;
       });
+
     };
     replyEvents.on('replyAdded', onReplyAdded);
     return () => {
@@ -266,17 +273,20 @@ const HomeScreen = forwardRef<HomeScreenRef, { hideInput?: boolean }>(
     };
   }, []);
 
+
   const createPost = async (
     content: string,
     image?: string,
     video?: string,
   ) => {
     if (!content.trim() || !profile) return;
+
     skipNextFetch.current = true;
 
     const newPost: Post = {
       id: `temp-${Date.now()}`,
       content,
+
       user_id: user.id,
       created_at: new Date().toISOString(),
       like_count: 0,
@@ -289,10 +299,12 @@ const HomeScreen = forwardRef<HomeScreenRef, { hideInput?: boolean }>(
 
     setPosts(prev => dedupeById([newPost, ...prev]));
 
+
     const { data, error } = await supabase
       .from('posts')
       .insert({
         content,
+
         user_id: user.id,
         username: profile.username,
         image_url: image ?? null,
@@ -327,6 +339,7 @@ const HomeScreen = forwardRef<HomeScreenRef, { hideInput?: boolean }>(
 
   useImperativeHandle(ref, () => ({ createPost, scrollToTop }));
 
+
   return (
     <View style={styles.container}>
       {!hideInput && (
@@ -346,6 +359,7 @@ const HomeScreen = forwardRef<HomeScreenRef, { hideInput?: boolean }>(
       ) : (
         <FlatList
           ref={listRef}
+
           data={posts}
           keyExtractor={item => item.id}
           style={{ flex: 1 }}
@@ -360,6 +374,7 @@ const HomeScreen = forwardRef<HomeScreenRef, { hideInput?: boolean }>(
               : item.profiles?.image_url ?? undefined;
             const bannerUrl = isMe
               ? profile?.banner_url ?? undefined
+
               : item.profiles?.banner_url ?? undefined;
             return (
               <PostCard
@@ -380,6 +395,7 @@ const HomeScreen = forwardRef<HomeScreenRef, { hideInput?: boolean }>(
               />
             );
           }}
+
           onEndReached={() => fetchPosts(posts.length, true)}
           onEndReachedThreshold={0.5}
           ListFooterComponent={loadingMore ? <ActivityIndicator /> : null}
