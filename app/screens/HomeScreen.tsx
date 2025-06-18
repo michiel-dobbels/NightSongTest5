@@ -20,8 +20,7 @@ import {
 import { useNavigation } from '@react-navigation/native';
 import { supabase } from '../../lib/supabase';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { useAuth } from '../../contexts/AuthContext';
-import { usePostStore } from '../contexts/PostStoreContext';
+import { useAuth } from '../../AuthContext';
 import { PostCard, Post } from '../components/PostCard';
 import { colors } from '../styles/colors';
 
@@ -34,15 +33,6 @@ export interface HomeScreenRef {
   scrollToTop: () => void;
 }
 
-export interface HomeScreenRef {
-  createPost: (
-    content: string,
-    image?: string,
-    video?: string,
-
-  ) => Promise<void>;
-  scrollToTop: () => void;
-}
 
 const STORAGE_KEY = 'cached_posts';
 const PAGE_SIZE = 10;
@@ -50,7 +40,7 @@ const PAGE_SIZE = 10;
 const HomeScreen = forwardRef<HomeScreenRef, { hideInput?: boolean }>(
   ({ hideInput }, ref) => {
   const navigation = useNavigation();
-  const { user, profile, updatePost, mergeLiked } = usePostStore();
+  const { user, profile } = useAuth()!;
   const [postText, setPostText] = useState('');
   const [posts, setPosts] = useState<Post[]>([]);
   const [loading, setLoading] = useState(false);
