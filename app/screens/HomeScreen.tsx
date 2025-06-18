@@ -1,6 +1,11 @@
 // ✅ FIXED: HomeScreen.tsx with anti-jitter logic fully restored
 import React, {
-  useState, useEffect, useRef, useCallback, forwardRef, useImperativeHandle,
+  useState,
+  useEffect,
+  useRef,
+  useCallback,
+  forwardRef,
+  useImperativeHandle,
 } from 'react';
 import {
   View,
@@ -19,10 +24,20 @@ import { useAuth } from '../../contexts/AuthContext';
 import { usePostStore } from '../contexts/PostStoreContext';
 import { PostCard, Post } from '../components/PostCard';
 
+export interface HomeScreenRef {
+  createPost: (
+    content: string,
+    image?: string,
+    video?: string,
+  ) => Promise<void>;
+  scrollToTop: () => void;
+}
+
 const STORAGE_KEY = 'cached_posts';
 const PAGE_SIZE = 10;
 
-const HomeScreen = forwardRef(({ hideInput }, ref) => {
+const HomeScreen = forwardRef<HomeScreenRef, { hideInput?: boolean }>(
+  ({ hideInput }, ref) => {
   const navigation = useNavigation();
   const { user, profile, updatePost, mergeLiked } = usePostStore();
   const [postText, setPostText] = useState('');
@@ -31,6 +46,7 @@ const HomeScreen = forwardRef(({ hideInput }, ref) => {
   const [loadingMore, setLoadingMore] = useState(false);
   const [hasMore, setHasMore] = useState(true);
   const skipNextFetch = useRef(false);
+  const listRef = useRef<FlatList>(null);
 
   if (!user) {
     return (
@@ -91,35 +107,49 @@ const HomeScreen = forwardRef(({ hideInput }, ref) => {
     loadCached();
   }, []);
 
-  const handlePost = async () => {
-    if (!postText.trim()) return;
+  const createPost = async (
+    content: string,
+    image?: string,
+    video?: string,
+  ) => {
+    if (!content.trim()) return;
     skipNextFetch.current = true;
 
     const newPost: Post = {
       id: `temp-${Date.now()}`,
-      content: postText,
+      content,
       user_id: user.id,
       created_at: new Date().toISOString(),
       like_count: 0,
       reply_count: 0,
       username: profile.username,
-      image_url: null,
-      video_url: null,
+      image_url: image ?? null,
+      video_url: video ?? null,
       profiles: profile,
     };
 
     setPosts(prev => [newPost, ...prev]);
-    setPostText('');
 
-    const { data, error } = await supabase.from('posts').insert({
-      content: postText,
-      user_id: user.id,
-      username: profile.username,
-    }).select().single();
+    const { data, error } = await supabase
+      .from('posts')
+      .insert({
+        content,
+        user_id: user.id,
+        username: profile.username,
+        image_url: image ?? null,
+        video_url: video ?? null,
+      })
+      .select()
+      .single();
 
     if (!error && data) {
       setPosts(prev => prev.map(p => (p.id === newPost.id ? data : p)));
     }
+  };
+
+  const handlePost = async () => {
+    await createPost(postText);
+    setPostText('');
   };
 
   const handleLike = async (postId: string) => {
@@ -131,6 +161,12 @@ const HomeScreen = forwardRef(({ hideInput }, ref) => {
     );
     await supabase.from('likes').insert({ post_id: postId, user_id: user.id });
   };
+
+  const scrollToTop = () => {
+    listRef.current?.scrollToOffset({ offset: 0, animated: true });
+  };
+
+  useImperativeHandle(ref, () => ({ createPost, scrollToTop }));
 
   return (
     <View style={styles.container}>
@@ -150,8 +186,14 @@ const HomeScreen = forwardRef(({ hideInput }, ref) => {
         <ActivityIndicator color="white" style={{ marginTop: 20 }} />
       ) : (
         <FlatList
+          ref={listRef}
           data={posts}
           keyExtractor={item => item.id}
+          style={{ flex: 1 }}
+          contentContainerStyle={{ paddingBottom: 20 }}
+          removeClippedSubviews={false}
+          initialNumToRender={10}
+          windowSize={5}
           renderItem={({ item }) => (
             <PostCard
               post={item}
