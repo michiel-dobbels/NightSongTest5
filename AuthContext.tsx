@@ -110,32 +110,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return profileData;
   };
 
-  // 🔁 Refresh session on mount
+  // 🔁 Refresh session on mount without flicker
   useEffect(() => {
-    const getSession = async () => {
-      // supabase-js v1 exposes `session()` to fetch the current session
-      const session = supabase.auth.session();
-      setUser(session?.user ?? null);
-
-      if (session?.user) {
-        // Ensure a profile exists so posting doesn't hit foreign-key errors
-        await ensureProfile(session.user);
-      }
-
-      setLoading(false);
-    };
-
-    getSession();
-
-    const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
-      setUser(session?.user ?? null);
-      if (session?.user) {
-        // Refresh or create the profile for consistent posting
-        ensureProfile(session.user);
-      } else {
-        setProfile(null);
-      }
-    });
+    const { data: listener } = supabase.auth.onAuthStateChange(
+      async (_event, session) => {
+        setUser(session?.user ?? null);
+        if (session?.user) {
+          // Refresh or create the profile for consistent posting
+          await ensureProfile(session.user);
+        } else {
+          setProfile(null);
+        }
+        // Session has been resolved so loading can stop
+        setLoading(false);
+      },
+    );
 
     return () => {
       if (listener?.subscription) {
