@@ -112,21 +112,41 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   // 🔁 Refresh session on mount without flicker
   useEffect(() => {
+    let isMounted = true;
+
+    const init = async () => {
+      try {
+        // Prefer the async getSession API when available
+        const { data } = await (supabase.auth.getSession
+          ? supabase.auth.getSession()
+          : Promise.resolve({ data: { session: supabase.auth.session() } }));
+
+        const session = data?.session;
+        if (session?.user && isMounted) {
+          setUser(session.user);
+          await ensureProfile(session.user);
+        }
+      } finally {
+        if (isMounted) setLoading(false);
+      }
+    };
+
+    init();
+
     const { data: listener } = supabase.auth.onAuthStateChange(
       async (_event, session) => {
+        if (!isMounted) return;
         setUser(session?.user ?? null);
         if (session?.user) {
-          // Refresh or create the profile for consistent posting
           await ensureProfile(session.user);
         } else {
           setProfile(null);
         }
-        // Session has been resolved so loading can stop
-        setLoading(false);
       },
     );
 
     return () => {
+      isMounted = false;
       if (listener?.subscription) {
         listener.subscription.unsubscribe();
       } else {
@@ -137,7 +157,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     const loadImage = async () => {
-      const authUser = user ?? supabase.auth.user();
+      const authUser = user;
       if (!authUser) return;
 
       const profileKey = `profile_image_uri_${authUser.id}`;
@@ -280,8 +300,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const setProfileImageUri = useCallback(async (uri: string | null): Promise<void> => {
     setProfileImageUriState(uri);
-    const authUser = supabase.auth.user();
-    const id = authUser?.id || user?.id;
+    const authUser = user ?? supabase.auth.session()?.user || null;
+    const id = authUser?.id;
     const key = id ? `profile_image_uri_${id}` : 'profile_image_uri';
 
     if (authUser) {
@@ -301,8 +321,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const setBannerImageUri = useCallback(async (uri: string | null): Promise<void> => {
     setBannerImageUriState(uri);
-    const authUser = supabase.auth.user();
-    const id = authUser?.id || user?.id;
+    const authUser = user ?? supabase.auth.session()?.user || null;
+    const id = authUser?.id;
     const key = id ? `banner_image_uri_${id}` : 'banner_image_uri';
 
     if (authUser) {
@@ -439,7 +459,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       .single();
 
     if (!error && data) {
-      const authUser = supabase.auth.user();
+      const authUser = user ?? supabase.auth.session()?.user || null;
       const meta = authUser?.user_metadata || {};
       const profileData = {
         ...data,
