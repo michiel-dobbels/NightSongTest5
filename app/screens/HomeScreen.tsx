@@ -130,13 +130,16 @@ const HomeScreen = forwardRef<HomeScreenRef, { hideInput?: boolean }>(
 
     setReplyModalVisible(false);
 
-    setPosts(prev =>
-      prev.map(p =>
+    setPosts(prev => {
+      const updated = prev.map(p =>
         p.id === activePostId
           ? { ...p, reply_count: (p.reply_count ?? 0) + 1 }
           : p,
-      ),
-    );
+      );
+      AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(updated)).catch(() => {});
+      return updated;
+    });
+    skipNextFetch.current = true;
 
     let uploadedUrl: string | null = null;
     if (replyVideo) {
@@ -192,11 +195,14 @@ const HomeScreen = forwardRef<HomeScreenRef, { hideInput?: boolean }>(
 
       if (data) {
         setPosts(prev => {
+          const prevMap = Object.fromEntries(prev.map(p => [p.id, p.reply_count ?? 0]));
           const combined = append ? [...prev, ...data] : data;
-          const unique = dedupeById(combined);
-          AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(unique)).catch(
-            () => {},
-          );
+          const merged = combined.map(p => ({
+            ...p,
+            reply_count: Math.max(p.reply_count ?? 0, prevMap[p.id] ?? 0),
+          }));
+          const unique = dedupeById(merged);
+          AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(unique)).catch(() => {});
           return unique;
         });
       }
