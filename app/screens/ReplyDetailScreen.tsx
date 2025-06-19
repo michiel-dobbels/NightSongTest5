@@ -524,6 +524,7 @@ export default function ReplyDetailScreen() {
             .from(REPLY_VIDEO_BUCKET)
             .getPublicUrl(path);
           uploadedUrl = publicURL;
+
         }
       } catch (e) {
         console.error('Video upload failed', e);
