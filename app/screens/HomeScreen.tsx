@@ -157,7 +157,9 @@ const HomeScreen = forwardRef<HomeScreenRef, { hideInput?: boolean }>(
           .from('reply-videos')
           .upload(path, blob);
         if (!uploadError) {
-          uploadedUrl = supabase.storage.from('reply-videos').getPublicUrl(path).data.publicUrl;
+          uploadedUrl = supabase.storage
+            .from('reply-videos')
+            .getPublicUrl(path).data.publicURL;
         }
       } catch (e) {
         console.error('Video upload failed', e);
@@ -299,7 +301,10 @@ const HomeScreen = forwardRef<HomeScreenRef, { hideInput?: boolean }>(
           .from(POST_BUCKET)
           .upload(path, blob);
         if (!uploadError) {
-          uploadedImageUrl = supabase.storage.from(POST_BUCKET).getPublicUrl(path).data.publicUrl;
+          uploadedImageUrl = supabase.storage
+            .from(POST_BUCKET)
+            .getPublicUrl(path).data.publicURL;
+
         }
       } catch (e) {
         console.error('Image upload failed', e);
@@ -320,7 +325,8 @@ const HomeScreen = forwardRef<HomeScreenRef, { hideInput?: boolean }>(
         if (!uploadError) {
           uploadedVideoUrl = supabase.storage
             .from(POST_VIDEO_BUCKET)
-            .getPublicUrl(path).data.publicUrl;
+            .getPublicUrl(path).data.publicURL;
+
         }
       } catch (e) {
         console.error('Video upload failed', e);
