@@ -27,3 +27,19 @@ create policy "Post image uploads" on storage.objects
 -- Allow anyone to read post images
 create policy "Public post image access" on storage.objects
   for select using (bucket_id = 'post-images');
+
+-- Policies for the post-videos storage bucket
+insert into storage.buckets (id, name, public)
+  values ('post-videos', 'post-videos', true)
+  on conflict (id) do update set public = true;
+
+-- Allow authenticated users to upload post videos
+create policy "Post video uploads" on storage.objects
+  for insert with check (
+    bucket_id = 'post-videos' and auth.role() = 'authenticated'
+  );
+
+-- Allow anyone to read post videos
+create policy "Public post video access" on storage.objects
+  for select using (bucket_id = 'post-videos');
+

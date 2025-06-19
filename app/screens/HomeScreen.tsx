@@ -25,7 +25,8 @@ import { Video } from 'expo-av';
 import * as ImagePicker from 'expo-image-picker';
 import * as FileSystem from 'expo-file-system';
 import { useNavigation } from '@react-navigation/native';
-import { supabase, POST_BUCKET } from '../../lib/supabase';
+import { supabase, POST_BUCKET, POST_VIDEO_BUCKET } from '../../lib/supabase';
+
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useAuth } from '../../AuthContext';
 import { usePostStore } from '../contexts/PostStoreContext';
@@ -279,6 +280,8 @@ const HomeScreen = forwardRef<HomeScreenRef, { hideInput?: boolean }>(
     skipNextFetch.current = true;
 
     let uploadedImageUrl: string | null = null;
+    let uploadedVideoUrl: string | null = null;
+
     if (image && !image.startsWith('http')) {
       try {
         let ext = 'jpg';
@@ -305,6 +308,28 @@ const HomeScreen = forwardRef<HomeScreenRef, { hideInput?: boolean }>(
       uploadedImageUrl = image;
     }
 
+    if (video && !video.startsWith('http')) {
+      try {
+        const ext = video.split('.').pop() || 'mp4';
+        const path = `${user.id}-${Date.now()}.${ext}`;
+        const resp = await fetch(video);
+        const blob = await resp.blob();
+        const { error: uploadError } = await supabase.storage
+          .from(POST_VIDEO_BUCKET)
+          .upload(path, blob);
+        if (!uploadError) {
+          uploadedVideoUrl = supabase.storage
+            .from(POST_VIDEO_BUCKET)
+            .getPublicUrl(path).data.publicUrl;
+        }
+      } catch (e) {
+        console.error('Video upload failed', e);
+      }
+    } else if (video) {
+      uploadedVideoUrl = video;
+    }
+
+
     const newPost: Post = {
       id: `temp-${Date.now()}`,
       content,
@@ -315,7 +340,8 @@ const HomeScreen = forwardRef<HomeScreenRef, { hideInput?: boolean }>(
       reply_count: 0,
       username: profile.username,
       image_url: uploadedImageUrl,
-      video_url: video ?? null,
+      video_url: uploadedVideoUrl,
+
       profiles: profile,
     };
 
@@ -330,7 +356,8 @@ const HomeScreen = forwardRef<HomeScreenRef, { hideInput?: boolean }>(
         user_id: user.id,
         username: profile.username,
         image_url: uploadedImageUrl,
-        video_url: video ?? null,
+        video_url: uploadedVideoUrl,
+
       })
       .select()
       .single();
