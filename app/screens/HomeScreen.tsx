@@ -28,6 +28,9 @@ import { useNavigation } from '@react-navigation/native';
 import { supabase } from '../../lib/supabase';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useAuth } from '../../AuthContext';
+import { usePostStore } from '../contexts/PostStoreContext';
+import { postEvents } from '../postEvents';
+import { CONFIRM_ACTION } from '../constants/ui';
 import PostCard, { Post } from '../components/PostCard';
 import { colors } from '../styles/colors';
 import { replyEvents } from '../replyEvents';
@@ -49,7 +52,8 @@ const PAGE_SIZE = 10;
 const HomeScreen = forwardRef<HomeScreenRef, { hideInput?: boolean }>(
   ({ hideInput }, ref) => {
   const navigation = useNavigation();
-  const { user, profile } = useAuth()!;
+  const { user, profile, removePost } = useAuth()!;
+  const { remove } = usePostStore();
   const [postText, setPostText] = useState('');
   const [posts, setPosts] = useState<Post[]>([]);
   const [loading, setLoading] = useState(false);
@@ -130,13 +134,16 @@ const HomeScreen = forwardRef<HomeScreenRef, { hideInput?: boolean }>(
 
     setReplyModalVisible(false);
 
-    setPosts(prev =>
-      prev.map(p =>
+    setPosts(prev => {
+      const updated = prev.map(p =>
         p.id === activePostId
           ? { ...p, reply_count: (p.reply_count ?? 0) + 1 }
           : p,
-      ),
-    );
+      );
+      AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(updated)).catch(() => {});
+      return updated;
+    });
+    skipNextFetch.current = true;
 
     let uploadedUrl: string | null = null;
     if (replyVideo) {
@@ -192,11 +199,14 @@ const HomeScreen = forwardRef<HomeScreenRef, { hideInput?: boolean }>(
 
       if (data) {
         setPosts(prev => {
+          const prevMap = Object.fromEntries(prev.map(p => [p.id, p.reply_count ?? 0]));
           const combined = append ? [...prev, ...data] : data;
-          const unique = dedupeById(combined);
-          AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(unique)).catch(
-            () => {},
-          );
+          const merged = combined.map(p => ({
+            ...p,
+            reply_count: Math.max(p.reply_count ?? 0, prevMap[p.id] ?? 0),
+          }));
+          const unique = dedupeById(merged);
+          AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(unique)).catch(() => {});
           return unique;
         });
       }
@@ -245,6 +255,16 @@ const HomeScreen = forwardRef<HomeScreenRef, { hideInput?: boolean }>(
     replyEvents.on('replyAdded', onReplyAdded);
     return () => {
       replyEvents.off('replyAdded', onReplyAdded);
+    };
+  }, []);
+
+  useEffect(() => {
+    const onPostDeleted = (postId: string) => {
+      setPosts(prev => prev.filter(p => p.id !== postId));
+    };
+    postEvents.on('postDeleted', onPostDeleted);
+    return () => {
+      postEvents.off('postDeleted', onPostDeleted);
     };
   }, []);
 
@@ -308,6 +328,21 @@ const HomeScreen = forwardRef<HomeScreenRef, { hideInput?: boolean }>(
     await supabase.from('likes').insert({ post_id: postId, user_id: user.id });
   };
 
+  const confirmDeletePost = (id: string) => {
+    Alert.alert('Delete Post', 'Are you sure you want to delete this post?', [
+      CONFIRM_ACTION,
+      { text: 'Delete', style: 'destructive', onPress: () => handleDeletePost(id) },
+    ]);
+  };
+
+  const handleDeletePost = async (id: string) => {
+    skipNextFetch.current = true;
+    setPosts(prev => prev.filter(p => p.id !== id));
+    remove(id);
+    await removePost(id);
+    await supabase.from('posts').delete().eq('id', id);
+  };
+
   const scrollToTop = () => {
     listRef.current?.scrollToOffset({ offset: 0, animated: true });
   };
@@ -365,7 +400,7 @@ const HomeScreen = forwardRef<HomeScreenRef, { hideInput?: boolean }>(
                     ? navigation.navigate('Profile')
                     : navigation.navigate('OtherUserProfile', { userId: item.user_id })
                 }
-                onDelete={() => {}}
+                onDelete={() => confirmDeletePost(item.id)}
                 onOpenReplies={() => openReplyModal(item.id)}
               />
             );

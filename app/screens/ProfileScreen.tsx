@@ -385,9 +385,14 @@ export default function ProfileScreen() {
       if (!error && data) {
         const list = data as Post[];
         setPosts(prev => {
+          const prevMap = Object.fromEntries(prev.map(p => [p.id, p.reply_count ?? 0]));
           const combined = append ? [...prev, ...list] : list;
           const seen = new Set<string>();
-          return combined.filter(p => {
+          const merged = combined.map(p => ({
+            ...p,
+            reply_count: Math.max(p.reply_count ?? 0, prevMap[p.id] ?? 0),
+          }));
+          return merged.filter(p => {
             if (seen.has(p.id)) return false;
             seen.add(p.id);
             return true;
@@ -396,7 +401,9 @@ export default function ProfileScreen() {
         setReplyCounts(prev => {
           const counts = { ...prev };
           list.forEach(p => {
-            counts[p.id] = p.reply_count ?? 0;
+            const current = counts[p.id] ?? 0;
+            const incoming = p.reply_count ?? 0;
+            counts[p.id] = Math.max(current, incoming);
           });
           return counts;
         });
