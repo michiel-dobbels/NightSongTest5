@@ -26,6 +26,7 @@ import * as ImagePicker from 'expo-image-picker';
 import * as FileSystem from 'expo-file-system';
 import { useNavigation } from '@react-navigation/native';
 import { supabase, POST_BUCKET, POST_VIDEO_BUCKET } from '../../lib/supabase';
+
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useAuth } from '../../AuthContext';
 import { usePostStore } from '../contexts/PostStoreContext';
@@ -280,6 +281,7 @@ const HomeScreen = forwardRef<HomeScreenRef, { hideInput?: boolean }>(
 
     let uploadedImageUrl: string | null = null;
     let uploadedVideoUrl: string | null = null;
+
     if (image && !image.startsWith('http')) {
       try {
         let ext = 'jpg';
@@ -327,6 +329,7 @@ const HomeScreen = forwardRef<HomeScreenRef, { hideInput?: boolean }>(
       uploadedVideoUrl = video;
     }
 
+
     const newPost: Post = {
       id: `temp-${Date.now()}`,
       content,
@@ -338,6 +341,7 @@ const HomeScreen = forwardRef<HomeScreenRef, { hideInput?: boolean }>(
       username: profile.username,
       image_url: uploadedImageUrl,
       video_url: uploadedVideoUrl,
+
       profiles: profile,
     };
 
@@ -353,6 +357,7 @@ const HomeScreen = forwardRef<HomeScreenRef, { hideInput?: boolean }>(
         username: profile.username,
         image_url: uploadedImageUrl,
         video_url: uploadedVideoUrl,
+
       })
       .select()
       .single();
