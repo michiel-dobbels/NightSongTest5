@@ -482,7 +482,9 @@ export default function PostDetailScreen() {
           .from('reply-videos')
           .upload(path, blob);
         if (!uploadError) {
-          uploadedUrl = supabase.storage.from('reply-videos').getPublicUrl(path).data.publicUrl;
+          uploadedUrl = supabase.storage
+            .from('reply-videos')
+            .getPublicUrl(path).data.publicURL;
         }
       } catch (e) {
         console.error('Video upload failed', e);
