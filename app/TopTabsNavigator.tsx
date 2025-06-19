@@ -113,8 +113,7 @@ export default function TopTabsNavigator() {
     });
     if (!result.canceled) {
       const uri = result.assets[0].uri;
-      const base64 = await FileSystem.readAsStringAsync(uri, { encoding: 'base64' });
-      setModalImage(`data:image/jpeg;base64,${base64}`);
+      setModalImage(uri);
       setModalVideo(null);
     }
   };
