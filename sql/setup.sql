@@ -51,6 +51,7 @@ alter table public.profiles add column if not exists image_url text;
 alter table public.posts add column if not exists username text;
 alter table public.posts add column if not exists reply_count integer not null default 0;
 alter table public.posts add column if not exists image_url text;
+alter table public.posts add column if not exists video_url text;
 alter table public.profiles add column if not exists image_url text;
 alter table public.replies add column if not exists reply_count integer not null default 0;
 alter table public.replies add column if not exists image_url text;
