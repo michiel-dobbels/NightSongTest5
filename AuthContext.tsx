@@ -301,6 +301,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const setProfileImageUri = useCallback(async (uri: string | null): Promise<void> => {
     setProfileImageUriState(uri);
     const authUser = user ?? supabase.auth.session()?.user ?? null;
+
     const id = authUser?.id;
     const key = id ? `profile_image_uri_${id}` : 'profile_image_uri';
 
@@ -322,6 +323,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const setBannerImageUri = useCallback(async (uri: string | null): Promise<void> => {
     setBannerImageUriState(uri);
     const authUser = user ?? supabase.auth.session()?.user ?? null;
+
     const id = authUser?.id;
     const key = id ? `banner_image_uri_${id}` : 'banner_image_uri';
 
@@ -460,6 +462,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     if (!error && data) {
       const authUser = user ?? supabase.auth.session()?.user ?? null;
+
       const meta = authUser?.user_metadata || {};
       const profileData = {
         ...data,
