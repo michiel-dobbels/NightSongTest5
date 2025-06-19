@@ -466,7 +466,7 @@ export default function PostDetailScreen() {
       return counts;
     });
     initialize([{ id: newReply.id, like_count: 0 }]);
-    replyEvents.emit('replyAdded', post.id);
+    replyEvents.emit('replyAdded', post.id, true);
     setReplyText('');
     setReplyImage(null);
     setReplyVideo(null);
