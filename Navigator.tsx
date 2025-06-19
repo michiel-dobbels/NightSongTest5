@@ -11,7 +11,7 @@ const Stack = createNativeStackNavigator();
 export default function Navigator() {
   const { user, loading } = useAuth()!;
 
-  if (loading) return null;
+  if (loading) return <LoadingScreen />;
 
   return (
     <Suspense fallback={<LoadingScreen />}>
