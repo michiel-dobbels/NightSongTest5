@@ -25,7 +25,7 @@ import { Video } from 'expo-av';
 import * as ImagePicker from 'expo-image-picker';
 import * as FileSystem from 'expo-file-system';
 import { useNavigation } from '@react-navigation/native';
-import { supabase } from '../../lib/supabase';
+import { supabase, POST_BUCKET } from '../../lib/supabase';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useAuth } from '../../AuthContext';
 import { usePostStore } from '../contexts/PostStoreContext';
@@ -278,6 +278,33 @@ const HomeScreen = forwardRef<HomeScreenRef, { hideInput?: boolean }>(
 
     skipNextFetch.current = true;
 
+    let uploadedImageUrl: string | null = null;
+    if (image && !image.startsWith('http')) {
+      try {
+        let ext = 'jpg';
+        const dataUriMatch = image.match(/^data:image\/(\w+);/);
+        if (dataUriMatch) {
+          ext = dataUriMatch[1];
+        } else {
+          const pathExt = /\.([a-zA-Z0-9]+)$/.exec(image);
+          if (pathExt) ext = pathExt[1];
+        }
+        const path = `${user.id}-${Date.now()}.${ext}`;
+        const resp = await fetch(image);
+        const blob = await resp.blob();
+        const { error: uploadError } = await supabase.storage
+          .from(POST_BUCKET)
+          .upload(path, blob);
+        if (!uploadError) {
+          uploadedImageUrl = supabase.storage.from(POST_BUCKET).getPublicUrl(path).data.publicUrl;
+        }
+      } catch (e) {
+        console.error('Image upload failed', e);
+      }
+    } else if (image) {
+      uploadedImageUrl = image;
+    }
+
     const newPost: Post = {
       id: `temp-${Date.now()}`,
       content,
@@ -287,7 +314,7 @@ const HomeScreen = forwardRef<HomeScreenRef, { hideInput?: boolean }>(
       like_count: 0,
       reply_count: 0,
       username: profile.username,
-      image_url: image ?? null,
+      image_url: uploadedImageUrl,
       video_url: video ?? null,
       profiles: profile,
     };
@@ -302,7 +329,7 @@ const HomeScreen = forwardRef<HomeScreenRef, { hideInput?: boolean }>(
 
         user_id: user.id,
         username: profile.username,
-        image_url: image ?? null,
+        image_url: uploadedImageUrl,
         video_url: video ?? null,
       })
       .select()
