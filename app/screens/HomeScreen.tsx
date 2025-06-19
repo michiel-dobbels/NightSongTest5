@@ -304,10 +304,13 @@ const HomeScreen = forwardRef<HomeScreenRef, { hideInput?: boolean }>(
           uploadedImageUrl = supabase.storage
             .from(POST_BUCKET)
             .getPublicUrl(path).data.publicURL;
-
+        } else {
+          uploadedImageUrl = image;
         }
       } catch (e) {
         console.error('Image upload failed', e);
+        uploadedImageUrl = image;
+
       }
     } else if (image) {
       uploadedImageUrl = image;
@@ -326,10 +329,13 @@ const HomeScreen = forwardRef<HomeScreenRef, { hideInput?: boolean }>(
           uploadedVideoUrl = supabase.storage
             .from(POST_VIDEO_BUCKET)
             .getPublicUrl(path).data.publicURL;
-
+        } else {
+          uploadedVideoUrl = video;
         }
       } catch (e) {
         console.error('Video upload failed', e);
+        uploadedVideoUrl = video;
+
       }
     } else if (video) {
       uploadedVideoUrl = video;
