@@ -19,7 +19,7 @@ import * as FileSystem from 'expo-file-system';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useRoute, useNavigation } from '@react-navigation/native';
 
-import { supabase } from '../../lib/supabase';
+import { supabase, REPLY_VIDEO_BUCKET } from '../../lib/supabase';
 import { getLikeCounts } from '../../lib/getLikeCounts';
 import { useAuth } from '../../AuthContext';
 import { colors } from '../styles/colors';
@@ -479,10 +479,13 @@ export default function PostDetailScreen() {
         const resp = await fetch(replyVideo);
         const blob = await resp.blob();
         const { error: uploadError } = await supabase.storage
-          .from('reply-videos')
+          .from(REPLY_VIDEO_BUCKET)
           .upload(path, blob);
         if (!uploadError) {
-          uploadedUrl = supabase.storage.from('reply-videos').getPublicUrl(path).data.publicUrl;
+          const { publicURL } = supabase.storage
+            .from(REPLY_VIDEO_BUCKET)
+            .getPublicUrl(path);
+          uploadedUrl = publicURL;
         }
       } catch (e) {
         console.error('Video upload failed', e);

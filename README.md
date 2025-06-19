@@ -7,7 +7,7 @@ This project uses [Supabase](https://supabase.com) for authentication and storin
 
 
 
-3. Create a public storage bucket named `market-images` in Supabase so listing images can be uploaded. Then run `sql/storage.sql` to allow authenticated users to upload and everyone to view images.
+3. Create public storage buckets named `market-images`, `post-images`, `post-videos` and `reply-videos` in Supabase so listing media can be uploaded. Then run `sql/storage.sql` to allow authenticated users to upload and everyone to view files.
 
 4. Copy your project's URL and `anon` key into `lib/supabase.js`.
 5. Install dependencies with `npm install`.

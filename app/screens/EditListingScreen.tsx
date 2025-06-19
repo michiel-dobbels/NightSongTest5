@@ -61,15 +61,15 @@ export default function EditListingScreen() {
       const blob = await resp.blob();
       const { error } = await supabase.storage.from(MARKET_BUCKET).upload(path, blob, { upsert: true });
       if (!error) {
-        const { data } = supabase.storage
+        const { publicURL } = supabase.storage
           .from(MARKET_BUCKET)
           .getPublicUrl(path);
 
-        if (!data.publicUrl) {
+        if (!publicURL) {
           throw new Error('Failed to retrieve public URL');
         }
 
-        url = data.publicUrl;
+        url = publicURL;
       }
     }
     await supabase
