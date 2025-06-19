@@ -25,7 +25,12 @@ import { Video } from 'expo-av';
 import * as ImagePicker from 'expo-image-picker';
 import * as FileSystem from 'expo-file-system';
 import { useNavigation } from '@react-navigation/native';
-import { supabase, POST_BUCKET, POST_VIDEO_BUCKET } from '../../lib/supabase';
+import {
+  supabase,
+  POST_BUCKET,
+  POST_VIDEO_BUCKET,
+  REPLY_VIDEO_BUCKET,
+} from '../../lib/supabase';
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useAuth } from '../../AuthContext';
@@ -154,12 +159,14 @@ const HomeScreen = forwardRef<HomeScreenRef, { hideInput?: boolean }>(
         const resp = await fetch(replyVideo);
         const blob = await resp.blob();
         const { error: uploadError } = await supabase.storage
-          .from('reply-videos')
+          .from(REPLY_VIDEO_BUCKET)
           .upload(path, blob);
         if (!uploadError) {
-          uploadedUrl = supabase.storage
-            .from('reply-videos')
-            .getPublicUrl(path).data.publicURL;
+          const { publicURL } = supabase.storage
+            .from(REPLY_VIDEO_BUCKET)
+            .getPublicUrl(path);
+          uploadedUrl = publicURL;
+
         }
       } catch (e) {
         console.error('Video upload failed', e);
@@ -277,7 +284,7 @@ const HomeScreen = forwardRef<HomeScreenRef, { hideInput?: boolean }>(
     image?: string,
     video?: string,
   ) => {
-    if (!content.trim() || !profile) return;
+    if (!profile || (!content.trim() && !image && !video)) return;
 
     skipNextFetch.current = true;
 
@@ -301,9 +308,11 @@ const HomeScreen = forwardRef<HomeScreenRef, { hideInput?: boolean }>(
           .from(POST_BUCKET)
           .upload(path, blob);
         if (!uploadError) {
-          uploadedImageUrl = supabase.storage
+          const { publicURL } = supabase.storage
             .from(POST_BUCKET)
-            .getPublicUrl(path).data.publicURL;
+            .getPublicUrl(path);
+          uploadedImageUrl = publicURL;
+
         } else {
           uploadedImageUrl = image;
         }
@@ -326,9 +335,11 @@ const HomeScreen = forwardRef<HomeScreenRef, { hideInput?: boolean }>(
           .from(POST_VIDEO_BUCKET)
           .upload(path, blob);
         if (!uploadError) {
-          uploadedVideoUrl = supabase.storage
+          const { publicURL } = supabase.storage
             .from(POST_VIDEO_BUCKET)
-            .getPublicUrl(path).data.publicURL;
+            .getPublicUrl(path);
+          uploadedVideoUrl = publicURL;
+
         } else {
           uploadedVideoUrl = video;
         }

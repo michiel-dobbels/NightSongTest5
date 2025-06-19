@@ -43,9 +43,9 @@ const uploadImage = async (uri: string, userId: string): Promise<string> => {
 
   if (error) throw error;
 
-  const { data } = supabase.storage.from(MARKET_BUCKET).getPublicUrl(path);
-  if (!data?.publicURL) throw new Error('Failed to get public URL');
-  return data.publicURL;
+  const { publicURL } = supabase.storage.from(MARKET_BUCKET).getPublicUrl(path);
+  if (!publicURL) throw new Error('Failed to get public URL');
+  return publicURL;
 };
 
 export default function ListingImagePicker({ userId, onChange }: ListingImagePickerProps) {

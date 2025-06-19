@@ -27,7 +27,7 @@ import { useAuth } from '../../AuthContext';
 import { usePostStore } from '../contexts/PostStoreContext';
 import { useFollowCounts } from '../hooks/useFollowCounts';
 import { colors } from '../styles/colors';
-import { supabase } from '../../lib/supabase';
+import { supabase, REPLY_VIDEO_BUCKET } from '../../lib/supabase';
 import { getLikeCounts } from '../../lib/getLikeCounts';
 import PostCard, { Post } from '../components/PostCard';
 import ReplyCard, { Reply } from '../components/ReplyCard';
@@ -277,12 +277,14 @@ export default function ProfileScreen() {
         const resp = await fetch(replyVideo);
         const blob = await resp.blob();
         const { error: uploadError } = await supabase.storage
-          .from('reply-videos')
+          .from(REPLY_VIDEO_BUCKET)
           .upload(path, blob);
         if (!uploadError) {
-          uploadedUrl = supabase.storage
-            .from('reply-videos')
-            .getPublicUrl(path).data.publicURL;
+          const { publicURL } = supabase.storage
+            .from(REPLY_VIDEO_BUCKET)
+            .getPublicUrl(path);
+          uploadedUrl = publicURL;
+
         }
       } catch (e) {
         console.error('Video upload failed', e);
