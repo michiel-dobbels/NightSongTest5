@@ -185,7 +185,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   useEffect(() => {
-    const onReplyAdded = (postId) => {
+    const onReplyAdded = (postId: string, fromSelf?: boolean) => {
+      if (fromSelf) return;
       setMyPosts(prev => {
         const found = prev.find(p => p.id === postId);
         if (!found) return prev;
