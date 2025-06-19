@@ -25,9 +25,12 @@ import { Video } from 'expo-av';
 import * as ImagePicker from 'expo-image-picker';
 import * as FileSystem from 'expo-file-system';
 import { useNavigation } from '@react-navigation/native';
-import { supabase } from '../../lib/supabase';
+import { supabase, POST_BUCKET, POST_VIDEO_BUCKET } from '../../lib/supabase';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useAuth } from '../../AuthContext';
+import { usePostStore } from '../contexts/PostStoreContext';
+import { postEvents } from '../postEvents';
+import { CONFIRM_ACTION } from '../constants/ui';
 import PostCard, { Post } from '../components/PostCard';
 import { colors } from '../styles/colors';
 import { replyEvents } from '../replyEvents';
@@ -49,7 +52,8 @@ const PAGE_SIZE = 10;
 const HomeScreen = forwardRef<HomeScreenRef, { hideInput?: boolean }>(
   ({ hideInput }, ref) => {
   const navigation = useNavigation();
-  const { user, profile } = useAuth()!;
+  const { user, profile, removePost } = useAuth()!;
+  const { remove } = usePostStore();
   const [postText, setPostText] = useState('');
   const [posts, setPosts] = useState<Post[]>([]);
   const [loading, setLoading] = useState(false);
@@ -130,13 +134,16 @@ const HomeScreen = forwardRef<HomeScreenRef, { hideInput?: boolean }>(
 
     setReplyModalVisible(false);
 
-    setPosts(prev =>
-      prev.map(p =>
+    setPosts(prev => {
+      const updated = prev.map(p =>
         p.id === activePostId
           ? { ...p, reply_count: (p.reply_count ?? 0) + 1 }
           : p,
-      ),
-    );
+      );
+      AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(updated)).catch(() => {});
+      return updated;
+    });
+    skipNextFetch.current = true;
 
     let uploadedUrl: string | null = null;
     if (replyVideo) {
@@ -149,7 +156,9 @@ const HomeScreen = forwardRef<HomeScreenRef, { hideInput?: boolean }>(
           .from('reply-videos')
           .upload(path, blob);
         if (!uploadError) {
-          uploadedUrl = supabase.storage.from('reply-videos').getPublicUrl(path).data.publicUrl;
+          uploadedUrl = supabase.storage
+            .from('reply-videos')
+            .getPublicUrl(path).data.publicURL;
         }
       } catch (e) {
         console.error('Video upload failed', e);
@@ -192,11 +201,14 @@ const HomeScreen = forwardRef<HomeScreenRef, { hideInput?: boolean }>(
 
       if (data) {
         setPosts(prev => {
+          const prevMap = Object.fromEntries(prev.map(p => [p.id, p.reply_count ?? 0]));
           const combined = append ? [...prev, ...data] : data;
-          const unique = dedupeById(combined);
-          AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(unique)).catch(
-            () => {},
-          );
+          const merged = combined.map(p => ({
+            ...p,
+            reply_count: Math.max(p.reply_count ?? 0, prevMap[p.id] ?? 0),
+          }));
+          const unique = dedupeById(merged);
+          AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(unique)).catch(() => {});
           return unique;
         });
       }
@@ -248,6 +260,16 @@ const HomeScreen = forwardRef<HomeScreenRef, { hideInput?: boolean }>(
     };
   }, []);
 
+  useEffect(() => {
+    const onPostDeleted = (postId: string) => {
+      setPosts(prev => prev.filter(p => p.id !== postId));
+    };
+    postEvents.on('postDeleted', onPostDeleted);
+    return () => {
+      postEvents.off('postDeleted', onPostDeleted);
+    };
+  }, []);
+
 
   const createPost = async (
     content: string,
@@ -258,6 +280,63 @@ const HomeScreen = forwardRef<HomeScreenRef, { hideInput?: boolean }>(
 
     skipNextFetch.current = true;
 
+    let uploadedImageUrl: string | null = null;
+    let uploadedVideoUrl: string | null = null;
+    if (image && !image.startsWith('http')) {
+      try {
+        let ext = 'jpg';
+        const dataUriMatch = image.match(/^data:image\/(\w+);/);
+        if (dataUriMatch) {
+          ext = dataUriMatch[1];
+        } else {
+          const pathExt = /\.([a-zA-Z0-9]+)$/.exec(image);
+          if (pathExt) ext = pathExt[1];
+        }
+        const path = `${user.id}-${Date.now()}.${ext}`;
+        const resp = await fetch(image);
+        const blob = await resp.blob();
+        const { error: uploadError } = await supabase.storage
+          .from(POST_BUCKET)
+          .upload(path, blob);
+        if (!uploadError) {
+          uploadedImageUrl = supabase.storage
+            .from(POST_BUCKET)
+            .getPublicUrl(path).data.publicURL;
+        } else {
+          uploadedImageUrl = image;
+        }
+      } catch (e) {
+        console.error('Image upload failed', e);
+        uploadedImageUrl = image;
+      }
+    } else if (image) {
+      uploadedImageUrl = image;
+    }
+
+    if (video && !video.startsWith('http')) {
+      try {
+        const ext = video.split('.').pop() || 'mp4';
+        const path = `${user.id}-${Date.now()}.${ext}`;
+        const resp = await fetch(video);
+        const blob = await resp.blob();
+        const { error: uploadError } = await supabase.storage
+          .from(POST_VIDEO_BUCKET)
+          .upload(path, blob);
+        if (!uploadError) {
+          uploadedVideoUrl = supabase.storage
+            .from(POST_VIDEO_BUCKET)
+            .getPublicUrl(path).data.publicURL;
+        } else {
+          uploadedVideoUrl = video;
+        }
+      } catch (e) {
+        console.error('Video upload failed', e);
+        uploadedVideoUrl = video;
+      }
+    } else if (video) {
+      uploadedVideoUrl = video;
+    }
+
     const newPost: Post = {
       id: `temp-${Date.now()}`,
       content,
@@ -267,8 +346,8 @@ const HomeScreen = forwardRef<HomeScreenRef, { hideInput?: boolean }>(
       like_count: 0,
       reply_count: 0,
       username: profile.username,
-      image_url: image ?? null,
-      video_url: video ?? null,
+      image_url: uploadedImageUrl,
+      video_url: uploadedVideoUrl,
       profiles: profile,
     };
 
@@ -282,8 +361,8 @@ const HomeScreen = forwardRef<HomeScreenRef, { hideInput?: boolean }>(
 
         user_id: user.id,
         username: profile.username,
-        image_url: image ?? null,
-        video_url: video ?? null,
+        image_url: uploadedImageUrl,
+        video_url: uploadedVideoUrl,
       })
       .select()
       .single();
@@ -306,6 +385,21 @@ const HomeScreen = forwardRef<HomeScreenRef, { hideInput?: boolean }>(
       )
     );
     await supabase.from('likes').insert({ post_id: postId, user_id: user.id });
+  };
+
+  const confirmDeletePost = (id: string) => {
+    Alert.alert('Delete Post', 'Are you sure you want to delete this post?', [
+      CONFIRM_ACTION,
+      { text: 'Delete', style: 'destructive', onPress: () => handleDeletePost(id) },
+    ]);
+  };
+
+  const handleDeletePost = async (id: string) => {
+    skipNextFetch.current = true;
+    setPosts(prev => prev.filter(p => p.id !== id));
+    remove(id);
+    await removePost(id);
+    await supabase.from('posts').delete().eq('id', id);
   };
 
   const scrollToTop = () => {
@@ -365,7 +459,7 @@ const HomeScreen = forwardRef<HomeScreenRef, { hideInput?: boolean }>(
                     ? navigation.navigate('Profile')
                     : navigation.navigate('OtherUserProfile', { userId: item.user_id })
                 }
-                onDelete={() => {}}
+                onDelete={() => confirmDeletePost(item.id)}
                 onOpenReplies={() => openReplyModal(item.id)}
               />
             );
