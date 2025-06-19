@@ -42,3 +42,4 @@ create policy "Post video uploads" on storage.objects
 -- Allow anyone to read post videos
 create policy "Public post video access" on storage.objects
   for select using (bucket_id = 'post-videos');
+
