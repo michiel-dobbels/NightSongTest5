@@ -58,7 +58,8 @@ const PAGE_SIZE = 10;
 const HomeScreen = forwardRef<HomeScreenRef, { hideInput?: boolean }>(
   ({ hideInput }, ref) => {
   const navigation = useNavigation();
-  const { user, profile, removePost } = useAuth()!;
+  const { user, profile, removePost, profileImageUri, bannerImageUri } =
+    useAuth()!;
   const { remove } = usePostStore();
   const [postText, setPostText] = useState('');
   const [posts, setPosts] = useState<Post[]>([]);
@@ -464,11 +465,10 @@ const HomeScreen = forwardRef<HomeScreenRef, { hideInput?: boolean }>(
           renderItem={({ item }) => {
             const isMe = item.user_id === user.id;
             const avatarUri = isMe
-              ? profile?.image_url ?? undefined
+              ? profileImageUri ?? profile?.image_url ?? undefined
               : item.profiles?.image_url ?? undefined;
             const bannerUrl = isMe
-              ? profile?.banner_url ?? undefined
-
+              ? bannerImageUri ?? profile?.banner_url ?? undefined
               : item.profiles?.banner_url ?? undefined;
             return (
               <PostCard
