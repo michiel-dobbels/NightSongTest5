@@ -117,9 +117,11 @@ function PostCard({
               </Text>
             </View>
             <Text style={styles.postContent}>{post.content}</Text>
-            {finalImageUrl ? (
+            {finalImageUrl && (
               <Image source={{ uri: finalImageUrl }} style={styles.postImage} />
-            ) : finalVideoUrl ? (
+            )}
+            {finalVideoUrl && (
+
               <TouchableWithoutFeedback onPressIn={e => e.stopPropagation()}>
                 <View>
                   <Video
