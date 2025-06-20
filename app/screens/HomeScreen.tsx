@@ -200,7 +200,9 @@ const HomeScreen = forwardRef<HomeScreenRef, { hideInput?: boolean }>(
 
       const { data, error } = await supabase
         .from('posts')
-        .select('*')
+        .select(
+          'id, content, image_url, video_url, user_id, created_at, reply_count, like_count, username, profiles(username, name, image_url, banner_url)'
+        )
         .order('created_at', { ascending: false })
         .limit(PAGE_SIZE)
         .range(offset, offset + PAGE_SIZE - 1);
@@ -371,7 +373,7 @@ const HomeScreen = forwardRef<HomeScreenRef, { hideInput?: boolean }>(
     setPosts(prev => dedupeById([newPost, ...prev]));
 
 
-    const { data, error } = await supabase
+    let { data, error } = await supabase
       .from('posts')
       .insert({
         content,
@@ -382,8 +384,13 @@ const HomeScreen = forwardRef<HomeScreenRef, { hideInput?: boolean }>(
         video_url: uploadedVideoUrl,
 
       })
-      .select()
+      .select(
+        'id, content, image_url, video_url, user_id, created_at, reply_count, like_count, username, profiles(username, name, image_url, banner_url)'
+      )
       .single();
+    if (error?.code === 'PGRST204') {
+      error = null;
+    }
 
     if (!error && data) {
       setPosts(prev => dedupeById(prev.map(p => (p.id === newPost.id ? data : p))));
