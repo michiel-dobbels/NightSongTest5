@@ -476,6 +476,8 @@ const HomeScreen = forwardRef<HomeScreenRef, { hideInput?: boolean }>(
                 isOwner={isMe}
                 avatarUri={avatarUri}
                 bannerUrl={bannerUrl}
+                imageUrl={item.image_url ?? undefined}
+                videoUrl={item.video_url ?? undefined}
                 replyCount={item.reply_count ?? 0}
                 onLike={() => handleLike(item.id)}
                 onPress={() => navigation.navigate('PostDetail', { post: item })}
