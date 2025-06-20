@@ -37,6 +37,10 @@ function timeAgo(dateString: string): string {
 export interface PostCardProps {
   post: Post;
   isOwner: boolean;
+  /**
+   * Optional avatar override. If omitted the component will
+   * fall back to the profile image on the post itself.
+   */
   avatarUri?: string;
   bannerUrl?: string;
   /** Optional override for the post image URL */
@@ -70,6 +74,11 @@ function PostCard({
   const isReply = (post as any).post_id !== undefined;
   const { likeCount, liked, toggleLike } = useLike(post.id, isReply);
 
+  const finalAvatarUri =
+    avatarUri ?? post.profiles?.image_url ?? undefined;
+  const finalImageUrl = imageUrl ?? post.image_url;
+  const finalVideoUrl = videoUrl ?? post.video_url;
+
   return (
     <TouchableOpacity onPress={onPress}>
       <View style={styles.post}>
@@ -92,8 +101,8 @@ function PostCard({
               onProfilePress();
             }}
           >
-            {avatarUri ? (
-              <Image source={{ uri: avatarUri }} style={styles.avatar} />
+            {finalAvatarUri ? (
+              <Image source={{ uri: finalAvatarUri }} style={styles.avatar} />
             ) : (
               <View style={[styles.avatar, styles.placeholder]} />
             )}
@@ -108,32 +117,22 @@ function PostCard({
               </Text>
             </View>
             <Text style={styles.postContent}>{post.content}</Text>
-            {(() => {
-              const resolvedImageUrl = imageUrl ?? post.image_url;
-              const resolvedVideoUrl = videoUrl ?? post.video_url;
-              if (resolvedImageUrl && resolvedImageUrl.trim().length > 0) {
-                return (
-                  <Image source={{ uri: resolvedImageUrl }} style={styles.postImage} />
-                );
-              }
-              if (resolvedVideoUrl && resolvedVideoUrl.trim().length > 0) {
-                return (
-                  <TouchableWithoutFeedback onPressIn={e => e.stopPropagation()}>
-                    <View>
-                      <Video
-                        source={{ uri: resolvedVideoUrl }}
-                        style={styles.postVideo}
-                        useNativeControls
-                        isMuted
-                        resizeMode="contain"
-                        onTouchStart={e => e.stopPropagation()}
-                      />
-                    </View>
-                  </TouchableWithoutFeedback>
-                );
-              }
-              return null;
-            })()}
+            {finalImageUrl ? (
+              <Image source={{ uri: finalImageUrl }} style={styles.postImage} />
+            ) : finalVideoUrl ? (
+              <TouchableWithoutFeedback onPressIn={e => e.stopPropagation()}>
+                <View>
+                  <Video
+                    source={{ uri: finalVideoUrl }}
+                    style={styles.postVideo}
+                    useNativeControls
+                    isMuted
+                    resizeMode="contain"
+                    onTouchStart={e => e.stopPropagation()}
+                  />
+                </View>
+              </TouchableWithoutFeedback>
+            ) : null}
 
           </View>
         </View>
