@@ -8,6 +8,8 @@ const PostItem = React.memo(function PostItem({
   isMe,
   avatarUri,
   bannerUrl,
+  imageUrl,
+  videoUrl,
   replyCount,
   onPress,
   onProfilePress,
@@ -19,6 +21,8 @@ const PostItem = React.memo(function PostItem({
       isOwner={isMe}
       avatarUri={avatarUri}
       bannerUrl={bannerUrl}
+      imageUrl={imageUrl}
+      videoUrl={videoUrl}
       replyCount={replyCount}
       onPress={onPress}
       onProfilePress={onProfilePress}
@@ -161,6 +165,8 @@ export default function FollowingFeedScreen() {
               isMe={isMe}
               avatarUri={avatarUri}
               bannerUrl={bannerUrl}
+              imageUrl={item.image_url || undefined}
+              videoUrl={item.video_url || undefined}
               replyCount={replyCounts[item.id] || 0}
               onPress={() => navigation.navigate('PostDetail', { post: item })}
               onProfilePress={() =>

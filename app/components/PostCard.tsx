@@ -37,8 +37,16 @@ function timeAgo(dateString: string): string {
 export interface PostCardProps {
   post: Post;
   isOwner: boolean;
+  /**
+   * Optional avatar override. If omitted the component will
+   * fall back to the profile image on the post itself.
+   */
   avatarUri?: string;
   bannerUrl?: string;
+  /** Optional override for the post image URL */
+  imageUrl?: string;
+  /** Optional override for the post video URL */
+  videoUrl?: string;
   replyCount: number;
   onPress: () => void;
   onProfilePress: () => void;
@@ -51,6 +59,9 @@ function PostCard({
   post,
   isOwner,
   avatarUri,
+  bannerUrl,
+  imageUrl,
+  videoUrl,
   replyCount,
   onPress,
   onProfilePress,
@@ -62,6 +73,11 @@ function PostCard({
   const userName = post.profiles?.username || post.username;
   const isReply = (post as any).post_id !== undefined;
   const { likeCount, liked, toggleLike } = useLike(post.id, isReply);
+
+  const finalAvatarUri =
+    avatarUri ?? post.profiles?.image_url ?? undefined;
+  const finalImageUrl = imageUrl ?? post.image_url;
+  const finalVideoUrl = videoUrl ?? post.video_url;
 
   return (
     <TouchableOpacity onPress={onPress}>
@@ -85,8 +101,8 @@ function PostCard({
               onProfilePress();
             }}
           >
-            {avatarUri ? (
-              <Image source={{ uri: avatarUri }} style={styles.avatar} />
+            {finalAvatarUri ? (
+              <Image source={{ uri: finalAvatarUri }} style={styles.avatar} />
             ) : (
               <View style={[styles.avatar, styles.placeholder]} />
             )}
@@ -101,14 +117,14 @@ function PostCard({
               </Text>
             </View>
             <Text style={styles.postContent}>{post.content}</Text>
-            {post.image_url && (
-              <Image source={{ uri: post.image_url }} style={styles.postImage} />
+            {finalImageUrl && (
+              <Image source={{ uri: finalImageUrl }} style={styles.postImage} />
             )}
-            {!post.image_url && post.video_url && (
+            {finalVideoUrl ? (
               <TouchableWithoutFeedback onPressIn={e => e.stopPropagation()}>
                 <View>
                   <Video
-                    source={{ uri: post.video_url }}
+                    source={{ uri: finalVideoUrl }}
                     style={styles.postVideo}
                     useNativeControls
                     isMuted
@@ -117,7 +133,7 @@ function PostCard({
                   />
                 </View>
               </TouchableWithoutFeedback>
-            )}
+            ) : null}
           </View>
         </View>
         <TouchableOpacity
