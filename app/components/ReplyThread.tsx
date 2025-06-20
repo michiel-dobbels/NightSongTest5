@@ -75,6 +75,8 @@ function ReplyThread({
             isOwner={false}
             avatarUri={post.profiles?.image_url ?? undefined}
             bannerUrl={post.profiles?.banner_url ?? undefined}
+            imageUrl={post.image_url ?? undefined}
+            videoUrl={post.video_url ?? undefined}
             replyCount={post.reply_count ?? 0}
             onPress={() => onPress(reply)}
             onProfilePress={() => navigateToProfile(post.user_id)}
@@ -109,6 +111,8 @@ function ReplyThread({
           isOwner={isOwner}
           avatarUri={avatarUri}
           bannerUrl={bannerUrl}
+          imageUrl={reply.image_url ?? undefined}
+          videoUrl={reply.video_url ?? undefined}
           replyCount={reply.reply_count ?? 0}
           onPress={() => onPress(reply)}
           onProfilePress={() => navigateToProfile(reply.user_id)}
