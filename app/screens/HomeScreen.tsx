@@ -29,7 +29,6 @@ import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../navigation/types'; // adjust if needed
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
-const navigation = useNavigation<NavigationProp>();
 
   
 import * as FileSystem from 'expo-file-system';
@@ -74,6 +73,7 @@ const PAGE_SIZE = 10;
 
 const HomeScreen = forwardRef<HomeScreenRef, { hideInput?: boolean }>(
   ({ hideInput }, ref) => {
+  const navigation = useNavigation<NavigationProp>();
   
   let user = null;
     let profile = null;
@@ -232,7 +232,9 @@ const HomeScreen = forwardRef<HomeScreenRef, { hideInput?: boolean }>(
 
       const { data, error } = await supabase
         .from('posts')
-        .select('*')
+        .select(
+          'id, content, image_url, video_url, user_id, created_at, reply_count, like_count, username, profiles(username, name, image_url, banner_url)'
+        )
         .order('created_at', { ascending: false })
         .limit(PAGE_SIZE)
         .range(offset, offset + PAGE_SIZE - 1);
