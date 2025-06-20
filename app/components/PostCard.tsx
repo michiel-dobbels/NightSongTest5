@@ -134,6 +134,7 @@ function PostCard({
               }
               return null;
             })()}
+
           </View>
         </View>
         <TouchableOpacity
