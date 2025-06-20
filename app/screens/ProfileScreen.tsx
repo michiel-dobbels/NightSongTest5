@@ -27,7 +27,7 @@ import { useAuth } from '../../AuthContext';
 import { usePostStore } from '../contexts/PostStoreContext';
 import { useFollowCounts } from '../hooks/useFollowCounts';
 import { colors } from '../styles/colors';
-import { supabase } from '../../lib/supabase';
+import { supabase, REPLY_VIDEO_BUCKET } from '../../lib/supabase';
 import { getLikeCounts } from '../../lib/getLikeCounts';
 import PostCard, { Post } from '../components/PostCard';
 import ReplyCard, { Reply } from '../components/ReplyCard';
@@ -277,10 +277,13 @@ export default function ProfileScreen() {
         const resp = await fetch(replyVideo);
         const blob = await resp.blob();
         const { error: uploadError } = await supabase.storage
-          .from('reply-videos')
+          .from(REPLY_VIDEO_BUCKET)
           .upload(path, blob);
         if (!uploadError) {
-          uploadedUrl = supabase.storage.from('reply-videos').getPublicUrl(path).data.publicUrl;
+          const { publicURL } = supabase.storage
+            .from(REPLY_VIDEO_BUCKET)
+            .getPublicUrl(path);
+          uploadedUrl = publicURL;
         }
       } catch (e) {
         console.error('Video upload failed', e);
@@ -385,9 +388,14 @@ export default function ProfileScreen() {
       if (!error && data) {
         const list = data as Post[];
         setPosts(prev => {
+          const prevMap = Object.fromEntries(prev.map(p => [p.id, p.reply_count ?? 0]));
           const combined = append ? [...prev, ...list] : list;
           const seen = new Set<string>();
-          return combined.filter(p => {
+          const merged = combined.map(p => ({
+            ...p,
+            reply_count: Math.max(p.reply_count ?? 0, prevMap[p.id] ?? 0),
+          }));
+          return merged.filter(p => {
             if (seen.has(p.id)) return false;
             seen.add(p.id);
             return true;
@@ -396,7 +404,9 @@ export default function ProfileScreen() {
         setReplyCounts(prev => {
           const counts = { ...prev };
           list.forEach(p => {
-            counts[p.id] = p.reply_count ?? 0;
+            const current = counts[p.id] ?? 0;
+            const incoming = p.reply_count ?? 0;
+            counts[p.id] = Math.max(current, incoming);
           });
           return counts;
         });

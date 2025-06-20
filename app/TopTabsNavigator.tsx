@@ -112,9 +112,13 @@ export default function TopTabsNavigator() {
       quality: 0.8,
     });
     if (!result.canceled) {
-      const uri = result.assets[0].uri;
-      const base64 = await FileSystem.readAsStringAsync(uri, { encoding: 'base64' });
-      setModalImage(`data:image/jpeg;base64,${base64}`);
+      const asset = result.assets[0];
+      const base64 = await FileSystem.readAsStringAsync(asset.uri, {
+        encoding: 'base64',
+      });
+      const extMatch = asset.uri.match(/\.([a-zA-Z0-9]+)$/);
+      const ext = extMatch ? extMatch[1] : 'jpeg';
+      setModalImage(`data:image/${ext};base64,${base64}`);
       setModalVideo(null);
     }
   };
