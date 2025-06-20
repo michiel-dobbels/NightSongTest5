@@ -119,6 +119,7 @@ export default function TopTabsNavigator() {
       const extMatch = asset.uri.match(/\.([a-zA-Z0-9]+)$/);
       const ext = extMatch ? extMatch[1] : 'jpeg';
       setModalImage(`data:image/${ext};base64,${base64}`);
+
       setModalVideo(null);
     }
   };

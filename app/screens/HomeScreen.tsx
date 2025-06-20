@@ -31,6 +31,7 @@ import {
   POST_VIDEO_BUCKET,
   REPLY_VIDEO_BUCKET,
 } from '../../lib/supabase';
+
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useAuth } from '../../AuthContext';
 import { usePostStore } from '../contexts/PostStoreContext';
@@ -165,6 +166,7 @@ const HomeScreen = forwardRef<HomeScreenRef, { hideInput?: boolean }>(
             .from(REPLY_VIDEO_BUCKET)
             .getPublicUrl(path);
           uploadedUrl = publicURL;
+
         }
       } catch (e) {
         console.error('Video upload failed', e);
@@ -288,6 +290,7 @@ const HomeScreen = forwardRef<HomeScreenRef, { hideInput?: boolean }>(
 
     let uploadedImageUrl: string | null = null;
     let uploadedVideoUrl: string | null = null;
+
     if (image && !image.startsWith('http')) {
       try {
         let ext = 'jpg';
@@ -309,12 +312,14 @@ const HomeScreen = forwardRef<HomeScreenRef, { hideInput?: boolean }>(
             .from(POST_BUCKET)
             .getPublicUrl(path);
           uploadedImageUrl = publicURL;
+
         } else {
           uploadedImageUrl = image;
         }
       } catch (e) {
         console.error('Image upload failed', e);
         uploadedImageUrl = image;
+
       }
     } else if (image) {
       uploadedImageUrl = image;
@@ -334,16 +339,19 @@ const HomeScreen = forwardRef<HomeScreenRef, { hideInput?: boolean }>(
             .from(POST_VIDEO_BUCKET)
             .getPublicUrl(path);
           uploadedVideoUrl = publicURL;
+
         } else {
           uploadedVideoUrl = video;
         }
       } catch (e) {
         console.error('Video upload failed', e);
         uploadedVideoUrl = video;
+
       }
     } else if (video) {
       uploadedVideoUrl = video;
     }
+
 
     const newPost: Post = {
       id: `temp-${Date.now()}`,
@@ -356,6 +364,7 @@ const HomeScreen = forwardRef<HomeScreenRef, { hideInput?: boolean }>(
       username: profile.username,
       image_url: uploadedImageUrl,
       video_url: uploadedVideoUrl,
+
       profiles: profile,
     };
 
@@ -371,6 +380,7 @@ const HomeScreen = forwardRef<HomeScreenRef, { hideInput?: boolean }>(
         username: profile.username,
         image_url: uploadedImageUrl,
         video_url: uploadedVideoUrl,
+
       })
       .select()
       .single();

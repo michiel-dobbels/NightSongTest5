@@ -57,3 +57,4 @@ create policy "Reply video uploads" on storage.objects
 -- Allow anyone to read reply videos
 create policy "Public reply video access" on storage.objects
   for select using (bucket_id = 'reply-videos');
+

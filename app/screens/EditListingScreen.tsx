@@ -70,6 +70,7 @@ export default function EditListingScreen() {
         }
 
         url = publicURL;
+
       }
     }
     await supabase

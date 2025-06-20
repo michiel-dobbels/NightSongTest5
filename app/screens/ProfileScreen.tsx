@@ -284,6 +284,7 @@ export default function ProfileScreen() {
             .from(REPLY_VIDEO_BUCKET)
             .getPublicUrl(path);
           uploadedUrl = publicURL;
+
         }
       } catch (e) {
         console.error('Video upload failed', e);
