@@ -576,6 +576,8 @@ export default function PostDetailScreen() {
               user?.id === post.user_id ? profileImageUri : post.profiles?.image_url || undefined
             }
             bannerUrl={user?.id === post.user_id ? undefined : post.profiles?.banner_url || undefined}
+            imageUrl={post.image_url ?? undefined}
+            videoUrl={post.video_url ?? undefined}
             replyCount={replyCounts[post.id] || 0}
             onPress={() => {}}
             onProfilePress={() =>
@@ -605,6 +607,8 @@ export default function PostDetailScreen() {
               isOwner={isMe}
               avatarUri={avatarUri}
               bannerUrl={item.profiles?.banner_url || undefined}
+              imageUrl={item.image_url ?? undefined}
+              videoUrl={item.video_url ?? undefined}
               replyCount={replyCounts[item.id] || 0}
               onPress={() =>
                 navigation.push('ReplyDetail', {

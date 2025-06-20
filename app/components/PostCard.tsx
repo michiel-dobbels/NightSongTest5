@@ -39,6 +39,10 @@ export interface PostCardProps {
   isOwner: boolean;
   avatarUri?: string;
   bannerUrl?: string;
+  /** Optional override for the post image URL */
+  imageUrl?: string;
+  /** Optional override for the post video URL */
+  videoUrl?: string;
   replyCount: number;
   onPress: () => void;
   onProfilePress: () => void;
@@ -51,6 +55,9 @@ function PostCard({
   post,
   isOwner,
   avatarUri,
+  bannerUrl,
+  imageUrl,
+  videoUrl,
   replyCount,
   onPress,
   onProfilePress,
@@ -101,23 +108,32 @@ function PostCard({
               </Text>
             </View>
             <Text style={styles.postContent}>{post.content}</Text>
-            {post.image_url && (
-              <Image source={{ uri: post.image_url }} style={styles.postImage} />
-            )}
-            {!post.image_url && post.video_url && (
-              <TouchableWithoutFeedback onPressIn={e => e.stopPropagation()}>
-                <View>
-                  <Video
-                    source={{ uri: post.video_url }}
-                    style={styles.postVideo}
-                    useNativeControls
-                    isMuted
-                    resizeMode="contain"
-                    onTouchStart={e => e.stopPropagation()}
-                  />
-                </View>
-              </TouchableWithoutFeedback>
-            )}
+            {(() => {
+              const resolvedImageUrl = imageUrl ?? post.image_url;
+              const resolvedVideoUrl = videoUrl ?? post.video_url;
+              if (resolvedImageUrl && resolvedImageUrl.trim().length > 0) {
+                return (
+                  <Image source={{ uri: resolvedImageUrl }} style={styles.postImage} />
+                );
+              }
+              if (resolvedVideoUrl && resolvedVideoUrl.trim().length > 0) {
+                return (
+                  <TouchableWithoutFeedback onPressIn={e => e.stopPropagation()}>
+                    <View>
+                      <Video
+                        source={{ uri: resolvedVideoUrl }}
+                        style={styles.postVideo}
+                        useNativeControls
+                        isMuted
+                        resizeMode="contain"
+                        onTouchStart={e => e.stopPropagation()}
+                      />
+                    </View>
+                  </TouchableWithoutFeedback>
+                );
+              }
+              return null;
+            })()}
           </View>
         </View>
         <TouchableOpacity

@@ -407,6 +407,8 @@ export default function UserProfileScreen() {
             isOwner={false}
             avatarUri={profile.image_url || avatarUrl || undefined}
             bannerUrl={item.profiles?.banner_url || bannerUrl || undefined}
+            imageUrl={item.image_url ?? undefined}
+            videoUrl={item.video_url ?? undefined}
             replyCount={item.reply_count ?? 0}
             onPress={() => navigation.navigate('PostDetail', { post: item })}
             onProfilePress={() => {}}
