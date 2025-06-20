@@ -7,8 +7,8 @@
   },
   "dependencies": {
     "expo": "~53.0.7",
-    "react": "19.0.0",
-    "react-native": "0.79.2",
+    "react": "18.2.0",
+    "react-native": "0.73.8",
     "@supabase/supabase-js": "^2.37.0"
   }
 }
