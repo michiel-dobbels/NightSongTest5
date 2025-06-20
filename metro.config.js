@@ -1,5 +1,6 @@
 // metro.config.js
 const { getDefaultConfig } = require('expo/metro-config');
+const path = require('path');
 
 const config = getDefaultConfig(__dirname);
 
@@ -10,6 +11,8 @@ config.resolver.extraNodeModules = {
   buffer: require.resolve('buffer/'),
   process: require.resolve('process/browser'),
   util: require.resolve('util/'),
+  react: path.resolve(__dirname, 'node_modules/react'),
+  'react-native': path.resolve(__dirname, 'node_modules/react-native'),
 };
 
 module.exports = config;

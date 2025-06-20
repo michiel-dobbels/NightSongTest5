@@ -29,7 +29,6 @@ import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../navigation/types'; // adjust if needed
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
-const navigation = useNavigation<NavigationProp>();
 
   
 import * as FileSystem from 'expo-file-system';
@@ -74,6 +73,7 @@ const PAGE_SIZE = 10;
 
 const HomeScreen = forwardRef<HomeScreenRef, { hideInput?: boolean }>(
   ({ hideInput }, ref) => {
+  const navigation = useNavigation<NavigationProp>();
   
   let user = null;
     let profile = null;
