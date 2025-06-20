@@ -39,6 +39,10 @@ export interface PostCardProps {
   isOwner: boolean;
   avatarUri?: string;
   bannerUrl?: string;
+  /** Optional override for the post image URL */
+  imageUrl?: string;
+  /** Optional override for the post video URL */
+  videoUrl?: string;
   replyCount: number;
   onPress: () => void;
   onProfilePress: () => void;
@@ -51,6 +55,9 @@ function PostCard({
   post,
   isOwner,
   avatarUri,
+  bannerUrl,
+  imageUrl,
+  videoUrl,
   replyCount,
   onPress,
   onProfilePress,
@@ -101,14 +108,17 @@ function PostCard({
               </Text>
             </View>
             <Text style={styles.postContent}>{post.content}</Text>
-            {post.image_url && (
-              <Image source={{ uri: post.image_url }} style={styles.postImage} />
+            {(imageUrl || post.image_url) && (
+              <Image
+                source={{ uri: imageUrl || post.image_url }}
+                style={styles.postImage}
+              />
             )}
-            {!post.image_url && post.video_url && (
+            {!imageUrl && !post.image_url && (videoUrl || post.video_url) && (
               <TouchableWithoutFeedback onPressIn={e => e.stopPropagation()}>
                 <View>
                   <Video
-                    source={{ uri: post.video_url }}
+                    source={{ uri: videoUrl || post.video_url }}
                     style={styles.postVideo}
                     useNativeControls
                     isMuted

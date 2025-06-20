@@ -11,7 +11,14 @@ export interface ReplyCardProps extends Omit<PostCardProps, 'post'> {
 }
 
 function ReplyCard({ reply, ...props }: ReplyCardProps) {
-  return <PostCard post={reply} {...props} />;
+  return (
+    <PostCard
+      post={reply}
+      imageUrl={reply.image_url ?? undefined}
+      videoUrl={reply.video_url ?? undefined}
+      {...props}
+    />
+  );
 }
 
 export default React.memo(ReplyCard);

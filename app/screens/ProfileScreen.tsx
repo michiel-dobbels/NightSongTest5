@@ -47,6 +47,8 @@ interface PostItemProps {
   item: Post;
   avatarUri?: string;
   bannerUrl?: string;
+  imageUrl?: string;
+  videoUrl?: string;
   replyCount: number;
   onPress: () => void;
   onProfilePress: () => void;
@@ -58,6 +60,8 @@ const PostItem = React.memo(function PostItem({
   item,
   avatarUri,
   bannerUrl,
+  imageUrl,
+  videoUrl,
   replyCount,
   onPress,
   onProfilePress,
@@ -70,6 +74,8 @@ const PostItem = React.memo(function PostItem({
       isOwner={true}
       avatarUri={avatarUri}
       bannerUrl={bannerUrl}
+      imageUrl={imageUrl}
+      videoUrl={videoUrl}
       replyCount={replyCount}
       onPress={onPress}
       onProfilePress={onProfilePress}
@@ -554,6 +560,8 @@ export default function ProfileScreen() {
         item={item as Post}
         avatarUri={profileImageUri ?? undefined}
         bannerUrl={bannerImageUri ?? undefined}
+        imageUrl={item.image_url ?? undefined}
+        videoUrl={item.video_url ?? undefined}
         replyCount={replyCounts[item.id] ?? item.reply_count ?? 0}
         onPress={() => navigation.navigate('PostDetail', { post: item })}
         onProfilePress={() => navigation.navigate('Profile')}
