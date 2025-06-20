@@ -45,6 +45,7 @@ export interface PostCardProps {
   onProfilePress: () => void;
   onDelete: () => void;
   onOpenReplies: () => void;
+  showThreadLine?: boolean;
 }
 
 
