@@ -108,26 +108,33 @@ function PostCard({
               </Text>
             </View>
             <Text style={styles.postContent}>{post.content}</Text>
-            {(imageUrl || post.image_url) && (
-              <Image
-                source={{ uri: imageUrl || post.image_url }}
-                style={styles.postImage}
-              />
-            )}
-            {!imageUrl && !post.image_url && (videoUrl || post.video_url) && (
-              <TouchableWithoutFeedback onPressIn={e => e.stopPropagation()}>
-                <View>
-                  <Video
-                    source={{ uri: videoUrl || post.video_url }}
-                    style={styles.postVideo}
-                    useNativeControls
-                    isMuted
-                    resizeMode="contain"
-                    onTouchStart={e => e.stopPropagation()}
-                  />
-                </View>
-              </TouchableWithoutFeedback>
-            )}
+            {(() => {
+              const resolvedImageUrl = imageUrl ?? post.image_url;
+              const resolvedVideoUrl = videoUrl ?? post.video_url;
+              if (resolvedImageUrl && resolvedImageUrl.trim().length > 0) {
+                return (
+                  <Image source={{ uri: resolvedImageUrl }} style={styles.postImage} />
+                );
+              }
+              if (resolvedVideoUrl && resolvedVideoUrl.trim().length > 0) {
+                return (
+                  <TouchableWithoutFeedback onPressIn={e => e.stopPropagation()}>
+                    <View>
+                      <Video
+                        source={{ uri: resolvedVideoUrl }}
+                        style={styles.postVideo}
+                        useNativeControls
+                        isMuted
+                        resizeMode="contain"
+                        onTouchStart={e => e.stopPropagation()}
+                      />
+                    </View>
+                  </TouchableWithoutFeedback>
+                );
+              }
+              return null;
+            })()}
+
           </View>
         </View>
         <TouchableOpacity
