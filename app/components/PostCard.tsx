@@ -121,6 +121,7 @@ function PostCard({
               <Image source={{ uri: finalImageUrl }} style={styles.postImage} />
             )}
             {finalVideoUrl && (
+
               <TouchableWithoutFeedback onPressIn={e => e.stopPropagation()}>
                 <View>
                   <Video
@@ -133,7 +134,8 @@ function PostCard({
                   />
                 </View>
               </TouchableWithoutFeedback>
-            )}
+            ) : null}
+
           </View>
         </View>
         <TouchableOpacity
