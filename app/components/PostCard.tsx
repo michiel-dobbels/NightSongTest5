@@ -133,6 +133,7 @@ function PostCard({
                 </View>
               </TouchableWithoutFeedback>
             ) : null}
+
           </View>
         </View>
         <TouchableOpacity
