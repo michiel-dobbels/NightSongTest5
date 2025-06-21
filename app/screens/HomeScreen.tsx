@@ -27,10 +27,10 @@ import * as FileSystem from 'expo-file-system';
 import { useNavigation } from '@react-navigation/native';
 import {
   supabase,
-  POST_BUCKET,
   POST_VIDEO_BUCKET,
   REPLY_VIDEO_BUCKET,
 } from '../../lib/supabase';
+import { uploadImage } from '../../lib/uploadImage';
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useAuth } from '../../AuthContext';
@@ -153,6 +153,7 @@ const HomeScreen = forwardRef<HomeScreenRef, { hideInput?: boolean }>(
     skipNextFetch.current = true;
 
     let uploadedUrl: string | null = null;
+    let uploadedImage: string | null = null;
     if (replyVideo) {
       try {
         const ext = replyVideo.split('.').pop() || 'mp4';
@@ -174,12 +175,19 @@ const HomeScreen = forwardRef<HomeScreenRef, { hideInput?: boolean }>(
       }
     }
 
+    if (replyImage && !replyImage.startsWith('http')) {
+      uploadedImage = await uploadImage(replyImage, profile.id);
+      if (!uploadedImage) uploadedImage = replyImage;
+    } else if (replyImage) {
+      uploadedImage = replyImage;
+    }
+
     const { error } = await supabase.from('replies').insert({
       post_id: activePostId,
       parent_id: null,
       user_id: profile.id,
       content: replyText,
-      image_url: replyImage,
+      image_url: uploadedImage,
       video_url: uploadedUrl,
       username: profile.name || profile.username,
     });
@@ -295,35 +303,8 @@ const HomeScreen = forwardRef<HomeScreenRef, { hideInput?: boolean }>(
     let uploadedVideoUrl: string | null = null;
 
     if (image && !image.startsWith('http')) {
-      try {
-        let ext = 'jpg';
-        const dataUriMatch = image.match(/^data:image\/(\w+);/);
-        if (dataUriMatch) {
-          ext = dataUriMatch[1];
-        } else {
-          const pathExt = /\.([a-zA-Z0-9]+)$/.exec(image);
-          if (pathExt) ext = pathExt[1];
-        }
-        const path = `${user.id}-${Date.now()}.${ext}`;
-        const resp = await fetch(image);
-        const blob = await resp.blob();
-        const { error: uploadError } = await supabase.storage
-          .from(POST_BUCKET)
-          .upload(path, blob);
-        if (!uploadError) {
-          const { publicURL } = supabase.storage
-            .from(POST_BUCKET)
-            .getPublicUrl(path);
-          uploadedImageUrl = publicURL;
-
-        } else {
-          uploadedImageUrl = image;
-        }
-      } catch (e) {
-        console.error('Image upload failed', e);
-        uploadedImageUrl = image;
-
-      }
+      uploadedImageUrl = await uploadImage(image, user.id);
+      if (!uploadedImageUrl) uploadedImageUrl = image;
     } else if (image) {
       uploadedImageUrl = image;
     }

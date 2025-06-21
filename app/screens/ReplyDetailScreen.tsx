@@ -21,6 +21,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useRoute, useNavigation } from '@react-navigation/native';
 
 import { supabase, REPLY_VIDEO_BUCKET } from '../../lib/supabase';
+import { uploadImage } from '../../lib/uploadImage';
 import { getLikeCounts } from '../../lib/getLikeCounts';
 import { useAuth } from '../../AuthContext';
 import { colors } from '../styles/colors';
@@ -510,6 +511,7 @@ export default function ReplyDetailScreen() {
     setReplyVideo(null);
 
     let uploadedUrl = null;
+    let uploadedImage = null;
     if (replyVideo) {
       try {
         const ext = replyVideo.split('.').pop() || 'mp4';
@@ -531,6 +533,13 @@ export default function ReplyDetailScreen() {
       }
     }
 
+    if (replyImage && !replyImage.startsWith('http')) {
+      uploadedImage = await uploadImage(replyImage, user.id);
+      if (!uploadedImage) uploadedImage = replyImage;
+    } else if (replyImage) {
+      uploadedImage = replyImage;
+    }
+
     let { data, error } = await supabase
       .from('replies')
       .insert([
@@ -539,7 +548,7 @@ export default function ReplyDetailScreen() {
           parent_id: parent.id,
           user_id: user.id,
           content: replyText,
-          image_url: replyImage,
+          image_url: uploadedImage,
           video_url: uploadedUrl,
           username: profile.name || profile.username,
         },
@@ -753,6 +762,9 @@ export default function ReplyDetailScreen() {
           })}
 
             <View style={[styles.post, styles.longReply]}>
+              {(originalPost || ancestors.length > 0) && (
+                <View style={styles.threadLine} pointerEvents="none" />
+              )}
               {user?.id === parent.user_id && (
                 <TouchableOpacity
                   onPress={() => confirmDeleteReply(parent.id)}
@@ -837,6 +849,9 @@ export default function ReplyDetailScreen() {
               }
             >
               <View style={[styles.reply, styles.longReply]}>
+                {item.parent_id && (
+                  <View style={styles.threadLine} pointerEvents="none" />
+                )}
                 {isMe && (
                   <TouchableOpacity
                     onPress={() => confirmDeleteReply(item.id)}
