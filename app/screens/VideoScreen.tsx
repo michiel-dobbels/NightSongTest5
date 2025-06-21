@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState, useCallback } from 'react';
-import { View, StyleSheet, FlatList, ViewToken } from 'react-native';
+import { View, StyleSheet, FlatList, ViewToken, ActivityIndicator } from 'react-native';
+
 import * as FileSystem from 'expo-file-system';
 
 import VideoFeedItem, { FeedVideo } from '../components/VideoFeedItem';
@@ -10,11 +11,30 @@ interface CachedMap {
   [url: string]: string;
 }
 
+const PAGE_SIZE = 10;
+
+const dedupeById = (arr: FeedVideo[]): FeedVideo[] => {
+  const seen = new Set<string>();
+  const result: FeedVideo[] = [];
+  for (const item of arr) {
+    if (!seen.has(item.id)) {
+      result.push(item);
+      seen.add(item.id);
+    }
+  }
+  return result;
+};
+
+
 export default function VideoScreen() {
   const [videos, setVideos] = useState<FeedVideo[]>([]);
   const [cached, setCached] = useState<CachedMap>({});
   const [currentIndex, setCurrentIndex] = useState(0);
   const [muted, setMuted] = useState(true);
+  const [loading, setLoading] = useState(false);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [hasMore, setHasMore] = useState(true);
+
 
   const viewabilityConfig = { viewAreaCoveragePercentThreshold: 80 };
   const onViewableItemsChanged = useRef(({ viewableItems }: { viewableItems: Array<ViewToken> }) => {
@@ -23,28 +43,52 @@ export default function VideoScreen() {
     }
   });
 
-  useEffect(() => {
-    const fetchVideos = async () => {
-      const { data, error } = await supabase
-        .from('videos')
-        .select('id, video_url, caption, profiles(username)')
-        .order('created_at', { ascending: false });
+  const fetchVideos = useCallback(
+    async (offset = 0, append = false) => {
+      try {
+        if (offset === 0) setLoading(true);
+        else setLoadingMore(true);
 
-      if (!error && data) {
-        const mapped: FeedVideo[] = data.map((v: any) => ({
-          id: v.id,
-          video_url: v.video_url,
-          caption: v.caption || '',
-          username: v.profiles?.username || 'unknown',
-        }));
-        setVideos(mapped);
-      } else {
-        console.error('Failed to fetch videos', error);
+        const { data, error } = await supabase
+          .from('posts')
+          .select('id, video_url, content, username, profiles(username)')
+          .neq('video_url', null)
+          .order('created_at', { ascending: false })
+          .limit(PAGE_SIZE)
+          .range(offset, offset + PAGE_SIZE - 1);
+
+        if (error) throw error;
+
+        if (data) {
+          const mapped: FeedVideo[] = data
+            .filter((v: any) => v.video_url)
+            .map((v: any) => ({
+              id: v.id,
+              video_url: v.video_url,
+              caption: v.content || '',
+              username: v.profiles?.username || v.username || 'unknown',
+            }));
+
+          setVideos(prev => {
+            const combined = append ? [...prev, ...mapped] : mapped;
+            return dedupeById(combined);
+          });
+          setHasMore(data.length === PAGE_SIZE);
+        }
+      } catch (e) {
+        console.error('Failed to fetch videos', e);
+      } finally {
+        setLoading(false);
+        setLoadingMore(false);
       }
-    };
+    },
+    [],
+  );
 
-    fetchVideos();
-  }, []);
+  useEffect(() => {
+    fetchVideos(0, false);
+  }, [fetchVideos]);
+
 
   const prefetch = useCallback(
     async (url: string) => {
@@ -85,17 +129,29 @@ export default function VideoScreen() {
 
   return (
     <View style={styles.container}>
-      <FlatList
-        data={videos}
-        keyExtractor={item => item.id}
-        renderItem={renderItem}
-        pagingEnabled
-        showsVerticalScrollIndicator={false}
-        onViewableItemsChanged={onViewableItemsChanged.current}
-        viewabilityConfig={viewabilityConfig}
-        windowSize={3}
-        removeClippedSubviews
-      />
+      {loading && videos.length === 0 ? (
+        <ActivityIndicator style={{ marginTop: 20 }} color="white" />
+      ) : (
+        <FlatList
+          data={videos}
+          keyExtractor={item => item.id}
+          renderItem={renderItem}
+          pagingEnabled
+          showsVerticalScrollIndicator={false}
+          onViewableItemsChanged={onViewableItemsChanged.current}
+          viewabilityConfig={viewabilityConfig}
+          windowSize={3}
+          removeClippedSubviews
+          onEndReached={() => {
+            if (!loadingMore && hasMore) {
+              fetchVideos(videos.length, true);
+            }
+          }}
+          onEndReachedThreshold={0.5}
+          ListFooterComponent={loadingMore ? <ActivityIndicator color="white" /> : null}
+        />
+      )}
+
     </View>
   );
 }
