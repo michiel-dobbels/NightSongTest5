@@ -762,6 +762,9 @@ export default function ReplyDetailScreen() {
           })}
 
             <View style={[styles.post, styles.longReply]}>
+              {(originalPost || ancestors.length > 0) && (
+                <View style={styles.threadLine} pointerEvents="none" />
+              )}
               {user?.id === parent.user_id && (
                 <TouchableOpacity
                   onPress={() => confirmDeleteReply(parent.id)}
@@ -846,6 +849,9 @@ export default function ReplyDetailScreen() {
               }
             >
               <View style={[styles.reply, styles.longReply]}>
+                {item.parent_id && (
+                  <View style={styles.threadLine} pointerEvents="none" />
+                )}
                 {isMe && (
                   <TouchableOpacity
                     onPress={() => confirmDeleteReply(item.id)}
