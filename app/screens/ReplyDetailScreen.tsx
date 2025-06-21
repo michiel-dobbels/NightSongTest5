@@ -29,6 +29,8 @@ import useLike from '../hooks/useLike';
 import { postEvents } from '../postEvents';
 import { CONFIRM_ACTION } from '../constants/ui';
 import ReplyModal from '../components/ReplyModal';
+import useStoryAvailability from '../hooks/useStoryAvailability';
+import { useStories } from '../contexts/StoryContext';
 
 
 const CHILD_PREFIX = 'cached_child_replies_';
@@ -135,6 +137,12 @@ export default function ReplyDetailScreen() {
     postId: string;
     parentId: string | null;
   } | null>(null);
+  const { openUserStories } = useStories();
+  const storyMap = useStoryAvailability([
+    parent.user_id,
+    ...ancestors.map(a => a.user_id),
+    ...replies.map(r => r.user_id),
+  ]);
 
 
   const [keyboardOffset, setKeyboardOffset] = useState(0);
@@ -631,16 +639,21 @@ export default function ReplyDetailScreen() {
                 )}
                 <View style={styles.row}>
                   <TouchableOpacity
-                  onPress={() =>
-                    user?.id === originalPost.user_id
-                      ? navigation.navigate('Profile')
-                      : navigation.navigate('OtherUserProfile', {
-                          userId: originalPost.user_id,
-                        })
-                  }
+                    onPress={() =>
+                      storyMap[originalPost.user_id]
+                        ? openUserStories(originalPost.user_id)
+                        : user?.id === originalPost.user_id
+                        ? navigation.navigate('Profile')
+                        : navigation.navigate('OtherUserProfile', {
+                            userId: originalPost.user_id,
+                          })
+                    }
                   >
                     {user?.id === originalPost.user_id && profileImageUri ? (
-                      <Image source={{ uri: profileImageUri }} style={styles.avatar} />
+                      <Image
+                        source={{ uri: profileImageUri }}
+                        style={[styles.avatar, storyMap[originalPost.user_id] && styles.storyRing]}
+                      />
                     ) : (
                       <View style={[styles.avatar, styles.placeholder]} />
                     )}
@@ -710,7 +723,9 @@ export default function ReplyDetailScreen() {
                   <View style={styles.row}>
                     <TouchableOpacity
                       onPress={() =>
-                        isMe
+                        storyMap[a.user_id]
+                          ? openUserStories(a.user_id)
+                          : isMe
                           ? navigation.navigate('Profile')
                           : navigation.navigate('OtherUserProfile', {
                               userId: a.user_id,
@@ -718,7 +733,10 @@ export default function ReplyDetailScreen() {
                       }
                     >
                       {avatarUri ? (
-                        <Image source={{ uri: avatarUri }} style={styles.avatar} />
+                        <Image
+                          source={{ uri: avatarUri }}
+                          style={[styles.avatar, storyMap[a.user_id] && styles.storyRing]}
+                        />
                       ) : (
                         <View style={[styles.avatar, styles.placeholder]} />
                       )}
@@ -873,7 +891,9 @@ export default function ReplyDetailScreen() {
                 <View style={styles.row}>
                   <TouchableOpacity
                     onPress={() =>
-                      isMe
+                      storyMap[item.user_id]
+                        ? openUserStories(item.user_id)
+                        : isMe
                         ? navigation.navigate('Profile')
                         : navigation.navigate('OtherUserProfile', {
                             userId: item.user_id,
@@ -881,7 +901,10 @@ export default function ReplyDetailScreen() {
                     }
                   >
                     {avatarUri ? (
-                      <Image source={{ uri: avatarUri }} style={styles.avatar} />
+                      <Image
+                        source={{ uri: avatarUri }}
+                        style={[styles.avatar, storyMap[item.user_id] && styles.storyRing]}
+                      />
                     ) : (
                       <View style={[styles.avatar, styles.placeholder]} />
                     )}
@@ -975,6 +998,10 @@ const styles = StyleSheet.create({
     borderRadius: 24,
     marginRight: 8,
     zIndex: 1,
+  },
+  storyRing: {
+    borderWidth: 2,
+    borderColor: '#0a84ff',
   },
   placeholder: { backgroundColor: '#555' },
   reply: {
