@@ -41,6 +41,7 @@ export default function StoryViewer() {
       presentationStyle="fullScreen"
       onRequestClose={closeViewer}
     >
+
       <View style={styles.container} {...panResponder.panHandlers}>
         <TouchableOpacity style={styles.close} onPress={closeViewer}>
           <Text style={{ color: colors.text, fontSize: 18 }}>X</Text>
@@ -55,6 +56,7 @@ export default function StoryViewer() {
             {story.profiles?.name || story.profiles?.username || ''}
           </Text>
         </View>
+
         {story.media_type === 'image' ? (
           <Image source={{ uri: story.media_url }} style={styles.media} resizeMode="contain" />
         ) : (
@@ -74,6 +76,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: colors.background,
+
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -121,4 +124,5 @@ const styles = StyleSheet.create({
   },
   infoName: { color: colors.text, fontSize: 16 },
   placeholder: { backgroundColor: '#555' },
+
 });

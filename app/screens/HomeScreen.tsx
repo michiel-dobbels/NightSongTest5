@@ -86,6 +86,7 @@ const HomeScreen = forwardRef<HomeScreenRef, { hideInput?: boolean }>(
   const storyMap = useStoryAvailability(posts.map(p => p.user_id));
 
 
+
   if (!user || !profile) {
     return (
       <View style={styles.container}>
@@ -612,6 +613,10 @@ const styles = StyleSheet.create({
     marginBottom: 10,
     borderRadius: 5,
   },
+  storyRow: { flexDirection: 'row', marginBottom: 10 },
+  storyItem: { marginRight: 10 },
+  storyAvatar: { width: 56, height: 56, borderRadius: 28 },
+  storyRing: { borderWidth: 2, borderColor: '#0a84ff' },
   searchContainer: {
     flex: 1,
     backgroundColor: colors.background,

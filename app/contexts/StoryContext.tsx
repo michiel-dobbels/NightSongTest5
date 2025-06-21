@@ -15,6 +15,7 @@ export interface Story {
     name: string | null;
     image_url: string | null;
   } | null;
+
 }
 
 interface StoryContextValue {
@@ -41,6 +42,7 @@ export const StoryProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     const { data, error } = await supabase
       .from('stories')
       .select('*, profiles(username, name, image_url)')
+
       .eq('user_id', userId)
       .gt('expires_at', new Date().toISOString())
       .order('created_at', { ascending: true });

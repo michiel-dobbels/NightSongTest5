@@ -12,6 +12,7 @@ export default function StoryAvatarRow() {
   const [users, setUsers] = useState<any[]>([]);
   const [hasMyStory, setHasMyStory] = useState(false);
 
+
   useEffect(() => {
     const load = async () => {
       const { data } = await supabase
@@ -24,6 +25,7 @@ export default function StoryAvatarRow() {
         let mine = false;
         data.forEach((s: any) => {
           if (s.user_id === profile?.id) mine = true;
+
           if (!seen.has(s.user_id)) {
             arr.push(s);
             seen.add(s.user_id);
@@ -31,6 +33,7 @@ export default function StoryAvatarRow() {
         });
         setUsers(arr);
         setHasMyStory(mine);
+
       }
     };
     load();
@@ -52,6 +55,7 @@ export default function StoryAvatarRow() {
             source={{ uri: profileImageUri }}
             style={[styles.avatar, hasMyStory && styles.ring]}
           />
+
         ) : (
           <View style={[styles.avatar, styles.placeholder]} />
         )}
