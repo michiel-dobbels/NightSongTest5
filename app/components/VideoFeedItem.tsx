@@ -81,6 +81,7 @@ const styles = StyleSheet.create({
   muteButton: {
     position: 'absolute',
     bottom: 120,
+
     right: 20,
     backgroundColor: 'rgba(0,0,0,0.5)',
     padding: 10,
