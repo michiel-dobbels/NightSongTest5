@@ -38,6 +38,7 @@ import { colors } from './styles/colors';
 import * as ImagePicker from 'expo-image-picker';
 import * as FileSystem from 'expo-file-system';
 import { Video } from 'expo-av';
+import StoryAvatarRow from './components/StoryAvatarRow';
 
 
 const Tab = createMaterialTopTabNavigator();
@@ -84,6 +85,7 @@ function HeaderTabBar(
         <Button title="Profile" onPress={onProfile} />
         <Button title="Logout" onPress={signOut} />
       </View>
+      <StoryAvatarRow />
       <MaterialTopTabBar
         {...barProps}
         style={[barProps.style, styles.blurredBar]}
@@ -282,6 +284,10 @@ export default function TopTabsNavigator() {
               <View style={styles.buttonRow}>
                 <Button title="Add Image" onPress={pickImage} />
                 <Button title="Add Video" onPress={pickVideo} />
+                <Button title="Add Story" onPress={() => {
+                  setModalVisible(false);
+                  navigation.navigate('CreateStory');
+                }} />
                 <Button title="Post" onPress={handleModalPost} />
               </View>
               <Button title="Cancel" onPress={() => setModalVisible(false)} />
