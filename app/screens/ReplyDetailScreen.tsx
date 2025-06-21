@@ -612,7 +612,10 @@ export default function ReplyDetailScreen() {
           <>
               {originalPost && (
                 <View style={[styles.post, styles.longReply]}>
-                  <View style={styles.threadLine} pointerEvents="none" />
+                  <View
+                    style={[styles.threadLine, styles.threadLineStartMid]}
+                    pointerEvents="none"
+                  />
                   {user?.id === originalPost.user_id && (
                     <TouchableOpacity
                       onPress={() => confirmDeletePost(originalPost.id)}
@@ -993,6 +996,9 @@ const styles = StyleSheet.create({
     backgroundColor: colors.accent,
     zIndex: 0,
 
+  },
+  threadLineStartMid: {
+    top: 34,
   },
   threadLineEnd: {
     position: 'absolute',
