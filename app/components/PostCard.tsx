@@ -4,6 +4,7 @@ import { Video } from 'expo-av';
 import useLike from '../hooks/useLike';
 import { Ionicons } from '@expo/vector-icons';
 import { colors } from '../styles/colors';
+import StoryAvatar from './StoryAvatar';
 
 export interface Post {
   id: string;
@@ -106,17 +107,12 @@ function PostCard({
           </TouchableOpacity>
         )}
         <View style={styles.row}>
-          <TouchableOpacity
-            onPress={e => {
-              e.stopPropagation();
-              onProfilePress();
-            }}
-          >
-            {finalAvatarUri ? (
-              <Image source={{ uri: finalAvatarUri }} style={styles.avatar} />
-            ) : (
-              <View style={[styles.avatar, styles.placeholder]} />
-            )}
+          <TouchableOpacity onPress={e => e.stopPropagation()}>
+            <StoryAvatar
+              userId={post.user_id}
+              uri={finalAvatarUri}
+              onFallbackPress={onProfilePress}
+            />
           </TouchableOpacity>
           <View style={{ flex: 1 }}>
             <View style={styles.headerRow}>
