@@ -2,7 +2,8 @@ import React, { Suspense } from 'react';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { Ionicons } from '@expo/vector-icons';
-import { Dimensions } from 'react-native';
+import { Dimensions, StyleSheet } from 'react-native';
+import { BlurView } from 'expo-blur';
 import { colors } from '../app/styles/colors';
 
 import TopTabsNavigator from '../app/TopTabsNavigator';
@@ -65,7 +66,7 @@ export default function BottomTabsNavigator() {
           bottom: 0,
           height: height * 0.1,
           width: '100%',
-          backgroundColor: 'rgba(44,44,84,0.9)',
+          backgroundColor: 'rgba(29,21,43,0.6)',
           borderTopWidth: 0,
           elevation: 5,
           shadowColor: '#000',
@@ -73,6 +74,13 @@ export default function BottomTabsNavigator() {
           shadowOpacity: 0.2,
           shadowRadius: 4,
         },
+        tabBarBackground: () => (
+          <BlurView
+            tint="dark"
+            intensity={25}
+            style={StyleSheet.absoluteFill}
+          />
+        ),
         tabBarActiveTintColor: colors.accent,
         tabBarIcon: ({ focused, color, size }) => {
           let iconName = 'home-outline';
