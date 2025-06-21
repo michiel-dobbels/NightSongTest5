@@ -240,7 +240,7 @@ const styles = StyleSheet.create({
   },
   threadLine: {
     position: 'absolute',
-    left: 26,
+    left: 34,
     top: 0,
     bottom: -10,
     width: 2,
@@ -249,7 +249,8 @@ const styles = StyleSheet.create({
   },
   threadLineEnd: {
     position: 'absolute',
-    left: 26,
+    left: 34,
+
     top: 0,
     height: 48,
     width: 2,
