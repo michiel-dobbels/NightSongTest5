@@ -45,5 +45,10 @@
     "@types/react-native": "^0.72.8",
     "typescript": "~5.8.3"
   },
-  "private": true
+  "private": true,
+  "overrides": {
+    "react-native-stories-view": {
+      "react": "^19.0.0"
+    }
+  }
 }
