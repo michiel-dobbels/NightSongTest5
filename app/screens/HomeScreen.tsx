@@ -84,28 +84,7 @@ const HomeScreen = forwardRef<HomeScreenRef, { hideInput?: boolean }>(
   const [searchResults, setSearchResults] = useState<SearchItem[]>([]);
   const { openUserStories } = useStories();
   const storyMap = useStoryAvailability(posts.map(p => p.user_id));
-  const [activeStoryUsers, setActiveStoryUsers] = useState<any[]>([]);
 
-  useEffect(() => {
-    const load = async () => {
-      const { data } = await supabase
-        .from('stories')
-        .select('user_id, profiles(username, name, image_url)')
-        .gt('expires_at', new Date().toISOString());
-      if (data) {
-        const seen = new Set();
-        const arr: any[] = [];
-        data.forEach(s => {
-          if (!seen.has(s.user_id)) {
-            arr.push(s);
-            seen.add(s.user_id);
-          }
-        });
-        setActiveStoryUsers(arr);
-      }
-    };
-    load();
-  }, []);
 
 
   if (!user || !profile) {
@@ -490,39 +469,7 @@ const HomeScreen = forwardRef<HomeScreenRef, { hideInput?: boolean }>(
       ) : (
         <FlatList
           ref={listRef}
-          ListHeaderComponent={() => (
-            <View style={styles.storyRow}>
-              <TouchableOpacity
-                onPress={() => navigation.navigate('CreateStory')}
-                style={styles.storyItem}
-              >
-                {profileImageUri ? (
-                  <Image
-                    source={{ uri: profileImageUri }}
-                    style={styles.storyAvatar}
-                  />
-                ) : (
-                  <View style={[styles.storyAvatar, styles.placeholder]} />
-                )}
-              </TouchableOpacity>
-              {activeStoryUsers.map(u => (
-                <TouchableOpacity
-                  key={u.user_id}
-                  onPress={() => openUserStories(u.user_id)}
-                  style={styles.storyItem}
-                >
-                  {u.profiles?.image_url ? (
-                    <Image
-                      source={{ uri: u.profiles.image_url }}
-                      style={[styles.storyAvatar, styles.storyRing]}
-                    />
-                  ) : (
-                    <View style={[styles.storyAvatar, styles.placeholder]} />
-                  )}
-                </TouchableOpacity>
-              ))}
-            </View>
-          )}
+
           data={posts}
           keyExtractor={item => item.id}
           style={{ flex: 1 }}
