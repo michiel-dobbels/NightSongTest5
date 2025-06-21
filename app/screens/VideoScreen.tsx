@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { View, StyleSheet, FlatList, ViewToken, ActivityIndicator } from 'react-native';
+
 import * as FileSystem from 'expo-file-system';
 
 import VideoFeedItem, { FeedVideo } from '../components/VideoFeedItem';
@@ -24,6 +25,7 @@ const dedupeById = (arr: FeedVideo[]): FeedVideo[] => {
   return result;
 };
 
+
 export default function VideoScreen() {
   const [videos, setVideos] = useState<FeedVideo[]>([]);
   const [cached, setCached] = useState<CachedMap>({});
@@ -32,6 +34,7 @@ export default function VideoScreen() {
   const [loading, setLoading] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
   const [hasMore, setHasMore] = useState(true);
+
 
   const viewabilityConfig = { viewAreaCoveragePercentThreshold: 80 };
   const onViewableItemsChanged = useRef(({ viewableItems }: { viewableItems: Array<ViewToken> }) => {
@@ -85,6 +88,7 @@ export default function VideoScreen() {
   useEffect(() => {
     fetchVideos(0, false);
   }, [fetchVideos]);
+
 
   const prefetch = useCallback(
     async (url: string) => {
@@ -147,6 +151,7 @@ export default function VideoScreen() {
           ListFooterComponent={loadingMore ? <ActivityIndicator color="white" /> : null}
         />
       )}
+
     </View>
   );
 }
