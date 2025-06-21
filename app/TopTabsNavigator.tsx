@@ -38,6 +38,7 @@ import { colors } from './styles/colors';
 import * as ImagePicker from 'expo-image-picker';
 import * as FileSystem from 'expo-file-system';
 import { Video } from 'expo-av';
+import StoryAvatarRow from './components/StoryAvatarRow';
 
 
 const Tab = createMaterialTopTabNavigator();
@@ -84,6 +85,7 @@ function HeaderTabBar(
         <Button title="Profile" onPress={onProfile} />
         <Button title="Logout" onPress={signOut} />
       </View>
+      <StoryAvatarRow />
       <MaterialTopTabBar
         {...barProps}
         style={[barProps.style, styles.blurredBar]}
@@ -258,6 +260,13 @@ export default function TopTabsNavigator() {
           <Text style={{ color: colors.text, fontSize: 24 }}>+</Text>
         </TouchableOpacity>
 
+        <TouchableOpacity
+          onPress={() => navigation.navigate('CreateStory')}
+          style={styles.storyFab}
+        >
+          <Text style={{ color: colors.text, fontSize: 24 }}>+</Text>
+        </TouchableOpacity>
+
         <Modal visible={modalVisible} animationType="slide" transparent>
           <View style={styles.modalOverlay}>
             <View style={styles.modalContent}>
@@ -282,6 +291,10 @@ export default function TopTabsNavigator() {
               <View style={styles.buttonRow}>
                 <Button title="Add Image" onPress={pickImage} />
                 <Button title="Add Video" onPress={pickVideo} />
+                <Button title="Add Story" onPress={() => {
+                  setModalVisible(false);
+                  navigation.navigate('CreateStory');
+                }} />
                 <Button title="Post" onPress={handleModalPost} />
               </View>
               <Button title="Cancel" onPress={() => setModalVisible(false)} />
@@ -351,6 +364,18 @@ const styles = StyleSheet.create({
     width: 56,
     height: 56,
     borderRadius: 28,
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 100,
+  },
+  storyFab: {
+    position: 'absolute',
+    bottom: FAB_BOTTOM_OFFSET + 70,
+    right: 20,
+    backgroundColor: colors.accent,
+    width: 48,
+    height: 48,
+    borderRadius: 24,
     justifyContent: 'center',
     alignItems: 'center',
     zIndex: 100,

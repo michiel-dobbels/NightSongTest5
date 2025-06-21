@@ -16,6 +16,7 @@ import {
   Button,
   Alert,
   Image,
+  TouchableOpacity,
   Modal,
   KeyboardAvoidingView,
   Platform,
@@ -29,6 +30,8 @@ import {
 } from '../../lib/supabase';
 import { uploadImage } from '../../lib/uploadImage';
 import ReplyModal from '../components/ReplyModal';
+import useStoryAvailability from '../hooks/useStoryAvailability';
+import { useStories } from '../contexts/StoryContext';
 
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -79,6 +82,8 @@ const HomeScreen = forwardRef<HomeScreenRef, { hideInput?: boolean }>(
   const [searchVisible, setSearchVisible] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState<SearchItem[]>([]);
+  const { openUserStories } = useStories();
+  const storyMap = useStoryAvailability(posts.map(p => p.user_id));
 
 
   if (!user || !profile) {
@@ -463,7 +468,6 @@ const HomeScreen = forwardRef<HomeScreenRef, { hideInput?: boolean }>(
       ) : (
         <FlatList
           ref={listRef}
-
           data={posts}
           keyExtractor={item => item.id}
           style={{ flex: 1 }}
@@ -488,7 +492,6 @@ const HomeScreen = forwardRef<HomeScreenRef, { hideInput?: boolean }>(
                 imageUrl={item.image_url ?? undefined}
                 videoUrl={item.video_url ?? undefined}
                 replyCount={item.reply_count ?? 0}
-                onLike={() => handleLike(item.id)}
                 onPress={() => navigation.navigate('PostDetail', { post: item })}
                 onProfilePress={() =>
                   isMe
@@ -497,6 +500,8 @@ const HomeScreen = forwardRef<HomeScreenRef, { hideInput?: boolean }>(
                 }
                 onDelete={() => confirmDeletePost(item.id)}
                 onOpenReplies={() => openReplyModal(item.id)}
+                hasStory={!!storyMap[item.user_id]}
+                onAvatarPress={storyMap[item.user_id] ? () => openUserStories(item.user_id) : undefined}
               />
             );
           }}
@@ -575,7 +580,6 @@ const HomeScreen = forwardRef<HomeScreenRef, { hideInput?: boolean }>(
                     imageUrl={post.image_url ?? undefined}
                     videoUrl={post.video_url ?? undefined}
                     replyCount={post.reply_count ?? 0}
-                    onLike={() => handleLike(post.id)}
                     onPress={() => navigation.navigate('PostDetail', { post })}
                     onProfilePress={() =>
                       isMe
@@ -584,6 +588,8 @@ const HomeScreen = forwardRef<HomeScreenRef, { hideInput?: boolean }>(
                     }
                     onDelete={() => {}}
                     onOpenReplies={() => {}}
+                    hasStory={!!storyMap[post.user_id]}
+                    onAvatarPress={storyMap[post.user_id] ? () => openUserStories(post.user_id) : undefined}
                   />
                 );
               }}
