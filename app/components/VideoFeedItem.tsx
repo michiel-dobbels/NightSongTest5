@@ -66,7 +66,7 @@ const styles = StyleSheet.create({
   },
   infoContainer: {
     position: 'absolute',
-    bottom: 80,
+    bottom: 140,
     left: 10,
     paddingRight: 80,
   },
@@ -80,7 +80,7 @@ const styles = StyleSheet.create({
   },
   muteButton: {
     position: 'absolute',
-    bottom: 20,
+    bottom: 80,
     right: 20,
     backgroundColor: 'rgba(0,0,0,0.5)',
     padding: 10,
