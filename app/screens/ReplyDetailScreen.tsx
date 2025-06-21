@@ -18,6 +18,7 @@ import { Video } from 'expo-av';
 import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useRoute, useNavigation } from '@react-navigation/native';
+import { useStory } from '../contexts/StoryContext';
 
 import { supabase, REPLY_VIDEO_BUCKET } from '../../lib/supabase';
 import { uploadImage } from '../../lib/uploadImage';
@@ -119,6 +120,7 @@ export default function ReplyDetailScreen() {
     removePost,
   } = useAuth()!;
   const { initialize, remove } = usePostStore();
+  const { openUserStories } = useStory();
   const parent = route.params.reply as Reply;
   const originalPost = route.params.originalPost as Post | undefined;
   const ancestors = (route.params.ancestors as Reply[]) || [];
@@ -136,8 +138,19 @@ export default function ReplyDetailScreen() {
     parentId: string | null;
   } | null>(null);
 
+  const [storyMap, setStoryMap] = useState<Record<string, boolean>>({});
+
 
   const [keyboardOffset, setKeyboardOffset] = useState(0);
+
+  const handleAvatarPress = async (userId: string, isMe: boolean) => {
+    const opened = await openUserStories(userId);
+    if (!opened) {
+      isMe
+        ? navigation.navigate('Profile')
+        : navigation.navigate('OtherUserProfile', { userId });
+    }
+  };
 
   const confirmDeletePost = (id: string) => {
     Alert.alert('Delete Post', 'Are you sure you want to delete this post?', [
@@ -576,6 +589,30 @@ export default function ReplyDetailScreen() {
   }, [refreshCounts, fetchReplies]);
 
   useEffect(() => {
+    const ids = new Set<string>();
+    ids.add(parent.user_id);
+    if (originalPost) ids.add(originalPost.user_id);
+    ancestors.forEach(a => ids.add(a.user_id));
+    replies.forEach(r => ids.add(r.user_id));
+    const fetchStories = async () => {
+      const since = new Date(Date.now() - 5 * 60 * 1000).toISOString();
+      const { data } = await supabase
+        .from('stories')
+        .select('user_id')
+        .gt('created_at', since)
+        .in('user_id', Array.from(ids));
+      if (data) {
+        const map: Record<string, boolean> = {};
+        data.forEach(d => {
+          map[d.user_id] = true;
+        });
+        setStoryMap(map);
+      }
+    };
+    fetchStories();
+  }, [replies]);
+
+  useEffect(() => {
     const show = Keyboard.addListener(
       Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow',
       e => setKeyboardOffset(e.endCoordinates.height),
@@ -631,16 +668,18 @@ export default function ReplyDetailScreen() {
                 )}
                 <View style={styles.row}>
                   <TouchableOpacity
-                  onPress={() =>
-                    user?.id === originalPost.user_id
-                      ? navigation.navigate('Profile')
-                      : navigation.navigate('OtherUserProfile', {
-                          userId: originalPost.user_id,
-                        })
-                  }
+                    onPress={() =>
+                      handleAvatarPress(
+                        originalPost.user_id,
+                        user?.id === originalPost.user_id,
+                      )
+                    }
                   >
                     {user?.id === originalPost.user_id && profileImageUri ? (
-                      <Image source={{ uri: profileImageUri }} style={styles.avatar} />
+                      <Image
+                        source={{ uri: profileImageUri }}
+                        style={[styles.avatar, storyMap[originalPost.user_id] && styles.storyRing]}
+                      />
                     ) : (
                       <View style={[styles.avatar, styles.placeholder]} />
                     )}
@@ -709,16 +748,13 @@ export default function ReplyDetailScreen() {
                   )}
                   <View style={styles.row}>
                     <TouchableOpacity
-                      onPress={() =>
-                        isMe
-                          ? navigation.navigate('Profile')
-                          : navigation.navigate('OtherUserProfile', {
-                              userId: a.user_id,
-                            })
-                      }
+                      onPress={() => handleAvatarPress(a.user_id, isMe)}
                     >
                       {avatarUri ? (
-                        <Image source={{ uri: avatarUri }} style={styles.avatar} />
+                        <Image
+                          source={{ uri: avatarUri }}
+                          style={[styles.avatar, storyMap[a.user_id] && styles.storyRing]}
+                        />
                       ) : (
                         <View style={[styles.avatar, styles.placeholder]} />
                       )}
@@ -781,15 +817,14 @@ export default function ReplyDetailScreen() {
               <View style={styles.row}>
                 <TouchableOpacity
                   onPress={() =>
-                    user?.id === parent.user_id
-                      ? navigation.navigate('Profile')
-                      : navigation.navigate('OtherUserProfile', {
-                          userId: parent.user_id,
-                        })
+                    handleAvatarPress(parent.user_id, user?.id === parent.user_id)
                   }
                 >
                   {user?.id === parent.user_id && profileImageUri ? (
-                    <Image source={{ uri: profileImageUri }} style={styles.avatar} />
+                    <Image
+                      source={{ uri: profileImageUri }}
+                      style={[styles.avatar, storyMap[parent.user_id] && styles.storyRing]}
+                    />
                   ) : (
                     <View style={[styles.avatar, styles.placeholder]} />
                   )}
@@ -872,16 +907,13 @@ export default function ReplyDetailScreen() {
                 )}
                 <View style={styles.row}>
                   <TouchableOpacity
-                    onPress={() =>
-                      isMe
-                        ? navigation.navigate('Profile')
-                        : navigation.navigate('OtherUserProfile', {
-                            userId: item.user_id,
-                          })
-                    }
+                    onPress={() => handleAvatarPress(item.user_id, isMe)}
                   >
                     {avatarUri ? (
-                      <Image source={{ uri: avatarUri }} style={styles.avatar} />
+                      <Image
+                        source={{ uri: avatarUri }}
+                        style={[styles.avatar, storyMap[item.user_id] && styles.storyRing]}
+                      />
                     ) : (
                       <View style={[styles.avatar, styles.placeholder]} />
                     )}
@@ -975,6 +1007,10 @@ const styles = StyleSheet.create({
     borderRadius: 24,
     marginRight: 8,
     zIndex: 1,
+  },
+  storyRing: {
+    borderWidth: 2,
+    borderColor: '#0a84ff',
   },
   placeholder: { backgroundColor: '#555' },
   reply: {

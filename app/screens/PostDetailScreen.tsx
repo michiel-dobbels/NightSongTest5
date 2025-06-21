@@ -29,6 +29,7 @@ import { postEvents } from '../postEvents';
 import PostCard, { Post } from '../components/PostCard';
 import { CONFIRM_ACTION } from '../constants/ui';
 import ReplyModal from '../components/ReplyModal';
+import { useStory } from '../contexts/StoryContext';
 
 const REPLY_STORAGE_PREFIX = 'cached_replies_';
 const COUNT_STORAGE_KEY = 'cached_reply_counts';
@@ -72,6 +73,7 @@ export default function PostDetailScreen() {
     removePost,
   } = useAuth()!;
   const { initialize, remove } = usePostStore();
+  const { openUserStories } = useStory();
   const post = route.params.post as Post;
   const fromProfile = route.params?.fromProfile ?? false;
 
@@ -86,6 +88,8 @@ export default function PostDetailScreen() {
     postId: string;
     parentId: string | null;
   } | null>(null);
+
+  const [storyMap, setStoryMap] = useState<Record<string, boolean>>({});
 
 
   const [keyboardOffset, setKeyboardOffset] = useState(0);
@@ -308,6 +312,28 @@ export default function PostDetailScreen() {
     refreshCounts();
     fetchReplies();
   }, [refreshCounts, fetchReplies]);
+
+  useEffect(() => {
+    const ids = new Set<string>();
+    ids.add(post.user_id);
+    replies.forEach(r => ids.add(r.user_id));
+    const fetchStories = async () => {
+      const since = new Date(Date.now() - 5 * 60 * 1000).toISOString();
+      const { data } = await supabase
+        .from('stories')
+        .select('user_id')
+        .gt('created_at', since)
+        .in('user_id', Array.from(ids));
+      if (data) {
+        const map: Record<string, boolean> = {};
+        data.forEach(d => {
+          map[d.user_id] = true;
+        });
+        setStoryMap(map);
+      }
+    };
+    fetchStories();
+  }, [replies]);
 
   useEffect(() => {
     const loadCached = async () => {
@@ -579,6 +605,7 @@ export default function PostDetailScreen() {
             bannerUrl={user?.id === post.user_id ? undefined : post.profiles?.banner_url || undefined}
             imageUrl={post.image_url ?? undefined}
             videoUrl={post.video_url ?? undefined}
+            hasStory={storyMap[post.user_id]}
             replyCount={replyCounts[post.id] || 0}
             onPress={() => {}}
             onProfilePress={() =>
@@ -588,7 +615,16 @@ export default function PostDetailScreen() {
                     userId: post.user_id,
                   })
             }
-            
+
+            onAvatarPress={async () => {
+              const opened = await openUserStories(post.user_id);
+              if (!opened) {
+                user?.id === post.user_id
+                  ? navigation.navigate('Profile')
+                  : navigation.navigate('OtherUserProfile', { userId: post.user_id });
+              }
+            }}
+
             onDelete={() => confirmDeletePost(post.id)}
             onOpenReplies={() => openQuickReplyModal(post.id, null)}
           />
@@ -610,6 +646,7 @@ export default function PostDetailScreen() {
               bannerUrl={item.profiles?.banner_url || undefined}
               imageUrl={item.image_url ?? undefined}
               videoUrl={item.video_url ?? undefined}
+              hasStory={storyMap[item.user_id]}
               replyCount={replyCounts[item.id] || 0}
               onPress={() =>
                 navigation.push('ReplyDetail', {
@@ -625,6 +662,14 @@ export default function PostDetailScreen() {
                       userId: item.user_id,
                     })
               }
+              onAvatarPress={async () => {
+                const opened = await openUserStories(item.user_id);
+                if (!opened) {
+                  isMe
+                    ? navigation.navigate('Profile')
+                    : navigation.navigate('OtherUserProfile', { userId: item.user_id });
+                }
+              }}
               onDelete={() => confirmDeleteReply(item.id)}
               onOpenReplies={() => openQuickReplyModal(post.id, item.id)}
             />

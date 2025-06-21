@@ -58,6 +58,10 @@ export interface PostCardProps {
    * rather than extending to the bottom of the card.
    */
   isLastInThread?: boolean;
+  /** Show a blue ring if the user has an active story */
+  hasStory?: boolean;
+  /** Called when avatar is pressed. Defaults to onProfilePress */
+  onAvatarPress?: () => void;
 }
 
 function PostCard({
@@ -74,6 +78,8 @@ function PostCard({
   onOpenReplies,
   showThreadLine = false,
   isLastInThread = false,
+  hasStory = false,
+  onAvatarPress,
 }: PostCardProps) {
   const displayName = post.profiles?.name || post.profiles?.username || post.username;
   const userName = post.profiles?.username || post.username;
@@ -109,11 +115,14 @@ function PostCard({
           <TouchableOpacity
             onPress={e => {
               e.stopPropagation();
-              onProfilePress();
+              (onAvatarPress || onProfilePress)();
             }}
           >
             {finalAvatarUri ? (
-              <Image source={{ uri: finalAvatarUri }} style={styles.avatar} />
+              <Image
+                source={{ uri: finalAvatarUri }}
+                style={[styles.avatar, hasStory && styles.storyRing]}
+              />
             ) : (
               <View style={[styles.avatar, styles.placeholder]} />
             )}
@@ -194,6 +203,10 @@ const styles = StyleSheet.create({
     borderRadius: 24,
     marginRight: 8,
     zIndex: 1,
+  },
+  storyRing: {
+    borderWidth: 2,
+    borderColor: '#0a84ff',
   },
   placeholder: { backgroundColor: '#555' },
   deleteButton: {

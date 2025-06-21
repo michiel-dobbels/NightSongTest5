@@ -37,6 +37,7 @@
     "util": "^0.12.5",
     "expo-file-system": "~18.1.10",
     "expo-linear-gradient": "~14.1.5"
+    ,"react-native-stories-view": "^1.4.0"
   },
   "devDependencies": {
     "@babel/core": "^7.25.2",
