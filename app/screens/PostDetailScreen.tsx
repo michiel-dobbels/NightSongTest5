@@ -20,6 +20,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useRoute, useNavigation } from '@react-navigation/native';
 
 import { supabase, REPLY_VIDEO_BUCKET } from '../../lib/supabase';
+import { uploadImage } from '../../lib/uploadImage';
 import { getLikeCounts } from '../../lib/getLikeCounts';
 import { useAuth } from '../../AuthContext';
 import { colors } from '../styles/colors';
@@ -472,6 +473,7 @@ export default function PostDetailScreen() {
     setReplyVideo(null);
 
     let uploadedUrl = null;
+    let uploadedImage = null;
     if (replyVideo) {
       try {
         const ext = replyVideo.split('.').pop() || 'mp4';
@@ -493,6 +495,13 @@ export default function PostDetailScreen() {
       }
     }
 
+    if (replyImage && !replyImage.startsWith('http')) {
+      uploadedImage = await uploadImage(replyImage, user.id);
+      if (!uploadedImage) uploadedImage = replyImage;
+    } else if (replyImage) {
+      uploadedImage = replyImage;
+    }
+
     let { data, error } = await supabase
 
         .from('replies')
@@ -502,7 +511,7 @@ export default function PostDetailScreen() {
             parent_id: null,
             user_id: user.id,
             content: replyText,
-            image_url: replyImage,
+            image_url: uploadedImage,
             video_url: uploadedUrl,
             username: profile.name || profile.username,
           },
