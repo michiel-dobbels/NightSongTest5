@@ -30,7 +30,7 @@ export default function VideoScreen() {
   const [videos, setVideos] = useState<FeedVideo[]>([]);
   const [cached, setCached] = useState<CachedMap>({});
   const [currentIndex, setCurrentIndex] = useState(0);
-  const [muted, setMuted] = useState(true);
+  const [muted, setMuted] = useState(false);
   const [loading, setLoading] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
   const [hasMore, setHasMore] = useState(true);
