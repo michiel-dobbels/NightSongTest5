@@ -255,6 +255,7 @@ const styles = StyleSheet.create({
     width: 2,
     backgroundColor: colors.accent,
     zIndex: 0,
+
   },
 });
 
