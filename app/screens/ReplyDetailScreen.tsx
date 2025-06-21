@@ -29,6 +29,7 @@ import useLike from '../hooks/useLike';
 import { postEvents } from '../postEvents';
 import { CONFIRM_ACTION } from '../constants/ui';
 import ReplyModal from '../components/ReplyModal';
+import StoryAvatar from '../components/StoryAvatar';
 
 
 const CHILD_PREFIX = 'cached_child_replies_';
@@ -630,21 +631,15 @@ export default function ReplyDetailScreen() {
                   </TouchableOpacity>
                 )}
                 <View style={styles.row}>
-                  <TouchableOpacity
-                  onPress={() =>
-                    user?.id === originalPost.user_id
-                      ? navigation.navigate('Profile')
-                      : navigation.navigate('OtherUserProfile', {
-                          userId: originalPost.user_id,
-                        })
-                  }
-                  >
-                    {user?.id === originalPost.user_id && profileImageUri ? (
-                      <Image source={{ uri: profileImageUri }} style={styles.avatar} />
-                    ) : (
-                      <View style={[styles.avatar, styles.placeholder]} />
-                    )}
-                  </TouchableOpacity>
+                  <StoryAvatar
+                    userId={originalPost.user_id}
+                    uri={user?.id === originalPost.user_id ? profileImageUri ?? undefined : originalPost.profiles?.image_url ?? undefined}
+                    onFallbackPress={() =>
+                      user?.id === originalPost.user_id
+                        ? navigation.navigate('Profile')
+                        : navigation.navigate('OtherUserProfile', { userId: originalPost.user_id })
+                    }
+                  />
 
                   <View style={{ flex: 1 }}>
                     <View style={styles.headerRow}>
@@ -708,21 +703,15 @@ export default function ReplyDetailScreen() {
                     </TouchableOpacity>
                   )}
                   <View style={styles.row}>
-                    <TouchableOpacity
-                      onPress={() =>
+                    <StoryAvatar
+                      userId={a.user_id}
+                      uri={avatarUri ?? undefined}
+                      onFallbackPress={() =>
                         isMe
                           ? navigation.navigate('Profile')
-                          : navigation.navigate('OtherUserProfile', {
-                              userId: a.user_id,
-                            })
+                          : navigation.navigate('OtherUserProfile', { userId: a.user_id })
                       }
-                    >
-                      {avatarUri ? (
-                        <Image source={{ uri: avatarUri }} style={styles.avatar} />
-                      ) : (
-                        <View style={[styles.avatar, styles.placeholder]} />
-                      )}
-                    </TouchableOpacity>
+                    />
 
                     <View style={{ flex: 1 }}>
                     <View style={styles.headerRow}>
@@ -779,21 +768,15 @@ export default function ReplyDetailScreen() {
                 </TouchableOpacity>
               )}
               <View style={styles.row}>
-                <TouchableOpacity
-                  onPress={() =>
+                <StoryAvatar
+                  userId={parent.user_id}
+                  uri={user?.id === parent.user_id ? profileImageUri ?? undefined : parent.profiles?.image_url ?? undefined}
+                  onFallbackPress={() =>
                     user?.id === parent.user_id
                       ? navigation.navigate('Profile')
-                      : navigation.navigate('OtherUserProfile', {
-                          userId: parent.user_id,
-                        })
+                      : navigation.navigate('OtherUserProfile', { userId: parent.user_id })
                   }
-                >
-                  {user?.id === parent.user_id && profileImageUri ? (
-                    <Image source={{ uri: profileImageUri }} style={styles.avatar} />
-                  ) : (
-                    <View style={[styles.avatar, styles.placeholder]} />
-                  )}
-                </TouchableOpacity>
+                />
 
                 <View style={{ flex: 1 }}>
                   <View style={styles.headerRow}>
@@ -871,21 +854,15 @@ export default function ReplyDetailScreen() {
                   </TouchableOpacity>
                 )}
                 <View style={styles.row}>
-                  <TouchableOpacity
-                    onPress={() =>
+                  <StoryAvatar
+                    userId={item.user_id}
+                    uri={avatarUri ?? undefined}
+                    onFallbackPress={() =>
                       isMe
                         ? navigation.navigate('Profile')
-                        : navigation.navigate('OtherUserProfile', {
-                            userId: item.user_id,
-                          })
+                        : navigation.navigate('OtherUserProfile', { userId: item.user_id })
                     }
-                  >
-                    {avatarUri ? (
-                      <Image source={{ uri: avatarUri }} style={styles.avatar} />
-                    ) : (
-                      <View style={[styles.avatar, styles.placeholder]} />
-                    )}
-                  </TouchableOpacity>
+                  />
 
                   <View style={{ flex: 1 }}>
                     <View style={styles.headerRow}>

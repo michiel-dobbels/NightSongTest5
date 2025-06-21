@@ -29,6 +29,7 @@ import {
 } from '../../lib/supabase';
 import { uploadImage } from '../../lib/uploadImage';
 import ReplyModal from '../components/ReplyModal';
+import StoryUploadModal from '../components/StoryUploadModal';
 
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -79,6 +80,7 @@ const HomeScreen = forwardRef<HomeScreenRef, { hideInput?: boolean }>(
   const [searchVisible, setSearchVisible] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState<SearchItem[]>([]);
+  const [storyVisible, setStoryVisible] = useState(false);
 
 
   if (!user || !profile) {
@@ -465,6 +467,12 @@ const HomeScreen = forwardRef<HomeScreenRef, { hideInput?: boolean }>(
           ref={listRef}
 
           data={posts}
+          ListHeaderComponent={() => (
+            <View style={styles.storiesPlaceholder}>
+              <Text style={styles.storiesPlaceholderText}>Stories coming soon...</Text>
+              <Button title="Add Story" onPress={() => setStoryVisible(true)} />
+            </View>
+          )}
           keyExtractor={item => item.id}
           style={{ flex: 1 }}
           contentContainerStyle={{ paddingBottom: 20 }}
@@ -511,6 +519,7 @@ const HomeScreen = forwardRef<HomeScreenRef, { hideInput?: boolean }>(
         onSubmit={handleReplySubmit}
         onClose={() => setReplyModalVisible(false)}
       />
+      <StoryUploadModal visible={storyVisible} onClose={() => setStoryVisible(false)} />
 
       <Modal visible={searchVisible} animationType="slide" onRequestClose={closeSearch}>
         <View style={styles.searchContainer}>
@@ -623,6 +632,14 @@ const styles = StyleSheet.create({
     marginTop: 10,
 
   },
+  storiesPlaceholder: {
+    height: 80,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderBottomColor: '#444',
+    borderBottomWidth: StyleSheet.hairlineWidth,
+  },
+  storiesPlaceholderText: { color: colors.muted },
   noResultsWrapper: { flex: 1, justifyContent: 'center', alignItems: 'center' },
   noResultsText: { color: colors.text, marginTop: 20 },
 });
