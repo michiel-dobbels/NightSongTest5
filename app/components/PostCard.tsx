@@ -228,7 +228,7 @@ const styles = StyleSheet.create({
     bottom: -10,
     width: 2,
     backgroundColor: colors.accent,
-    zIndex: -1,
+    zIndex: 1,
   },
 });
 
