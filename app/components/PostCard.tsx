@@ -250,11 +250,13 @@ const styles = StyleSheet.create({
   threadLineEnd: {
     position: 'absolute',
     left: 34,
+
     top: 0,
     height: 48,
     width: 2,
     backgroundColor: colors.accent,
     zIndex: 0,
+
   },
 });
 

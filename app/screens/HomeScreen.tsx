@@ -21,9 +21,6 @@ import {
   Platform,
   ActivityIndicator,
 } from 'react-native';
-import { Video } from 'expo-av';
-import * as ImagePicker from 'expo-image-picker';
-import * as FileSystem from 'expo-file-system';
 import { useNavigation } from '@react-navigation/native';
 import {
   supabase,
@@ -31,6 +28,8 @@ import {
   REPLY_VIDEO_BUCKET,
 } from '../../lib/supabase';
 import { uploadImage } from '../../lib/uploadImage';
+import ReplyModal from '../components/ReplyModal';
+
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useAuth } from '../../AuthContext';
@@ -70,9 +69,6 @@ const HomeScreen = forwardRef<HomeScreenRef, { hideInput?: boolean }>(
   const listRef = useRef<FlatList>(null);
   const [replyModalVisible, setReplyModalVisible] = useState(false);
   const [activePostId, setActivePostId] = useState<string | null>(null);
-  const [replyText, setReplyText] = useState('');
-  const [replyImage, setReplyImage] = useState<string | null>(null);
-  const [replyVideo, setReplyVideo] = useState<string | null>(null);
 
 
   if (!user || !profile) {
@@ -97,44 +93,15 @@ const HomeScreen = forwardRef<HomeScreenRef, { hideInput?: boolean }>(
 
   const openReplyModal = (postId: string) => {
     setActivePostId(postId);
-    setReplyText('');
-    setReplyImage(null);
-    setReplyVideo(null);
     setReplyModalVisible(true);
   };
 
-  const pickReplyImage = async () => {
-    const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
-      allowsEditing: true,
-      quality: 0.8,
-    });
-    if (!result.canceled) {
-      const uri = result.assets[0].uri;
-      const base64 = await FileSystem.readAsStringAsync(uri, { encoding: 'base64' });
-      setReplyImage(`data:image/jpeg;base64,${base64}`);
-      setReplyVideo(null);
-    }
-  };
-
-  const pickReplyVideo = async () => {
-    const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Videos,
-    });
-    if (!result.canceled) {
-      const uri = result.assets[0].uri;
-      const info = await FileSystem.getInfoAsync(uri);
-      if (info.size && info.size > 20 * 1024 * 1024) {
-        Alert.alert('Video too large', 'Please select a video under 20MB.');
-        return;
-      }
-      setReplyVideo(uri);
-      setReplyImage(null);
-    }
-  };
-
-  const handleReplySubmit = async () => {
-    if (!activePostId || (!replyText.trim() && !replyImage && !replyVideo) || !profile) {
+  const handleReplySubmit = async (
+    text: string,
+    image: string | null,
+    video: string | null,
+  ) => {
+    if (!activePostId || (!text.trim() && !image && !video) || !profile) {
       setReplyModalVisible(false);
       return;
     }
@@ -154,11 +121,12 @@ const HomeScreen = forwardRef<HomeScreenRef, { hideInput?: boolean }>(
 
     let uploadedUrl: string | null = null;
     let uploadedImage: string | null = null;
-    if (replyVideo) {
+    if (video) {
+
       try {
-        const ext = replyVideo.split('.').pop() || 'mp4';
+        const ext = video.split('.').pop() || 'mp4';
         const path = `${profile.id}-${Date.now()}.${ext}`;
-        const resp = await fetch(replyVideo);
+        const resp = await fetch(video);
         const blob = await resp.blob();
         const { error: uploadError } = await supabase.storage
           .from(REPLY_VIDEO_BUCKET)
@@ -175,18 +143,20 @@ const HomeScreen = forwardRef<HomeScreenRef, { hideInput?: boolean }>(
       }
     }
 
-    if (replyImage && !replyImage.startsWith('http')) {
-      uploadedImage = await uploadImage(replyImage, profile.id);
-      if (!uploadedImage) uploadedImage = replyImage;
-    } else if (replyImage) {
-      uploadedImage = replyImage;
+    if (image && !image.startsWith('http')) {
+      uploadedImage = await uploadImage(image, profile.id);
+      if (!uploadedImage) uploadedImage = image;
+    } else if (image) {
+      uploadedImage = image;
+
     }
 
     const { error } = await supabase.from('replies').insert({
       post_id: activePostId,
       parent_id: null,
       user_id: profile.id,
-      content: replyText,
+      content: text,
+
       image_url: uploadedImage,
       video_url: uploadedUrl,
       username: profile.name || profile.username,
@@ -197,9 +167,6 @@ const HomeScreen = forwardRef<HomeScreenRef, { hideInput?: boolean }>(
       replyEvents.emit('replyAdded', activePostId);
     }
 
-    setReplyText('');
-    setReplyImage(null);
-    setReplyVideo(null);
   };
 
 
@@ -476,37 +443,11 @@ const HomeScreen = forwardRef<HomeScreenRef, { hideInput?: boolean }>(
           ListFooterComponent={loadingMore ? <ActivityIndicator /> : null}
         />
       )}
-      <Modal visible={replyModalVisible} animationType="slide" transparent>
-        <KeyboardAvoidingView
-          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-          style={styles.modalOverlay}
-        >
-          <View style={styles.modalContent}>
-            <TextInput
-              placeholder="Write a reply"
-              value={replyText}
-              onChangeText={setReplyText}
-              style={styles.input}
-              multiline
-            />
-            {replyImage && <Image source={{ uri: replyImage }} style={styles.preview} />}
-            {!replyImage && replyVideo && (
-              <Video
-                source={{ uri: replyVideo }}
-                style={styles.preview}
-                useNativeControls
-                isMuted
-                resizeMode="contain"
-              />
-            )}
-            <View style={styles.buttonRow}>
-              <Button title="Add Image" onPress={pickReplyImage} />
-              <Button title="Add Video" onPress={pickReplyVideo} />
-              <Button title="Post" onPress={handleReplySubmit} />
-            </View>
-          </View>
-        </KeyboardAvoidingView>
-      </Modal>
+      <ReplyModal
+        visible={replyModalVisible}
+        onSubmit={handleReplySubmit}
+        onClose={() => setReplyModalVisible(false)}
+      />
     </View>
   );
 });
@@ -519,26 +460,6 @@ const styles = StyleSheet.create({
     padding: 10,
     marginBottom: 10,
     borderRadius: 5,
-  },
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.5)',
-    justifyContent: 'flex-end',
-  },
-  modalContent: {
-    backgroundColor: colors.background,
-    padding: 20,
-  },
-  preview: {
-    width: '100%',
-    height: 200,
-    borderRadius: 6,
-    marginBottom: 10,
-  },
-  buttonRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginBottom: 10,
   },
 });
 
