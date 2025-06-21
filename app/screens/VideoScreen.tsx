@@ -1,20 +1,25 @@
 import React, { useEffect, useRef, useState, useCallback } from 'react';
-import { View, StyleSheet, FlatList } from 'react-native';
+import { View, StyleSheet, FlatList, ViewToken } from 'react-native';
 import * as FileSystem from 'expo-file-system';
-import VideoFeedItem from '../app/components/VideoFeedItem';
 
-import { supabase } from '../lib/supabase';
-import { colors } from '../app/styles/colors';
+import VideoFeedItem, { FeedVideo } from '../components/VideoFeedItem';
+import { supabase } from '../../lib/supabase';
+import { colors } from '../styles/colors';
+
+interface CachedMap {
+  [url: string]: string;
+}
 
 export default function VideoScreen() {
-  const [videos, setVideos] = useState([]);
-  const [cached, setCached] = useState({});
+  const [videos, setVideos] = useState<FeedVideo[]>([]);
+  const [cached, setCached] = useState<CachedMap>({});
   const [currentIndex, setCurrentIndex] = useState(0);
   const [muted, setMuted] = useState(true);
+
   const viewabilityConfig = { viewAreaCoveragePercentThreshold: 80 };
-  const onViewableItemsChanged = useRef(({ viewableItems }) => {
-    if (viewableItems.length > 0) {
-      setCurrentIndex(viewableItems[0].index);
+  const onViewableItemsChanged = useRef(({ viewableItems }: { viewableItems: Array<ViewToken> }) => {
+    if (viewableItems.length > 0 && viewableItems[0].index != null) {
+      setCurrentIndex(viewableItems[0].index!);
     }
   });
 
@@ -26,7 +31,7 @@ export default function VideoScreen() {
         .order('created_at', { ascending: false });
 
       if (!error && data) {
-        const mapped = data.map(v => ({
+        const mapped: FeedVideo[] = data.map((v: any) => ({
           id: v.id,
           video_url: v.video_url,
           caption: v.caption || '',
@@ -37,22 +42,26 @@ export default function VideoScreen() {
         console.error('Failed to fetch videos', error);
       }
     };
+
     fetchVideos();
   }, []);
 
-  const prefetch = useCallback(async url => {
-    if (!url || cached[url]) return;
-    try {
-      const fileUri = FileSystem.cacheDirectory + encodeURIComponent(url);
-      const info = await FileSystem.getInfoAsync(fileUri);
-      if (!info.exists) {
-        await FileSystem.downloadAsync(url, fileUri);
+  const prefetch = useCallback(
+    async (url: string) => {
+      if (!url || cached[url]) return;
+      try {
+        const fileUri = FileSystem.cacheDirectory + encodeURIComponent(url);
+        const info = await FileSystem.getInfoAsync(fileUri);
+        if (!info.exists) {
+          await FileSystem.downloadAsync(url, fileUri);
+        }
+        setCached(c => ({ ...c, [url]: fileUri }));
+      } catch (e) {
+        console.warn('Prefetch failed', e);
       }
-      setCached(c => ({ ...c, [url]: fileUri }));
-    } catch (e) {
-      console.warn('Prefetch failed', e);
-    }
-  }, [cached]);
+    },
+    [cached],
+  );
 
   useEffect(() => {
     if (videos[currentIndex + 1]) {
@@ -63,7 +72,7 @@ export default function VideoScreen() {
   const toggleMute = useCallback(() => setMuted(m => !m), []);
 
   const renderItem = useCallback(
-    ({ item, index }) => (
+    ({ item, index }: { item: FeedVideo; index: number }) => (
       <VideoFeedItem
         video={{ ...item, localUri: cached[item.video_url] }}
         isActive={currentIndex === index}
