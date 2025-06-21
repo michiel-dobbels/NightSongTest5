@@ -58,3 +58,16 @@ create policy "Reply video uploads" on storage.objects
 create policy "Public reply video access" on storage.objects
   for select using (bucket_id = 'reply-videos');
 
+-- Policies for the story-media storage bucket
+insert into storage.buckets (id, name, public)
+  values ('story-media', 'story-media', true)
+  on conflict (id) do update set public = true;
+
+create policy "Story media uploads" on storage.objects
+  for insert with check (
+    bucket_id = 'story-media' and auth.role() = 'authenticated'
+  );
+
+create policy "Public story media access" on storage.objects
+  for select using (bucket_id = 'story-media');
+
