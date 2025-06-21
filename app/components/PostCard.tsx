@@ -76,6 +76,8 @@ function PostCard({
   onOpenReplies,
   showThreadLine = false,
   isLastInThread = false,
+  hasStory = false,
+  onAvatarPress,
 }: PostCardProps) {
   const displayName = post.profiles?.name || post.profiles?.username || post.username;
   const userName = post.profiles?.username || post.username;
