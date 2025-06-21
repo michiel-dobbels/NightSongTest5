@@ -775,7 +775,7 @@ export default function ReplyDetailScreen() {
         ListHeaderComponent={() => (
           <>
               {originalPost && (
-                <View style={[styles.post, styles.highlightPost, styles.longReply]}>
+                <View style={[styles.post, styles.longReply]}>
                   <View style={styles.threadLine} pointerEvents="none" />
                   {user?.id === originalPost.user_id && (
                     <TouchableOpacity
@@ -1016,7 +1016,10 @@ export default function ReplyDetailScreen() {
             >
               <View style={[styles.reply, styles.longReply]}>
                 {item.parent_id && (
-                  <View style={styles.threadLine} pointerEvents="none" />
+                  <View
+                    style={[styles.threadLine, isLast && styles.threadLineEnd]}
+                    pointerEvents="none"
+                  />
 
                 )}
                 {isMe && (
@@ -1174,22 +1177,16 @@ const styles = StyleSheet.create({
     width: 2,
     backgroundColor: colors.accent,
     zIndex: 0,
+
   },
   threadLineEnd: {
     position: 'absolute',
     left: 34,
-
     top: 0,
     height: 48,
     width: 2,
     backgroundColor: colors.accent,
     zIndex: 0,
-
-  },
-  highlightPost: {
-    borderColor: colors.accent,
-    borderWidth: 2,
-
   },
   postContent: { color: colors.text },
   username: { fontWeight: 'bold', color: colors.text },
