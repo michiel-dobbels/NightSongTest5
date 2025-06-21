@@ -372,10 +372,11 @@ const styles = StyleSheet.create({
   },
   topRow: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
+    justifyContent: 'center',
     alignItems: 'center',
   },
-  searchButton: { padding: 4 },
+  searchButton: { position: 'absolute', right: 0, padding: 4 },
+
 
   blurredBar: {
     backgroundColor: 'transparent',

@@ -606,7 +606,13 @@ const styles = StyleSheet.create({
     marginBottom: 10,
     borderRadius: 5,
   },
-  searchContainer: { flex: 1, backgroundColor: colors.background, padding: 10 },
+  searchContainer: {
+    flex: 1,
+    backgroundColor: colors.background,
+    padding: 10,
+    paddingTop: 40,
+  },
+
   searchInput: {
     backgroundColor: '#333',
     color: colors.text,
@@ -614,6 +620,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
     paddingVertical: 6,
     marginBottom: 10,
+    marginTop: 10,
+
   },
   noResultsWrapper: { flex: 1, justifyContent: 'center', alignItems: 'center' },
   noResultsText: { color: colors.text, marginTop: 20 },
