@@ -2,7 +2,6 @@ import React, { useEffect, useState, useCallback } from 'react';
 import {
   View,
   Text,
-  TextInput,
   Button,
   FlatList,
   StyleSheet,
@@ -14,12 +13,11 @@ import {
   Image,
 } from 'react-native';
 import { Video } from 'expo-av';
-import * as ImagePicker from 'expo-image-picker';
-import * as FileSystem from 'expo-file-system';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useRoute, useNavigation } from '@react-navigation/native';
 
 import { supabase, REPLY_VIDEO_BUCKET } from '../../lib/supabase';
+import { uploadImage } from '../../lib/uploadImage';
 import { getLikeCounts } from '../../lib/getLikeCounts';
 import { useAuth } from '../../AuthContext';
 import { colors } from '../styles/colors';
@@ -28,6 +26,7 @@ import { usePostStore } from '../contexts/PostStoreContext';
 import { postEvents } from '../postEvents';
 import PostCard, { Post } from '../components/PostCard';
 import { CONFIRM_ACTION } from '../constants/ui';
+import ReplyModal from '../components/ReplyModal';
 
 const REPLY_STORAGE_PREFIX = 'cached_replies_';
 const COUNT_STORAGE_KEY = 'cached_reply_counts';
@@ -73,12 +72,15 @@ export default function PostDetailScreen() {
 
   const STORAGE_KEY = `${REPLY_STORAGE_PREFIX}${post.id}`;
 
-  const [replyText, setReplyText] = useState('');
-  const [replyImage, setReplyImage] = useState<string | null>(null);
-  const [replyVideo, setReplyVideo] = useState<string | null>(null);
   const [replies, setReplies] = useState<Reply[]>([]);
   const [allReplies, setAllReplies] = useState<Reply[]>([]);
   const [replyCounts, setReplyCounts] = useState<{ [key: string]: number }>({});
+
+  const [quickReplyModalVisible, setQuickReplyModalVisible] = useState(false);
+  const [quickReplyTarget, setQuickReplyTarget] = useState<{
+    postId: string;
+    parentId: string | null;
+  } | null>(null);
 
   const [keyboardOffset, setKeyboardOffset] = useState(0);
 
@@ -93,33 +95,8 @@ export default function PostDetailScreen() {
     ]);
   };
 
-  const pickImage = async () => {
-    const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
-      allowsEditing: true,
-      quality: 0.8,
-    });
-    if (!result.canceled) {
-      const uri = result.assets[0].uri;
-      const base64 = await FileSystem.readAsStringAsync(uri, { encoding: 'base64' });
-      setReplyImage(`data:image/jpeg;base64,${base64}`);
-    }
-  };
 
-  const pickVideo = async () => {
-    const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Videos,
-    });
-    if (!result.canceled) {
-      const uri = result.assets[0].uri;
-      const info = await FileSystem.getInfoAsync(uri);
-      if (info.size && info.size > 20 * 1024 * 1024) {
-        Alert.alert('Video too large', 'Please select a video under 20MB.');
-        return;
-      }
-      setReplyVideo(uri);
-    }
-  };
+
 
   const handleDeletePost = async (id: string) => {
     remove(id);
@@ -425,18 +402,31 @@ export default function PostDetailScreen() {
     loadCached();
   }, []);
 
+  const openQuickReplyModal = (postId: string, parentId: string | null) => {
+    setQuickReplyTarget({ postId, parentId });
+    setQuickReplyModalVisible(true);
+  };
 
-  const handleReply = async () => {
-    if ((!replyText.trim() && !replyImage && !replyVideo) || !user) return;
+  const handleQuickReplySubmit = async (
+    text: string,
+    image: string | null,
+    video: string | null,
+  ) => {
+    if (!quickReplyTarget || (!text.trim() && !image && !video) || !user) {
+      setQuickReplyModalVisible(false);
+      return;
+    }
+
+    setQuickReplyModalVisible(false);
 
     const newReply: Reply = {
       id: `temp-${Date.now()}`,
-      post_id: post.id,
-      parent_id: null,
+      post_id: quickReplyTarget.postId,
+      parent_id: quickReplyTarget.parentId,
       user_id: user.id,
-      content: replyText,
-      image_url: replyImage ?? undefined,
-      video_url: replyVideo ?? undefined,
+      content: text,
+      image_url: image ?? undefined,
+      video_url: video ?? undefined,
       created_at: new Date().toISOString(),
       username: profile.name || profile.username,
       reply_count: 0,
@@ -449,34 +439,36 @@ export default function PostDetailScreen() {
       },
     };
 
-    setReplies(prev => {
-      const updated = [newReply, ...prev];
-      AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
-      return updated;
-    });
+    if (quickReplyTarget.parentId === null) {
+      setReplies(prev => {
+        const updated = [newReply, ...prev];
+        AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
+        return updated;
+      });
+    }
+
     setAllReplies(prev => [...prev, newReply]);
     setReplyCounts(prev => {
-      const counts = {
-        ...prev,
-        [post.id]: (prev[post.id] || 0) + 1,
-        [newReply.id]: 0,
-      };
-
+      const counts = { ...prev };
+      counts[post.id] = (counts[post.id] || 0) + 1;
+      if (quickReplyTarget.parentId) {
+        counts[quickReplyTarget.parentId] =
+          (counts[quickReplyTarget.parentId] || 0) + 1;
+      }
+      counts[newReply.id] = 0;
       AsyncStorage.setItem(COUNT_STORAGE_KEY, JSON.stringify(counts));
       return counts;
     });
     initialize([{ id: newReply.id, like_count: 0 }]);
-    replyEvents.emit('replyAdded', post.id);
-    setReplyText('');
-    setReplyImage(null);
-    setReplyVideo(null);
 
-    let uploadedUrl = null;
-    if (replyVideo) {
+
+    let uploadedUrl: string | null = null;
+    let uploadedImage: string | null = null;
+    if (video) {
       try {
-        const ext = replyVideo.split('.').pop() || 'mp4';
+        const ext = video.split('.').pop() || 'mp4';
         const path = `${user.id}-${Date.now()}.${ext}`;
-        const resp = await fetch(replyVideo);
+        const resp = await fetch(video);
         const blob = await resp.blob();
         const { error: uploadError } = await supabase.storage
           .from(REPLY_VIDEO_BUCKET)
@@ -486,36 +478,40 @@ export default function PostDetailScreen() {
             .from(REPLY_VIDEO_BUCKET)
             .getPublicUrl(path);
           uploadedUrl = publicURL;
-
         }
       } catch (e) {
         console.error('Video upload failed', e);
       }
     }
 
-    let { data, error } = await supabase
+    if (image && !image.startsWith('http')) {
+      uploadedImage = await uploadImage(image, user.id);
+      if (!uploadedImage) uploadedImage = image;
+    } else if (image) {
+      uploadedImage = image;
+    }
 
-        .from('replies')
-        .insert([
-          {
-            post_id: post.id,
-            parent_id: null,
-            user_id: user.id,
-            content: replyText,
-            image_url: replyImage,
-            video_url: uploadedUrl,
-            username: profile.name || profile.username,
-          },
-        ])
-        .select()
-        .single();
-    // PGRST204 means the insert succeeded but no row was returned
+    let { data, error } = await supabase
+      .from('replies')
+      .insert([
+        {
+          post_id: quickReplyTarget.postId,
+          parent_id: quickReplyTarget.parentId,
+          user_id: user.id,
+          content: text,
+          image_url: uploadedImage,
+          video_url: uploadedUrl,
+          username: profile.name || profile.username,
+        },
+      ])
+      .select()
+      .single();
     if (error?.code === 'PGRST204') {
       error = null;
     }
 
-    if (!error) {
-      if (data) {
+    if (!error && data) {
+      if (quickReplyTarget.parentId === null) {
         setReplies(prev =>
           prev.map(r =>
             r.id === newReply.id
@@ -523,34 +519,28 @@ export default function PostDetailScreen() {
               : r,
           ),
         );
-        setAllReplies(prev =>
-          prev.map(r =>
-            r.id === newReply.id
-              ? { ...r, id: data.id, created_at: data.created_at, reply_count: 0 }
-              : r,
-          ),
-        );
-        setAllReplies(prev =>
-          prev.map(r => (r.id === newReply.id ? { ...r, id: data.id, created_at: data.created_at } : r)),
-        );
-        setReplyCounts(prev => {
-          const temp = prev[newReply.id] ?? 0;
-          const { [newReply.id]: _omit, ...rest } = prev;
-          const counts = { ...rest, [data.id]: temp, [post.id]: prev[post.id] || 0 };
-          AsyncStorage.setItem(COUNT_STORAGE_KEY, JSON.stringify(counts));
-          return counts;
-        });
-        initialize([{ id: data.id, like_count: 0 }]);
-
-
       }
-
-      // Whether or not data was returned, refresh from the server so the reply persists
-      fetchReplies();
-    } else {
-      // Keep the optimistic reply so the user doesn't lose their input
+      setAllReplies(prev =>
+        prev.map(r =>
+          r.id === newReply.id ? { ...r, id: data.id, created_at: data.created_at } : r,
+        ),
+      );
+      setReplyCounts(prev => {
+        const temp = prev[newReply.id] ?? 0;
+        const { [newReply.id]: _omit, ...rest } = prev;
+        const counts = { ...rest, [data.id]: temp };
+        if (quickReplyTarget.parentId) {
+          counts[quickReplyTarget.parentId] = counts[quickReplyTarget.parentId] || 0;
+        }
+        AsyncStorage.setItem(COUNT_STORAGE_KEY, JSON.stringify(counts));
+        return counts;
+      });
+      initialize([{ id: data.id, like_count: 0 }]);
     }
+    fetchReplies();
   };
+
+
 
   const displayName = post.profiles?.name || post.profiles?.username || post.username;
   const userName = post.profiles?.username || post.username;
@@ -589,7 +579,7 @@ export default function PostDetailScreen() {
             }
             
             onDelete={() => confirmDeletePost(post.id)}
-            onOpenReplies={() => {}}
+            onOpenReplies={() => openQuickReplyModal(post.id, null)}
           />
         )}
         contentContainerStyle={{ paddingBottom: 100 }}
@@ -625,38 +615,25 @@ export default function PostDetailScreen() {
                     })
               }
               onDelete={() => confirmDeleteReply(item.id)}
-              onOpenReplies={() => {}}
+              onOpenReplies={() => openQuickReplyModal(post.id, item.id)}
             />
           );
         }}
       />
 
-      <View style={[styles.inputContainer, { bottom: keyboardOffset }]}>
-        <TextInput
-          placeholder="Write a reply"
-          value={replyText}
-          onChangeText={setReplyText}
-          style={styles.input}
-          multiline
-        />
-        {replyImage && (
-          <Image source={{ uri: replyImage }} style={styles.preview} />
-        )}
-        {!replyImage && replyVideo && (
-          <Video
-            source={{ uri: replyVideo }}
-            style={styles.preview}
-            useNativeControls
-            isMuted
-            resizeMode="contain"
-          />
-        )}
-        <View style={styles.buttonRow}>
-          <Button title="Add Image" onPress={pickImage} />
-          <Button title="Add Video" onPress={pickVideo} />
-          <Button title="Post" onPress={handleReply} />
-        </View>
-      </View>
+      <TouchableOpacity
+        activeOpacity={0.8}
+        onPress={() => openQuickReplyModal(post.id, null)}
+        style={[styles.quickReplyBar, { bottom: keyboardOffset }]}
+      >
+        <Text style={styles.quickReplyPlaceholder}>Write a reply...</Text>
+      </TouchableOpacity>
+
+      <ReplyModal
+        visible={quickReplyModalVisible}
+        onSubmit={handleQuickReplySubmit}
+        onClose={() => setQuickReplyModalVisible(false)}
+      />
     </KeyboardAvoidingView>
   );
 }
@@ -680,14 +657,6 @@ const styles = StyleSheet.create({
     alignSelf: 'flex-start',
     marginBottom: 10,
   },
-  inputContainer: {
-    position: 'absolute',
-    left: 16,
-    right: 16,
-    bottom: 0,
-    backgroundColor: colors.background,
-    paddingBottom: 16,
-  },
   preview: {
     width: '100%',
     height: 200,
@@ -698,5 +667,19 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     marginBottom: 10,
+  },
+  quickReplyBar: {
+    position: 'absolute',
+    left: 16,
+    right: 16,
+    bottom: 0,
+    backgroundColor: colors.background,
+    padding: 12,
+    borderRadius: 6,
+    borderWidth: 1,
+    borderColor: colors.accent,
+  },
+  quickReplyPlaceholder: {
+    color: '#888',
   },
 });
