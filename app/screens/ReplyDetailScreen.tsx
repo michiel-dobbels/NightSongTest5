@@ -832,11 +832,12 @@ export default function ReplyDetailScreen() {
         data={replies}
         keyExtractor={item => item.id}
 
-        renderItem={({ item }) => {
+        renderItem={({ item, index }) => {
           const childName = item.profiles?.name || item.profiles?.username || item.username;
           const childUserName = item.profiles?.username || item.username;
           const isMe = user?.id === item.user_id;
           const avatarUri = isMe ? profileImageUri : item.profiles?.image_url || undefined;
+          const isLast = index === replies.length - 1;
 
           return (
             <TouchableOpacity
@@ -850,7 +851,10 @@ export default function ReplyDetailScreen() {
             >
               <View style={[styles.reply, styles.longReply]}>
                 {item.parent_id && (
-                  <View style={styles.threadLine} pointerEvents="none" />
+                  <View
+                    style={[styles.threadLine, isLast && styles.threadLineEnd]}
+                    pointerEvents="none"
+                  />
                 )}
                 {isMe && (
                   <TouchableOpacity
@@ -967,7 +971,13 @@ const styles = StyleSheet.create({
     position: 'relative',
   },
   row: { flexDirection: 'row', alignItems: 'flex-start' },
-  avatar: { width: 48, height: 48, borderRadius: 24, marginRight: 8 },
+  avatar: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    marginRight: 8,
+    zIndex: 1,
+  },
   placeholder: { backgroundColor: '#555' },
   reply: {
     backgroundColor: colors.background,
@@ -985,12 +995,21 @@ const styles = StyleSheet.create({
   },
   threadLine: {
     position: 'absolute',
-    left: 26,
+    left: 34,
     top: 0,
     bottom: -10,
     width: 2,
     backgroundColor: colors.accent,
-    zIndex: -1,
+    zIndex: 0,
+  },
+  threadLineEnd: {
+    position: 'absolute',
+    left: 34,
+    top: 0,
+    height: 48,
+    width: 2,
+    backgroundColor: colors.accent,
+    zIndex: 0,
   },
   highlightPost: {
     borderColor: colors.accent,
