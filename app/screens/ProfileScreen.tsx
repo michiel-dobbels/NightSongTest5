@@ -340,6 +340,13 @@ export default function ProfileScreen() {
 
   };
 
+  const handleReplyCancel = () => {
+    setReplyText('');
+    setReplyImage(null);
+    setReplyVideo(null);
+    setReplyModalVisible(false);
+  };
+
 
 
   const pickImage = async () => {
@@ -655,6 +662,7 @@ export default function ProfileScreen() {
               <Button title="Add Image" onPress={pickReplyImage} />
               <Button title="Add Video" onPress={pickReplyVideo} />
               <Button title="Post" onPress={handleReplySubmit} />
+              <Button title="Cancel" onPress={handleReplyCancel} />
             </View>
           </View>
         </KeyboardAvoidingView>
