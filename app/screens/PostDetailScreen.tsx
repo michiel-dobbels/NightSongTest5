@@ -12,6 +12,7 @@ import {
   Keyboard,
   Alert,
   Image,
+  Dimensions,
 } from 'react-native';
 import { Video } from 'expo-av';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -33,6 +34,9 @@ const REPLY_STORAGE_PREFIX = 'cached_replies_';
 const COUNT_STORAGE_KEY = 'cached_reply_counts';
 const LIKE_COUNT_KEY = 'cached_like_counts';
 const LIKED_KEY_PREFIX = 'cached_likes_';
+
+const TAB_BAR_HEIGHT = Dimensions.get('window').height * 0.1;
+const TAB_BAR_COLOR = 'rgba(44,44,84,0.9)';
 
 
 
@@ -631,7 +635,7 @@ export default function PostDetailScreen() {
       <TouchableOpacity
         activeOpacity={0.8}
         onPress={() => openQuickReplyModal(post.id, null)}
-        style={[styles.quickReplyBar, { bottom: keyboardOffset }]}
+        style={[styles.quickReplyBar, { bottom: TAB_BAR_HEIGHT + keyboardOffset }]}
       >
         <Text style={styles.quickReplyPlaceholder}>Write a reply...</Text>
       </TouchableOpacity>
@@ -681,8 +685,8 @@ const styles = StyleSheet.create({
     position: 'absolute',
     left: 16,
     right: 16,
-    bottom: 0,
-    backgroundColor: colors.background,
+    bottom: TAB_BAR_HEIGHT,
+    backgroundColor: TAB_BAR_COLOR,
     padding: 12,
     borderRadius: 6,
     borderWidth: 1,
