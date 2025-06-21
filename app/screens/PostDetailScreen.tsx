@@ -29,6 +29,8 @@ import { postEvents } from '../postEvents';
 import PostCard, { Post } from '../components/PostCard';
 import { CONFIRM_ACTION } from '../constants/ui';
 import ReplyModal from '../components/ReplyModal';
+import useStoryAvailability from '../hooks/useStoryAvailability';
+import { useStories } from '../contexts/StoryContext';
 
 const REPLY_STORAGE_PREFIX = 'cached_replies_';
 const COUNT_STORAGE_KEY = 'cached_reply_counts';
@@ -86,6 +88,11 @@ export default function PostDetailScreen() {
     postId: string;
     parentId: string | null;
   } | null>(null);
+  const { openUserStories } = useStories();
+  const storyMap = useStoryAvailability([
+    post.user_id,
+    ...replies.map(r => r.user_id),
+  ]);
 
 
   const [keyboardOffset, setKeyboardOffset] = useState(0);
@@ -588,9 +595,10 @@ export default function PostDetailScreen() {
                     userId: post.user_id,
                   })
             }
-            
             onDelete={() => confirmDeletePost(post.id)}
             onOpenReplies={() => openQuickReplyModal(post.id, null)}
+            hasStory={!!storyMap[post.user_id]}
+            onAvatarPress={storyMap[post.user_id] ? () => openUserStories(post.user_id) : undefined}
           />
         )}
         contentContainerStyle={{ paddingBottom: 100 }}
@@ -627,6 +635,8 @@ export default function PostDetailScreen() {
               }
               onDelete={() => confirmDeleteReply(item.id)}
               onOpenReplies={() => openQuickReplyModal(post.id, item.id)}
+              hasStory={!!storyMap[item.user_id]}
+              onAvatarPress={storyMap[item.user_id] ? () => openUserStories(item.user_id) : undefined}
             />
           );
         }}
