@@ -967,7 +967,13 @@ const styles = StyleSheet.create({
     position: 'relative',
   },
   row: { flexDirection: 'row', alignItems: 'flex-start' },
-  avatar: { width: 48, height: 48, borderRadius: 24, marginRight: 8 },
+  avatar: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    marginRight: 8,
+    zIndex: 1,
+  },
   placeholder: { backgroundColor: '#555' },
   reply: {
     backgroundColor: colors.background,
@@ -990,7 +996,7 @@ const styles = StyleSheet.create({
     bottom: -10,
     width: 2,
     backgroundColor: colors.accent,
-    zIndex: -1,
+    zIndex: 0,
   },
   highlightPost: {
     borderColor: colors.accent,
