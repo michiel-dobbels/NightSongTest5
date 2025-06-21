@@ -58,6 +58,8 @@ export interface PostCardProps {
    * rather than extending to the bottom of the card.
    */
   isLastInThread?: boolean;
+  hasStory?: boolean;
+  onAvatarPress?: () => void;
 }
 
 function PostCard({
@@ -74,14 +76,15 @@ function PostCard({
   onOpenReplies,
   showThreadLine = false,
   isLastInThread = false,
+  hasStory = false,
+  onAvatarPress,
 }: PostCardProps) {
   const displayName = post.profiles?.name || post.profiles?.username || post.username;
   const userName = post.profiles?.username || post.username;
   const isReply = (post as any).post_id !== undefined;
   const { likeCount, liked, toggleLike } = useLike(post.id, isReply);
 
-  const finalAvatarUri =
-    avatarUri ?? post.profiles?.image_url ?? undefined;
+  const finalAvatarUri = avatarUri ?? post.profiles?.image_url ?? undefined;
   const finalImageUrl = imageUrl ?? post.image_url;
   const finalVideoUrl = videoUrl ?? post.video_url;
 
@@ -109,11 +112,15 @@ function PostCard({
           <TouchableOpacity
             onPress={e => {
               e.stopPropagation();
-              onProfilePress();
+              if (onAvatarPress) onAvatarPress();
+              else onProfilePress();
             }}
           >
             {finalAvatarUri ? (
-              <Image source={{ uri: finalAvatarUri }} style={styles.avatar} />
+              <Image
+                source={{ uri: finalAvatarUri }}
+                style={[styles.avatar, hasStory && styles.storyRing]}
+              />
             ) : (
               <View style={[styles.avatar, styles.placeholder]} />
             )}
@@ -194,6 +201,10 @@ const styles = StyleSheet.create({
     borderRadius: 24,
     marginRight: 8,
     zIndex: 1,
+  },
+  storyRing: {
+    borderWidth: 2,
+    borderColor: '#0a84ff',
   },
   placeholder: { backgroundColor: '#555' },
   deleteButton: {
