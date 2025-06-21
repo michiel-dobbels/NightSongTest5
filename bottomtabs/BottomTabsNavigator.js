@@ -8,7 +8,7 @@ import { colors } from '../app/styles/colors';
 import TopTabsNavigator from '../app/TopTabsNavigator';
 
 import MarketScreen from './MarketScreen';
-import VideoScreen from './VideoScreen';
+import VideoScreen from '../app/screens/VideoScreen';
 import NotificationsScreen from './NotificationsScreen';
 
 // Future search features will live in dedicated screens:

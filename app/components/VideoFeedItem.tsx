@@ -1,6 +1,6 @@
 import React, { useRef, useEffect } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Dimensions } from 'react-native';
-import Video from 'react-native-video';
+import { Video } from 'expo-av';
 import { colors } from '../styles/colors';
 
 export interface FeedVideo {
@@ -23,7 +23,7 @@ export default function VideoFeedItem({ video, isActive, muted, onToggleMute }: 
 
   useEffect(() => {
     if (!isActive) {
-      ref.current?.seek(0);
+      ref.current?.setPositionAsync(0);
     }
   }, [isActive]);
 
@@ -34,9 +34,9 @@ export default function VideoFeedItem({ video, isActive, muted, onToggleMute }: 
         source={{ uri: video.localUri || video.video_url }}
         style={styles.video}
         resizeMode="cover"
-        repeat
-        paused={!isActive}
-        muted={muted}
+        isLooping
+        shouldPlay={isActive}
+        isMuted={muted}
       />
       <View style={styles.infoContainer}>
         <Text style={styles.username}>@{video.username}</Text>
