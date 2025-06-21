@@ -1,0 +1,12 @@
+*** Begin Patch
+*** Update File: package.json
+@@
+-  "peerDependencies": {
+-    "react": "^18.0.0",
+-    "react-native": ">=0.64.0"
+-  }
++  "peerDependencies": {
++    "react": ">=18",
++    "react-native": ">=0.64.0"
++  }
+*** End Patch

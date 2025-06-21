@@ -306,6 +306,14 @@ export default function TopTabsNavigator() {
 
           <Text style={styles.menuItem}>Profile</Text>
         </TouchableOpacity>
+        <TouchableOpacity
+          onPress={() => {
+            closeDrawer();
+            navigation.navigate('AddStory');
+          }}
+        >
+          <Text style={styles.menuItem}>Add Story</Text>
+        </TouchableOpacity>
       </Animated.View>
     </SafeAreaView>
   );

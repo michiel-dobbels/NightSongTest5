@@ -38,6 +38,7 @@ import { postEvents } from '../postEvents';
 import { CONFIRM_ACTION } from '../constants/ui';
 import PostCard, { Post } from '../components/PostCard';
 import ReplyCard, { Reply } from '../components/ReplyCard';
+import { useStory } from '../contexts/StoryContext';
 import { colors } from '../styles/colors';
 import { replyEvents } from '../replyEvents';
 
@@ -66,11 +67,13 @@ const HomeScreen = forwardRef<HomeScreenRef, { hideInput?: boolean }>(
   const { user, profile, removePost, profileImageUri, bannerImageUri } =
     useAuth()!;
   const { remove } = usePostStore();
+  const { openUserStories } = useStory();
   const [postText, setPostText] = useState('');
   const [posts, setPosts] = useState<Post[]>([]);
   const [loading, setLoading] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
   const [hasMore, setHasMore] = useState(true);
+  const [storyUsers, setStoryUsers] = useState<Set<string>>(new Set());
   const skipNextFetch = useRef(false);
   const listRef = useRef<FlatList>(null);
   const [replyModalVisible, setReplyModalVisible] = useState(false);
@@ -284,6 +287,20 @@ const HomeScreen = forwardRef<HomeScreenRef, { hideInput?: boolean }>(
   }, []);
 
   useEffect(() => {
+    const fetchStoryUsers = async () => {
+      const since = new Date(Date.now() - 5 * 60 * 1000).toISOString();
+      const { data } = await supabase
+        .from('stories')
+        .select('user_id')
+        .gt('created_at', since);
+      if (data) {
+        setStoryUsers(new Set(data.map(d => d.user_id)));
+      }
+    };
+    fetchStoryUsers();
+  }, []);
+
+  useEffect(() => {
     const onReplyAdded = (postId: string) => {
       setPosts(prev =>
         prev.map(p =>
@@ -463,7 +480,7 @@ const HomeScreen = forwardRef<HomeScreenRef, { hideInput?: boolean }>(
       ) : (
         <FlatList
           ref={listRef}
-
+          ListHeaderComponent={<View style={{ height: 80 }} />}
           data={posts}
           keyExtractor={item => item.id}
           style={{ flex: 1 }}
@@ -495,6 +512,15 @@ const HomeScreen = forwardRef<HomeScreenRef, { hideInput?: boolean }>(
                     ? navigation.navigate('Profile')
                     : navigation.navigate('OtherUserProfile', { userId: item.user_id })
                 }
+                hasStory={storyUsers.has(item.user_id)}
+                onAvatarPress={async () => {
+                  const opened = await openUserStories(item.user_id);
+                  if (!opened) {
+                    isMe
+                      ? navigation.navigate('Profile')
+                      : navigation.navigate('OtherUserProfile', { userId: item.user_id });
+                  }
+                }}
                 onDelete={() => confirmDeletePost(item.id)}
                 onOpenReplies={() => openReplyModal(item.id)}
               />
