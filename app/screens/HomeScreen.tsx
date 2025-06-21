@@ -16,6 +16,7 @@ import {
   Button,
   Alert,
   Image,
+  TouchableOpacity,
   Modal,
   KeyboardAvoidingView,
   Platform,
@@ -29,6 +30,8 @@ import {
 } from '../../lib/supabase';
 import { uploadImage } from '../../lib/uploadImage';
 import ReplyModal from '../components/ReplyModal';
+import useStoryAvailability from '../hooks/useStoryAvailability';
+import { useStories } from '../contexts/StoryContext';
 
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -79,6 +82,30 @@ const HomeScreen = forwardRef<HomeScreenRef, { hideInput?: boolean }>(
   const [searchVisible, setSearchVisible] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState<SearchItem[]>([]);
+  const { openUserStories } = useStories();
+  const storyMap = useStoryAvailability(posts.map(p => p.user_id));
+  const [activeStoryUsers, setActiveStoryUsers] = useState<any[]>([]);
+
+  useEffect(() => {
+    const load = async () => {
+      const { data } = await supabase
+        .from('stories')
+        .select('user_id, profiles(username, name, image_url)')
+        .gt('expires_at', new Date().toISOString());
+      if (data) {
+        const seen = new Set();
+        const arr: any[] = [];
+        data.forEach(s => {
+          if (!seen.has(s.user_id)) {
+            arr.push(s);
+            seen.add(s.user_id);
+          }
+        });
+        setActiveStoryUsers(arr);
+      }
+    };
+    load();
+  }, []);
 
 
   if (!user || !profile) {
@@ -463,7 +490,39 @@ const HomeScreen = forwardRef<HomeScreenRef, { hideInput?: boolean }>(
       ) : (
         <FlatList
           ref={listRef}
-
+          ListHeaderComponent={() => (
+            <View style={styles.storyRow}>
+              <TouchableOpacity
+                onPress={() => navigation.navigate('CreateStory')}
+                style={styles.storyItem}
+              >
+                {profileImageUri ? (
+                  <Image
+                    source={{ uri: profileImageUri }}
+                    style={styles.storyAvatar}
+                  />
+                ) : (
+                  <View style={[styles.storyAvatar, styles.placeholder]} />
+                )}
+              </TouchableOpacity>
+              {activeStoryUsers.map(u => (
+                <TouchableOpacity
+                  key={u.user_id}
+                  onPress={() => openUserStories(u.user_id)}
+                  style={styles.storyItem}
+                >
+                  {u.profiles?.image_url ? (
+                    <Image
+                      source={{ uri: u.profiles.image_url }}
+                      style={[styles.storyAvatar, styles.storyRing]}
+                    />
+                  ) : (
+                    <View style={[styles.storyAvatar, styles.placeholder]} />
+                  )}
+                </TouchableOpacity>
+              ))}
+            </View>
+          )}
           data={posts}
           keyExtractor={item => item.id}
           style={{ flex: 1 }}
@@ -488,7 +547,6 @@ const HomeScreen = forwardRef<HomeScreenRef, { hideInput?: boolean }>(
                 imageUrl={item.image_url ?? undefined}
                 videoUrl={item.video_url ?? undefined}
                 replyCount={item.reply_count ?? 0}
-                onLike={() => handleLike(item.id)}
                 onPress={() => navigation.navigate('PostDetail', { post: item })}
                 onProfilePress={() =>
                   isMe
@@ -497,6 +555,8 @@ const HomeScreen = forwardRef<HomeScreenRef, { hideInput?: boolean }>(
                 }
                 onDelete={() => confirmDeletePost(item.id)}
                 onOpenReplies={() => openReplyModal(item.id)}
+                hasStory={!!storyMap[item.user_id]}
+                onAvatarPress={storyMap[item.user_id] ? () => openUserStories(item.user_id) : undefined}
               />
             );
           }}
@@ -575,7 +635,6 @@ const HomeScreen = forwardRef<HomeScreenRef, { hideInput?: boolean }>(
                     imageUrl={post.image_url ?? undefined}
                     videoUrl={post.video_url ?? undefined}
                     replyCount={post.reply_count ?? 0}
-                    onLike={() => handleLike(post.id)}
                     onPress={() => navigation.navigate('PostDetail', { post })}
                     onProfilePress={() =>
                       isMe
@@ -584,6 +643,8 @@ const HomeScreen = forwardRef<HomeScreenRef, { hideInput?: boolean }>(
                     }
                     onDelete={() => {}}
                     onOpenReplies={() => {}}
+                    hasStory={!!storyMap[post.user_id]}
+                    onAvatarPress={storyMap[post.user_id] ? () => openUserStories(post.user_id) : undefined}
                   />
                 );
               }}
@@ -606,6 +667,10 @@ const styles = StyleSheet.create({
     marginBottom: 10,
     borderRadius: 5,
   },
+  storyRow: { flexDirection: 'row', marginBottom: 10 },
+  storyItem: { marginRight: 10 },
+  storyAvatar: { width: 56, height: 56, borderRadius: 28 },
+  storyRing: { borderWidth: 2, borderColor: '#0a84ff' },
   searchContainer: {
     flex: 1,
     backgroundColor: colors.background,
