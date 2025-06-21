@@ -6,6 +6,7 @@ import {
   FlatList,
   StyleSheet,
   TouchableOpacity,
+  Modal,
   KeyboardAvoidingView,
   Platform,
   Keyboard,
@@ -82,6 +83,7 @@ export default function PostDetailScreen() {
     parentId: string | null;
   } | null>(null);
 
+
   const [keyboardOffset, setKeyboardOffset] = useState(0);
 
   const confirmDeletePost = (id: string) => {
@@ -94,6 +96,8 @@ export default function PostDetailScreen() {
       },
     ]);
   };
+
+
 
 
 
@@ -417,6 +421,7 @@ export default function PostDetailScreen() {
       return;
     }
 
+
     setQuickReplyModalVisible(false);
 
     const newReply: Reply = {
@@ -465,6 +470,7 @@ export default function PostDetailScreen() {
     let uploadedUrl: string | null = null;
     let uploadedImage: string | null = null;
     if (video) {
+
       try {
         const ext = video.split('.').pop() || 'mp4';
         const path = `${user.id}-${Date.now()}.${ext}`;
@@ -506,6 +512,7 @@ export default function PostDetailScreen() {
       ])
       .select()
       .single();
+
     if (error?.code === 'PGRST204') {
       error = null;
     }
@@ -629,11 +636,13 @@ export default function PostDetailScreen() {
         <Text style={styles.quickReplyPlaceholder}>Write a reply...</Text>
       </TouchableOpacity>
 
+
       <ReplyModal
         visible={quickReplyModalVisible}
         onSubmit={handleQuickReplySubmit}
         onClose={() => setQuickReplyModalVisible(false)}
       />
+
     </KeyboardAvoidingView>
   );
 }
@@ -681,5 +690,6 @@ const styles = StyleSheet.create({
   },
   quickReplyPlaceholder: {
     color: '#888',
+
   },
 });

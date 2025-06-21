@@ -30,6 +30,7 @@ import {
 import { uploadImage } from '../../lib/uploadImage';
 import ReplyModal from '../components/ReplyModal';
 
+
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useAuth } from '../../AuthContext';
 import { usePostStore } from '../contexts/PostStoreContext';
@@ -121,6 +122,7 @@ const HomeScreen = forwardRef<HomeScreenRef, { hideInput?: boolean }>(
     let uploadedUrl: string | null = null;
     let uploadedImage: string | null = null;
     if (video) {
+
       try {
         const ext = video.split('.').pop() || 'mp4';
         const path = `${profile.id}-${Date.now()}.${ext}`;
@@ -146,6 +148,7 @@ const HomeScreen = forwardRef<HomeScreenRef, { hideInput?: boolean }>(
       if (!uploadedImage) uploadedImage = image;
     } else if (image) {
       uploadedImage = image;
+
     }
 
     const { error } = await supabase.from('replies').insert({
@@ -153,6 +156,7 @@ const HomeScreen = forwardRef<HomeScreenRef, { hideInput?: boolean }>(
       parent_id: null,
       user_id: profile.id,
       content: text,
+
       image_url: uploadedImage,
       video_url: uploadedUrl,
       username: profile.name || profile.username,
