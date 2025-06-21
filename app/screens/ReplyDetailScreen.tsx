@@ -30,6 +30,7 @@ import { usePostStore } from '../contexts/PostStoreContext';
 import useLike from '../hooks/useLike';
 import { postEvents } from '../postEvents';
 import { CONFIRM_ACTION } from '../constants/ui';
+import ReplyModal from '../components/ReplyModal';
 
 
 const CHILD_PREFIX = 'cached_child_replies_';
@@ -136,9 +137,7 @@ export default function ReplyDetailScreen() {
     postId: string;
     parentId: string | null;
   } | null>(null);
-  const [quickReplyText, setQuickReplyText] = useState('');
-  const [quickReplyImage, setQuickReplyImage] = useState<string | null>(null);
-  const [quickReplyVideo, setQuickReplyVideo] = useState<string | null>(null);
+
 
   const [keyboardOffset, setKeyboardOffset] = useState(0);
 
@@ -207,35 +206,7 @@ export default function ReplyDetailScreen() {
     }
   };
 
-  const pickQuickReplyImage = async () => {
-    const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
-      allowsEditing: true,
-      quality: 0.8,
-    });
-    if (!result.canceled) {
-      const uri = result.assets[0].uri;
-      const base64 = await FileSystem.readAsStringAsync(uri, { encoding: 'base64' });
-      setQuickReplyImage(`data:image/jpeg;base64,${base64}`);
-      setQuickReplyVideo(null);
-    }
-  };
 
-  const pickQuickReplyVideo = async () => {
-    const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Videos,
-    });
-    if (!result.canceled) {
-      const uri = result.assets[0].uri;
-      const info = await FileSystem.getInfoAsync(uri);
-      if (info.size && info.size > 20 * 1024 * 1024) {
-        Alert.alert('Video too large', 'Please select a video under 20MB.');
-        return;
-      }
-      setQuickReplyVideo(uri);
-      setQuickReplyImage(null);
-    }
-  };
 
   const handleDeleteReply = async (id: string) => {
     // Remove from local state
@@ -452,18 +423,16 @@ export default function ReplyDetailScreen() {
 
   const openQuickReplyModal = (postId: string, parentId: string | null) => {
     setQuickReplyTarget({ postId, parentId });
-    setQuickReplyText('');
-    setQuickReplyImage(null);
-    setQuickReplyVideo(null);
     setQuickReplyModalVisible(true);
   };
 
-  const handleQuickReplySubmit = async () => {
-    if (
-      !quickReplyTarget ||
-      (!quickReplyText.trim() && !quickReplyImage && !quickReplyVideo) ||
-      !user
-    ) {
+  const handleQuickReplySubmit = async (
+    text: string,
+    image: string | null,
+    video: string | null,
+  ) => {
+    if (!quickReplyTarget || (!text.trim() && !image && !video) || !user) {
+
       setQuickReplyModalVisible(false);
       return;
     }
@@ -475,9 +444,10 @@ export default function ReplyDetailScreen() {
       post_id: quickReplyTarget.postId,
       parent_id: quickReplyTarget.parentId,
       user_id: user.id,
-      content: quickReplyText,
-      image_url: quickReplyImage ?? undefined,
-      video_url: quickReplyVideo ?? undefined,
+      content: text,
+      image_url: image ?? undefined,
+      video_url: video ?? undefined,
+
       created_at: new Date().toISOString(),
       reply_count: 0,
       username: profile.name || profile.username,
@@ -512,17 +482,15 @@ export default function ReplyDetailScreen() {
     });
     initialize([{ id: newReply.id, like_count: 0 }]);
 
-    setQuickReplyText('');
-    setQuickReplyImage(null);
-    setQuickReplyVideo(null);
 
     let uploadedUrl: string | null = null;
     let uploadedImage: string | null = null;
-    if (quickReplyVideo) {
+    if (video) {
       try {
-        const ext = quickReplyVideo.split('.').pop() || 'mp4';
+        const ext = video.split('.').pop() || 'mp4';
         const path = `${user.id}-${Date.now()}.${ext}`;
-        const resp = await fetch(quickReplyVideo);
+        const resp = await fetch(video);
+
         const blob = await resp.blob();
         const { error: uploadError } = await supabase.storage
           .from(REPLY_VIDEO_BUCKET)
@@ -538,11 +506,12 @@ export default function ReplyDetailScreen() {
       }
     }
 
-    if (quickReplyImage && !quickReplyImage.startsWith('http')) {
-      uploadedImage = await uploadImage(quickReplyImage, user.id);
-      if (!uploadedImage) uploadedImage = quickReplyImage;
-    } else if (quickReplyImage) {
-      uploadedImage = quickReplyImage;
+    if (image && !image.startsWith('http')) {
+      uploadedImage = await uploadImage(image, user.id);
+      if (!uploadedImage) uploadedImage = image;
+    } else if (image) {
+      uploadedImage = image;
+
     }
 
     let { data, error } = await supabase
@@ -552,7 +521,8 @@ export default function ReplyDetailScreen() {
           post_id: quickReplyTarget.postId,
           parent_id: quickReplyTarget.parentId,
           user_id: user.id,
-          content: quickReplyText,
+          content: text,
+
           image_url: uploadedImage,
           video_url: uploadedUrl,
           username: profile.name || profile.username,
@@ -1046,10 +1016,8 @@ export default function ReplyDetailScreen() {
             >
               <View style={[styles.reply, styles.longReply]}>
                 {item.parent_id && (
-                  <View
-                    style={[styles.threadLine, isLast && styles.threadLineEnd]}
-                    pointerEvents="none"
-                  />
+                  <View style={styles.threadLine} pointerEvents="none" />
+
                 )}
                 {isMe && (
                   <TouchableOpacity
@@ -1147,39 +1115,12 @@ export default function ReplyDetailScreen() {
         </View>
       </View>
 
-      <Modal visible={quickReplyModalVisible} animationType="slide" transparent>
-        <KeyboardAvoidingView
-          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-          style={styles.modalOverlay}
-        >
-          <View style={styles.modalContent}>
-            <TextInput
-              placeholder="Write a reply"
-              value={quickReplyText}
-              onChangeText={setQuickReplyText}
-              style={styles.input}
-              multiline
-            />
-            {quickReplyImage && (
-              <Image source={{ uri: quickReplyImage }} style={styles.preview} />
-            )}
-            {!quickReplyImage && quickReplyVideo && (
-              <Video
-                source={{ uri: quickReplyVideo }}
-                style={styles.preview}
-                useNativeControls
-                isMuted
-                resizeMode="contain"
-              />
-            )}
-            <View style={styles.buttonRow}>
-              <Button title="Add Image" onPress={pickQuickReplyImage} />
-              <Button title="Add Video" onPress={pickQuickReplyVideo} />
-              <Button title="Post" onPress={handleQuickReplySubmit} />
-            </View>
-          </View>
-        </KeyboardAvoidingView>
-      </Modal>
+      <ReplyModal
+        visible={quickReplyModalVisible}
+        onSubmit={handleQuickReplySubmit}
+        onClose={() => setQuickReplyModalVisible(false)}
+      />
+
     </KeyboardAvoidingView>
   );
 }
