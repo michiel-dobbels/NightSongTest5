@@ -7,6 +7,7 @@ import {
   FlatList,
   StyleSheet,
   TouchableOpacity,
+  Modal,
   KeyboardAvoidingView,
   Platform,
   Keyboard,
@@ -88,6 +89,7 @@ export default function PostDetailScreen() {
     parentId: string | null;
   } | null>(null);
 
+
   const [keyboardOffset, setKeyboardOffset] = useState(0);
 
   const confirmDeletePost = (id: string) => {
@@ -128,6 +130,7 @@ export default function PostDetailScreen() {
       setReplyVideo(uri);
     }
   };
+
 
 
   const handleDeletePost = async (id: string) => {
@@ -445,6 +448,7 @@ export default function PostDetailScreen() {
     video: string | null,
   ) => {
     if (!quickReplyTarget || (!text.trim() && !image && !video) || !user) {
+
       setQuickReplyModalVisible(false);
       return;
     }
@@ -459,6 +463,7 @@ export default function PostDetailScreen() {
       content: text,
       image_url: image ?? undefined,
       video_url: video ?? undefined,
+
       created_at: new Date().toISOString(),
       username: profile.name || profile.username,
       reply_count: 0,
@@ -501,6 +506,7 @@ export default function PostDetailScreen() {
         const ext = video.split('.').pop() || 'mp4';
         const path = `${user.id}-${Date.now()}.${ext}`;
         const resp = await fetch(video);
+
         const blob = await resp.blob();
         const { error: uploadError } = await supabase.storage
           .from(REPLY_VIDEO_BUCKET)
@@ -521,6 +527,7 @@ export default function PostDetailScreen() {
       if (!uploadedImage) uploadedImage = image;
     } else if (image) {
       uploadedImage = image;
+
     }
 
     let { data, error } = await supabase
@@ -531,6 +538,7 @@ export default function PostDetailScreen() {
           parent_id: quickReplyTarget.parentId,
           user_id: user.id,
           content: text,
+
           image_url: uploadedImage,
           video_url: uploadedUrl,
           username: profile.name || profile.username,
@@ -818,6 +826,7 @@ export default function PostDetailScreen() {
         onSubmit={handleQuickReplySubmit}
         onClose={() => setQuickReplyModalVisible(false)}
       />
+
     </KeyboardAvoidingView>
   );
 }
@@ -859,5 +868,14 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     marginBottom: 10,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'flex-end',
+  },
+  modalContent: {
+    backgroundColor: colors.background,
+    padding: 20,
   },
 });

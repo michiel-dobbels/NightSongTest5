@@ -7,6 +7,7 @@ import {
   FlatList,
   StyleSheet,
   TouchableOpacity,
+  Modal,
   KeyboardAvoidingView,
   Platform,
   Keyboard,
@@ -137,6 +138,7 @@ export default function ReplyDetailScreen() {
     parentId: string | null;
   } | null>(null);
 
+
   const [keyboardOffset, setKeyboardOffset] = useState(0);
 
   const confirmDeletePost = (id: string) => {
@@ -203,6 +205,7 @@ export default function ReplyDetailScreen() {
       setReplyVideo(uri);
     }
   };
+
 
 
   const handleDeleteReply = async (id: string) => {
@@ -429,6 +432,7 @@ export default function ReplyDetailScreen() {
     video: string | null,
   ) => {
     if (!quickReplyTarget || (!text.trim() && !image && !video) || !user) {
+
       setQuickReplyModalVisible(false);
       return;
     }
@@ -443,6 +447,7 @@ export default function ReplyDetailScreen() {
       content: text,
       image_url: image ?? undefined,
       video_url: video ?? undefined,
+
       created_at: new Date().toISOString(),
       reply_count: 0,
       username: profile.name || profile.username,
@@ -485,6 +490,7 @@ export default function ReplyDetailScreen() {
         const ext = video.split('.').pop() || 'mp4';
         const path = `${user.id}-${Date.now()}.${ext}`;
         const resp = await fetch(video);
+
         const blob = await resp.blob();
         const { error: uploadError } = await supabase.storage
           .from(REPLY_VIDEO_BUCKET)
@@ -505,6 +511,7 @@ export default function ReplyDetailScreen() {
       if (!uploadedImage) uploadedImage = image;
     } else if (image) {
       uploadedImage = image;
+
     }
 
     let { data, error } = await supabase
@@ -515,6 +522,7 @@ export default function ReplyDetailScreen() {
           parent_id: quickReplyTarget.parentId,
           user_id: user.id,
           content: text,
+
           image_url: uploadedImage,
           video_url: uploadedUrl,
           username: profile.name || profile.username,
@@ -989,11 +997,12 @@ export default function ReplyDetailScreen() {
         data={replies}
         keyExtractor={item => item.id}
 
-        renderItem={({ item }) => {
+        renderItem={({ item, index }) => {
           const childName = item.profiles?.name || item.profiles?.username || item.username;
           const childUserName = item.profiles?.username || item.username;
           const isMe = user?.id === item.user_id;
           const avatarUri = isMe ? profileImageUri : item.profiles?.image_url || undefined;
+          const isLast = index === replies.length - 1;
 
           return (
             <TouchableOpacity
@@ -1008,6 +1017,7 @@ export default function ReplyDetailScreen() {
               <View style={[styles.reply, styles.longReply]}>
                 {item.parent_id && (
                   <View style={styles.threadLine} pointerEvents="none" />
+
                 )}
                 {isMe && (
                   <TouchableOpacity
@@ -1110,6 +1120,7 @@ export default function ReplyDetailScreen() {
         onSubmit={handleQuickReplySubmit}
         onClose={() => setQuickReplyModalVisible(false)}
       />
+
     </KeyboardAvoidingView>
   );
 }
@@ -1133,7 +1144,13 @@ const styles = StyleSheet.create({
     position: 'relative',
   },
   row: { flexDirection: 'row', alignItems: 'flex-start' },
-  avatar: { width: 48, height: 48, borderRadius: 24, marginRight: 8 },
+  avatar: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    marginRight: 8,
+    zIndex: 1,
+  },
   placeholder: { backgroundColor: '#555' },
   reply: {
     backgroundColor: colors.background,
@@ -1151,12 +1168,23 @@ const styles = StyleSheet.create({
   },
   threadLine: {
     position: 'absolute',
-    left: 26,
+    left: 34,
     top: 0,
     bottom: -10,
     width: 2,
     backgroundColor: colors.accent,
-    zIndex: -1,
+    zIndex: 0,
+  },
+  threadLineEnd: {
+    position: 'absolute',
+    left: 34,
+
+    top: 0,
+    height: 48,
+    width: 2,
+    backgroundColor: colors.accent,
+    zIndex: 0,
+
   },
   highlightPost: {
     borderColor: colors.accent,
@@ -1239,5 +1267,14 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     marginBottom: 10,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'flex-end',
+  },
+  modalContent: {
+    backgroundColor: colors.background,
+    padding: 20,
   },
 });
