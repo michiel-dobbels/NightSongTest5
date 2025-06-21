@@ -7,6 +7,7 @@ import {
   FlatList,
   StyleSheet,
   TouchableOpacity,
+  Modal,
   KeyboardAvoidingView,
   Platform,
   Keyboard,
@@ -21,6 +22,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useRoute, useNavigation } from '@react-navigation/native';
 
 import { supabase, REPLY_VIDEO_BUCKET } from '../../lib/supabase';
+import { uploadImage } from '../../lib/uploadImage';
 import { getLikeCounts } from '../../lib/getLikeCounts';
 import { useAuth } from '../../AuthContext';
 import { colors } from '../styles/colors';
@@ -129,6 +131,15 @@ export default function ReplyDetailScreen() {
   const [allReplies, setAllReplies] = useState<Reply[]>([]);
   const [replyCounts, setReplyCounts] = useState<{ [key: string]: number }>({});
 
+  const [quickReplyModalVisible, setQuickReplyModalVisible] = useState(false);
+  const [quickReplyTarget, setQuickReplyTarget] = useState<{
+    postId: string;
+    parentId: string | null;
+  } | null>(null);
+  const [quickReplyText, setQuickReplyText] = useState('');
+  const [quickReplyImage, setQuickReplyImage] = useState<string | null>(null);
+  const [quickReplyVideo, setQuickReplyVideo] = useState<string | null>(null);
+
   const [keyboardOffset, setKeyboardOffset] = useState(0);
 
   const confirmDeletePost = (id: string) => {
@@ -193,6 +204,36 @@ export default function ReplyDetailScreen() {
         return;
       }
       setReplyVideo(uri);
+    }
+  };
+
+  const pickQuickReplyImage = async () => {
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: true,
+      quality: 0.8,
+    });
+    if (!result.canceled) {
+      const uri = result.assets[0].uri;
+      const base64 = await FileSystem.readAsStringAsync(uri, { encoding: 'base64' });
+      setQuickReplyImage(`data:image/jpeg;base64,${base64}`);
+      setQuickReplyVideo(null);
+    }
+  };
+
+  const pickQuickReplyVideo = async () => {
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Videos,
+    });
+    if (!result.canceled) {
+      const uri = result.assets[0].uri;
+      const info = await FileSystem.getInfoAsync(uri);
+      if (info.size && info.size > 20 * 1024 * 1024) {
+        Alert.alert('Video too large', 'Please select a video under 20MB.');
+        return;
+      }
+      setQuickReplyVideo(uri);
+      setQuickReplyImage(null);
     }
   };
 
@@ -409,6 +450,150 @@ export default function ReplyDetailScreen() {
     loadCached();
   }, []);
 
+  const openQuickReplyModal = (postId: string, parentId: string | null) => {
+    setQuickReplyTarget({ postId, parentId });
+    setQuickReplyText('');
+    setQuickReplyImage(null);
+    setQuickReplyVideo(null);
+    setQuickReplyModalVisible(true);
+  };
+
+  const handleQuickReplySubmit = async () => {
+    if (
+      !quickReplyTarget ||
+      (!quickReplyText.trim() && !quickReplyImage && !quickReplyVideo) ||
+      !user
+    ) {
+      setQuickReplyModalVisible(false);
+      return;
+    }
+
+    setQuickReplyModalVisible(false);
+
+    const newReply: Reply = {
+      id: `temp-${Date.now()}`,
+      post_id: quickReplyTarget.postId,
+      parent_id: quickReplyTarget.parentId,
+      user_id: user.id,
+      content: quickReplyText,
+      image_url: quickReplyImage ?? undefined,
+      video_url: quickReplyVideo ?? undefined,
+      created_at: new Date().toISOString(),
+      reply_count: 0,
+      username: profile.name || profile.username,
+      like_count: 0,
+      profiles: {
+        username: profile.username,
+        name: profile.name,
+        image_url: profileImageUri,
+        banner_url: bannerImageUri,
+      },
+    };
+
+    if (quickReplyTarget.parentId === parent.id) {
+      setReplies(prev => {
+        const updated = [newReply, ...prev];
+        AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
+        return updated;
+      });
+    }
+
+    setAllReplies(prev => [...prev, newReply]);
+    setReplyCounts(prev => {
+      const counts = { ...prev };
+      counts[parent.id] = (counts[parent.id] || 0) + 1;
+      if (quickReplyTarget.parentId) {
+        counts[quickReplyTarget.parentId] =
+          (counts[quickReplyTarget.parentId] || 0) + 1;
+      }
+      counts[newReply.id] = 0;
+      AsyncStorage.setItem(COUNT_STORAGE_KEY, JSON.stringify(counts));
+      return counts;
+    });
+    initialize([{ id: newReply.id, like_count: 0 }]);
+
+    setQuickReplyText('');
+    setQuickReplyImage(null);
+    setQuickReplyVideo(null);
+
+    let uploadedUrl: string | null = null;
+    let uploadedImage: string | null = null;
+    if (quickReplyVideo) {
+      try {
+        const ext = quickReplyVideo.split('.').pop() || 'mp4';
+        const path = `${user.id}-${Date.now()}.${ext}`;
+        const resp = await fetch(quickReplyVideo);
+        const blob = await resp.blob();
+        const { error: uploadError } = await supabase.storage
+          .from(REPLY_VIDEO_BUCKET)
+          .upload(path, blob);
+        if (!uploadError) {
+          const { publicURL } = supabase.storage
+            .from(REPLY_VIDEO_BUCKET)
+            .getPublicUrl(path);
+          uploadedUrl = publicURL;
+        }
+      } catch (e) {
+        console.error('Video upload failed', e);
+      }
+    }
+
+    if (quickReplyImage && !quickReplyImage.startsWith('http')) {
+      uploadedImage = await uploadImage(quickReplyImage, user.id);
+      if (!uploadedImage) uploadedImage = quickReplyImage;
+    } else if (quickReplyImage) {
+      uploadedImage = quickReplyImage;
+    }
+
+    let { data, error } = await supabase
+      .from('replies')
+      .insert([
+        {
+          post_id: quickReplyTarget.postId,
+          parent_id: quickReplyTarget.parentId,
+          user_id: user.id,
+          content: quickReplyText,
+          image_url: uploadedImage,
+          video_url: uploadedUrl,
+          username: profile.name || profile.username,
+        },
+      ])
+      .select()
+      .single();
+    if (error?.code === 'PGRST204') {
+      error = null;
+    }
+
+    if (!error && data) {
+      if (quickReplyTarget.parentId === parent.id) {
+        setReplies(prev =>
+          prev.map(r =>
+            r.id === newReply.id
+              ? { ...r, id: data.id, created_at: data.created_at, reply_count: 0 }
+              : r,
+          ),
+        );
+      }
+      setAllReplies(prev =>
+        prev.map(r =>
+          r.id === newReply.id ? { ...r, id: data.id, created_at: data.created_at } : r,
+        ),
+      );
+      setReplyCounts(prev => {
+        const temp = prev[newReply.id] ?? 0;
+        const { [newReply.id]: _omit, ...rest } = prev;
+        const counts = { ...rest, [data.id]: temp };
+        if (quickReplyTarget.parentId) {
+          counts[quickReplyTarget.parentId] = counts[quickReplyTarget.parentId] || 0;
+        }
+        AsyncStorage.setItem(COUNT_STORAGE_KEY, JSON.stringify(counts));
+        return counts;
+      });
+      initialize([{ id: data.id, like_count: 0 }]);
+    }
+    fetchReplies();
+  };
+
   const refreshCounts = useCallback(async () => {
     const stored = await AsyncStorage.getItem(COUNT_STORAGE_KEY);
     if (stored) {
@@ -510,6 +695,7 @@ export default function ReplyDetailScreen() {
     setReplyVideo(null);
 
     let uploadedUrl = null;
+    let uploadedImage = null;
     if (replyVideo) {
       try {
         const ext = replyVideo.split('.').pop() || 'mp4';
@@ -531,6 +717,13 @@ export default function ReplyDetailScreen() {
       }
     }
 
+    if (replyImage && !replyImage.startsWith('http')) {
+      uploadedImage = await uploadImage(replyImage, user.id);
+      if (!uploadedImage) uploadedImage = replyImage;
+    } else if (replyImage) {
+      uploadedImage = replyImage;
+    }
+
     let { data, error } = await supabase
       .from('replies')
       .insert([
@@ -539,7 +732,7 @@ export default function ReplyDetailScreen() {
           parent_id: parent.id,
           user_id: user.id,
           content: replyText,
-          image_url: replyImage,
+          image_url: uploadedImage,
           video_url: uploadedUrl,
           username: profile.name || profile.username,
         },
@@ -664,7 +857,12 @@ export default function ReplyDetailScreen() {
                     )}
                   </View>
                 </View>
-                <View style={styles.replyCountContainer}>
+                <TouchableOpacity
+                  style={styles.replyCountContainer}
+                  onPress={() =>
+                    openQuickReplyModal(parent.post_id, originalPost.id)
+                  }
+                >
                   <Ionicons
                     name="chatbubble-outline"
                     size={18}
@@ -672,7 +870,7 @@ export default function ReplyDetailScreen() {
                     style={{ marginRight: 2 }}
                   />
                   <Text style={styles.replyCountLarge}>{replyCounts[originalPost.id] || 0}</Text>
-                </View>
+                </TouchableOpacity>
                 <LikeInfo id={originalPost.id} isPost />
 
               </View>
@@ -737,7 +935,10 @@ export default function ReplyDetailScreen() {
                     )}
                   </View>
                 </View>
-                <View style={styles.replyCountContainer}>
+                <TouchableOpacity
+                  style={styles.replyCountContainer}
+                  onPress={() => openQuickReplyModal(parent.post_id, a.id)}
+                >
                   <Ionicons
                     name="chatbubble-outline"
                     size={18}
@@ -745,7 +946,7 @@ export default function ReplyDetailScreen() {
                     style={{ marginRight: 2 }}
                   />
                   <Text style={styles.replyCountLarge}>{replyCounts[a.id] || 0}</Text>
-                </View>
+                </TouchableOpacity>
                 <LikeInfo id={a.id} />
 
               </View>
@@ -753,6 +954,9 @@ export default function ReplyDetailScreen() {
           })}
 
             <View style={[styles.post, styles.longReply]}>
+              {(originalPost || ancestors.length > 0) && (
+                <View style={styles.threadLine} pointerEvents="none" />
+              )}
               {user?.id === parent.user_id && (
                 <TouchableOpacity
                   onPress={() => confirmDeleteReply(parent.id)}
@@ -802,7 +1006,10 @@ export default function ReplyDetailScreen() {
                   )}
                 </View>
               </View>
-          <View style={styles.replyCountContainer}>
+          <TouchableOpacity
+            style={styles.replyCountContainer}
+            onPress={() => openQuickReplyModal(parent.post_id, parent.id)}
+          >
             <Ionicons
               name="chatbubble-outline"
               size={18}
@@ -810,7 +1017,7 @@ export default function ReplyDetailScreen() {
               style={{ marginRight: 2 }}
             />
             <Text style={styles.replyCountLarge}>{replyCounts[parent.id] || 0}</Text>
-          </View>
+          </TouchableOpacity>
           <LikeInfo id={parent.id} />
 
           </View>
@@ -837,6 +1044,9 @@ export default function ReplyDetailScreen() {
               }
             >
               <View style={[styles.reply, styles.longReply]}>
+                {item.parent_id && (
+                  <View style={styles.threadLine} pointerEvents="none" />
+                )}
                 {isMe && (
                   <TouchableOpacity
                     onPress={() => confirmDeleteReply(item.id)}
@@ -886,7 +1096,10 @@ export default function ReplyDetailScreen() {
                     )}
                   </View>
                 </View>
-                <View style={styles.replyCountContainer}>
+                <TouchableOpacity
+                  style={styles.replyCountContainer}
+                  onPress={() => openQuickReplyModal(parent.post_id, item.id)}
+                >
                   <Ionicons
                     name="chatbubble-outline"
                     size={18}
@@ -894,7 +1107,7 @@ export default function ReplyDetailScreen() {
                     style={{ marginRight: 2 }}
                   />
                   <Text style={styles.replyCountLarge}>{replyCounts[item.id] || 0}</Text>
-                </View>
+                </TouchableOpacity>
                 <LikeInfo id={item.id} />
 
               </View>
@@ -929,6 +1142,40 @@ export default function ReplyDetailScreen() {
           <Button title="Post" onPress={handleReply} />
         </View>
       </View>
+
+      <Modal visible={quickReplyModalVisible} animationType="slide" transparent>
+        <KeyboardAvoidingView
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          style={styles.modalOverlay}
+        >
+          <View style={styles.modalContent}>
+            <TextInput
+              placeholder="Write a reply"
+              value={quickReplyText}
+              onChangeText={setQuickReplyText}
+              style={styles.input}
+              multiline
+            />
+            {quickReplyImage && (
+              <Image source={{ uri: quickReplyImage }} style={styles.preview} />
+            )}
+            {!quickReplyImage && quickReplyVideo && (
+              <Video
+                source={{ uri: quickReplyVideo }}
+                style={styles.preview}
+                useNativeControls
+                isMuted
+                resizeMode="contain"
+              />
+            )}
+            <View style={styles.buttonRow}>
+              <Button title="Add Image" onPress={pickQuickReplyImage} />
+              <Button title="Add Video" onPress={pickQuickReplyVideo} />
+              <Button title="Post" onPress={handleQuickReplySubmit} />
+            </View>
+          </View>
+        </KeyboardAvoidingView>
+      </Modal>
     </KeyboardAvoidingView>
   );
 }
@@ -1058,5 +1305,14 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     marginBottom: 10,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'flex-end',
+  },
+  modalContent: {
+    backgroundColor: colors.background,
+    padding: 20,
   },
 });
