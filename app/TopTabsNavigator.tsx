@@ -377,6 +377,7 @@ const styles = StyleSheet.create({
   },
   searchButton: { position: 'absolute', right: 0, padding: 4 },
 
+
   blurredBar: {
     backgroundColor: 'transparent',
   },
