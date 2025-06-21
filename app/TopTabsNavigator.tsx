@@ -20,6 +20,7 @@ import {
   Image,
   Alert,
 } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import {
   SafeAreaView,
   useSafeAreaInsets,
@@ -57,9 +58,10 @@ function HeaderTabBar(
     welcomeText: string;
     signOut: () => void;
     onProfile: () => void;
+    onSearch: () => void;
   },
 ) {
-  const { insetsTop, welcomeText, signOut, onProfile, ...barProps } = props;
+  const { insetsTop, welcomeText, signOut, onProfile, onSearch, ...barProps } = props;
   return (
     <BlurView
       intensity={25}
@@ -67,11 +69,16 @@ function HeaderTabBar(
       style={[styles.headerBlur, { paddingTop: insetsTop + 10 }]}
     >
       <StatusBar barStyle="light-content" translucent backgroundColor="transparent" />
-      <Image
-        source={require('../assets/logo.png')}
-        style={styles.logo}
-        resizeMode="contain"
-      />
+      <View style={styles.topRow}>
+        <Image
+          source={require('../assets/logo.png')}
+          style={styles.logo}
+          resizeMode="contain"
+        />
+        <TouchableOpacity onPress={onSearch} style={styles.searchButton}>
+          <Ionicons name="search" size={24} color={colors.accent} />
+        </TouchableOpacity>
+      </View>
       <Text style={{ color: colors.text, textAlign: 'center' }}>{welcomeText}</Text>
       <View style={{ flexDirection: 'row', justifyContent: 'center', marginTop: 10 }}>
         <Button title="Profile" onPress={onProfile} />
@@ -214,6 +221,7 @@ export default function TopTabsNavigator() {
               welcomeText={welcomeText}
               signOut={signOut}
               onProfile={openDrawer}
+              onSearch={() => homeScreenRef.current?.openSearch()}
             />
           )}
           sceneContainerStyle={{ paddingTop: HEADER_TOTAL_HEIGHT }}
@@ -362,6 +370,12 @@ const styles = StyleSheet.create({
     alignSelf: 'center',
     marginBottom: 5,
   },
+  topRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  searchButton: { padding: 4 },
 
   blurredBar: {
     backgroundColor: 'transparent',
