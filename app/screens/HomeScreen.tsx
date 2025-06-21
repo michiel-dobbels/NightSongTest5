@@ -37,6 +37,7 @@ import { usePostStore } from '../contexts/PostStoreContext';
 import { postEvents } from '../postEvents';
 import { CONFIRM_ACTION } from '../constants/ui';
 import PostCard, { Post } from '../components/PostCard';
+import ReplyCard, { Reply } from '../components/ReplyCard';
 import { colors } from '../styles/colors';
 import { replyEvents } from '../replyEvents';
 
@@ -48,7 +49,12 @@ export interface HomeScreenRef {
     video?: string,
   ) => Promise<void>;
   scrollToTop: () => void;
+  openSearch: () => void;
 }
+
+export type SearchItem =
+  | (Post & { type: 'post' })
+  | (Reply & { type: 'reply' });
 
 
 const STORAGE_KEY = 'cached_posts';
@@ -70,6 +76,10 @@ const HomeScreen = forwardRef<HomeScreenRef, { hideInput?: boolean }>(
   const [replyModalVisible, setReplyModalVisible] = useState(false);
   const [activePostId, setActivePostId] = useState<string | null>(null);
 
+  const [searchVisible, setSearchVisible] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [searchResults, setSearchResults] = useState<SearchItem[]>([]);
+
 
   if (!user || !profile) {
     return (
@@ -90,6 +100,47 @@ const HomeScreen = forwardRef<HomeScreenRef, { hideInput?: boolean }>(
     }
     return result;
   };
+
+  useEffect(() => {
+    if (!searchVisible) return;
+    const timer = setTimeout(() => {
+      const q = searchQuery.trim();
+      if (q === '') {
+        setSearchResults([]);
+        return;
+      }
+      const like = `%${q}%`;
+      Promise.all([
+        supabase
+          .from('posts')
+          .select(
+            'id, content, image_url, video_url, user_id, created_at, reply_count, like_count, username, profiles(username, name, image_url, banner_url)'
+          )
+          .ilike('content', like),
+        supabase
+          .from('replies')
+          .select(
+            'id, post_id, parent_id, user_id, content, image_url, video_url, created_at, reply_count, like_count, username, profiles(username, name, image_url, banner_url)'
+          )
+          .ilike('content', like),
+      ]).then(([postsRes, repliesRes]) => {
+        const postsData = (postsRes.data || []).map(p => ({
+          ...p,
+          type: 'post' as const,
+        }));
+        const repliesData = (repliesRes.data || []).map(r => ({
+          ...r,
+          type: 'reply' as const,
+        }));
+        const combined = [...postsData, ...repliesData] as SearchItem[];
+        combined.sort(
+          (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime(),
+        );
+        setSearchResults(combined);
+      });
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [searchQuery, searchVisible]);
 
   const openReplyModal = (postId: string) => {
     setActivePostId(postId);
@@ -378,7 +429,19 @@ const HomeScreen = forwardRef<HomeScreenRef, { hideInput?: boolean }>(
     listRef.current?.scrollToOffset({ offset: 0, animated: true });
   };
 
-  useImperativeHandle(ref, () => ({ createPost, scrollToTop }));
+  const openSearch = () => {
+    setSearchVisible(true);
+    setSearchQuery('');
+    setSearchResults([]);
+  };
+
+  const closeSearch = () => {
+    setSearchVisible(false);
+    setSearchQuery('');
+    setSearchResults([]);
+  };
+
+  useImperativeHandle(ref, () => ({ createPost, scrollToTop, openSearch }));
 
 
   return (
@@ -448,6 +511,88 @@ const HomeScreen = forwardRef<HomeScreenRef, { hideInput?: boolean }>(
         onSubmit={handleReplySubmit}
         onClose={() => setReplyModalVisible(false)}
       />
+
+      <Modal visible={searchVisible} animationType="slide" onRequestClose={closeSearch}>
+        <View style={styles.searchContainer}>
+          <TextInput
+            value={searchQuery}
+            onChangeText={setSearchQuery}
+            placeholder="Search posts and replies"
+            placeholderTextColor={colors.muted}
+            style={styles.searchInput}
+            autoFocus
+          />
+          {searchResults.length === 0 ? (
+            <View style={styles.noResultsWrapper}>
+              <Text style={styles.noResultsText}>No results</Text>
+            </View>
+          ) : (
+            <FlatList
+              data={searchResults}
+              keyExtractor={item => `${item.type}-${item.id}`}
+              renderItem={({ item }) => {
+                const isReply = item.type === 'reply';
+                const isMe = item.user_id === user.id;
+                const avatarUri = isMe
+                  ? profileImageUri ?? profile?.image_url ?? undefined
+                  : item.profiles?.image_url ?? undefined;
+                const bannerUrl = isMe
+                  ? bannerImageUri ?? profile?.banner_url ?? undefined
+                  : item.profiles?.banner_url ?? undefined;
+                if (isReply) {
+                  const reply = item as Reply & { type: 'reply' };
+                  return (
+                    <ReplyCard
+                      reply={reply}
+                      isOwner={isMe}
+                      avatarUri={avatarUri}
+                      bannerUrl={bannerUrl}
+                      replyCount={reply.reply_count ?? 0}
+                      onPress={() =>
+                        navigation.navigate('ReplyDetail', {
+                          reply,
+                          originalPost: undefined,
+                          ancestors: [],
+                        })
+                      }
+                      onProfilePress={() =>
+                        isMe
+                          ? navigation.navigate('Profile')
+                          : navigation.navigate('OtherUserProfile', { userId: reply.user_id })
+                      }
+                      onDelete={() => {}}
+                      onOpenReplies={() => {}}
+                    />
+                  );
+                }
+                const post = item as Post & { type: 'post' };
+                return (
+                  <PostCard
+                    post={post}
+                    isOwner={isMe}
+                    avatarUri={avatarUri}
+                    bannerUrl={bannerUrl}
+                    imageUrl={post.image_url ?? undefined}
+                    videoUrl={post.video_url ?? undefined}
+                    replyCount={post.reply_count ?? 0}
+                    onLike={() => handleLike(post.id)}
+                    onPress={() => navigation.navigate('PostDetail', { post })}
+                    onProfilePress={() =>
+                      isMe
+                        ? navigation.navigate('Profile')
+                        : navigation.navigate('OtherUserProfile', { userId: post.user_id })
+                    }
+                    onDelete={() => {}}
+                    onOpenReplies={() => {}}
+                  />
+                );
+              }}
+            />
+          )}
+
+          <Button title="Close" onPress={closeSearch} />
+        </View>
+      </Modal>
     </View>
   );
 });
@@ -461,6 +606,23 @@ const styles = StyleSheet.create({
     marginBottom: 10,
     borderRadius: 5,
   },
+  searchContainer: {
+    flex: 1,
+    backgroundColor: colors.background,
+    padding: 10,
+    paddingTop: 40,
+  },
+  searchInput: {
+    backgroundColor: '#333',
+    color: colors.text,
+    borderRadius: 8,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    marginBottom: 10,
+    marginTop: 10,
+  },
+  noResultsWrapper: { flex: 1, justifyContent: 'center', alignItems: 'center' },
+  noResultsText: { color: colors.text, marginTop: 20 },
 });
 
 export default HomeScreen;
