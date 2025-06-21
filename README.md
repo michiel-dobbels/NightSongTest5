@@ -18,3 +18,6 @@ This project uses [Supabase](https://supabase.com) for authentication and storin
 With the database configured you can run `npm start` to launch the Expo app.
 
 The marketplace screens live under `app/screens` and use a dark theme. The primary background color is `#2c2c54` and interactive elements use the accent color `#0070f3`.
+
+The Market home screen includes a magnifying glass icon in the header. Tapping it reveals a search field for quickly filtering car listings by title or description. Results update live using a fuzzy, case-insensitive query against Supabase.
+
