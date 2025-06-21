@@ -282,6 +282,10 @@ export default function TopTabsNavigator() {
               <View style={styles.buttonRow}>
                 <Button title="Add Image" onPress={pickImage} />
                 <Button title="Add Video" onPress={pickVideo} />
+                <Button title="Add Story" onPress={() => {
+                  setModalVisible(false);
+                  navigation.navigate('CreateStory');
+                }} />
                 <Button title="Post" onPress={handleModalPost} />
               </View>
               <Button title="Cancel" onPress={() => setModalVisible(false)} />
