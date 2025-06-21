@@ -1027,11 +1027,12 @@ export default function ReplyDetailScreen() {
         data={replies}
         keyExtractor={item => item.id}
 
-        renderItem={({ item }) => {
+        renderItem={({ item, index }) => {
           const childName = item.profiles?.name || item.profiles?.username || item.username;
           const childUserName = item.profiles?.username || item.username;
           const isMe = user?.id === item.user_id;
           const avatarUri = isMe ? profileImageUri : item.profiles?.image_url || undefined;
+          const isLast = index === replies.length - 1;
 
           return (
             <TouchableOpacity
@@ -1045,7 +1046,10 @@ export default function ReplyDetailScreen() {
             >
               <View style={[styles.reply, styles.longReply]}>
                 {item.parent_id && (
-                  <View style={styles.threadLine} pointerEvents="none" />
+                  <View
+                    style={[styles.threadLine, isLast && styles.threadLineEnd]}
+                    pointerEvents="none"
+                  />
                 )}
                 {isMe && (
                   <TouchableOpacity
@@ -1226,6 +1230,15 @@ const styles = StyleSheet.create({
     left: 26,
     top: 0,
     bottom: -10,
+    width: 2,
+    backgroundColor: colors.accent,
+    zIndex: 0,
+  },
+  threadLineEnd: {
+    position: 'absolute',
+    left: 26,
+    top: 0,
+    height: 48,
     width: 2,
     backgroundColor: colors.accent,
     zIndex: 0,

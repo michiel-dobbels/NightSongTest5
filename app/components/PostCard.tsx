@@ -53,6 +53,11 @@ export interface PostCardProps {
   onDelete: () => void;
   onOpenReplies: () => void;
   showThreadLine?: boolean;
+  /**
+   * If true, the thread line should end behind this avatar
+   * rather than extending to the bottom of the card.
+   */
+  isLastInThread?: boolean;
 }
 
 function PostCard({
@@ -68,6 +73,7 @@ function PostCard({
   onDelete,
   onOpenReplies,
   showThreadLine = false,
+  isLastInThread = false,
 }: PostCardProps) {
   const displayName = post.profiles?.name || post.profiles?.username || post.username;
   const userName = post.profiles?.username || post.username;
@@ -82,7 +88,12 @@ function PostCard({
   return (
     <TouchableOpacity onPress={onPress}>
       <View style={styles.post}>
-        {showThreadLine && <View style={styles.threadLine} pointerEvents="none" />}
+        {showThreadLine && (
+          <View
+            style={[styles.threadLine, isLastInThread && styles.threadLineEnd]}
+            pointerEvents="none"
+          />
+        )}
         {isOwner && (
           <TouchableOpacity
             onPress={e => {
@@ -232,6 +243,15 @@ const styles = StyleSheet.create({
     left: 26,
     top: 0,
     bottom: -10,
+    width: 2,
+    backgroundColor: colors.accent,
+    zIndex: 0,
+  },
+  threadLineEnd: {
+    position: 'absolute',
+    left: 26,
+    top: 0,
+    height: 48,
     width: 2,
     backgroundColor: colors.accent,
     zIndex: 0,
