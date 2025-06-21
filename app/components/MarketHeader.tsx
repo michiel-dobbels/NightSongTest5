@@ -1,13 +1,59 @@
-import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import React, { useEffect, useRef } from 'react';
+import {
+  View,
+  Text,
+  TouchableOpacity,
+  StyleSheet,
+  TextInput,
+} from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { colors } from '../styles/colors';
 
+export interface MarketHeaderProps {
+  searchVisible: boolean;
+  query: string;
+  onSearchPress: () => void;
+  onQueryChange: (text: string) => void;
+}
 
+export default function MarketHeader({
+  searchVisible,
+  query,
+  onSearchPress,
+  onQueryChange,
+}: MarketHeaderProps) {
+  const inputRef = useRef<TextInput>(null);
 
-export default function MarketHeader() {
+  useEffect(() => {
+    if (searchVisible) {
+      inputRef.current?.focus();
+    }
+  }, [searchVisible]);
+
   return (
     <View style={styles.headerWrapper}>
-      <Text style={styles.title}>Market</Text>
+      <View style={styles.topRow}>
+        <Text style={styles.title}>Market</Text>
+        <TouchableOpacity onPress={onSearchPress} style={styles.searchButton}>
+          <Ionicons
+            name={searchVisible ? 'close' : 'search'}
+            size={24}
+            color={colors.accent}
+          />
+        </TouchableOpacity>
+      </View>
+
+      {searchVisible && (
+        <TextInput
+          ref={inputRef}
+          value={query}
+          onChangeText={onQueryChange}
+          placeholder="Search listings"
+          placeholderTextColor={colors.muted}
+          style={styles.searchInput}
+        />
+      )}
+
       <View style={styles.buttonRow}>
         <TouchableOpacity style={styles.tabButton}>
           <Text style={styles.tabText}>For you</Text>
@@ -17,7 +63,6 @@ export default function MarketHeader() {
         </TouchableOpacity>
         <TouchableOpacity style={styles.inactiveTab}>
           <Text style={styles.inactiveText}>Categories</Text>
-
         </TouchableOpacity>
       </View>
     </View>
@@ -32,11 +77,27 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingBottom: 10,
   },
+  topRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
   title: {
     fontSize: 28,
     fontWeight: 'bold',
     color: colors.text,
 
+  },
+  searchButton: {
+    padding: 4,
+  },
+  searchInput: {
+    backgroundColor: '#333',
+    color: colors.text,
+    borderRadius: 8,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    marginTop: 10,
   },
   buttonRow: {
     flexDirection: 'row',

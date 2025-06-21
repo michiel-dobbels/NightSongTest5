@@ -45,16 +45,21 @@ export default function MarketHomeScreen() {
   const [listings, setListings] = useState<Listing[]>([]);
   const [placeholderListing, setPlaceholderListing] = useState<Partial<Listing> | null>(null);
   const [refreshKey, setRefreshKey] = useState(0);
+  const [searchVisible, setSearchVisible] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
 
   const navigation = useNavigation<any>();
   const route = useRoute<any>();
   const skipNextLoad = useRef(false); // ✅ new ref
 
-  const load = async () => {
-    const { data } = await supabase
-      .from('market_listings')
-      .select('*')
-      .order('created_at', { ascending: false });
+  const load = async (query?: string) => {
+    let q = supabase.from('market_listings').select('*');
+    if (query) {
+      const like = `*${query}*`;
+      q = q.or(`title.ilike.${like},description.ilike.${like}`);
+    }
+
+    const { data } = await q.order('created_at', { ascending: false });
 
     setListings(data ?? []);
   };
@@ -77,6 +82,18 @@ export default function MarketHomeScreen() {
       navigation.setParams({ placeholderListing: undefined });
     }
   }, [route.params?.placeholderListing]);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      const q = searchQuery.trim();
+      if (q === '') {
+        load();
+      } else {
+        load(q);
+      }
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
 
   const handleDelete = (deletedId: string) => {
     skipNextLoad.current = true; // ✅ mark that next load should be skipped
@@ -123,13 +140,25 @@ export default function MarketHomeScreen() {
     </TouchableOpacity>
   );
 
-  const dataToRender = placeholderListing
-    ? ([placeholderListing, ...listings] as Listing[])
-    : listings;
+  const dataToRender =
+    placeholderListing && searchQuery.trim() === ''
+      ? ([placeholderListing, ...listings] as Listing[])
+      : listings;
 
   return (
     <View style={styles.container}>
-      <MarketHeader />
+      <MarketHeader
+        searchVisible={searchVisible}
+        query={searchQuery}
+        onSearchPress={() => {
+          setSearchVisible((v) => {
+            const next = !v;
+            if (!next) setSearchQuery('');
+            return next;
+          });
+        }}
+        onQueryChange={setSearchQuery}
+      />
 
       {dataToRender.length === 0 ? (
         <View style={styles.emptyWrapper}>
