@@ -64,6 +64,13 @@ export default function ReplyModal({ visible, onSubmit, onClose }: ReplyModalPro
     onClose();
   };
 
+  const handleCancel = () => {
+    setText('');
+    setImage(null);
+    setVideo(null);
+    onClose();
+  };
+
   return (
     <Modal visible={visible} animationType="slide" transparent onRequestClose={onClose}>
       <KeyboardAvoidingView
@@ -92,6 +99,7 @@ export default function ReplyModal({ visible, onSubmit, onClose }: ReplyModalPro
             <Button title="Add Image" onPress={pickImage} />
             <Button title="Add Video" onPress={pickVideo} />
             <Button title="Post" onPress={handleSubmit} />
+            <Button title="Cancel" onPress={handleCancel} />
           </View>
         </View>
       </KeyboardAvoidingView>
