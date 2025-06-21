@@ -83,6 +83,7 @@ function ReplyThread({
             onDelete={() => {}}
             onOpenReplies={() => {}}
             showThreadLine
+            isLastInThread={false}
 
           />
         </View>
@@ -101,6 +102,7 @@ function ReplyThread({
             onDelete={() => {}}
             onOpenReplies={() => {}}
             showThreadLine
+            isLastInThread={false}
           />
         </View>
       )}
@@ -119,6 +121,7 @@ function ReplyThread({
           onDelete={onDelete}
           onOpenReplies={() => {}}
           showThreadLine
+          isLastInThread
 
         />
       </View>
