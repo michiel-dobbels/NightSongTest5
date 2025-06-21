@@ -12,6 +12,7 @@ import {
   Keyboard,
   Alert,
   Image,
+  Dimensions,
 } from 'react-native';
 import { Video } from 'expo-av';
 import { Ionicons } from '@expo/vector-icons';
@@ -34,6 +35,9 @@ const CHILD_PREFIX = 'cached_child_replies_';
 const COUNT_STORAGE_KEY = 'cached_reply_counts';
 const LIKE_COUNT_KEY = 'cached_like_counts';
 const LIKED_KEY_PREFIX = 'cached_likes_';
+
+const TAB_BAR_HEIGHT = Dimensions.get('window').height * 0.1;
+const TAB_BAR_COLOR = 'rgba(44,44,84,0.9)';
 
 
 function timeAgo(dateString: string): string {
@@ -930,7 +934,7 @@ export default function ReplyDetailScreen() {
       <TouchableOpacity
         activeOpacity={0.8}
         onPress={() => openQuickReplyModal(parent.post_id, parent.id)}
-        style={[styles.quickReplyBar, { bottom: keyboardOffset }]}
+        style={[styles.quickReplyBar, { bottom: TAB_BAR_HEIGHT + keyboardOffset }]}
       >
         <Text style={styles.quickReplyPlaceholder}>Write a reply...</Text>
       </TouchableOpacity>
@@ -1070,8 +1074,8 @@ const styles = StyleSheet.create({
     position: 'absolute',
     left: 16,
     right: 16,
-    bottom: 0,
-    backgroundColor: colors.background,
+    bottom: TAB_BAR_HEIGHT,
+    backgroundColor: TAB_BAR_COLOR,
     padding: 12,
     borderRadius: 6,
     borderWidth: 1,
