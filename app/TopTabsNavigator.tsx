@@ -38,6 +38,7 @@ import { colors } from './styles/colors';
 import * as ImagePicker from 'expo-image-picker';
 import * as FileSystem from 'expo-file-system';
 import { Video } from 'expo-av';
+import CreateStoryModal from './components/CreateStoryModal';
 
 
 const Tab = createMaterialTopTabNavigator();
@@ -110,6 +111,7 @@ export default function TopTabsNavigator() {
   const [modalText, setModalText] = useState('');
   const [modalImage, setModalImage] = useState<string | null>(null);
   const [modalVideo, setModalVideo] = useState<string | null>(null);
+  const [createStoryVisible, setCreateStoryVisible] = useState(false);
   const homeScreenRef = useRef<HomeScreenRef>(null);
 
   const pickImage = async () => {
@@ -166,6 +168,10 @@ export default function TopTabsNavigator() {
     setModalImage(null);
     setModalVideo(null);
     setModalVisible(false);
+  };
+
+  const openCreateStoryModal = () => {
+    setCreateStoryVisible(true);
   };
 
   const displayName = profile?.name || profile?.username;
@@ -282,12 +288,17 @@ export default function TopTabsNavigator() {
               <View style={styles.buttonRow}>
                 <Button title="Add Image" onPress={pickImage} />
                 <Button title="Add Video" onPress={pickVideo} />
+                <Button title="Add Story" onPress={openCreateStoryModal} />
                 <Button title="Post" onPress={handleModalPost} />
               </View>
               <Button title="Cancel" onPress={() => setModalVisible(false)} />
             </View>
           </View>
         </Modal>
+        <CreateStoryModal
+          visible={createStoryVisible}
+          onClose={() => setCreateStoryVisible(false)}
+        />
       </Animated.View>
 
       {drawerOpen && (
