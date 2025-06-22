@@ -59,6 +59,7 @@ export default function StoryAvatarRow() {
     return () => {
       followEvents.off('followChanged', load);
     };
+
   }, [user?.id]);
 
   return (
