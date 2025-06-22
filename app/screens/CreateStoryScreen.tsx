@@ -8,6 +8,7 @@ import { supabase, STORY_BUCKET } from '../../lib/supabase';
 import { uploadImage } from '../../lib/uploadImage';
 import { useAuth } from '../../AuthContext';
 import { colors } from '../styles/colors';
+import { storyEvents } from '../storyEvents';
 
 export default function CreateStoryScreen() {
   const { profile } = useAuth()!;
@@ -68,14 +69,21 @@ export default function CreateStoryScreen() {
 
     if (!mediaUrl) return;
 
-    await supabase.from('stories').insert({
+
+    const { error } = await supabase.from('stories').insert({
       user_id: profile.id,
       media_url: mediaUrl,
       media_type: mediaType,
       overlay_text: text || null,
       created_at: new Date().toISOString(),
-      expires_at: new Date(Date.now() + 5 * 60 * 1000).toISOString(),
+      expires_at: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
     });
+
+    if (!error) {
+      storyEvents.emit('storyAdded', profile.id);
+    } else {
+      console.error('Failed to insert story', error);
+    }
 
     navigation.goBack();
   };

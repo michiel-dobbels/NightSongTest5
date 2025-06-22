@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '../../lib/supabase';
+import { storyEvents } from '../storyEvents';
 
 export default function useStoryAvailability(userIds: string[]) {
   const [map, setMap] = useState<Record<string, boolean>>({});
@@ -14,7 +15,10 @@ export default function useStoryAvailability(userIds: string[]) {
         .from('stories')
         .select('user_id')
         .in('user_id', userIds)
-        .gt('expires_at', new Date().toISOString());
+        .gte(
+          'created_at',
+          new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(),
+        );
       if (!error && data) {
         const m: Record<string, boolean> = {};
         data.forEach(s => {
@@ -24,6 +28,10 @@ export default function useStoryAvailability(userIds: string[]) {
       }
     };
     fetchStories();
+    storyEvents.on('storyAdded', fetchStories);
+    return () => {
+      storyEvents.off('storyAdded', fetchStories);
+    };
   }, [JSON.stringify(userIds)]);
 
   return map;

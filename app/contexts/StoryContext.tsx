@@ -12,22 +12,30 @@ export interface Story {
   expires_at: string;
 }
 
+export interface ViewerProfile {
+  username: string;
+  image_url: string | null;
+}
+
 interface StoryContextValue {
   openUserStories: (userId: string) => Promise<void>;
   closeViewer: () => void;
-  stories: Story[];
+  stories: (Story & { profiles?: any })[];
   visible: boolean;
   currentIndex: number;
+  viewer: ViewerProfile | null;
   next: () => void;
   prev: () => void;
+  setIndex: (index: number) => void;
 }
 
 const StoryContext = createContext<StoryContextValue | undefined>(undefined);
 
 export const StoryProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [stories, setStories] = useState<Story[]>([]);
+  const [stories, setStories] = useState<(Story & { profiles?: any })[]>([]);
   const [visible, setVisible] = useState(false);
   const [currentIndex, setCurrentIndex] = useState(0);
+  const [viewer, setViewer] = useState<ViewerProfile | null>(null);
   const loadingRef = useRef(false);
 
   const openUserStories = useCallback(async (userId: string) => {
@@ -35,9 +43,12 @@ export const StoryProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     loadingRef.current = true;
     const { data, error } = await supabase
       .from('stories')
-      .select('*')
+      .select('*, profiles(username, image_url)')
       .eq('user_id', userId)
-      .gt('expires_at', new Date().toISOString())
+      .gte(
+        'created_at',
+        new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(),
+      )
       .order('created_at', { ascending: true });
     loadingRef.current = false;
     if (error) {
@@ -45,7 +56,12 @@ export const StoryProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       return;
     }
     if (data && data.length > 0) {
-      setStories(data as Story[]);
+      const { profiles, ...first } = data[0] as any;
+      setViewer({
+        username: profiles?.username ?? '',
+        image_url: profiles?.image_url ?? null,
+      });
+      setStories(data as any);
       setCurrentIndex(0);
       setVisible(true);
     }
@@ -55,6 +71,7 @@ export const StoryProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     setVisible(false);
     setStories([]);
     setCurrentIndex(0);
+    setViewer(null);
   }, []);
 
   const next = useCallback(() => {
@@ -69,14 +86,30 @@ export const StoryProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     setCurrentIndex(i => Math.max(0, i - 1));
   }, []);
 
+  const setIndex = useCallback(
+    (index: number) => {
+      setCurrentIndex(i => {
+        if (index < 0) return 0;
+        if (index >= stories.length) {
+          closeViewer();
+          return i;
+        }
+        return index;
+      });
+    },
+    [stories.length, closeViewer],
+  );
+
   const value: StoryContextValue = {
     openUserStories,
     closeViewer,
     stories,
     visible,
     currentIndex,
+    viewer,
     next,
     prev,
+    setIndex,
   };
 
   return (
