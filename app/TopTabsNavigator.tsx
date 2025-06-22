@@ -38,6 +38,7 @@ import { colors } from './styles/colors';
 import * as ImagePicker from 'expo-image-picker';
 import * as FileSystem from 'expo-file-system';
 import { Video } from 'expo-av';
+import CreateStoryModal from './components/CreateStoryModal';
 
 
 const Tab = createMaterialTopTabNavigator();
@@ -106,8 +107,11 @@ export default function TopTabsNavigator() {
 
 
   const [modalVisible, setModalVisible] = useState(false);
+  const [storyModalVisible, setStoryModalVisible] = useState(false);
   const openCreateStoryModal = () => {
-    // TODO: Replace with actual CreateStoryModal logic
+    // Close the main post modal before opening the story modal
+    setModalVisible(false);
+    setStoryModalVisible(true);
   };
   const [postText, setPostText] = useState('');
   const [modalText, setModalText] = useState('');
@@ -292,6 +296,10 @@ export default function TopTabsNavigator() {
             </View>
           </View>
         </Modal>
+        <CreateStoryModal
+          visible={storyModalVisible}
+          onClose={() => setStoryModalVisible(false)}
+        />
       </Animated.View>
 
       {drawerOpen && (
