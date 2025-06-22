@@ -106,6 +106,9 @@ export default function TopTabsNavigator() {
 
 
   const [modalVisible, setModalVisible] = useState(false);
+  const openCreateStoryModal = () => {
+    // TODO: Replace with actual CreateStoryModal logic
+  };
   const [postText, setPostText] = useState('');
   const [modalText, setModalText] = useState('');
   const [modalImage, setModalImage] = useState<string | null>(null);
@@ -282,6 +285,7 @@ export default function TopTabsNavigator() {
               <View style={styles.buttonRow}>
                 <Button title="Add Image" onPress={pickImage} />
                 <Button title="Add Video" onPress={pickVideo} />
+                <Button title="Add Story" onPress={openCreateStoryModal} />
                 <Button title="Post" onPress={handleModalPost} />
               </View>
               <Button title="Cancel" onPress={() => setModalVisible(false)} />
