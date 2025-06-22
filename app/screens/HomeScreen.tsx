@@ -41,6 +41,46 @@ import ReplyCard, { Reply } from '../components/ReplyCard';
 import { colors } from '../styles/colors';
 import { replyEvents } from '../replyEvents';
 
+const PostItem = React.memo(function PostItem({
+  item,
+  isMe,
+  avatarUri,
+  bannerUrl,
+  onLike,
+  onPress,
+  onProfilePress,
+  onDelete,
+  onOpenReplies,
+}: {
+  item: Post;
+  isMe: boolean;
+  avatarUri?: string;
+  bannerUrl?: string;
+  onLike: (delta: number) => void;
+  onPress: () => void;
+  onProfilePress: () => void;
+  onDelete: () => void;
+  onOpenReplies: () => void;
+}) {
+  const handleLike = React.useCallback(onLike, [onLike]);
+  return (
+    <PostCard
+      post={item}
+      isOwner={isMe}
+      avatarUri={avatarUri}
+      bannerUrl={bannerUrl}
+      imageUrl={item.image_url ?? undefined}
+      videoUrl={item.video_url ?? undefined}
+      replyCount={item.reply_count ?? 0}
+      onLike={handleLike}
+      onPress={onPress}
+      onProfilePress={onProfilePress}
+      onDelete={onDelete}
+      onOpenReplies={onOpenReplies}
+    />
+  );
+});
+
 
 export interface HomeScreenRef {
   createPost: (
@@ -434,6 +474,54 @@ const HomeScreen = forwardRef<HomeScreenRef, { hideInput?: boolean }>(
     await supabase.from('posts').delete().eq('id', id);
   };
 
+  const keyExtractor = useCallback((item: Post) => item.id, []);
+
+  const renderPost = useCallback(
+    ({ item }: { item: Post }) => {
+      const isMe = item.user_id === user.id;
+      const avatarUri = isMe
+        ? profileImageUri ?? profile?.image_url ?? undefined
+        : item.profiles?.image_url ?? undefined;
+      const bannerUrl = isMe
+        ? bannerImageUri ?? profile?.banner_url ?? undefined
+        : item.profiles?.banner_url ?? undefined;
+
+      const onLike = (delta: number) => handleLike(item.id, delta);
+      const onPress = () => navigation.navigate('PostDetail', { post: item });
+      const onProfile = () =>
+        isMe
+          ? navigation.navigate('Profile')
+          : navigation.navigate('OtherUserProfile', { userId: item.user_id });
+      const onDelete = () => confirmDeletePost(item.id);
+      const onOpenRepliesPress = () => openReplyModal(item.id);
+
+      return (
+        <PostItem
+          item={item}
+          isMe={isMe}
+          avatarUri={avatarUri}
+          bannerUrl={bannerUrl}
+          onLike={onLike}
+          onPress={onPress}
+          onProfilePress={onProfile}
+          onDelete={onDelete}
+          onOpenReplies={onOpenRepliesPress}
+        />
+      );
+    },
+    [
+      user.id,
+      profileImageUri,
+      profile?.image_url,
+      bannerImageUri,
+      profile?.banner_url,
+      navigation,
+      handleLike,
+      confirmDeletePost,
+      openReplyModal,
+    ],
+  );
+
   const scrollToTop = () => {
     listRef.current?.scrollToOffset({ offset: 0, animated: true });
   };
@@ -449,6 +537,78 @@ const HomeScreen = forwardRef<HomeScreenRef, { hideInput?: boolean }>(
     setSearchQuery('');
     setSearchResults([]);
   };
+
+  const searchKeyExtractor = useCallback(
+    (item: SearchItem) => `${item.type}-${item.id}`,
+    [],
+  );
+
+  const renderSearchItem = useCallback(
+    ({ item }: { item: SearchItem }) => {
+      const isReply = item.type === 'reply';
+      const isMe = item.user_id === user.id;
+      const avatarUri = isMe
+        ? profileImageUri ?? profile?.image_url ?? undefined
+        : item.profiles?.image_url ?? undefined;
+      const bannerUrl = isMe
+        ? bannerImageUri ?? profile?.banner_url ?? undefined
+        : item.profiles?.banner_url ?? undefined;
+      if (isReply) {
+        const reply = item as Reply & { type: 'reply' };
+        return (
+          <ReplyCard
+            reply={reply}
+            isOwner={isMe}
+            avatarUri={avatarUri}
+            bannerUrl={bannerUrl}
+            replyCount={reply.reply_count ?? 0}
+            onPress={() =>
+              navigation.navigate('ReplyDetail', {
+                reply,
+                originalPost: undefined,
+                ancestors: [],
+              })
+            }
+            onProfilePress={() =>
+              isMe
+                ? navigation.navigate('Profile')
+                : navigation.navigate('OtherUserProfile', { userId: reply.user_id })
+            }
+            onDelete={() => {}}
+            onOpenReplies={() => {}}
+          />
+        );
+      }
+      const post = item as Post & { type: 'post' };
+      const onLike = (delta: number) => handleLike(post.id, delta);
+      return (
+        <PostItem
+          item={post}
+          isMe={isMe}
+          avatarUri={avatarUri}
+          bannerUrl={bannerUrl}
+          onLike={onLike}
+          onPress={() => navigation.navigate('PostDetail', { post })}
+          onProfilePress={() =>
+            isMe
+              ? navigation.navigate('Profile')
+              : navigation.navigate('OtherUserProfile', { userId: post.user_id })
+          }
+          onDelete={() => {}}
+          onOpenReplies={() => {}}
+        />
+      );
+    },
+    [
+      user.id,
+      profileImageUri,
+      profile?.image_url,
+      bannerImageUri,
+      profile?.banner_url,
+      navigation,
+      handleLike,
+    ],
+  );
 
   useImperativeHandle(ref, () => ({ createPost, scrollToTop, openSearch }));
 
@@ -474,41 +634,13 @@ const HomeScreen = forwardRef<HomeScreenRef, { hideInput?: boolean }>(
           ref={listRef}
 
           data={posts}
-          keyExtractor={item => item.id}
+          keyExtractor={keyExtractor}
           style={{ flex: 1 }}
           contentContainerStyle={{ paddingBottom: 20 }}
           removeClippedSubviews={false}
           initialNumToRender={10}
           windowSize={5}
-          renderItem={({ item }) => {
-            const isMe = item.user_id === user.id;
-            const avatarUri = isMe
-              ? profileImageUri ?? profile?.image_url ?? undefined
-              : item.profiles?.image_url ?? undefined;
-            const bannerUrl = isMe
-              ? bannerImageUri ?? profile?.banner_url ?? undefined
-              : item.profiles?.banner_url ?? undefined;
-            return (
-              <PostCard
-                post={item}
-                isOwner={isMe}
-                avatarUri={avatarUri}
-                bannerUrl={bannerUrl}
-                imageUrl={item.image_url ?? undefined}
-                videoUrl={item.video_url ?? undefined}
-                replyCount={item.reply_count ?? 0}
-                onLike={delta => handleLike(item.id, delta)}
-                onPress={() => navigation.navigate('PostDetail', { post: item })}
-                onProfilePress={() =>
-                  isMe
-                    ? navigation.navigate('Profile')
-                    : navigation.navigate('OtherUserProfile', { userId: item.user_id })
-                }
-                onDelete={() => confirmDeletePost(item.id)}
-                onOpenReplies={() => openReplyModal(item.id)}
-              />
-            );
-          }}
+          renderItem={renderPost}
 
           onEndReached={() => fetchPosts(posts.length, true)}
           onEndReachedThreshold={0.5}
@@ -538,64 +670,8 @@ const HomeScreen = forwardRef<HomeScreenRef, { hideInput?: boolean }>(
           ) : (
             <FlatList
               data={searchResults}
-              keyExtractor={item => `${item.type}-${item.id}`}
-              renderItem={({ item }) => {
-                const isReply = item.type === 'reply';
-                const isMe = item.user_id === user.id;
-                const avatarUri = isMe
-                  ? profileImageUri ?? profile?.image_url ?? undefined
-                  : item.profiles?.image_url ?? undefined;
-                const bannerUrl = isMe
-                  ? bannerImageUri ?? profile?.banner_url ?? undefined
-                  : item.profiles?.banner_url ?? undefined;
-                if (isReply) {
-                  const reply = item as Reply & { type: 'reply' };
-                  return (
-                    <ReplyCard
-                      reply={reply}
-                      isOwner={isMe}
-                      avatarUri={avatarUri}
-                      bannerUrl={bannerUrl}
-                      replyCount={reply.reply_count ?? 0}
-                      onPress={() =>
-                        navigation.navigate('ReplyDetail', {
-                          reply,
-                          originalPost: undefined,
-                          ancestors: [],
-                        })
-                      }
-                      onProfilePress={() =>
-                        isMe
-                          ? navigation.navigate('Profile')
-                          : navigation.navigate('OtherUserProfile', { userId: reply.user_id })
-                      }
-                      onDelete={() => {}}
-                      onOpenReplies={() => {}}
-                    />
-                  );
-                }
-                const post = item as Post & { type: 'post' };
-                return (
-                  <PostCard
-                    post={post}
-                    isOwner={isMe}
-                    avatarUri={avatarUri}
-                    bannerUrl={bannerUrl}
-                    imageUrl={post.image_url ?? undefined}
-                    videoUrl={post.video_url ?? undefined}
-                    replyCount={post.reply_count ?? 0}
-                    onLike={delta => handleLike(post.id, delta)}
-                    onPress={() => navigation.navigate('PostDetail', { post })}
-                    onProfilePress={() =>
-                      isMe
-                        ? navigation.navigate('Profile')
-                        : navigation.navigate('OtherUserProfile', { userId: post.user_id })
-                    }
-                    onDelete={() => {}}
-                    onOpenReplies={() => {}}
-                  />
-                );
-              }}
+              keyExtractor={searchKeyExtractor}
+              renderItem={renderSearchItem}
             />
           )}
 
