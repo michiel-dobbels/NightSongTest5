@@ -1,6 +1,5 @@
 import React, { useCallback, useState, useEffect } from 'react';
 
-
 import {
   View,
   Text,
@@ -37,7 +36,6 @@ import { replyEvents } from '../replyEvents';
 import { likeEvents } from '../likeEvents';
 
 import { CONFIRM_ACTION } from '../constants/ui';
-
 
 const COUNT_STORAGE_KEY = 'cached_reply_counts';
 const REPLY_STORAGE_PREFIX = 'cached_replies_';
@@ -85,8 +83,6 @@ const PostItem = React.memo(function PostItem({
   );
 });
 
-
-
 export default function ProfileScreen() {
   const navigation = useNavigation<any>();
   const {
@@ -99,7 +95,7 @@ export default function ProfileScreen() {
     removePost,
     updatePost,
   } = useAuth()!;
-  const { initialize, remove, posts: storePosts } = usePostStore();
+  const { initialize, remove, getState } = usePostStore();
 
   const [replyCounts, setReplyCounts] = useState<{ [key: string]: number }>({});
   const [replyModalVisible, setReplyModalVisible] = useState(false);
@@ -119,15 +115,17 @@ export default function ProfileScreen() {
   useEffect(() => {
     const syncLikes = async () => {
       if (myPosts && myPosts.length) {
-        const missing = myPosts.filter(p => storePosts[p.id] === undefined);
+        const missing = myPosts.filter((p) => !getState(p.id));
         if (missing.length) {
-          const counts = await getLikeCounts(missing.map(p => p.id));
-          initialize(missing.map(p => ({ id: p.id, like_count: counts[p.id] })));
+          const counts = await getLikeCounts(missing.map((p) => p.id));
+          initialize(
+            missing.map((p) => ({ id: p.id, like_count: counts[p.id] })),
+          );
         }
       }
     };
     syncLikes();
-  }, [myPosts, storePosts]);
+  }, [myPosts, getState, initialize]);
 
   useEffect(() => {
     const loadCounts = async () => {
@@ -145,7 +143,7 @@ export default function ProfileScreen() {
 
   useEffect(() => {
     const onReplyAdded = (postId: string) => {
-      setReplyCounts(prev => {
+      setReplyCounts((prev) => {
         const updated = { ...prev, [postId]: (prev[postId] || 0) + 1 };
         AsyncStorage.setItem(COUNT_STORAGE_KEY, JSON.stringify(updated));
         return updated;
@@ -158,7 +156,15 @@ export default function ProfileScreen() {
   }, []);
 
   useEffect(() => {
-    const onLikeChanged = ({ id, count, liked }: { id: string; count: number; liked: boolean }) => {
+    const onLikeChanged = ({
+      id,
+      count,
+      liked,
+    }: {
+      id: string;
+      count: number;
+      liked: boolean;
+    }) => {
       updatePost(id, { like_count: count, liked });
     };
     likeEvents.on('likeChanged', onLikeChanged);
@@ -167,19 +173,20 @@ export default function ProfileScreen() {
     };
   }, [updatePost]);
 
-
-
-
   const confirmDeletePost = (id: string) => {
     Alert.alert('Delete Post', 'Are you sure you want to delete this post?', [
       CONFIRM_ACTION,
 
-      { text: 'Delete', style: 'destructive', onPress: () => handleDeletePost(id) },
+      {
+        text: 'Delete',
+        style: 'destructive',
+        onPress: () => handleDeletePost(id),
+      },
     ]);
   };
 
   const handleDeletePost = async (id: string) => {
-    setReplyCounts(prev => {
+    setReplyCounts((prev) => {
       const { [id]: _removed, ...rest } = prev;
       AsyncStorage.setItem(COUNT_STORAGE_KEY, JSON.stringify(rest));
       return rest;
@@ -187,7 +194,6 @@ export default function ProfileScreen() {
     remove(id);
     await supabase.from('posts').delete().eq('id', id);
     await removePost(id);
-
   };
 
   const openReplyModal = (postId: string) => {
@@ -206,7 +212,9 @@ export default function ProfileScreen() {
     });
     if (!result.canceled) {
       const uri = result.assets[0].uri;
-      const base64 = await FileSystem.readAsStringAsync(uri, { encoding: 'base64' });
+      const base64 = await FileSystem.readAsStringAsync(uri, {
+        encoding: 'base64',
+      });
       setReplyImage(`data:image/jpeg;base64,${base64}`);
     }
   };
@@ -227,7 +235,11 @@ export default function ProfileScreen() {
   };
 
   const handleReplySubmit = async () => {
-    if (!activePostId || (!replyText.trim() && !replyImage && !replyVideo) || !profile) {
+    if (
+      !activePostId ||
+      (!replyText.trim() && !replyImage && !replyVideo) ||
+      !profile
+    ) {
       setReplyModalVisible(false);
       return;
     }
@@ -264,8 +276,12 @@ export default function ProfileScreen() {
       console.error('Failed to cache reply', e);
     }
 
-    setReplyCounts(prev => {
-      const counts = { ...prev, [activePostId]: (prev[activePostId] || 0) + 1, [newReply.id]: 0 };
+    setReplyCounts((prev) => {
+      const counts = {
+        ...prev,
+        [activePostId]: (prev[activePostId] || 0) + 1,
+        [newReply.id]: 0,
+      };
       AsyncStorage.setItem(COUNT_STORAGE_KEY, JSON.stringify(counts));
       return counts;
     });
@@ -290,7 +306,6 @@ export default function ProfileScreen() {
             .from(REPLY_VIDEO_BUCKET)
             .getPublicUrl(path);
           uploadedUrl = publicURL;
-
         }
       } catch (e) {
         console.error('Video upload failed', e);
@@ -319,13 +334,15 @@ export default function ProfileScreen() {
         const stored = await AsyncStorage.getItem(storageKey);
         const cached = stored ? JSON.parse(stored) : [];
         const updated = cached.map((r: any) =>
-          r.id === newReply.id ? { ...r, id: data.id, created_at: data.created_at } : r,
+          r.id === newReply.id
+            ? { ...r, id: data.id, created_at: data.created_at }
+            : r,
         );
         await AsyncStorage.setItem(storageKey, JSON.stringify(updated));
       } catch (e) {
         console.error('Failed to update cached reply', e);
       }
-      setReplyCounts(prev => {
+      setReplyCounts((prev) => {
         const temp = prev[newReply.id] ?? 0;
         const { [newReply.id]: _omit, ...rest } = prev;
         const counts = { ...rest, [data.id]: temp };
@@ -337,7 +354,6 @@ export default function ProfileScreen() {
     } else if (error) {
       console.error('Reply failed', error.message);
     }
-
   };
 
   const handleReplyCancel = () => {
@@ -346,8 +362,6 @@ export default function ProfileScreen() {
     setReplyVideo(null);
     setReplyModalVisible(false);
   };
-
-
 
   const pickImage = async () => {
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
@@ -362,10 +376,10 @@ export default function ProfileScreen() {
 
     if (!result.canceled && result.assets && result.assets.length > 0) {
       const uri = result.assets[0].uri;
-      const base64 = await FileSystem.readAsStringAsync(uri, { encoding: 'base64' });
+      const base64 = await FileSystem.readAsStringAsync(uri, {
+        encoding: 'base64',
+      });
       setProfileImageUri(`data:image/jpeg;base64,${base64}`);
-
-
     }
   };
 
@@ -381,7 +395,9 @@ export default function ProfileScreen() {
     });
     if (!result.canceled && result.assets && result.assets.length > 0) {
       const uri = result.assets[0].uri;
-      const base64 = await FileSystem.readAsStringAsync(uri, { encoding: 'base64' });
+      const base64 = await FileSystem.readAsStringAsync(uri, {
+        encoding: 'base64',
+      });
       setBannerImageUri(`data:image/jpeg;base64,${base64}`);
     }
   };
@@ -394,30 +410,32 @@ export default function ProfileScreen() {
       const { data, error } = await supabase
         .from('posts')
         .select(
-          'id, content, image_url, video_url, user_id, created_at, reply_count, like_count, username, profiles(username, name, image_url, banner_url)'
+          'id, content, image_url, video_url, user_id, created_at, reply_count, like_count, username, profiles(username, name, image_url, banner_url)',
         )
         .eq('user_id', profile.id)
         .order('created_at', { ascending: false })
         .range(offset, offset + PAGE_SIZE - 1);
       if (!error && data) {
         const list = data as Post[];
-        setPosts(prev => {
-          const prevMap = Object.fromEntries(prev.map(p => [p.id, p.reply_count ?? 0]));
+        setPosts((prev) => {
+          const prevMap = Object.fromEntries(
+            prev.map((p) => [p.id, p.reply_count ?? 0]),
+          );
           const combined = append ? [...prev, ...list] : list;
           const seen = new Set<string>();
-          const merged = combined.map(p => ({
+          const merged = combined.map((p) => ({
             ...p,
             reply_count: Math.max(p.reply_count ?? 0, prevMap[p.id] ?? 0),
           }));
-          return merged.filter(p => {
+          return merged.filter((p) => {
             if (seen.has(p.id)) return false;
             seen.add(p.id);
             return true;
           });
         });
-        setReplyCounts(prev => {
+        setReplyCounts((prev) => {
           const counts = { ...prev };
-          list.forEach(p => {
+          list.forEach((p) => {
             const current = counts[p.id] ?? 0;
             const incoming = p.reply_count ?? 0;
             counts[p.id] = Math.max(current, incoming);
@@ -425,14 +443,14 @@ export default function ProfileScreen() {
           return counts;
         });
         setPostsHasMore(list.length === PAGE_SIZE);
-        const counts = await getLikeCounts(list.map(p => p.id));
-        initialize(list.map(p => ({ id: p.id, like_count: counts[p.id] })));
+        const counts = await getLikeCounts(list.map((p) => p.id));
+        initialize(list.map((p) => ({ id: p.id, like_count: counts[p.id] })));
       } else if (error) {
         console.error('Failed to fetch posts', error);
       }
       setPostsLoadingMore(false);
     },
-    [profile?.id, initialize]
+    [profile?.id, initialize],
   );
 
   const fetchReplies = useCallback(
@@ -443,38 +461,38 @@ export default function ProfileScreen() {
       const { data, error } = await supabase
         .from('replies')
         .select(
-          'id, post_id, parent_id, user_id, content, image_url, video_url, created_at, reply_count, like_count, username, profiles(username, name, image_url, banner_url)'
+          'id, post_id, parent_id, user_id, content, image_url, video_url, created_at, reply_count, like_count, username, profiles(username, name, image_url, banner_url)',
         )
         .eq('user_id', profile.id)
         .order('created_at', { ascending: false })
         .range(offset, offset + PAGE_SIZE - 1);
       if (!error && data) {
         const list = data as Reply[];
-        setReplies(prev => {
+        setReplies((prev) => {
           const combined = append ? [...prev, ...list] : list;
           const seen = new Set<string>();
-          return combined.filter(r => {
+          return combined.filter((r) => {
             if (seen.has(r.id)) return false;
             seen.add(r.id);
             return true;
           });
         });
         setRepliesHasMore(list.length === PAGE_SIZE);
-        setReplyCounts(prev => {
+        setReplyCounts((prev) => {
           const counts = { ...prev };
-          list.forEach(r => {
+          list.forEach((r) => {
             counts[r.id] = r.reply_count ?? 0;
           });
           return counts;
         });
-        const counts = await getLikeCounts(list.map(r => r.id));
-        initialize(list.map(r => ({ id: r.id, like_count: counts[r.id] })));
+        const counts = await getLikeCounts(list.map((r) => r.id));
+        initialize(list.map((r) => ({ id: r.id, like_count: counts[r.id] })));
       } else if (error) {
         console.error('Failed to fetch replies', error);
       }
       setRepliesLoadingMore(false);
     },
-    [profile?.id, initialize]
+    [profile?.id, initialize],
   );
 
   if (!profile) return null;
@@ -528,7 +546,6 @@ export default function ProfileScreen() {
       <TouchableOpacity onPress={pickBanner} style={styles.uploadLink}>
         <Text style={styles.uploadText}>Upload Banner</Text>
       </TouchableOpacity>
-
     </View>
   );
 
@@ -581,10 +598,14 @@ export default function ProfileScreen() {
         isOwner={true}
         avatarUri={profileImageUri ?? undefined}
         bannerUrl={bannerImageUri ?? undefined}
-        onPress={r =>
-          navigation.navigate('ReplyDetail', { reply: r, originalPost: undefined, ancestors: [] })
+        onPress={(r) =>
+          navigation.navigate('ReplyDetail', {
+            reply: r,
+            originalPost: undefined,
+            ancestors: [],
+          })
         }
-        onProfilePress={id =>
+        onProfilePress={(id) =>
           id === profile?.id
             ? navigation.navigate('Profile')
             : navigation.navigate('OtherUserProfile', { userId: id })
@@ -603,12 +624,15 @@ export default function ProfileScreen() {
         removeClippedSubviews
         initialNumToRender={10}
         windowSize={5}
-
         onEndReached={() => {
           if (activeTab === 'posts' && postsHasMore && !postsLoadingMore) {
             fetchPostsPage(posts.length, true);
           }
-          if (activeTab === 'replies' && repliesHasMore && !repliesLoadingMore) {
+          if (
+            activeTab === 'replies' &&
+            repliesHasMore &&
+            !repliesLoadingMore
+          ) {
             fetchReplies(replies.length, true);
           }
         }}
@@ -629,7 +653,6 @@ export default function ProfileScreen() {
           <Text style={styles.emptyText}>
             {activeTab === 'posts' ? 'No posts yet.' : 'No replies yet.'}
           </Text>
-
         )}
         renderItem={renderItem}
       />
@@ -777,6 +800,4 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     padding: 20,
   },
-
-
 });
