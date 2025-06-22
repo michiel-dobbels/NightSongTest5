@@ -55,6 +55,11 @@ export interface PostCardProps {
   /** Optional callback when the like button is pressed. The delta
    * will be +1 when liking and -1 when unliking. */
   onLike?: (delta: number) => void;
+  /** Explicit like count. If omitted, value from useLike will be used */
+  likeCount?: number;
+  /** Explicit liked state. If omitted, value from useLike will be used */
+  liked?: boolean;
+
   showThreadLine?: boolean;
   /**
    * If true, the thread line should end behind this avatar
@@ -76,13 +81,24 @@ function PostCard({
   onDelete,
   onOpenReplies,
   onLike,
+  likeCount: likeCountProp,
+  liked: likedProp,
+
   showThreadLine = false,
   isLastInThread = false,
 }: PostCardProps) {
   const displayName = post.profiles?.name || post.profiles?.username || post.username;
   const userName = post.profiles?.username || post.username;
   const isReply = (post as any).post_id !== undefined;
-  const { likeCount, liked, toggleLike } = useLike(post.id, isReply);
+  const store = useLike(post.id, isReply);
+  const likeCount = likeCountProp ?? store.likeCount;
+  const liked = likedProp ?? store.liked;
+  const toggleLike = store.toggleLike;
+
+  const handleLikePress = React.useCallback(() => {
+    onLike?.(liked ? -1 : 1);
+    toggleLike();
+  }, [onLike, liked, toggleLike]);
 
   const handleLikePress = React.useCallback(() => {
     onLike?.(liked ? -1 : 1);

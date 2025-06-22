@@ -28,7 +28,8 @@ interface ItemInfo {
 }
 
 interface PostStore {
-  posts: Record<string, PostState>;
+  /** Get the current like state for a given post id */
+  getState: (id: string) => PostState | undefined;
   initialize: (items: ItemInfo[]) => Promise<void>;
   mergeLiked: (map: Record<string, boolean>) => Promise<void>;
   toggleLike: (id: string, isReply?: boolean) => Promise<void>;
@@ -44,6 +45,11 @@ export const PostStoreProvider: React.FC<{ children: React.ReactNode }> = ({
   const [posts, setPosts] = useState<Record<string, PostState>>({});
   const postsRef = useRef<Record<string, PostState>>({});
   const lastLoadedUserIdRef = useRef<string | null>(null);
+
+  const getState = useCallback(
+    (id: string): PostState | undefined => postsRef.current[id],
+    [],
+  );
 
   useEffect(() => {
     postsRef.current = posts;
@@ -259,8 +265,8 @@ export const PostStoreProvider: React.FC<{ children: React.ReactNode }> = ({
   }, []);
 
   const value = useMemo(
-    () => ({ posts, initialize, mergeLiked, toggleLike, remove }),
-    [posts, initialize, mergeLiked, toggleLike, remove],
+    () => ({ getState, initialize, mergeLiked, toggleLike, remove }),
+    [getState, initialize, mergeLiked, toggleLike, remove],
   );
 
   return (
