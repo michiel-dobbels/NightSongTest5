@@ -7,6 +7,7 @@ import { useStories } from '../contexts/StoryContext';
 import { followEvents } from '../followEvents';
 import { storyEvents } from '../storyEvents';
 
+
 export default function StoryAvatarRow() {
   const navigation = useNavigation<any>();
   const { profileImageUri, user } = useAuth()!;
@@ -44,6 +45,7 @@ export default function StoryAvatarRow() {
           new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(),
         );
 
+
       if (!error && data) {
         const seen = new Set();
         const arr: any[] = [];
@@ -65,6 +67,7 @@ export default function StoryAvatarRow() {
       followEvents.off('followChanged', load);
       storyEvents.off('storyAdded', load);
     };
+
   }, [user?.id]);
 
   return (
