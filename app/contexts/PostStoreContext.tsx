@@ -2,7 +2,6 @@ import React, {
   createContext,
   useContext,
   useEffect,
-  useState,
   useRef,
   useCallback,
   useMemo,
@@ -44,21 +43,16 @@ export const PostStoreProvider: React.FC<{ children: React.ReactNode }> = ({
   children,
 }) => {
   const { user, updatePost } = useAuth()!;
-  const [posts, setPosts] = useState<Record<string, PostState>>({});
   const postsRef = useRef<Record<string, PostState>>({});
   const getState = useCallback((id: string) => postsRef.current[id], []);
   const lastLoadedUserIdRef = useRef<string | null>(null);
-
-  useEffect(() => {
-    postsRef.current = posts;
-  }, [posts]);
 
   useEffect(() => {
     if (user?.id && lastLoadedUserIdRef.current === user.id) {
       return;
     }
     if (!user) {
-      setPosts({});
+      postsRef.current = {};
       lastLoadedUserIdRef.current = null;
       return;
     }
@@ -90,7 +84,8 @@ export const PostStoreProvider: React.FC<{ children: React.ReactNode }> = ({
           );
           likedMap = likedStored ? JSON.parse(likedStored) : {};
         }
-        setPosts((prev) => {
+        postsRef.current = (() => {
+          const prev = postsRef.current;
           const merged = { ...prev };
           const ids = new Set([
             ...Object.keys(likeMap),
@@ -102,11 +97,8 @@ export const PostStoreProvider: React.FC<{ children: React.ReactNode }> = ({
               liked: prev[id]?.liked ?? !!likedMap[id],
             };
           });
-          if (JSON.stringify(prev) === JSON.stringify(merged)) {
-            return prev;
-          }
           return merged;
-        });
+        })();
       } catch (e) {
         console.error('Failed to load post store', e);
       }
@@ -117,19 +109,26 @@ export const PostStoreProvider: React.FC<{ children: React.ReactNode }> = ({
   }, [user?.id]);
 
   const initialize = useCallback(async (items: ItemInfo[]) => {
-    setPosts((prev) => {
-      const updated = { ...prev };
-      items.forEach((item) => {
-        const existing = updated[item.id];
-        const likeCount =
-          item.like_count !== undefined && item.like_count !== null
-            ? item.like_count
-            : (existing?.likeCount ?? 0);
+    const prev = postsRef.current;
+    const updated = { ...prev };
+    items.forEach((item) => {
+      const existing = updated[item.id];
+      const likeCount =
+        item.like_count !== undefined && item.like_count !== null
+          ? item.like_count
+          : existing?.likeCount ?? 0;
 
-        const liked = existing?.liked ?? false;
-        updated[item.id] = { likeCount, liked };
+      const liked = existing?.liked ?? false;
+      updated[item.id] = { likeCount, liked };
+    });
+    postsRef.current = updated;
+    items.forEach((item) => {
+      const state = updated[item.id];
+      likeEvents.emit('likeChanged', {
+        id: item.id,
+        count: state.likeCount,
+        liked: state.liked,
       });
-      return updated;
     });
     try {
       const stored = await AsyncStorage.getItem(LIKE_COUNT_KEY);
@@ -148,14 +147,23 @@ export const PostStoreProvider: React.FC<{ children: React.ReactNode }> = ({
   const mergeLiked = useCallback(
     async (likedMap: Record<string, boolean>) => {
       if (!user) return;
-      setPosts((prev) => {
+      {
+        const prev = postsRef.current;
         const updated = { ...prev };
         Object.entries(likedMap).forEach(([id, liked]) => {
           const existing = updated[id] || { likeCount: 0, liked: false };
           updated[id] = { likeCount: existing.likeCount, liked };
         });
-        return updated;
-      });
+        postsRef.current = updated;
+        Object.entries(likedMap).forEach(([id, liked]) => {
+          const state = updated[id];
+          likeEvents.emit('likeChanged', {
+            id,
+            count: state.likeCount,
+            liked,
+          });
+        });
+      }
       try {
         const stored = await AsyncStorage.getItem(
           `${LIKED_KEY_PREFIX}${user.id}`,
@@ -185,10 +193,10 @@ export const PostStoreProvider: React.FC<{ children: React.ReactNode }> = ({
       const current = postsRef.current[id] || { likeCount: 0, liked: false };
       const newLiked = !current.liked;
       let newCount = current.likeCount + (newLiked ? 1 : -1);
-      setPosts((prev) => ({
-        ...prev,
+      postsRef.current = {
+        ...postsRef.current,
         [id]: { likeCount: newCount, liked: newLiked },
-      }));
+      };
       if (!isReply) {
         likeEvents.emit('likeChanged', {
           id,
@@ -263,10 +271,10 @@ export const PostStoreProvider: React.FC<{ children: React.ReactNode }> = ({
           .match(isReply ? { reply_id: id } : { post_id: id });
         if (typeof count === 'number') {
           newCount = count;
-          setPosts((prev) => ({
-            ...prev,
+          postsRef.current = {
+            ...postsRef.current,
             [id]: { likeCount: count, liked: newLiked },
-          }));
+          };
           likeMap[id] = count;
           await AsyncStorage.setItem(LIKE_COUNT_KEY, JSON.stringify(likeMap));
           if (!isReply) {
@@ -282,10 +290,8 @@ export const PostStoreProvider: React.FC<{ children: React.ReactNode }> = ({
   );
 
   const remove = useCallback((id: string) => {
-    setPosts((prev) => {
-      const { [id]: _omit, ...rest } = prev;
-      return rest;
-    });
+    const { [id]: _omit, ...rest } = postsRef.current;
+    postsRef.current = rest;
     postEvents.emit('postDeleted', id);
   }, []);
 
