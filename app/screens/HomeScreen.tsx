@@ -32,6 +32,7 @@ import { uploadImage } from '../../lib/uploadImage';
 import ReplyModal from '../components/ReplyModal';
 import useStoryAvailability from '../hooks/useStoryAvailability';
 import { useStories } from '../contexts/StoryContext';
+import StoryAvatarList from '../components/StoryAvatarList';
 
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -463,6 +464,8 @@ const HomeScreen = forwardRef<HomeScreenRef, { hideInput?: boolean }>(
           <Button title="Post" onPress={handlePost} />
         </View>
       )}
+
+      <StoryAvatarList />
 
       {loading && posts.length === 0 ? (
         <ActivityIndicator color="white" style={{ marginTop: 20 }} />

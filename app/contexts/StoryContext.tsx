@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useCallback, useRef } from 'react';
 import { supabase } from '../../lib/supabase';
-import StoryViewer from '../components/StoryViewer';
+import StoryViewerModal from '../components/StoryViewerModal';
 
 export interface Story {
   id: string;
@@ -23,9 +23,6 @@ interface StoryContextValue {
   closeViewer: () => void;
   stories: Story[];
   visible: boolean;
-  currentIndex: number;
-  next: () => void;
-  prev: () => void;
 }
 
 const StoryContext = createContext<StoryContextValue | undefined>(undefined);
@@ -33,7 +30,6 @@ const StoryContext = createContext<StoryContextValue | undefined>(undefined);
 export const StoryProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [stories, setStories] = useState<Story[]>([]);
   const [visible, setVisible] = useState(false);
-  const [currentIndex, setCurrentIndex] = useState(0);
   const loadingRef = useRef(false);
 
   const openUserStories = useCallback(async (userId: string) => {
@@ -53,7 +49,6 @@ export const StoryProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     }
     if (data && data.length > 0) {
       setStories(data as Story[]);
-      setCurrentIndex(0);
       setVisible(true);
     }
   }, []);
@@ -61,19 +56,6 @@ export const StoryProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   const closeViewer = useCallback(() => {
     setVisible(false);
     setStories([]);
-    setCurrentIndex(0);
-  }, []);
-
-  const next = useCallback(() => {
-    setCurrentIndex(i => {
-      if (i < stories.length - 1) return i + 1;
-      closeViewer();
-      return i;
-    });
-  }, [stories.length, closeViewer]);
-
-  const prev = useCallback(() => {
-    setCurrentIndex(i => Math.max(0, i - 1));
   }, []);
 
   const value: StoryContextValue = {
@@ -81,15 +63,12 @@ export const StoryProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     closeViewer,
     stories,
     visible,
-    currentIndex,
-    next,
-    prev,
   };
 
   return (
     <StoryContext.Provider value={value}>
       {children}
-      <StoryViewer />
+      <StoryViewerModal />
     </StoryContext.Provider>
   );
 };

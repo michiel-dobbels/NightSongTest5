@@ -1,17 +1,23 @@
 import React, { useEffect, useState } from 'react';
 import { View, ScrollView, TouchableOpacity, Image, StyleSheet } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
 import { useAuth } from '../../AuthContext';
 import { supabase } from '../../lib/supabase';
 import { useStories } from '../contexts/StoryContext';
 
-export default function StoryAvatarRow() {
-  const navigation = useNavigation<any>();
+interface UserItem {
+  user_id: string;
+  profiles: {
+    username: string | null;
+    name: string | null;
+    image_url: string | null;
+  } | null;
+}
+
+export default function StoryAvatarList() {
   const { profileImageUri, profile } = useAuth()!;
   const { openUserStories } = useStories();
-  const [users, setUsers] = useState<any[]>([]);
+  const [users, setUsers] = useState<UserItem[]>([]);
   const [hasMyStory, setHasMyStory] = useState(false);
-
 
   useEffect(() => {
     const load = async () => {
@@ -20,12 +26,11 @@ export default function StoryAvatarRow() {
         .select('user_id, profiles(username, name, image_url)')
         .gt('expires_at', new Date().toISOString());
       if (data) {
-        const seen = new Set();
-        const arr: any[] = [];
+        const seen = new Set<string>();
+        const arr: UserItem[] = [];
         let mine = false;
         data.forEach((s: any) => {
           if (s.user_id === profile?.id) mine = true;
-
           if (!seen.has(s.user_id)) {
             arr.push(s);
             seen.add(s.user_id);
@@ -33,7 +38,6 @@ export default function StoryAvatarRow() {
         });
         setUsers(arr);
         setHasMyStory(mine);
-
       }
     };
     load();
@@ -55,7 +59,6 @@ export default function StoryAvatarRow() {
             source={{ uri: profileImageUri }}
             style={[styles.avatar, hasMyStory && styles.ring]}
           />
-
         ) : (
           <View style={[styles.avatar, styles.placeholder]} />
         )}

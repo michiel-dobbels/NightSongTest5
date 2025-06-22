@@ -34,8 +34,8 @@ const OtherUserProfileScreen = React.lazy(() =>
 const FollowListScreen = React.lazy(() =>
   import('../app/screens/FollowListScreen'),
 );
-const CreateStoryScreen = React.lazy(() =>
-  import('../app/screens/CreateStoryScreen'),
+const StoryUploaderScreen = React.lazy(() =>
+  import('../app/screens/StoryUploaderScreen'),
 );
 const { height } = Dimensions.get('window');
 
@@ -50,7 +50,7 @@ function HomeStackScreen() {
         <Stack.Screen name="UserProfile" component={UserProfileScreen} />
         <Stack.Screen name="OtherUserProfile" component={OtherUserProfileScreen} />
         <Stack.Screen name="FollowList" component={FollowListScreen} />
-        <Stack.Screen name="CreateStory" component={CreateStoryScreen} />
+        <Stack.Screen name="StoryUploader" component={StoryUploaderScreen} />
       </Stack.Navigator>
     </Suspense>
   );

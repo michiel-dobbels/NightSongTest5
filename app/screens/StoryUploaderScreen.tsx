@@ -9,7 +9,7 @@ import { uploadImage } from '../../lib/uploadImage';
 import { useAuth } from '../../AuthContext';
 import { colors } from '../styles/colors';
 
-export default function CreateStoryScreen() {
+export default function StoryUploaderScreen() {
   const { profile } = useAuth()!;
   const navigation = useNavigation();
   const [image, setImage] = useState<string | null>(null);
