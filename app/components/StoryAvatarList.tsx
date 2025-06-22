@@ -1,5 +1,13 @@
 import React, { useEffect, useState } from 'react';
-import { View, ScrollView, TouchableOpacity, Image, StyleSheet } from 'react-native';
+import {
+  View,
+  ScrollView,
+  TouchableOpacity,
+  Image,
+  StyleSheet,
+} from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
+import { useNavigation } from '@react-navigation/native';
 import { useAuth } from '../../AuthContext';
 import { supabase } from '../../lib/supabase';
 import { useStories } from '../contexts/StoryContext';
@@ -16,6 +24,7 @@ interface UserItem {
 export default function StoryAvatarList() {
   const { profileImageUri, profile } = useAuth()!;
   const { openUserStories } = useStories();
+  const navigation = useNavigation<any>();
   const [users, setUsers] = useState<UserItem[]>([]);
   const [hasMyStory, setHasMyStory] = useState(false);
 
@@ -50,19 +59,26 @@ export default function StoryAvatarList() {
       style={styles.row}
       contentContainerStyle={{ paddingHorizontal: 10 }}
     >
-      <TouchableOpacity
-        onPress={() => profile && openUserStories(profile.id)}
-        style={styles.item}
-      >
-        {profileImageUri ? (
-          <Image
-            source={{ uri: profileImageUri }}
-            style={[styles.avatar, hasMyStory && styles.ring]}
-          />
-        ) : (
-          <View style={[styles.avatar, styles.placeholder]} />
-        )}
-      </TouchableOpacity>
+      <View style={styles.item}>
+        <TouchableOpacity
+          onPress={() => profile && openUserStories(profile.id)}
+        >
+          {profileImageUri ? (
+            <Image
+              source={{ uri: profileImageUri }}
+              style={[styles.avatar, hasMyStory && styles.ring]}
+            />
+          ) : (
+            <View style={[styles.avatar, styles.placeholder]} />
+          )}
+        </TouchableOpacity>
+        <TouchableOpacity
+          onPress={() => navigation.navigate('StoryUploader')}
+          style={styles.add}
+        >
+          <Ionicons name="add" size={18} color="#fff" />
+        </TouchableOpacity>
+      </View>
       {users.map(u => (
         <TouchableOpacity
           key={u.user_id}
@@ -89,4 +105,12 @@ const styles = StyleSheet.create({
   avatar: { width: 56, height: 56, borderRadius: 28 },
   ring: { borderWidth: 2, borderColor: '#0a84ff' },
   placeholder: { backgroundColor: '#555' },
+  add: {
+    position: 'absolute',
+    bottom: -2,
+    right: -2,
+    backgroundColor: '#0a84ff',
+    borderRadius: 10,
+    padding: 2,
+  },
 });
