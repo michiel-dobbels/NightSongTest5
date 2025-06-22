@@ -400,15 +400,24 @@ const HomeScreen = forwardRef<HomeScreenRef, { hideInput?: boolean }>(
     setPostText('');
   };
 
-  const handleLike = async (postId: string) => {
-    skipNextFetch.current = true;
-    setPosts(prev =>
-      prev.map(p =>
-        p.id === postId ? { ...p, like_count: (p.like_count || 0) + 1 } : p
-      )
-    );
-    await supabase.from('likes').insert({ post_id: postId, user_id: user.id });
-  };
+  const handleLike = useCallback(
+    (postId: string, delta: number) => {
+      skipNextFetch.current = true;
+      setPosts(prev => {
+        const idx = prev.findIndex(p => p.id === postId);
+        if (idx === -1) return prev;
+        const target = prev[idx];
+        const nextCount = (target.like_count || 0) + delta;
+        if (nextCount === target.like_count) {
+          return prev;
+        }
+        const updated = [...prev];
+        updated[idx] = { ...target, like_count: nextCount };
+        return updated;
+      });
+    },
+    []
+  );
 
   const confirmDeletePost = (id: string) => {
     Alert.alert('Delete Post', 'Are you sure you want to delete this post?', [
@@ -488,7 +497,7 @@ const HomeScreen = forwardRef<HomeScreenRef, { hideInput?: boolean }>(
                 imageUrl={item.image_url ?? undefined}
                 videoUrl={item.video_url ?? undefined}
                 replyCount={item.reply_count ?? 0}
-                onLike={() => handleLike(item.id)}
+                onLike={delta => handleLike(item.id, delta)}
                 onPress={() => navigation.navigate('PostDetail', { post: item })}
                 onProfilePress={() =>
                   isMe
@@ -575,7 +584,7 @@ const HomeScreen = forwardRef<HomeScreenRef, { hideInput?: boolean }>(
                     imageUrl={post.image_url ?? undefined}
                     videoUrl={post.video_url ?? undefined}
                     replyCount={post.reply_count ?? 0}
-                    onLike={() => handleLike(post.id)}
+                    onLike={delta => handleLike(post.id, delta)}
                     onPress={() => navigation.navigate('PostDetail', { post })}
                     onProfilePress={() =>
                       isMe
