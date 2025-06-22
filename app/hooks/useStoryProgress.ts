@@ -1,26 +1,28 @@
 import { useEffect, useRef, useState } from 'react';
+import { Animated } from 'react-native';
 
 export default function useStoryProgress(length: number, onComplete: () => void) {
   const [index, setIndex] = useState(0);
-  const timerRef = useRef<NodeJS.Timeout | null>(null);
+  const progress = useRef(new Animated.Value(0)).current;
 
   const clear = () => {
-    if (timerRef.current) {
-      clearTimeout(timerRef.current);
-      timerRef.current = null;
-    }
+    progress.stopAnimation();
   };
 
   const schedule = (i: number) => {
     clear();
     if (length === 0) return;
-    timerRef.current = setTimeout(() => {
-      if (i < length - 1) {
-        setIndex(i + 1);
-      } else {
-        onComplete();
+    progress.setValue(0);
+    Animated.timing(progress, {
+      toValue: 1,
+      duration: 5000,
+      useNativeDriver: false,
+    }).start(({ finished }) => {
+      if (finished) {
+        if (i < length - 1) setIndex(i + 1);
+        else onComplete();
       }
-    }, 5000);
+    });
   };
 
   useEffect(() => {
@@ -42,5 +44,5 @@ export default function useStoryProgress(length: number, onComplete: () => void)
 
   const reset = () => setIndex(0);
 
-  return { index, next, prev, reset };
+  return { index, next, prev, reset, progress };
 }

@@ -1,15 +1,16 @@
-import React, { useRef } from 'react';
+import React, { useRef, useEffect } from 'react';
 import {
   Modal,
   View,
-  Image,
   StyleSheet,
   TouchableWithoutFeedback,
   Dimensions,
   Text,
   TouchableOpacity,
   PanResponder,
+  Animated,
 } from 'react-native';
+import { Image as ExpoImage } from 'expo-image';
 import { Video } from 'expo-av';
 import { useStories } from '../contexts/StoryContext';
 import useStoryProgress from '../hooks/useStoryProgress';
@@ -20,7 +21,14 @@ const { width, height } = Dimensions.get('window');
 export default function StoryViewerModal() {
   const { visible, stories, closeViewer } = useStories();
   const progress = useStoryProgress(stories.length, closeViewer);
-  const { index, next, prev, reset } = progress;
+  const { index, next, prev, reset, progress: anim } = progress;
+
+  useEffect(() => {
+    const nextStory = stories[index + 1];
+    if (nextStory && nextStory.media_type === 'image') {
+      ExpoImage.prefetch(nextStory.media_url);
+    }
+  }, [index, stories]);
 
   React.useEffect(() => {
     reset();
@@ -48,10 +56,10 @@ export default function StoryViewerModal() {
     >
       <View style={styles.container} {...panResponder.panHandlers}>
         {story.media_type === 'image' ? (
-          <Image
+          <ExpoImage
             source={{ uri: story.media_url }}
             style={styles.media}
-            resizeMode="cover"
+            contentFit="cover"
           />
         ) : (
           <Video
@@ -62,6 +70,26 @@ export default function StoryViewerModal() {
             isMuted
           />
         )}
+        <View style={styles.progressRow} pointerEvents="none">
+          {stories.map((_, i) => (
+            <View key={i} style={styles.progressWrap}>
+              {i < index && <View style={styles.progressFilled} />}
+              {i === index && (
+                <Animated.View
+                  style={[
+                    styles.progressFilled,
+                    {
+                      width: anim.interpolate({
+                        inputRange: [0, 1],
+                        outputRange: ['0%', '100%'],
+                      }),
+                    },
+                  ]}
+                />
+              )}
+            </View>
+          ))}
+        </View>
         {story.overlay_text ? (
           <Text style={styles.overlay}>{story.overlay_text}</Text>
         ) : null}
@@ -119,5 +147,23 @@ const styles = StyleSheet.create({
     top: 40,
     right: 20,
     zIndex: 10,
+  },
+  progressRow: {
+    position: 'absolute',
+    top: 20,
+    left: 10,
+    right: 10,
+    flexDirection: 'row',
+  },
+  progressWrap: {
+    flex: 1,
+    height: 3,
+    backgroundColor: '#555',
+    overflow: 'hidden',
+    marginHorizontal: 2,
+  },
+  progressFilled: {
+    backgroundColor: '#fff',
+    height: '100%',
   },
 });
