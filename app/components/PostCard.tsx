@@ -59,6 +59,7 @@ export interface PostCardProps {
   likeCount?: number;
   /** Explicit liked state. If omitted, value from useLike will be used */
   liked?: boolean;
+
   showThreadLine?: boolean;
   /**
    * If true, the thread line should end behind this avatar
@@ -82,6 +83,7 @@ function PostCard({
   onLike,
   likeCount: likeCountProp,
   liked: likedProp,
+
   showThreadLine = false,
   isLastInThread = false,
 }: PostCardProps) {
@@ -92,6 +94,11 @@ function PostCard({
   const likeCount = likeCountProp ?? store.likeCount;
   const liked = likedProp ?? store.liked;
   const toggleLike = store.toggleLike;
+
+  const handleLikePress = React.useCallback(() => {
+    onLike?.(liked ? -1 : 1);
+    toggleLike();
+  }, [onLike, liked, toggleLike]);
 
   const handleLikePress = React.useCallback(() => {
     onLike?.(liked ? -1 : 1);
