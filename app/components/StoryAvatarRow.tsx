@@ -4,6 +4,7 @@ import { useNavigation } from '@react-navigation/native';
 import { useAuth } from '../../AuthContext';
 import { supabase } from '../../lib/supabase';
 import { useStories } from '../contexts/StoryContext';
+import { followEvents } from '../followEvents';
 
 export default function StoryAvatarRow() {
   const navigation = useNavigation<any>();
@@ -54,6 +55,11 @@ export default function StoryAvatarRow() {
       }
     };
     load();
+    followEvents.on('followChanged', load);
+    return () => {
+      followEvents.off('followChanged', load);
+    };
+
   }, [user?.id]);
 
   return (
