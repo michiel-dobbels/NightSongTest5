@@ -114,9 +114,6 @@ export default function FollowingFeedScreen() {
 
 
   useEffect(() => {
-    const onLikeChanged = ({ id, count }) => {
-      setPosts(prev => prev.map(p => (p.id === id ? { ...p, like_count: count } : p)));
-    };
     const onPostDeleted = postId => {
       setPosts(prev => prev.filter(p => p.id !== postId));
       setReplyCounts(prev => {
@@ -124,10 +121,8 @@ export default function FollowingFeedScreen() {
         return rest;
       });
     };
-    likeEvents.on('likeChanged', onLikeChanged);
     postEvents.on('postDeleted', onPostDeleted);
     return () => {
-      likeEvents.off('likeChanged', onLikeChanged);
       postEvents.off('postDeleted', onPostDeleted);
     };
   }, []);

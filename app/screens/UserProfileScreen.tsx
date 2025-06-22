@@ -144,15 +144,6 @@ export default function UserProfileScreen() {
     loadPosts();
   }, [userId, initialize]);
 
-  useEffect(() => {
-    const onLikeChanged = ({ id, count }: { id: string; count: number }) => {
-      setPosts(prev => prev.map(p => (p.id === id ? { ...p, like_count: count } : p)));
-    };
-    likeEvents.on('likeChanged', onLikeChanged);
-    return () => {
-      likeEvents.off('likeChanged', onLikeChanged);
-    };
-  }, []);
 
   useEffect(() => {
     const onPostDeleted = (postId: string) => {

@@ -82,16 +82,11 @@ export default function OtherUserProfileScreen() {
   }, [idToLoad, initialize]);
 
   useEffect(() => {
-    const onLikeChanged = ({ id, count }) => {
-      setPosts(prev => prev.map(p => (p.id === id ? { ...p, like_count: count } : p)));
-    };
-    likeEvents.on('likeChanged', onLikeChanged);
     const onPostDeleted = postId => {
       setPosts(prev => prev.filter(p => p.id !== postId));
     };
     postEvents.on('postDeleted', onPostDeleted);
     return () => {
-      likeEvents.off('likeChanged', onLikeChanged);
       postEvents.off('postDeleted', onPostDeleted);
     };
   }, []);
