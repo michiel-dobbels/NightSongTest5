@@ -260,12 +260,6 @@ export default function TopTabsNavigator() {
           <Text style={{ color: colors.text, fontSize: 24 }}>+</Text>
         </TouchableOpacity>
 
-        <TouchableOpacity
-          onPress={() => navigation.navigate('StoryUploader')}
-          style={styles.storyFab}
-        >
-          <Text style={{ color: colors.text, fontSize: 24 }}>+</Text>
-        </TouchableOpacity>
 
         <Modal visible={modalVisible} animationType="slide" transparent>
           <View style={styles.modalOverlay}>
@@ -364,18 +358,6 @@ const styles = StyleSheet.create({
     width: 56,
     height: 56,
     borderRadius: 28,
-    justifyContent: 'center',
-    alignItems: 'center',
-    zIndex: 100,
-  },
-  storyFab: {
-    position: 'absolute',
-    bottom: FAB_BOTTOM_OFFSET + 70,
-    right: 20,
-    backgroundColor: colors.accent,
-    width: 48,
-    height: 48,
-    borderRadius: 24,
     justifyContent: 'center',
     alignItems: 'center',
     zIndex: 100,
