@@ -1,6 +1,6 @@
 import React, { useState, useCallback, useEffect } from 'react';
 import { View, FlatList, ActivityIndicator, StyleSheet } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import PostCard from '../components/PostCard';
 
 const PostItem = React.memo(function PostItem({
@@ -113,24 +113,28 @@ export default function FollowingFeedScreen() {
   }, [user?.id, initialize]);
 
 
-  useEffect(() => {
-    const onLikeChanged = ({ id, count }) => {
-      setPosts(prev => prev.map(p => (p.id === id ? { ...p, like_count: count } : p)));
-    };
-    const onPostDeleted = postId => {
-      setPosts(prev => prev.filter(p => p.id !== postId));
-      setReplyCounts(prev => {
-        const { [postId]: _omit, ...rest } = prev;
-        return rest;
-      });
-    };
-    likeEvents.on('likeChanged', onLikeChanged);
-    postEvents.on('postDeleted', onPostDeleted);
-    return () => {
-      likeEvents.off('likeChanged', onLikeChanged);
-      postEvents.off('postDeleted', onPostDeleted);
-    };
-  }, []);
+  useFocusEffect(
+    React.useCallback(() => {
+      const onLikeChanged = ({ id, count }) => {
+        setPosts(prev =>
+          prev.map(p => (p.id === id ? { ...p, like_count: count } : p)),
+        );
+      };
+      const onPostDeleted = postId => {
+        setPosts(prev => prev.filter(p => p.id !== postId));
+        setReplyCounts(prev => {
+          const { [postId]: _omit, ...rest } = prev;
+          return rest;
+        });
+      };
+      likeEvents.on('likeChanged', onLikeChanged);
+      postEvents.on('postDeleted', onPostDeleted);
+      return () => {
+        likeEvents.off('likeChanged', onLikeChanged);
+        postEvents.off('postDeleted', onPostDeleted);
+      };
+    }, []),
+  );
 
   useEffect(() => {
     fetchPosts(0);

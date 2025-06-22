@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, Image, ActivityIndicator, FlatList, Button, TouchableOpacity } from 'react-native';
-import { useRoute, useNavigation } from '@react-navigation/native';
+import { useRoute, useNavigation, useFocusEffect } from '@react-navigation/native';
 import { supabase } from '../../lib/supabase';
 import { colors } from '../styles/colors';
 import FollowButton from '../components/FollowButton';
@@ -81,20 +81,24 @@ export default function OtherUserProfileScreen() {
     loadPosts();
   }, [idToLoad, initialize]);
 
-  useEffect(() => {
-    const onLikeChanged = ({ id, count }) => {
-      setPosts(prev => prev.map(p => (p.id === id ? { ...p, like_count: count } : p)));
-    };
-    likeEvents.on('likeChanged', onLikeChanged);
-    const onPostDeleted = postId => {
-      setPosts(prev => prev.filter(p => p.id !== postId));
-    };
-    postEvents.on('postDeleted', onPostDeleted);
-    return () => {
-      likeEvents.off('likeChanged', onLikeChanged);
-      postEvents.off('postDeleted', onPostDeleted);
-    };
-  }, []);
+  useFocusEffect(
+    React.useCallback(() => {
+      const onLikeChanged = ({ id, count }) => {
+        setPosts(prev =>
+          prev.map(p => (p.id === id ? { ...p, like_count: count } : p)),
+        );
+      };
+      likeEvents.on('likeChanged', onLikeChanged);
+      const onPostDeleted = postId => {
+        setPosts(prev => prev.filter(p => p.id !== postId));
+      };
+      postEvents.on('postDeleted', onPostDeleted);
+      return () => {
+        likeEvents.off('likeChanged', onLikeChanged);
+        postEvents.off('postDeleted', onPostDeleted);
+      };
+    }, []),
+  );
 
   if (loading) {
     return (

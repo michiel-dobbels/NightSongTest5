@@ -19,7 +19,7 @@ import {
 import { Video } from 'expo-av';
 import * as ImagePicker from 'expo-image-picker';
 import * as FileSystem from 'expo-file-system';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 import { useAuth } from '../../AuthContext';
@@ -155,23 +155,25 @@ export default function ProfileScreen() {
     };
   }, []);
 
-  useEffect(() => {
-    const onLikeChanged = ({
-      id,
-      count,
-      liked,
-    }: {
-      id: string;
-      count: number;
-      liked: boolean;
-    }) => {
-      updatePost(id, { like_count: count, liked });
-    };
-    likeEvents.on('likeChanged', onLikeChanged);
-    return () => {
-      likeEvents.off('likeChanged', onLikeChanged);
-    };
-  }, [updatePost]);
+  useFocusEffect(
+    useCallback(() => {
+      const onLikeChanged = ({
+        id,
+        count,
+        liked,
+      }: {
+        id: string;
+        count: number;
+        liked: boolean;
+      }) => {
+        updatePost(id, { like_count: count, liked });
+      };
+      likeEvents.on('likeChanged', onLikeChanged);
+      return () => {
+        likeEvents.off('likeChanged', onLikeChanged);
+      };
+    }, [updatePost]),
+  );
 
   const confirmDeletePost = (id: string) => {
     Alert.alert('Delete Post', 'Are you sure you want to delete this post?', [

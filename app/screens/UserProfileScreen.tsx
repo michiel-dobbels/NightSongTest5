@@ -10,7 +10,7 @@ import {
   FlatList,
   TouchableOpacity,
 } from 'react-native';
-import { useRoute, useNavigation } from '@react-navigation/native';
+import { useRoute, useNavigation, useFocusEffect } from '@react-navigation/native';
 import { supabase } from '../../lib/supabase';
 import { colors } from '../styles/colors';
 import { useFollowCounts } from '../hooks/useFollowCounts';
@@ -144,15 +144,19 @@ export default function UserProfileScreen() {
     loadPosts();
   }, [userId, initialize]);
 
-  useEffect(() => {
-    const onLikeChanged = ({ id, count }: { id: string; count: number }) => {
-      setPosts(prev => prev.map(p => (p.id === id ? { ...p, like_count: count } : p)));
-    };
-    likeEvents.on('likeChanged', onLikeChanged);
-    return () => {
-      likeEvents.off('likeChanged', onLikeChanged);
-    };
-  }, []);
+  useFocusEffect(
+    React.useCallback(() => {
+      const onLikeChanged = ({ id, count }: { id: string; count: number }) => {
+        setPosts(prev =>
+          prev.map(p => (p.id === id ? { ...p, like_count: count } : p)),
+        );
+      };
+      likeEvents.on('likeChanged', onLikeChanged);
+      return () => {
+        likeEvents.off('likeChanged', onLikeChanged);
+      };
+    }, []),
+  );
 
   useEffect(() => {
     const onPostDeleted = (postId: string) => {
