@@ -99,7 +99,7 @@ export default function ProfileScreen() {
     removePost,
     updatePost,
   } = useAuth()!;
-  const { initialize, remove, posts: storePosts } = usePostStore();
+  const { initialize, remove, getState } = usePostStore();
 
   const [replyCounts, setReplyCounts] = useState<{ [key: string]: number }>({});
   const [replyModalVisible, setReplyModalVisible] = useState(false);
@@ -119,7 +119,7 @@ export default function ProfileScreen() {
   useEffect(() => {
     const syncLikes = async () => {
       if (myPosts && myPosts.length) {
-        const missing = myPosts.filter(p => storePosts[p.id] === undefined);
+        const missing = myPosts.filter(p => !getState(p.id));
         if (missing.length) {
           const counts = await getLikeCounts(missing.map(p => p.id));
           initialize(missing.map(p => ({ id: p.id, like_count: counts[p.id] })));
@@ -127,7 +127,7 @@ export default function ProfileScreen() {
       }
     };
     syncLikes();
-  }, [myPosts, storePosts]);
+  }, [myPosts, getState]);
 
   useEffect(() => {
     const loadCounts = async () => {
