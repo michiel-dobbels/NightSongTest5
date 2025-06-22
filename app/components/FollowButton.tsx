@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Button } from 'react-native';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../AuthContext';
+import { followEvents } from '../followEvents';
 
 interface FollowButtonProps {
   targetUserId: string;
@@ -45,6 +46,11 @@ export default function FollowButton({ targetUserId, onToggle }: FollowButtonPro
       if (!error) {
         setFollowing(false);
         onToggle?.(false);
+        followEvents.emit('followChanged', {
+          followerId: user.id,
+          followingId: targetUserId,
+          isFollowing: false,
+        });
       } else {
         console.error('Failed to unfollow', error);
       }
@@ -56,6 +62,11 @@ export default function FollowButton({ targetUserId, onToggle }: FollowButtonPro
       if (!error) {
         setFollowing(true);
         onToggle?.(true);
+        followEvents.emit('followChanged', {
+          followerId: user.id,
+          followingId: targetUserId,
+          isFollowing: true,
+        });
       } else {
         console.error('Failed to follow', error);
       }

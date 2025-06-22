@@ -4,20 +4,43 @@ import { useNavigation } from '@react-navigation/native';
 import { useAuth } from '../../AuthContext';
 import { supabase } from '../../lib/supabase';
 import { useStories } from '../contexts/StoryContext';
+import { followEvents } from '../followEvents';
 
 export default function StoryAvatarRow() {
   const navigation = useNavigation<any>();
-  const { profileImageUri } = useAuth()!;
+  const { profileImageUri, user } = useAuth()!;
   const { openUserStories } = useStories();
   const [users, setUsers] = useState<any[]>([]);
 
   useEffect(() => {
     const load = async () => {
-      const { data } = await supabase
+      if (!user) return;
+
+      const { data: followData, error: followError } = await supabase
+        .from('follows')
+        .select('following_id')
+        .eq('follower_id', user.id);
+
+      if (followError) {
+        console.error('Failed to fetch following list', followError);
+        return;
+      }
+
+      const ids = (followData ?? []).map(f => f.following_id);
+      ids.push(user.id);
+
+      if (ids.length === 0) {
+        setUsers([]);
+        return;
+      }
+
+      const { data, error } = await supabase
         .from('stories')
         .select('user_id, profiles(username, name, image_url)')
+        .in('user_id', ids)
         .gt('expires_at', new Date().toISOString());
-      if (data) {
+
+      if (!error && data) {
         const seen = new Set();
         const arr: any[] = [];
         data.forEach((s: any) => {
@@ -27,10 +50,16 @@ export default function StoryAvatarRow() {
           }
         });
         setUsers(arr);
+      } else if (error) {
+        console.error('Failed to fetch stories', error);
       }
     };
     load();
-  }, []);
+    followEvents.on('followChanged', load);
+    return () => {
+      followEvents.off('followChanged', load);
+    };
+  }, [user?.id]);
 
   return (
     <ScrollView
