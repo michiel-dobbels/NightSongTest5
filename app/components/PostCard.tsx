@@ -52,6 +52,9 @@ export interface PostCardProps {
   onProfilePress: () => void;
   onDelete: () => void;
   onOpenReplies: () => void;
+  /** Optional callback when the like button is pressed. The delta
+   * will be +1 when liking and -1 when unliking. */
+  onLike?: (delta: number) => void;
   showThreadLine?: boolean;
   /**
    * If true, the thread line should end behind this avatar
@@ -72,6 +75,7 @@ function PostCard({
   onProfilePress,
   onDelete,
   onOpenReplies,
+  onLike,
   showThreadLine = false,
   isLastInThread = false,
 }: PostCardProps) {
@@ -79,6 +83,11 @@ function PostCard({
   const userName = post.profiles?.username || post.username;
   const isReply = (post as any).post_id !== undefined;
   const { likeCount, liked, toggleLike } = useLike(post.id, isReply);
+
+  const handleLikePress = React.useCallback(() => {
+    onLike?.(liked ? -1 : 1);
+    toggleLike();
+  }, [onLike, liked, toggleLike]);
 
   const finalAvatarUri =
     avatarUri ?? post.profiles?.image_url ?? undefined;
@@ -163,7 +172,7 @@ function PostCard({
           style={styles.likeContainer}
           onPress={e => {
             e.stopPropagation();
-            toggleLike();
+            handleLikePress();
           }}
         >
           <Ionicons name={liked ? 'heart' : 'heart-outline'} size={18} color="red" style={{ marginRight: 2 }} />
