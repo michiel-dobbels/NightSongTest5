@@ -265,23 +265,8 @@ export const PostStoreProvider: React.FC<{ children: React.ReactNode }> = ({
               [isReply ? 'reply_id' : 'post_id']: id,
             });
         }
-        const { count } = await supabase
-          .from('likes')
-          .select('id', { count: 'exact', head: true })
-          .match(isReply ? { reply_id: id } : { post_id: id });
-        if (typeof count === 'number') {
-          newCount = count;
-          postsRef.current = {
-            ...postsRef.current,
-            [id]: { likeCount: count, liked: newLiked },
-          };
-          likeMap[id] = count;
-          await AsyncStorage.setItem(LIKE_COUNT_KEY, JSON.stringify(likeMap));
-          if (!isReply) {
-            likeEvents.emit('likeChanged', { id, count, liked: newLiked });
-            updatePost(id, { like_count: count, liked: newLiked });
-          }
-        }
+        // Do not refresh counts from Supabase to avoid feed re-renders
+        // The locally updated count is good enough for immediate feedback
       } catch (e) {
         console.error('Failed to toggle like', e);
       }
