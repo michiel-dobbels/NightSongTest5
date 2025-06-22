@@ -109,6 +109,9 @@ export default function TopTabsNavigator() {
   const [modalVisible, setModalVisible] = useState(false);
   const [storyModalVisible, setStoryModalVisible] = useState(false);
   const openCreateStoryModal = () => {
+    // Close the main post modal before opening the story modal
+    setModalVisible(false);
+
     setStoryModalVisible(true);
   };
   const [postText, setPostText] = useState('');
