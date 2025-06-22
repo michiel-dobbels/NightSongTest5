@@ -203,7 +203,9 @@ export const PostStoreProvider: React.FC<{ children: React.ReactNode }> = ({
           count: newCount,
           liked: newLiked,
         });
-        updatePost(id, { like_count: newCount, liked: newLiked });
+        // updatePost would cause a global context change which re-renders the
+        // entire HomeScreen feed. The like event is sufficient for local UI
+        // updates, so avoid calling updatePost here.
       }
 
       try {
