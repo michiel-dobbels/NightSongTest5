@@ -25,6 +25,7 @@ import { useAuth } from '../../AuthContext';
 import { colors } from '../styles/colors';
 import { replyEvents } from '../replyEvents';
 import { usePostStore } from '../contexts/PostStoreContext';
+import { useStories } from '../contexts/StoryStoreContext';
 import { postEvents } from '../postEvents';
 import PostCard, { Post } from '../components/PostCard';
 import { CONFIRM_ACTION } from '../constants/ui';
@@ -71,6 +72,7 @@ export default function PostDetailScreen() {
     bannerImageUri,
     removePost,
   } = useAuth()!;
+  const { getStoriesForUser } = useStories();
   const { initialize, remove } = usePostStore();
   const post = route.params.post as Post;
   const fromProfile = route.params?.fromProfile ?? false;
@@ -89,6 +91,16 @@ export default function PostDetailScreen() {
 
 
   const [keyboardOffset, setKeyboardOffset] = useState(0);
+
+  const navigateToProfileOrStory = (targetId: string, isMe: boolean) => {
+    const stories = getStoriesForUser(targetId);
+    if (stories.length > 0) {
+      navigation.navigate('StoryView', { userId: targetId });
+    } else {
+      if (isMe) navigation.navigate('Profile');
+      else navigation.navigate('OtherUserProfile', { userId: targetId });
+    }
+  };
 
   const confirmDeletePost = (id: string) => {
     Alert.alert('Delete Post', 'Are you sure you want to delete this post?', [
@@ -581,13 +593,7 @@ export default function PostDetailScreen() {
             videoUrl={post.video_url ?? undefined}
             replyCount={replyCounts[post.id] || 0}
             onPress={() => {}}
-            onProfilePress={() =>
-              user?.id === post.user_id
-                ? navigation.navigate('Profile')
-                : navigation.navigate('OtherUserProfile', {
-                    userId: post.user_id,
-                  })
-            }
+            onProfilePress={() => navigateToProfileOrStory(post.user_id, user?.id === post.user_id)}
             
             onDelete={() => confirmDeletePost(post.id)}
             onOpenReplies={() => openQuickReplyModal(post.id, null)}
@@ -618,13 +624,7 @@ export default function PostDetailScreen() {
                   ancestors: [],
                 })
               }
-              onProfilePress={() =>
-                isMe
-                  ? navigation.navigate('Profile')
-                  : navigation.navigate('OtherUserProfile', {
-                      userId: item.user_id,
-                    })
-              }
+              onProfilePress={() => navigateToProfileOrStory(item.user_id, isMe)}
               onDelete={() => confirmDeleteReply(item.id)}
               onOpenReplies={() => openQuickReplyModal(post.id, item.id)}
             />
