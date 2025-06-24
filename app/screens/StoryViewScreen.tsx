@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import {
+
     View,
     StyleSheet,
     Image,
@@ -10,11 +11,13 @@ import {
     TouchableOpacity,
     PanResponder,
   } from 'react-native';
+
 import { Video } from 'expo-av';
 import { useRoute, useNavigation } from '@react-navigation/native';
 import { colors } from '../styles/colors';
 import { useStories } from '../contexts/StoryStoreContext';
 import { useAuth } from '../../AuthContext';
+
 
 export default function StoryViewScreen() {
   const route = useRoute<any>();
@@ -27,6 +30,7 @@ export default function StoryViewScreen() {
   const story = stories[index];
   const [mediaRatio, setMediaRatio] = useState(1);
 
+
   const panResponder = useRef(
     PanResponder.create({
       onMoveShouldSetPanResponder: (_, g) => Math.abs(g.dy) > Math.abs(g.dx) && Math.abs(g.dy) > 10,
@@ -35,9 +39,11 @@ export default function StoryViewScreen() {
         if (g.dy > 50) {
           navigation.goBack();
         }
+
       },
     }),
   ).current;
+
 
   const next = () => {
     if (index < stories.length - 1) {
@@ -54,6 +60,7 @@ export default function StoryViewScreen() {
   const confirmDelete = () => {
     if (!story) return;
     if (!user || user.id !== story.userId) return;
+
     Alert.alert(
       'Are you sure you want to delete this story?',
       '',
@@ -95,6 +102,7 @@ export default function StoryViewScreen() {
   return (
     <View style={styles.container} {...panResponder.panHandlers}>
       <View style={styles.mediaContainer}>
+
         <Text style={styles.counter}>{`${index + 1}/${stories.length}`}</Text>
         {user && story?.userId === user.id && (
           <TouchableOpacity style={styles.deleteBtn} onPress={confirmDelete}>
@@ -107,6 +115,7 @@ export default function StoryViewScreen() {
             style={[styles.media, { aspectRatio: mediaRatio }]}
             resizeMode="contain"
           />
+
         )}
         {!story?.imageUri && story?.videoUri && (
           <Video
@@ -118,11 +127,13 @@ export default function StoryViewScreen() {
               const { width, height } = e.naturalSize || {};
               if (width && height) setMediaRatio(width / height);
             }}
+
           />
         )}
         <Pressable style={styles.leftZone} onPress={prev} />
         <Pressable style={styles.rightZone} onPress={next} />
       </View>
+
       <Button title="Close" onPress={() => navigation.goBack()} />
     </View>
   );
@@ -143,6 +154,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   media: { width: '100%', borderRadius: 6 },
+
   leftZone: {
     position: 'absolute',
     top: 0,
@@ -160,6 +172,7 @@ const styles = StyleSheet.create({
   counter: {
     position: 'absolute',
     top: '10%',
+
     left: 10,
     color: colors.text,
     backgroundColor: 'rgba(0,0,0,0.5)',
@@ -170,4 +183,5 @@ const styles = StyleSheet.create({
   },
   deleteBtn: { position: 'absolute', top: '10%', right: 10, padding: 6, zIndex: 2 },
   deleteText: { color: colors.text, fontSize: 18 },
+
 });
