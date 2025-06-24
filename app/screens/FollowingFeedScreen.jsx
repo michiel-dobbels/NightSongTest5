@@ -2,6 +2,7 @@ import React, { useState, useCallback, useEffect } from 'react';
 import { View, FlatList, ActivityIndicator, StyleSheet } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import PostCard from '../components/PostCard';
+import { useStories } from '../contexts/StoryStoreContext';
 
 const PostItem = React.memo(function PostItem({
   item,
@@ -44,12 +45,23 @@ const PAGE_SIZE = 10;
 export default function FollowingFeedScreen() {
   const { user, profileImageUri } = useAuth();
   const navigation = useNavigation();
+  const { getStoriesForUser } = useStories();
   const { initialize } = usePostStore();
   const [posts, setPosts] = useState([]);
   const [replyCounts, setReplyCounts] = useState({});
   const [loading, setLoading] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
   const [hasMore, setHasMore] = useState(true);
+
+  const navigateToProfileOrStory = (targetId, isMe) => {
+    const stories = getStoriesForUser(targetId);
+    if (stories.length > 0) {
+      navigation.navigate('StoryView', { userId: targetId });
+    } else {
+      if (isMe) navigation.navigate('Profile');
+      else navigation.navigate('OtherUserProfile', { userId: targetId });
+    }
+  };
 
   const fetchPosts = useCallback(async (offset = 0, append = false) => {
 
@@ -169,11 +181,7 @@ export default function FollowingFeedScreen() {
               videoUrl={item.video_url || undefined}
               replyCount={replyCounts[item.id] || 0}
               onPress={() => navigation.navigate('PostDetail', { post: item })}
-              onProfilePress={() =>
-                isMe
-                  ? navigation.navigate('Profile')
-                  : navigation.navigate('OtherUserProfile', { userId: item.user_id })
-              }
+              onProfilePress={() => navigateToProfileOrStory(item.user_id, isMe)}
               onOpenReplies={() => navigation.navigate('PostDetail', { post: item })}
             />
           );
