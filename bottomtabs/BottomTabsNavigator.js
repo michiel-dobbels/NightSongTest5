@@ -3,6 +3,7 @@ import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { Ionicons } from '@expo/vector-icons';
 import { Dimensions } from 'react-native';
+import { getFocusedRouteNameFromRoute } from '@react-navigation/native';
 import { colors } from '../app/styles/colors';
 
 import TopTabsNavigator from '../app/TopTabsNavigator';
@@ -43,6 +44,28 @@ const StoryViewScreen = React.lazy(() =>
 
 const { height } = Dimensions.get('window');
 
+const BASE_TAB_STYLE = {
+  position: 'absolute',
+  bottom: 0,
+  height: height * 0.1,
+  width: '100%',
+  backgroundColor: 'rgba(44,44,84,0.9)',
+  borderTopWidth: 0,
+  elevation: 5,
+  shadowColor: '#000',
+  shadowOffset: { width: 0, height: 2 },
+  shadowOpacity: 0.2,
+  shadowRadius: 4,
+};
+
+function getTabBarStyle(route) {
+  const routeName = getFocusedRouteNameFromRoute(route) ?? '';
+  if (routeName === 'StoryView') {
+    return { ...BASE_TAB_STYLE, display: 'none' };
+  }
+  return BASE_TAB_STYLE;
+}
+
 function HomeStackScreen() {
   return (
     <Suspense fallback={null}>
@@ -70,19 +93,7 @@ export default function BottomTabsNavigator() {
         headerShown: false,
         tabBarShowLabel: true,
         tabBarLabelStyle: { fontSize: 12, marginBottom: 4, color: colors.text },
-        tabBarStyle: {
-          position: 'absolute',
-          bottom: 0,
-          height: height * 0.1,
-          width: '100%',
-          backgroundColor: 'rgba(44,44,84,0.9)',
-          borderTopWidth: 0,
-          elevation: 5,
-          shadowColor: '#000',
-          shadowOffset: { width: 0, height: 2 },
-          shadowOpacity: 0.2,
-          shadowRadius: 4,
-        },
+        tabBarStyle: BASE_TAB_STYLE,
         tabBarActiveTintColor: colors.accent,
         tabBarIcon: ({ focused, color, size }) => {
           let iconName = 'home-outline';
@@ -94,7 +105,11 @@ export default function BottomTabsNavigator() {
         },
       })}
     >
-      <Tab.Screen name="Home" component={HomeStackScreen} />
+      <Tab.Screen
+        name="Home"
+        component={HomeStackScreen}
+        options={({ route }) => ({ tabBarStyle: getTabBarStyle(route) })}
+      />
 
       <Tab.Screen name="Market" component={MarketScreen} />
       <Tab.Screen name="Video" component={VideoScreen} />

@@ -1,5 +1,6 @@
 import React, { useState, useRef } from 'react';
-  import {
+import {
+
     View,
     StyleSheet,
     Image,
@@ -84,8 +85,9 @@ export default function StoryViewScreen() {
   };
 
   return (
-    <View style={styles.container}>
-      <View style={styles.mediaContainer} {...panResponder.panHandlers}>
+    <View style={styles.container} {...panResponder.panHandlers}>
+      <View style={styles.mediaContainer}>
+
         <Text style={styles.counter}>{`${index + 1}/${stories.length}`}</Text>
         {user && story?.userId === user.id && (
           <TouchableOpacity style={styles.deleteBtn} onPress={confirmDelete}>
@@ -114,8 +116,20 @@ export default function StoryViewScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: colors.background },
-  mediaContainer: { width: '100%', height: '80%', justifyContent: 'center', alignItems: 'center' },
+  container: {
+    ...StyleSheet.absoluteFillObject,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: colors.background,
+    zIndex: 50,
+  },
+  mediaContainer: {
+    width: '100%',
+    height: '100%',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+
   media: { width: '100%', height: '100%', borderRadius: 6 },
   leftZone: {
     position: 'absolute',
