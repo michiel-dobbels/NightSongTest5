@@ -9,6 +9,7 @@ import {
   Alert,
   TouchableOpacity,
 } from 'react-native';
+
 import { Video } from 'expo-av';
 import { useRoute, useNavigation } from '@react-navigation/native';
 import { colors } from '../styles/colors';
@@ -19,6 +20,7 @@ export default function StoryViewScreen() {
   const navigation = useNavigation<any>();
   const { userId } = route.params as { userId: string };
   const { getStoriesForUser, removeStory } = useStories();
+
   const stories = getStoriesForUser(userId);
   const [index, setIndex] = useState(0);
   const story = stories[index];
@@ -68,6 +70,7 @@ export default function StoryViewScreen() {
         <TouchableOpacity style={styles.deleteBtn} onPress={confirmDelete}>
           <Text style={styles.deleteText}>X</Text>
         </TouchableOpacity>
+
         {story?.imageUri && (
           <Image source={{ uri: story.imageUri }} style={styles.media} />
         )}
@@ -82,6 +85,7 @@ export default function StoryViewScreen() {
         <Pressable style={styles.leftZone} onPress={prev} />
         <Pressable style={styles.rightZone} onPress={next} />
       </View>
+
       <Button title="Close" onPress={() => navigation.goBack()} />
     </View>
   );
@@ -118,4 +122,5 @@ const styles = StyleSheet.create({
   },
   deleteBtn: { position: 'absolute', top: 10, right: 10, padding: 6, zIndex: 2 },
   deleteText: { color: colors.text, fontSize: 18 },
+
 });
