@@ -6,6 +6,7 @@ import {
   Button,
   Pressable,
 } from 'react-native';
+
 import { Video } from 'expo-av';
 import { useRoute, useNavigation } from '@react-navigation/native';
 import { colors } from '../styles/colors';
@@ -49,6 +50,7 @@ export default function StoryViewScreen() {
         <Pressable style={styles.leftZone} onPress={prev} />
         <Pressable style={styles.rightZone} onPress={next} />
       </View>
+
       <Button title="Close" onPress={() => navigation.goBack()} />
     </View>
   );
@@ -72,4 +74,5 @@ const styles = StyleSheet.create({
     right: 0,
     width: '50%',
   },
+
 });
