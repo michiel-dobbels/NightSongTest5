@@ -26,7 +26,12 @@ export const StoryStoreProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     AsyncStorage.getItem('stories').then(stored => {
       if (stored) {
         try {
-          setStories(JSON.parse(stored));
+          const parsed: Story[] = JSON.parse(stored);
+          parsed.sort(
+            (a, b) =>
+              new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime(),
+          );
+          setStories(parsed);
         } catch {}
       }
     });
@@ -34,7 +39,7 @@ export const StoryStoreProvider: React.FC<{ children: React.ReactNode }> = ({ ch
 
   const addStory = useCallback(async (story: Story) => {
     setStories(prev => {
-      const updated = [story, ...prev];
+      const updated = [...prev, story];
       AsyncStorage.setItem('stories', JSON.stringify(updated));
       return updated;
     });

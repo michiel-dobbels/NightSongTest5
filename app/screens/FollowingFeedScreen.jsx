@@ -13,6 +13,7 @@ const PostItem = React.memo(function PostItem({
   videoUrl,
   replyCount,
   onPress,
+  onAvatarPress,
   onProfilePress,
   onOpenReplies,
 }) {
@@ -26,6 +27,7 @@ const PostItem = React.memo(function PostItem({
       videoUrl={videoUrl}
       replyCount={replyCount}
       onPress={onPress}
+      onAvatarPress={onAvatarPress}
       onProfilePress={onProfilePress}
       onDelete={() => {}}
       onOpenReplies={onOpenReplies}
@@ -61,6 +63,11 @@ export default function FollowingFeedScreen() {
       if (isMe) navigation.navigate('Profile');
       else navigation.navigate('OtherUserProfile', { userId: targetId });
     }
+  };
+
+  const navigateToProfile = (targetId, isMe) => {
+    if (isMe) navigation.navigate('Profile');
+    else navigation.navigate('OtherUserProfile', { userId: targetId });
   };
 
   const fetchPosts = useCallback(async (offset = 0, append = false) => {
@@ -181,7 +188,8 @@ export default function FollowingFeedScreen() {
               videoUrl={item.video_url || undefined}
               replyCount={replyCounts[item.id] || 0}
               onPress={() => navigation.navigate('PostDetail', { post: item })}
-              onProfilePress={() => navigateToProfileOrStory(item.user_id, isMe)}
+              onAvatarPress={() => navigateToProfileOrStory(item.user_id, isMe)}
+              onProfilePress={() => navigateToProfile(item.user_id, isMe)}
               onOpenReplies={() => navigation.navigate('PostDetail', { post: item })}
             />
           );

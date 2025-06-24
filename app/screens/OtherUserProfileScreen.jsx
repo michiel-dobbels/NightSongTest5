@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, Image, ActivityIndicator, FlatList, Button, TouchableOpacity } from 'react-native';
+import { useStories } from '../contexts/StoryStoreContext';
+import { storyRing } from '../styles/storyRing';
 import { useRoute, useNavigation } from '@react-navigation/native';
 import { supabase } from '../../lib/supabase';
 import { colors } from '../styles/colors';
@@ -16,6 +18,8 @@ export default function OtherUserProfileScreen() {
   const route = useRoute();
   const navigation = useNavigation();
   const { user } = useAuth();
+
+  const { getStoriesForUser } = useStories();
 
   const { initialize } = usePostStore();
   const { userId: routeUserId, username: routeUsername } = route.params || {};
@@ -119,7 +123,11 @@ export default function OtherUserProfileScreen() {
     <View style={styles.headerContainer}>
 
       {profile.banner_url ? (
-        <Image source={{ uri: profile.banner_url }} style={styles.banner} />
+        <Image
+          source={{ uri: profile.banner_url }}
+          style={styles.banner}
+          resizeMode="contain"
+        />
       ) : (
         <View style={[styles.banner, styles.placeholder]} />
       )}
@@ -127,11 +135,21 @@ export default function OtherUserProfileScreen() {
         <Button title="Back" onPress={() => navigation.goBack()} />
       </View>
       <View style={styles.profileRow}>
-        {profile.image_url ? (
-          <Image source={{ uri: profile.image_url }} style={styles.avatar} />
-        ) : (
-          <View style={[styles.avatar, styles.placeholder]} />
-        )}
+        <TouchableOpacity
+          disabled={getStoriesForUser(profile.id).length === 0}
+          onPress={() =>
+            navigation.navigate('StoryView', { userId: profile.id })
+          }
+        >
+          {profile.image_url ? (
+            <Image
+              source={{ uri: profile.image_url }}
+              style={[styles.avatar, getStoriesForUser(profile.id).length > 0 && storyRing]}
+            />
+          ) : (
+            <View style={[styles.avatar, styles.placeholder, getStoriesForUser(profile.id).length > 0 && storyRing]} />
+          )}
+        </TouchableOpacity>
         <View style={styles.textContainer}>
           {profile.name && <Text style={styles.name}>{profile.name}</Text>}
           <Text style={styles.username}>@{profile.username}</Text>
@@ -202,7 +220,7 @@ const styles = StyleSheet.create({
   },
   backButton: { alignSelf: 'flex-start', marginBottom: 20 },
   profileRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 20 },
-  banner: { width: '100%', height: 200, marginBottom: 20 },
+  banner: { width: '100%', height: 200, marginBottom: 20, marginHorizontal: -20 },
   avatar: { width: 80, height: 80, borderRadius: 40 },
   placeholder: { backgroundColor: '#555' },
   textContainer: { marginLeft: 15 },

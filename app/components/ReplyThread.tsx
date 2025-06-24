@@ -11,6 +11,7 @@ interface ReplyThreadProps {
   avatarUri?: string;
   bannerUrl?: string;
   onPress: (reply: Reply) => void;
+  onAvatarPress: (userId: string) => void;
   onProfilePress: (userId: string) => void;
   onDelete: () => void;
 }
@@ -22,6 +23,7 @@ function ReplyThread({
   avatarUri,
   bannerUrl,
   onPress,
+  onAvatarPress,
   onProfilePress,
   onDelete,
 }: ReplyThreadProps) {
@@ -64,6 +66,7 @@ function ReplyThread({
   }, [reply.post_id, reply.parent_id, initialize]);
 
   const navigateToProfile = (id: string) => onProfilePress(id);
+  const navigateToAvatar = (id: string) => onAvatarPress(id);
 
   return (
     <View>
@@ -79,6 +82,7 @@ function ReplyThread({
             videoUrl={post.video_url ?? undefined}
             replyCount={post.reply_count ?? 0}
             onPress={() => onPress(reply)}
+            onAvatarPress={() => navigateToAvatar(post.user_id)}
             onProfilePress={() => navigateToProfile(post.user_id)}
             onDelete={() => {}}
             onOpenReplies={() => {}}
@@ -98,6 +102,7 @@ function ReplyThread({
             bannerUrl={parent.profiles?.banner_url ?? undefined}
             replyCount={parent.reply_count ?? 0}
             onPress={() => onPress(reply)}
+            onAvatarPress={() => navigateToAvatar(parent.user_id)}
             onProfilePress={() => navigateToProfile(parent.user_id)}
             onDelete={() => {}}
             onOpenReplies={() => {}}
@@ -117,6 +122,7 @@ function ReplyThread({
           videoUrl={reply.video_url ?? undefined}
           replyCount={reply.reply_count ?? 0}
           onPress={() => onPress(reply)}
+          onAvatarPress={() => navigateToAvatar(reply.user_id)}
           onProfilePress={() => navigateToProfile(reply.user_id)}
           onDelete={onDelete}
           onOpenReplies={() => {}}

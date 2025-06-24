@@ -1,14 +1,14 @@
-import React, { useState, useRef } from 'react';
-  import {
+import React, { useState, useRef, useEffect } from 'react';
+import {
     View,
     StyleSheet,
     Image,
-    Button,
     Pressable,
     Text,
     Alert,
     TouchableOpacity,
     PanResponder,
+  Animated,
   } from 'react-native';
 
 import { Video } from 'expo-av';
@@ -28,6 +28,26 @@ export default function StoryViewScreen() {
   const stories = getStoriesForUser(userId);
   const [index, setIndex] = useState(0);
   const story = stories[index];
+  const progress = useRef(new Animated.Value(0)).current;
+
+  const startProgress = () => {
+    progress.setValue(0);
+    Animated.timing(progress, {
+      toValue: 1,
+      duration: 6000,
+      useNativeDriver: false,
+    }).start(({ finished }) => {
+      if (finished) {
+        next();
+      }
+    });
+  };
+
+  useEffect(() => {
+    startProgress();
+    // cleanup when unmounting
+    return () => progress.stopAnimation();
+  }, [index]);
 
   const panResponder = useRef(
     PanResponder.create({
@@ -44,14 +64,22 @@ export default function StoryViewScreen() {
 
 
   const next = () => {
+    progress.stopAnimation();
     if (index < stories.length - 1) {
       setIndex(i => i + 1);
+    } else {
+      navigation.goBack();
     }
   };
 
   const prev = () => {
+    progress.stopAnimation();
     if (index > 0) {
       setIndex(i => i - 1);
+    } else {
+      // restart progress if at first story
+      progress.setValue(0);
+      startProgress();
     }
   };
 
@@ -85,6 +113,21 @@ export default function StoryViewScreen() {
 
   return (
     <View style={styles.container}>
+      <View style={styles.progressContainer}>
+        {stories.map((_, i) => {
+          const width =
+            i < index
+              ? '100%'
+              : i === index
+              ? progress.interpolate({ inputRange: [0, 1], outputRange: ['0%', '100%'] })
+              : '0%';
+          return (
+            <View key={i} style={styles.progressBar}>
+              <Animated.View style={[styles.progressFill, { width }]} />
+            </View>
+          );
+        })
+      </View>
       <View style={styles.mediaContainer} {...panResponder.panHandlers}>
         <Text style={styles.counter}>{`${index + 1}/${stories.length}`}</Text>
         {user && story?.userId === user.id && (
@@ -94,7 +137,11 @@ export default function StoryViewScreen() {
         )}
 
         {story?.imageUri && (
-          <Image source={{ uri: story.imageUri }} style={styles.media} />
+          <Image
+            source={{ uri: story.imageUri }}
+            style={styles.media}
+            resizeMode="contain"
+          />
         )}
         {!story?.imageUri && story?.videoUri && (
           <Video
@@ -108,7 +155,13 @@ export default function StoryViewScreen() {
         <Pressable style={styles.rightZone} onPress={next} />
       </View>
 
-      <Button title="Close" onPress={() => navigation.goBack()} />
+      <TouchableOpacity
+        style={styles.closeButton}
+        onPress={() => navigation.goBack()}
+        activeOpacity={0.8}
+      >
+        <Text style={styles.closeText}>Close</Text>
+      </TouchableOpacity>
     </View>
   );
 }
@@ -144,5 +197,36 @@ const styles = StyleSheet.create({
   },
   deleteBtn: { position: 'absolute', top: 10, right: 10, padding: 6, zIndex: 2 },
   deleteText: { color: colors.text, fontSize: 18 },
+  progressContainer: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    height: 4,
+    flexDirection: 'row',
+    paddingHorizontal: 4,
+    zIndex: 3,
+  },
+  progressBar: {
+    flex: 1,
+    backgroundColor: 'rgba(255,255,255,0.3)',
+    overflow: 'hidden',
+    borderRadius: 2,
+    marginHorizontal: 1,
+  },
+  progressFill: {
+    height: '100%',
+    backgroundColor: '#fff',
+  },
+  closeButton: {
+    position: 'absolute',
+    bottom: '10%',
+    alignSelf: 'center',
+    padding: 10,
+    backgroundColor: colors.background,
+    borderRadius: 6,
+    zIndex: 2,
+  },
+  closeText: { color: colors.text, fontSize: 18 },
 
 });
