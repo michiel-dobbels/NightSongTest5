@@ -700,6 +700,7 @@ const styles = StyleSheet.create({
     width: '100%',
     height: Dimensions.get('window').height * 0.25,
     marginBottom: 20,
+    marginHorizontal: -20,
   },
   avatar: {
     width: 80,
