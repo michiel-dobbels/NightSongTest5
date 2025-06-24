@@ -51,6 +51,7 @@ export interface PostCardProps {
   videoUrl?: string;
   replyCount: number;
   onPress: () => void;
+  onAvatarPress?: () => void;
   onProfilePress: () => void;
   onDelete: () => void;
   onOpenReplies: () => void;
@@ -71,6 +72,7 @@ function PostCard({
   videoUrl,
   replyCount,
   onPress,
+  onAvatarPress,
   onProfilePress,
   onDelete,
   onOpenReplies,
@@ -113,7 +115,8 @@ function PostCard({
           <TouchableOpacity
             onPress={e => {
               e.stopPropagation();
-              onProfilePress();
+              if (onAvatarPress) onAvatarPress();
+              else onProfilePress();
             }}
           >
             {finalAvatarUri ? (

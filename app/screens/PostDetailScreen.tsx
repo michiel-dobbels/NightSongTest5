@@ -102,6 +102,11 @@ export default function PostDetailScreen() {
     }
   };
 
+  const navigateToProfile = (targetId: string, isMe: boolean) => {
+    if (isMe) navigation.navigate('Profile');
+    else navigation.navigate('OtherUserProfile', { userId: targetId });
+  };
+
   const confirmDeletePost = (id: string) => {
     Alert.alert('Delete Post', 'Are you sure you want to delete this post?', [
       CONFIRM_ACTION,
@@ -593,7 +598,8 @@ export default function PostDetailScreen() {
             videoUrl={post.video_url ?? undefined}
             replyCount={replyCounts[post.id] || 0}
             onPress={() => {}}
-            onProfilePress={() => navigateToProfileOrStory(post.user_id, user?.id === post.user_id)}
+            onAvatarPress={() => navigateToProfileOrStory(post.user_id, user?.id === post.user_id)}
+            onProfilePress={() => navigateToProfile(post.user_id, user?.id === post.user_id)}
             
             onDelete={() => confirmDeletePost(post.id)}
             onOpenReplies={() => openQuickReplyModal(post.id, null)}
@@ -624,7 +630,8 @@ export default function PostDetailScreen() {
                   ancestors: [],
                 })
               }
-              onProfilePress={() => navigateToProfileOrStory(item.user_id, isMe)}
+              onAvatarPress={() => navigateToProfileOrStory(item.user_id, isMe)}
+              onProfilePress={() => navigateToProfile(item.user_id, isMe)}
               onDelete={() => confirmDeleteReply(item.id)}
               onOpenReplies={() => openQuickReplyModal(post.id, item.id)}
             />

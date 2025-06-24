@@ -53,6 +53,7 @@ interface PostItemProps {
   videoUrl?: string;
   replyCount: number;
   onPress: () => void;
+  onAvatarPress: () => void;
   onProfilePress: () => void;
   onDelete: () => void;
   onOpenReplies: () => void;
@@ -66,6 +67,7 @@ const PostItem = React.memo(function PostItem({
   videoUrl,
   replyCount,
   onPress,
+  onAvatarPress,
   onProfilePress,
   onDelete,
   onOpenReplies,
@@ -80,6 +82,7 @@ const PostItem = React.memo(function PostItem({
       videoUrl={videoUrl}
       replyCount={replyCount}
       onPress={onPress}
+      onAvatarPress={onAvatarPress}
       onProfilePress={onProfilePress}
       onDelete={onDelete}
       onOpenReplies={onOpenReplies}
@@ -178,6 +181,11 @@ export default function ProfileScreen() {
       if (isMe) navigation.navigate('Profile');
       else navigation.navigate('OtherUserProfile', { userId: targetId });
     }
+  };
+
+  const navigateToProfile = (targetId: string, isMe: boolean) => {
+    if (isMe) navigation.navigate('Profile');
+    else navigation.navigate('OtherUserProfile', { userId: targetId });
   };
 
 
@@ -591,7 +599,8 @@ export default function ProfileScreen() {
         videoUrl={item.video_url ?? undefined}
         replyCount={replyCounts[item.id] ?? item.reply_count ?? 0}
         onPress={() => navigation.navigate('PostDetail', { post: item })}
-        onProfilePress={() => navigateToProfileOrStory(profile?.id ?? '', true)}
+        onAvatarPress={() => navigateToProfileOrStory(profile?.id ?? '', true)}
+        onProfilePress={() => navigateToProfile(profile?.id ?? '', true)}
         onDelete={() => confirmDeletePost(item.id)}
         onOpenReplies={() => openReplyModal(item.id)}
       />
@@ -604,7 +613,8 @@ export default function ProfileScreen() {
         onPress={r =>
           navigation.navigate('ReplyDetail', { reply: r, originalPost: undefined, ancestors: [] })
         }
-        onProfilePress={id => navigateToProfileOrStory(id, id === profile?.id)}
+        onAvatarPress={id => navigateToProfileOrStory(id, id === profile?.id)}
+        onProfilePress={id => navigateToProfile(id, id === profile?.id)}
         onDelete={() => {}}
       />
     );
