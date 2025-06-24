@@ -232,6 +232,7 @@ export default function UserProfileScreen() {
           <Image
             source={{ uri: profile?.banner_url || bannerUrl! }}
             style={styles.banner}
+            resizeMode="contain"
           />
         ) : (
           <View style={[styles.banner, styles.placeholder]} />
@@ -288,6 +289,7 @@ export default function UserProfileScreen() {
           <Image
             source={{ uri: profile?.banner_url || bannerUrl! }}
             style={styles.banner}
+            resizeMode="contain"
           />
         ) : (
           <View style={[styles.banner, styles.placeholder]} />
@@ -347,6 +349,7 @@ export default function UserProfileScreen() {
         <Image
           source={{ uri: profile.banner_url || bannerUrl! }}
           style={styles.banner}
+          resizeMode="contain"
         />
 
       ) : (
