@@ -18,6 +18,15 @@ import { useStories } from '../contexts/StoryStoreContext';
 import { useAuth } from '../../AuthContext';
 import { supabase } from '../../lib/supabase';
 
+function timeAgo(dateString: string): string {
+  const diff = Date.now() - new Date(dateString).getTime();
+  const minutes = Math.floor(diff / (1000 * 60));
+  if (minutes < 1) return 'just now';
+  if (minutes < 60) return `${minutes} minutes ago`;
+  const hours = Math.floor(minutes / 60);
+  return `${hours} hours ago`;
+}
+
 
 export default function StoryViewScreen() {
   const route = useRoute<any>();
@@ -191,6 +200,9 @@ export default function StoryViewScreen() {
             <Text style={styles.userName}>
               {profile.name || profile.username}
             </Text>
+            {story && (
+              <Text style={styles.timestamp}>{timeAgo(story.createdAt)}</Text>
+            )}
           </View>
         )}
 
@@ -291,9 +303,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     zIndex: 2,
   },
-  avatar: { width: 40, height: 40, borderRadius: 20, marginRight: 8 },
+  avatar: { width: 48, height: 48, borderRadius: 24, marginRight: 8 },
   avatarPlaceholder: { backgroundColor: '#555' },
   userName: { color: colors.text, fontWeight: 'bold' },
+  timestamp: { color: colors.muted, fontSize: 10, marginLeft: 6 },
 
   closeButton: {
     position: 'absolute',
