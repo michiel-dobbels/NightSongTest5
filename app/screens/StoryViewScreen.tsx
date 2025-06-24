@@ -3,7 +3,6 @@ import React, { useState, useRef } from 'react';
     View,
     StyleSheet,
     Image,
-    Button,
     Pressable,
     Text,
     Alert,
@@ -94,7 +93,11 @@ export default function StoryViewScreen() {
         )}
 
         {story?.imageUri && (
-          <Image source={{ uri: story.imageUri }} style={styles.media} />
+          <Image
+            source={{ uri: story.imageUri }}
+            style={styles.media}
+            resizeMode="contain"
+          />
         )}
         {!story?.imageUri && story?.videoUri && (
           <Video
@@ -108,7 +111,13 @@ export default function StoryViewScreen() {
         <Pressable style={styles.rightZone} onPress={next} />
       </View>
 
-      <Button title="Close" onPress={() => navigation.goBack()} />
+      <TouchableOpacity
+        style={styles.closeButton}
+        onPress={() => navigation.goBack()}
+        activeOpacity={0.8}
+      >
+        <Text style={styles.closeText}>Close</Text>
+      </TouchableOpacity>
     </View>
   );
 }
@@ -144,5 +153,15 @@ const styles = StyleSheet.create({
   },
   deleteBtn: { position: 'absolute', top: 10, right: 10, padding: 6, zIndex: 2 },
   deleteText: { color: colors.text, fontSize: 18 },
+  closeButton: {
+    position: 'absolute',
+    bottom: '10%',
+    alignSelf: 'center',
+    padding: 10,
+    backgroundColor: colors.background,
+    borderRadius: 6,
+    zIndex: 2,
+  },
+  closeText: { color: colors.text, fontSize: 18 },
 
 });

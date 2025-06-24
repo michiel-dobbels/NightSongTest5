@@ -114,6 +114,11 @@ const HomeScreen = forwardRef<HomeScreenRef, { hideInput?: boolean }>(
     }
   };
 
+  const navigateToProfile = (targetId: string, isMe: boolean) => {
+    if (isMe) navigation.navigate('Profile');
+    else navigation.navigate('OtherUserProfile', { userId: targetId });
+  };
+
   useEffect(() => {
     if (!searchVisible) return;
     const timer = setTimeout(() => {
@@ -503,7 +508,8 @@ const HomeScreen = forwardRef<HomeScreenRef, { hideInput?: boolean }>(
                 replyCount={item.reply_count ?? 0}
                 onLike={() => handleLike(item.id)}
                 onPress={() => navigation.navigate('PostDetail', { post: item })}
-                onProfilePress={() => navigateToProfileOrStory(item.user_id, isMe)}
+                onAvatarPress={() => navigateToProfileOrStory(item.user_id, isMe)}
+                onProfilePress={() => navigateToProfile(item.user_id, isMe)}
                 onDelete={() => confirmDeletePost(item.id)}
                 onOpenReplies={() => openReplyModal(item.id)}
               />
@@ -564,7 +570,8 @@ const HomeScreen = forwardRef<HomeScreenRef, { hideInput?: boolean }>(
                           ancestors: [],
                         })
                       }
-                      onProfilePress={() => navigateToProfileOrStory(reply.user_id, isMe)}
+                      onAvatarPress={() => navigateToProfileOrStory(reply.user_id, isMe)}
+                      onProfilePress={() => navigateToProfile(reply.user_id, isMe)}
                       onDelete={() => {}}
                       onOpenReplies={() => {}}
                     />
@@ -582,7 +589,8 @@ const HomeScreen = forwardRef<HomeScreenRef, { hideInput?: boolean }>(
                     replyCount={post.reply_count ?? 0}
                     onLike={() => handleLike(post.id)}
                     onPress={() => navigation.navigate('PostDetail', { post })}
-                    onProfilePress={() => navigateToProfileOrStory(post.user_id, isMe)}
+                    onAvatarPress={() => navigateToProfileOrStory(post.user_id, isMe)}
+                    onProfilePress={() => navigateToProfile(post.user_id, isMe)}
                     onDelete={() => {}}
                     onOpenReplies={() => {}}
                   />
