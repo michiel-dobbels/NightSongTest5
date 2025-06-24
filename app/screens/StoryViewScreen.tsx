@@ -63,6 +63,7 @@ export default function StoryViewScreen() {
 
   const next = () => {
     resetProgress();
+
     if (index < stories.length - 1) {
       setIndex(i => i + 1);
     }
@@ -70,6 +71,7 @@ export default function StoryViewScreen() {
 
   const prev = () => {
     resetProgress();
+
     if (index > 0) {
       setIndex(i => i - 1);
     }
@@ -120,6 +122,7 @@ export default function StoryViewScreen() {
                     }),
                   },
                   i > index && { width: '0%' },
+
                 ]}
               />
             </View>
