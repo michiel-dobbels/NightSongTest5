@@ -30,6 +30,8 @@ import {
 import { uploadImage } from '../../lib/uploadImage';
 import ReplyModal from '../components/ReplyModal';
 
+import { useStories } from '../contexts/StoryStoreContext';
+
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useAuth } from '../../AuthContext';
@@ -75,6 +77,7 @@ const HomeScreen = forwardRef<HomeScreenRef, { hideInput?: boolean }>(
   const listRef = useRef<FlatList>(null);
   const [replyModalVisible, setReplyModalVisible] = useState(false);
   const [activePostId, setActivePostId] = useState<string | null>(null);
+  const { getStoriesForUser } = useStories();
 
   const [searchVisible, setSearchVisible] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
@@ -99,6 +102,16 @@ const HomeScreen = forwardRef<HomeScreenRef, { hideInput?: boolean }>(
       }
     }
     return result;
+  };
+
+  const navigateToProfileOrStory = (targetId: string, isMe: boolean) => {
+    const stories = getStoriesForUser(targetId);
+    if (stories.length > 0) {
+      navigation.navigate('StoryView', { userId: targetId });
+    } else {
+      if (isMe) navigation.navigate('Profile');
+      else navigation.navigate('OtherUserProfile', { userId: targetId });
+    }
   };
 
   useEffect(() => {
@@ -490,11 +503,7 @@ const HomeScreen = forwardRef<HomeScreenRef, { hideInput?: boolean }>(
                 replyCount={item.reply_count ?? 0}
                 onLike={() => handleLike(item.id)}
                 onPress={() => navigation.navigate('PostDetail', { post: item })}
-                onProfilePress={() =>
-                  isMe
-                    ? navigation.navigate('Profile')
-                    : navigation.navigate('OtherUserProfile', { userId: item.user_id })
-                }
+                onProfilePress={() => navigateToProfileOrStory(item.user_id, isMe)}
                 onDelete={() => confirmDeletePost(item.id)}
                 onOpenReplies={() => openReplyModal(item.id)}
               />
@@ -555,11 +564,7 @@ const HomeScreen = forwardRef<HomeScreenRef, { hideInput?: boolean }>(
                           ancestors: [],
                         })
                       }
-                      onProfilePress={() =>
-                        isMe
-                          ? navigation.navigate('Profile')
-                          : navigation.navigate('OtherUserProfile', { userId: reply.user_id })
-                      }
+                      onProfilePress={() => navigateToProfileOrStory(reply.user_id, isMe)}
                       onDelete={() => {}}
                       onOpenReplies={() => {}}
                     />
@@ -577,11 +582,7 @@ const HomeScreen = forwardRef<HomeScreenRef, { hideInput?: boolean }>(
                     replyCount={post.reply_count ?? 0}
                     onLike={() => handleLike(post.id)}
                     onPress={() => navigation.navigate('PostDetail', { post })}
-                    onProfilePress={() =>
-                      isMe
-                        ? navigation.navigate('Profile')
-                        : navigation.navigate('OtherUserProfile', { userId: post.user_id })
-                    }
+                    onProfilePress={() => navigateToProfileOrStory(post.user_id, isMe)}
                     onDelete={() => {}}
                     onOpenReplies={() => {}}
                   />

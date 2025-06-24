@@ -25,6 +25,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 
 import { useAuth } from '../../AuthContext';
 import { usePostStore } from '../contexts/PostStoreContext';
+import { useStories } from '../contexts/StoryStoreContext';
 import { useFollowCounts } from '../hooks/useFollowCounts';
 import { colors } from '../styles/colors';
 import { supabase, REPLY_VIDEO_BUCKET } from '../../lib/supabase';
@@ -100,6 +101,7 @@ export default function ProfileScreen() {
     updatePost,
   } = useAuth()!;
   const { initialize, remove, posts: storePosts } = usePostStore();
+  const { getStoriesForUser } = useStories();
 
   const [replyCounts, setReplyCounts] = useState<{ [key: string]: number }>({});
   const [replyModalVisible, setReplyModalVisible] = useState(false);
@@ -166,6 +168,16 @@ export default function ProfileScreen() {
       likeEvents.off('likeChanged', onLikeChanged);
     };
   }, [updatePost]);
+
+  const navigateToProfileOrStory = (targetId: string, isMe: boolean) => {
+    const stories = getStoriesForUser(targetId);
+    if (stories.length > 0) {
+      navigation.navigate('StoryView', { userId: targetId });
+    } else {
+      if (isMe) navigation.navigate('Profile');
+      else navigation.navigate('OtherUserProfile', { userId: targetId });
+    }
+  };
 
 
 
@@ -571,7 +583,7 @@ export default function ProfileScreen() {
         videoUrl={item.video_url ?? undefined}
         replyCount={replyCounts[item.id] ?? item.reply_count ?? 0}
         onPress={() => navigation.navigate('PostDetail', { post: item })}
-        onProfilePress={() => navigation.navigate('Profile')}
+        onProfilePress={() => navigateToProfileOrStory(profile?.id ?? '', true)}
         onDelete={() => confirmDeletePost(item.id)}
         onOpenReplies={() => openReplyModal(item.id)}
       />
@@ -584,11 +596,7 @@ export default function ProfileScreen() {
         onPress={r =>
           navigation.navigate('ReplyDetail', { reply: r, originalPost: undefined, ancestors: [] })
         }
-        onProfilePress={id =>
-          id === profile?.id
-            ? navigation.navigate('Profile')
-            : navigation.navigate('OtherUserProfile', { userId: id })
-        }
+        onProfilePress={id => navigateToProfileOrStory(id, id === profile?.id)}
         onDelete={() => {}}
       />
     );
