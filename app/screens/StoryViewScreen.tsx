@@ -291,7 +291,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     zIndex: 2,
   },
-  avatar: { width: 40, height: 40, borderRadius: 20, marginRight: 8 },
+  avatar: { width: 48, height: 48, borderRadius: 24, marginRight: 8 },
   avatarPlaceholder: { backgroundColor: '#555' },
   userName: { color: colors.text, fontWeight: 'bold' },
 
