@@ -93,7 +93,11 @@ export default function StoryViewScreen() {
         )}
 
         {story?.imageUri && (
-          <Image source={{ uri: story.imageUri }} style={styles.media} />
+          <Image
+            source={{ uri: story.imageUri }}
+            style={styles.media}
+            resizeMode="contain"
+          />
         )}
         {!story?.imageUri && story?.videoUri && (
           <Video
@@ -151,7 +155,8 @@ const styles = StyleSheet.create({
   deleteText: { color: colors.text, fontSize: 18 },
   closeButton: {
     position: 'absolute',
-    bottom: 40,
+    bottom: '10%',
+
     alignSelf: 'center',
     padding: 10,
     backgroundColor: colors.background,
