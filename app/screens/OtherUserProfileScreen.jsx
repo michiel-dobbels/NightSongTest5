@@ -119,7 +119,11 @@ export default function OtherUserProfileScreen() {
     <View style={styles.headerContainer}>
 
       {profile.banner_url ? (
-        <Image source={{ uri: profile.banner_url }} style={styles.banner} />
+        <Image
+          source={{ uri: profile.banner_url }}
+          style={styles.banner}
+          resizeMode="contain"
+        />
       ) : (
         <View style={[styles.banner, styles.placeholder]} />
       )}

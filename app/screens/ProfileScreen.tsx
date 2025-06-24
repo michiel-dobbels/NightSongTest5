@@ -494,7 +494,11 @@ export default function ProfileScreen() {
   const renderHeader = () => (
     <View style={styles.headerContainer}>
       {bannerImageUri ? (
-        <Image source={{ uri: bannerImageUri }} style={styles.banner} />
+        <Image
+          source={{ uri: bannerImageUri }}
+          style={styles.banner}
+          resizeMode="contain"
+        />
       ) : (
         <View style={[styles.banner, styles.placeholder]} />
       )}
