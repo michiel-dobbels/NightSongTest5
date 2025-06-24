@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import {
 
     View,
@@ -25,10 +25,11 @@ export default function StoryViewScreen() {
   const { user } = useAuth()!;
   const { userId } = route.params as { userId: string };
   const { getStoriesForUser, removeStory } = useStories();
-
   const stories = getStoriesForUser(userId);
   const [index, setIndex] = useState(0);
   const story = stories[index];
+  const [mediaRatio, setMediaRatio] = useState(1);
+
 
   const panResponder = useRef(
     PanResponder.create({
@@ -84,6 +85,20 @@ export default function StoryViewScreen() {
     );
   };
 
+  useEffect(() => {
+    if (story?.imageUri) {
+      Image.getSize(
+        story.imageUri,
+        (w, h) => {
+          if (w && h) setMediaRatio(w / h);
+        },
+        () => setMediaRatio(1),
+      );
+    } else if (story?.videoUri) {
+      setMediaRatio(16 / 9);
+    }
+  }, [story]);
+
   return (
     <View style={styles.container} {...panResponder.panHandlers}>
       <View style={styles.mediaContainer}>
@@ -94,16 +109,25 @@ export default function StoryViewScreen() {
             <Text style={styles.deleteText}>X</Text>
           </TouchableOpacity>
         )}
-
         {story?.imageUri && (
-          <Image source={{ uri: story.imageUri }} style={styles.media} />
+          <Image
+            source={{ uri: story.imageUri }}
+            style={[styles.media, { aspectRatio: mediaRatio }]}
+            resizeMode="contain"
+          />
+
         )}
         {!story?.imageUri && story?.videoUri && (
           <Video
             source={{ uri: story.videoUri }}
-            style={styles.media}
+            style={[styles.media, { aspectRatio: mediaRatio }]}
             resizeMode="contain"
             shouldPlay
+            onLoad={e => {
+              const { width, height } = e.naturalSize || {};
+              if (width && height) setMediaRatio(width / height);
+            }}
+
           />
         )}
         <Pressable style={styles.leftZone} onPress={prev} />
@@ -125,12 +149,12 @@ const styles = StyleSheet.create({
   },
   mediaContainer: {
     width: '100%',
-    height: '100%',
+    flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
   },
+  media: { width: '100%', borderRadius: 6 },
 
-  media: { width: '100%', height: '100%', borderRadius: 6 },
   leftZone: {
     position: 'absolute',
     top: 0,
@@ -147,7 +171,8 @@ const styles = StyleSheet.create({
   },
   counter: {
     position: 'absolute',
-    top: 10,
+    top: '10%',
+
     left: 10,
     color: colors.text,
     backgroundColor: 'rgba(0,0,0,0.5)',
@@ -156,7 +181,7 @@ const styles = StyleSheet.create({
     borderRadius: 4,
     zIndex: 2,
   },
-  deleteBtn: { position: 'absolute', top: 10, right: 10, padding: 6, zIndex: 2 },
+  deleteBtn: { position: 'absolute', top: '10%', right: 10, padding: 6, zIndex: 2 },
   deleteText: { color: colors.text, fontSize: 18 },
 
 });
