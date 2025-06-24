@@ -675,6 +675,7 @@ export default function ReplyDetailScreen() {
                             originalPost.user_id,
                             user?.id === originalPost.user_id,
                           )
+
                         }
                       >
                         <Text style={styles.username}>
@@ -757,6 +758,7 @@ export default function ReplyDetailScreen() {
                     <View style={styles.headerRow}>
                       <TouchableOpacity
                         onPress={() => openProfile(a.user_id, isMe)}
+
                       >
                         <Text style={styles.username}>
                           {ancestorName} @{ancestorUserName}
@@ -834,6 +836,7 @@ export default function ReplyDetailScreen() {
                     <TouchableOpacity
                       onPress={() =>
                         openProfile(parent.user_id, user?.id === parent.user_id)
+
                       }
                     >
                       <Text style={styles.username}>
@@ -930,6 +933,7 @@ export default function ReplyDetailScreen() {
                     <View style={styles.headerRow}>
                       <TouchableOpacity
                         onPress={() => openProfile(item.user_id, isMe)}
+
                       >
                         <Text style={styles.username}>
                           {childName} @{childUserName}
