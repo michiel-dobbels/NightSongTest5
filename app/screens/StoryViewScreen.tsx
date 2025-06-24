@@ -31,9 +31,13 @@ export default function StoryViewScreen() {
 
   const panResponder = useRef(
     PanResponder.create({
-      onMoveShouldSetPanResponder: (_, g) => Math.abs(g.dy) > 20,
+      onMoveShouldSetPanResponder: (_, g) => Math.abs(g.dy) > Math.abs(g.dx) && Math.abs(g.dy) > 10,
+      onMoveShouldSetPanResponderCapture: (_, g) => Math.abs(g.dy) > Math.abs(g.dx) && Math.abs(g.dy) > 10,
       onPanResponderRelease: (_, g) => {
-        if (g.dy > 50) navigation.goBack();
+        if (g.dy > 50) {
+          navigation.goBack();
+        }
+
       },
     }),
   ).current;
