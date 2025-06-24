@@ -1,29 +1,43 @@
-import React, { useState } from 'react';
-import {
-  View,
-  StyleSheet,
-  Image,
-  Button,
-  Pressable,
-  Text,
-  Alert,
-  TouchableOpacity,
-} from 'react-native';
+import React, { useState, useRef } from 'react';
+  import {
+    View,
+    StyleSheet,
+    Image,
+    Button,
+    Pressable,
+    Text,
+    Alert,
+    TouchableOpacity,
+    PanResponder,
+  } from 'react-native';
 
 import { Video } from 'expo-av';
 import { useRoute, useNavigation } from '@react-navigation/native';
 import { colors } from '../styles/colors';
 import { useStories } from '../contexts/StoryStoreContext';
+import { useAuth } from '../../AuthContext';
+
 
 export default function StoryViewScreen() {
   const route = useRoute<any>();
   const navigation = useNavigation<any>();
+  const { user } = useAuth()!;
   const { userId } = route.params as { userId: string };
   const { getStoriesForUser, removeStory } = useStories();
 
   const stories = getStoriesForUser(userId);
   const [index, setIndex] = useState(0);
   const story = stories[index];
+
+  const panResponder = useRef(
+    PanResponder.create({
+      onMoveShouldSetPanResponder: (_, g) => Math.abs(g.dy) > 20,
+      onPanResponderRelease: (_, g) => {
+        if (g.dy > 50) navigation.goBack();
+      },
+    }),
+  ).current;
+
 
   const next = () => {
     if (index < stories.length - 1) {
@@ -39,6 +53,8 @@ export default function StoryViewScreen() {
 
   const confirmDelete = () => {
     if (!story) return;
+    if (!user || user.id !== story.userId) return;
+
     Alert.alert(
       'Are you sure you want to delete this story?',
       '',
@@ -65,11 +81,13 @@ export default function StoryViewScreen() {
 
   return (
     <View style={styles.container}>
-      <View style={styles.mediaContainer}>
+      <View style={styles.mediaContainer} {...panResponder.panHandlers}>
         <Text style={styles.counter}>{`${index + 1}/${stories.length}`}</Text>
-        <TouchableOpacity style={styles.deleteBtn} onPress={confirmDelete}>
-          <Text style={styles.deleteText}>X</Text>
-        </TouchableOpacity>
+        {user && story?.userId === user.id && (
+          <TouchableOpacity style={styles.deleteBtn} onPress={confirmDelete}>
+            <Text style={styles.deleteText}>X</Text>
+          </TouchableOpacity>
+        )}
 
         {story?.imageUri && (
           <Image source={{ uri: story.imageUri }} style={styles.media} />
