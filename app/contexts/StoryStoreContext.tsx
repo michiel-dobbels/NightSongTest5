@@ -13,6 +13,7 @@ interface StoryStore {
   stories: Story[];
   addStory: (story: Story) => Promise<void>;
   removeStory: (storyId: string) => void;
+
   getStoriesForUser: (userId: string) => Story[];
 }
 
@@ -47,6 +48,7 @@ export const StoryStoreProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     });
   }, []);
 
+
   const getStoriesForUser = useCallback(
     (userId: string) => stories.filter(s => s.userId === userId),
     [stories],
@@ -56,6 +58,7 @@ export const StoryStoreProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     <StoryStoreContext.Provider
       value={{ stories, addStory, removeStory, getStoriesForUser }}
     >
+
       {children}
     </StoryStoreContext.Provider>
   );
