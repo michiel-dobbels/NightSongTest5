@@ -5,6 +5,9 @@ import {
   Image,
   Button,
   Pressable,
+  Text,
+  Alert,
+  TouchableOpacity,
 } from 'react-native';
 
 import { Video } from 'expo-av';
@@ -16,7 +19,8 @@ export default function StoryViewScreen() {
   const route = useRoute<any>();
   const navigation = useNavigation<any>();
   const { userId } = route.params as { userId: string };
-  const { getStoriesForUser } = useStories();
+  const { getStoriesForUser, removeStory } = useStories();
+
   const stories = getStoriesForUser(userId);
   const [index, setIndex] = useState(0);
   const story = stories[index];
@@ -33,9 +37,40 @@ export default function StoryViewScreen() {
     }
   };
 
+  const confirmDelete = () => {
+    if (!story) return;
+    Alert.alert(
+      'Are you sure you want to delete this story?',
+      '',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Delete',
+          style: 'destructive',
+          onPress: () => {
+            removeStory(story.id);
+            const remaining = stories.filter((_, i) => i !== index);
+            if (remaining.length === 0) {
+              navigation.goBack();
+              return;
+            }
+            if (index >= remaining.length) {
+              setIndex(remaining.length - 1);
+            }
+          },
+        },
+      ],
+    );
+  };
+
   return (
     <View style={styles.container}>
       <View style={styles.mediaContainer}>
+        <Text style={styles.counter}>{`${index + 1}/${stories.length}`}</Text>
+        <TouchableOpacity style={styles.deleteBtn} onPress={confirmDelete}>
+          <Text style={styles.deleteText}>X</Text>
+        </TouchableOpacity>
+
         {story?.imageUri && (
           <Image source={{ uri: story.imageUri }} style={styles.media} />
         )}
@@ -74,5 +109,18 @@ const styles = StyleSheet.create({
     right: 0,
     width: '50%',
   },
+  counter: {
+    position: 'absolute',
+    top: 10,
+    left: 10,
+    color: colors.text,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 4,
+    zIndex: 2,
+  },
+  deleteBtn: { position: 'absolute', top: 10, right: 10, padding: 6, zIndex: 2 },
+  deleteText: { color: colors.text, fontSize: 18 },
 
 });

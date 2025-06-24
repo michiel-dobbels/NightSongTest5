@@ -12,6 +12,8 @@ export interface Story {
 interface StoryStore {
   stories: Story[];
   addStory: (story: Story) => Promise<void>;
+  removeStory: (storyId: string) => void;
+
   getStoriesForUser: (userId: string) => Story[];
 }
 
@@ -38,13 +40,25 @@ export const StoryStoreProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     });
   }, []);
 
+  const removeStory = useCallback((storyId: string) => {
+    setStories(prev => {
+      const updated = prev.filter(s => s.id !== storyId);
+      AsyncStorage.setItem('stories', JSON.stringify(updated));
+      return updated;
+    });
+  }, []);
+
+
   const getStoriesForUser = useCallback(
     (userId: string) => stories.filter(s => s.userId === userId),
     [stories],
   );
 
   return (
-    <StoryStoreContext.Provider value={{ stories, addStory, getStoriesForUser }}>
+    <StoryStoreContext.Provider
+      value={{ stories, addStory, removeStory, getStoriesForUser }}
+    >
+
       {children}
     </StoryStoreContext.Provider>
   );
