@@ -26,6 +26,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useAuth } from '../../AuthContext';
 import { usePostStore } from '../contexts/PostStoreContext';
 import { useStories } from '../contexts/StoryStoreContext';
+import { storyRing } from '../styles/storyRing';
 import { useFollowCounts } from '../hooks/useFollowCounts';
 import { colors } from '../styles/colors';
 import { supabase, REPLY_VIDEO_BUCKET } from '../../lib/supabase';
@@ -52,6 +53,7 @@ interface PostItemProps {
   videoUrl?: string;
   replyCount: number;
   onPress: () => void;
+  onAvatarPress: () => void;
   onProfilePress: () => void;
   onDelete: () => void;
   onOpenReplies: () => void;
@@ -65,6 +67,7 @@ const PostItem = React.memo(function PostItem({
   videoUrl,
   replyCount,
   onPress,
+  onAvatarPress,
   onProfilePress,
   onDelete,
   onOpenReplies,
@@ -79,6 +82,7 @@ const PostItem = React.memo(function PostItem({
       videoUrl={videoUrl}
       replyCount={replyCount}
       onPress={onPress}
+      onAvatarPress={onAvatarPress}
       onProfilePress={onProfilePress}
       onDelete={onDelete}
       onOpenReplies={onOpenReplies}
@@ -177,6 +181,11 @@ export default function ProfileScreen() {
       if (isMe) navigation.navigate('Profile');
       else navigation.navigate('OtherUserProfile', { userId: targetId });
     }
+  };
+
+  const navigateToProfile = (targetId: string, isMe: boolean) => {
+    if (isMe) navigation.navigate('Profile');
+    else navigation.navigate('OtherUserProfile', { userId: targetId });
   };
 
 
@@ -494,7 +503,11 @@ export default function ProfileScreen() {
   const renderHeader = () => (
     <View style={styles.headerContainer}>
       {bannerImageUri ? (
-        <Image source={{ uri: bannerImageUri }} style={styles.banner} />
+        <Image
+          source={{ uri: bannerImageUri }}
+          style={styles.banner}
+          resizeMode="contain"
+        />
       ) : (
         <View style={[styles.banner, styles.placeholder]} />
       )}
@@ -503,9 +516,12 @@ export default function ProfileScreen() {
       </View>
       <View style={styles.profileRow}>
         {profileImageUri ? (
-          <Image source={{ uri: profileImageUri }} style={styles.avatar} />
+          <Image
+            source={{ uri: profileImageUri }}
+            style={[styles.avatar, getStoriesForUser(profile.id).length > 0 && storyRing]}
+          />
         ) : (
-          <View style={[styles.avatar, styles.placeholder]} />
+          <View style={[styles.avatar, styles.placeholder, getStoriesForUser(profile.id).length > 0 && storyRing]} />
         )}
         <View style={styles.textContainer}>
           <Text style={styles.username}>@{profile.username}</Text>
@@ -583,7 +599,8 @@ export default function ProfileScreen() {
         videoUrl={item.video_url ?? undefined}
         replyCount={replyCounts[item.id] ?? item.reply_count ?? 0}
         onPress={() => navigation.navigate('PostDetail', { post: item })}
-        onProfilePress={() => navigateToProfileOrStory(profile?.id ?? '', true)}
+        onAvatarPress={() => navigateToProfileOrStory(profile?.id ?? '', true)}
+        onProfilePress={() => navigateToProfile(profile?.id ?? '', true)}
         onDelete={() => confirmDeletePost(item.id)}
         onOpenReplies={() => openReplyModal(item.id)}
       />
@@ -596,7 +613,8 @@ export default function ProfileScreen() {
         onPress={r =>
           navigation.navigate('ReplyDetail', { reply: r, originalPost: undefined, ancestors: [] })
         }
-        onProfilePress={id => navigateToProfileOrStory(id, id === profile?.id)}
+        onAvatarPress={id => navigateToProfileOrStory(id, id === profile?.id)}
+        onProfilePress={id => navigateToProfile(id, id === profile?.id)}
         onDelete={() => {}}
       />
     );
@@ -700,6 +718,7 @@ const styles = StyleSheet.create({
     width: '100%',
     height: Dimensions.get('window').height * 0.25,
     marginBottom: 20,
+    marginHorizontal: -20,
   },
   avatar: {
     width: 80,
