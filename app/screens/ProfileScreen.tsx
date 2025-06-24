@@ -515,14 +515,24 @@ export default function ProfileScreen() {
         <Button title="Back" onPress={() => navigation.goBack()} />
       </View>
       <View style={styles.profileRow}>
-        {profileImageUri ? (
-          <Image
-            source={{ uri: profileImageUri }}
-            style={[styles.avatar, getStoriesForUser(profile.id).length > 0 && storyRing]}
-          />
-        ) : (
-          <View style={[styles.avatar, styles.placeholder, getStoriesForUser(profile.id).length > 0 && storyRing]} />
-        )}
+        <TouchableOpacity
+          disabled={getStoriesForUser(profile.id).length === 0}
+          onPress={() =>
+            navigation.navigate('StoryView', { userId: profile.id })
+          }
+        >
+          {profileImageUri ? (
+            <Image
+              source={{ uri: profileImageUri }}
+              style={[styles.avatar, getStoriesForUser(profile.id).length > 0 && storyRing]}
+            />
+          ) : (
+            <View
+              style={[styles.avatar, styles.placeholder, getStoriesForUser(profile.id).length > 0 && storyRing]}
+            />
+          )}
+        </TouchableOpacity>
+
         <View style={styles.textContainer}>
           <Text style={styles.username}>@{profile.username}</Text>
           {profile.name && <Text style={styles.name}>{profile.name}</Text>}

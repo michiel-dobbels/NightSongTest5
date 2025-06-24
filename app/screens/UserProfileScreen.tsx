@@ -241,24 +241,29 @@ export default function UserProfileScreen() {
           <View style={[styles.banner, styles.placeholder]} />
         )}
 
-        {profile?.image_url || avatarUrl ? (
-          <Image
-            source={{ uri: profile?.image_url || avatarUrl! }}
-            style={[
-              styles.avatar,
-              getStoriesForUser(userId).length > 0 && storyRing,
-            ]}
-          />
+        <TouchableOpacity
+          disabled={getStoriesForUser(userId).length === 0}
+          onPress={() => navigation.navigate('StoryView', { userId })}
+        >
+          {profile?.image_url || avatarUrl ? (
+            <Image
+              source={{ uri: profile?.image_url || avatarUrl! }}
+              style={[
+                styles.avatar,
+                getStoriesForUser(userId).length > 0 && storyRing,
+              ]}
+            />
+          ) : (
+            <View
+              style={[
+                styles.avatar,
+                styles.placeholder,
+                getStoriesForUser(userId).length > 0 && storyRing,
+              ]}
+            />
+          )}
+        </TouchableOpacity>
 
-        ) : (
-          <View
-            style={[
-              styles.avatar,
-              styles.placeholder,
-              getStoriesForUser(userId).length > 0 && storyRing,
-            ]}
-          />
-        )}
         {name && <Text style={styles.name}>{name}</Text>}
         {username && <Text style={styles.username}>@{username}</Text>}
         {user && user.id !== userId && (
@@ -307,24 +312,30 @@ export default function UserProfileScreen() {
           <View style={[styles.banner, styles.placeholder]} />
         )}
 
-        {profile?.image_url || avatarUrl ? (
-          <Image
-            source={{ uri: profile?.image_url || avatarUrl! }}
-            style={[
-              styles.avatar,
-              getStoriesForUser(userId).length > 0 && storyRing,
-            ]}
-          />
+        <TouchableOpacity
+          disabled={getStoriesForUser(userId).length === 0}
+          onPress={() => navigation.navigate('StoryView', { userId })}
+        >
+          {profile?.image_url || avatarUrl ? (
+            <Image
+              source={{ uri: profile?.image_url || avatarUrl! }}
+              style={[
+                styles.avatar,
+                getStoriesForUser(userId).length > 0 && storyRing,
+              ]}
+            />
 
-        ) : (
-          <View
-            style={[
-              styles.avatar,
-              styles.placeholder,
-              getStoriesForUser(userId).length > 0 && storyRing,
-            ]}
-          />
-        )}
+          ) : (
+            <View
+              style={[
+                styles.avatar,
+                styles.placeholder,
+                getStoriesForUser(userId).length > 0 && storyRing,
+              ]}
+            />
+          )}
+        </TouchableOpacity>
+
         {name && <Text style={styles.name}>{name}</Text>}
         {username && <Text style={styles.username}>@{username}</Text>}
         {user && user.id !== userId && (
@@ -380,16 +391,22 @@ export default function UserProfileScreen() {
         <Button title="Back" onPress={() => navigation.goBack()} />
       </View>
       <View style={styles.profileRow}>
-        {profile.image_url || avatarUrl ? (
-          <Image
-            source={{ uri: profile.image_url || avatarUrl! }}
-            style={[styles.avatar, getStoriesForUser(userId).length > 0 && storyRing]}
-          />
-        ) : (
-          <View
-            style={[styles.avatar, styles.placeholder, getStoriesForUser(userId).length > 0 && storyRing]}
-          />
-        )}
+        <TouchableOpacity
+          disabled={getStoriesForUser(userId).length === 0}
+          onPress={() => navigation.navigate('StoryView', { userId })}
+        >
+          {profile.image_url || avatarUrl ? (
+            <Image
+              source={{ uri: profile.image_url || avatarUrl! }}
+              style={[styles.avatar, getStoriesForUser(userId).length > 0 && storyRing]}
+            />
+          ) : (
+            <View
+              style={[styles.avatar, styles.placeholder, getStoriesForUser(userId).length > 0 && storyRing]}
+            />
+          )}
+        </TouchableOpacity>
+
         <View style={styles.textContainer}>
           {name && <Text style={styles.name}>{name}</Text>}
           {username && <Text style={styles.username}>@{username}</Text>}
