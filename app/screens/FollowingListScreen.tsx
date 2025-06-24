@@ -2,6 +2,8 @@ import React, { useEffect, useState } from 'react';
 import { View, Text, FlatList, Image, StyleSheet } from 'react-native';
 import { supabase } from '../../lib/supabase';
 import { colors } from '../styles/colors';
+import { useStories } from '../contexts/StoryStoreContext';
+import { storyRing } from '../styles/storyRing';
 
 interface FollowingListScreenProps {
   userId: string;
@@ -63,16 +65,23 @@ export default function FollowingListScreen({ userId }: FollowingListScreenProps
     };
   }, [userId]);
 
-  const renderItem = ({ item }: { item: Profile }) => (
-    <View style={styles.row}>
-      {item.avatar_url ? (
-        <Image source={{ uri: item.avatar_url }} style={styles.avatar} />
-      ) : (
-        <View style={[styles.avatar, styles.placeholder]} />
-      )}
-      <Text style={styles.username}>{item.username}</Text>
-    </View>
-  );
+  const { getStoriesForUser } = useStories();
+  const renderItem = ({ item }: { item: Profile }) => {
+    const hasStory = getStoriesForUser(item.id).length > 0;
+    return (
+      <View style={styles.row}>
+        {item.avatar_url ? (
+          <Image
+            source={{ uri: item.avatar_url }}
+            style={[styles.avatar, hasStory && storyRing]}
+          />
+        ) : (
+          <View style={[styles.avatar, styles.placeholder, hasStory && storyRing]} />
+        )}
+        <Text style={styles.username}>{item.username}</Text>
+      </View>
+    );
+  };
 
   return (
     <View style={styles.container}>

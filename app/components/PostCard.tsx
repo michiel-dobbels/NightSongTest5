@@ -1,5 +1,7 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, Image, StyleSheet, TouchableWithoutFeedback } from 'react-native';
+import { useStories } from '../contexts/StoryStoreContext';
+import { storyRing } from '../styles/storyRing';
 import { Video } from 'expo-av';
 import useLike from '../hooks/useLike';
 import { Ionicons } from '@expo/vector-icons';
@@ -79,6 +81,8 @@ function PostCard({
   const userName = post.profiles?.username || post.username;
   const isReply = (post as any).post_id !== undefined;
   const { likeCount, liked, toggleLike } = useLike(post.id, isReply);
+  const { getStoriesForUser } = useStories();
+  const hasStory = getStoriesForUser(post.user_id).length > 0;
 
   const finalAvatarUri =
     avatarUri ?? post.profiles?.image_url ?? undefined;
@@ -113,9 +117,12 @@ function PostCard({
             }}
           >
             {finalAvatarUri ? (
-              <Image source={{ uri: finalAvatarUri }} style={styles.avatar} />
+              <Image
+                source={{ uri: finalAvatarUri }}
+                style={[styles.avatar, hasStory && storyRing]}
+              />
             ) : (
-              <View style={[styles.avatar, styles.placeholder]} />
+              <View style={[styles.avatar, styles.placeholder, hasStory && storyRing]} />
             )}
           </TouchableOpacity>
           <View style={{ flex: 1 }}>
