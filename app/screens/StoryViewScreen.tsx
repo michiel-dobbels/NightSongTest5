@@ -156,6 +156,7 @@ const styles = StyleSheet.create({
   closeButton: {
     position: 'absolute',
     bottom: '10%',
+
     alignSelf: 'center',
     padding: 10,
     backgroundColor: colors.background,
