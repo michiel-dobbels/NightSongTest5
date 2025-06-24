@@ -168,6 +168,11 @@ export default function TopTabsNavigator() {
     setModalVisible(false);
   };
 
+  const handleAddStory = () => {
+    setModalVisible(false);
+    navigation.navigate('CreateStory');
+  };
+
   const displayName = profile?.name || profile?.username;
   const welcomeText = displayName
     ? `Welcome @${displayName}`
@@ -282,6 +287,7 @@ export default function TopTabsNavigator() {
               <View style={styles.buttonRow}>
                 <Button title="Add Image" onPress={pickImage} />
                 <Button title="Add Video" onPress={pickVideo} />
+                <Button title="Add Story" onPress={handleAddStory} />
                 <Button title="Post" onPress={handleModalPost} />
               </View>
               <Button title="Cancel" onPress={() => setModalVisible(false)} />
