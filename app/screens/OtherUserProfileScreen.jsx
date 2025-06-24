@@ -119,7 +119,11 @@ export default function OtherUserProfileScreen() {
     <View style={styles.headerContainer}>
 
       {profile.banner_url ? (
-        <Image source={{ uri: profile.banner_url }} style={styles.banner} />
+        <Image
+          source={{ uri: profile.banner_url }}
+          style={styles.banner}
+          resizeMode="contain"
+        />
       ) : (
         <View style={[styles.banner, styles.placeholder]} />
       )}
@@ -202,7 +206,7 @@ const styles = StyleSheet.create({
   },
   backButton: { alignSelf: 'flex-start', marginBottom: 20 },
   profileRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 20 },
-  banner: { width: '100%', height: 200, marginBottom: 20 },
+  banner: { width: '100%', height: 200, marginBottom: 20, marginHorizontal: -20 },
   avatar: { width: 80, height: 80, borderRadius: 40 },
   placeholder: { backgroundColor: '#555' },
   textContainer: { marginLeft: 15 },

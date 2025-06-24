@@ -494,7 +494,11 @@ export default function ProfileScreen() {
   const renderHeader = () => (
     <View style={styles.headerContainer}>
       {bannerImageUri ? (
-        <Image source={{ uri: bannerImageUri }} style={styles.banner} />
+        <Image
+          source={{ uri: bannerImageUri }}
+          style={styles.banner}
+          resizeMode="contain"
+        />
       ) : (
         <View style={[styles.banner, styles.placeholder]} />
       )}
@@ -700,6 +704,7 @@ const styles = StyleSheet.create({
     width: '100%',
     height: Dimensions.get('window').height * 0.25,
     marginBottom: 20,
+    marginHorizontal: -20,
   },
   avatar: {
     width: 80,
