@@ -82,6 +82,19 @@ export default function StoryViewScreen() {
     });
   }, [index]);
 
+  const progress = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    progress.setValue(0);
+    Animated.timing(progress, {
+      toValue: 1,
+      duration: 5000,
+      useNativeDriver: false,
+    }).start(({ finished }) => {
+      if (finished) next();
+    });
+  }, [index]);
+
   const panResponder = useRef(
     PanResponder.create({
       onMoveShouldSetPanResponder: (_, g) => Math.abs(g.dy) > Math.abs(g.dx) && Math.abs(g.dy) > 10,
@@ -103,6 +116,7 @@ export default function StoryViewScreen() {
 
   const next = () => {
     resetProgress();
+
     if (index < stories.length - 1) {
       setIndex(i => i + 1);
     }
@@ -110,6 +124,7 @@ export default function StoryViewScreen() {
 
   const prev = () => {
     resetProgress();
+
     if (index > 0) {
       setIndex(i => i - 1);
     }
@@ -160,6 +175,7 @@ export default function StoryViewScreen() {
                     }),
                   },
                   i > index && { width: '0%' },
+
                 ]}
               />
             </View>
@@ -177,6 +193,7 @@ export default function StoryViewScreen() {
             </Text>
           </View>
         )}
+
         <Text style={styles.counter}>{`${index + 1}/${stories.length}`}</Text>
         {user && story?.userId === user.id && (
           <TouchableOpacity style={styles.deleteBtn} onPress={confirmDelete}>
@@ -277,6 +294,7 @@ const styles = StyleSheet.create({
   avatar: { width: 40, height: 40, borderRadius: 20, marginRight: 8 },
   avatarPlaceholder: { backgroundColor: '#555' },
   userName: { color: colors.text, fontWeight: 'bold' },
+
   closeButton: {
     position: 'absolute',
     bottom: '10%',
