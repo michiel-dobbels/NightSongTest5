@@ -1,5 +1,6 @@
 import React, { useState, useRef } from 'react';
 import {
+
     View,
     StyleSheet,
     Image,
@@ -10,11 +11,13 @@ import {
     TouchableOpacity,
     PanResponder,
   } from 'react-native';
+
 import { Video } from 'expo-av';
 import { useRoute, useNavigation } from '@react-navigation/native';
 import { colors } from '../styles/colors';
 import { useStories } from '../contexts/StoryStoreContext';
 import { useAuth } from '../../AuthContext';
+
 
 export default function StoryViewScreen() {
   const route = useRoute<any>();
@@ -22,6 +25,7 @@ export default function StoryViewScreen() {
   const { user } = useAuth()!;
   const { userId } = route.params as { userId: string };
   const { getStoriesForUser, removeStory } = useStories();
+
   const stories = getStoriesForUser(userId);
   const [index, setIndex] = useState(0);
   const story = stories[index];
@@ -34,9 +38,11 @@ export default function StoryViewScreen() {
         if (g.dy > 50) {
           navigation.goBack();
         }
+
       },
     }),
   ).current;
+
 
   const next = () => {
     if (index < stories.length - 1) {
@@ -53,6 +59,7 @@ export default function StoryViewScreen() {
   const confirmDelete = () => {
     if (!story) return;
     if (!user || user.id !== story.userId) return;
+
     Alert.alert(
       'Are you sure you want to delete this story?',
       '',
@@ -80,12 +87,14 @@ export default function StoryViewScreen() {
   return (
     <View style={styles.container} {...panResponder.panHandlers}>
       <View style={styles.mediaContainer}>
+
         <Text style={styles.counter}>{`${index + 1}/${stories.length}`}</Text>
         {user && story?.userId === user.id && (
           <TouchableOpacity style={styles.deleteBtn} onPress={confirmDelete}>
             <Text style={styles.deleteText}>X</Text>
           </TouchableOpacity>
         )}
+
         {story?.imageUri && (
           <Image source={{ uri: story.imageUri }} style={styles.media} />
         )}
@@ -100,6 +109,7 @@ export default function StoryViewScreen() {
         <Pressable style={styles.leftZone} onPress={prev} />
         <Pressable style={styles.rightZone} onPress={next} />
       </View>
+
       <Button title="Close" onPress={() => navigation.goBack()} />
     </View>
   );
@@ -119,6 +129,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
+
   media: { width: '100%', height: '100%', borderRadius: 6 },
   leftZone: {
     position: 'absolute',
@@ -147,4 +158,5 @@ const styles = StyleSheet.create({
   },
   deleteBtn: { position: 'absolute', top: 10, right: 10, padding: 6, zIndex: 2 },
   deleteText: { color: colors.text, fontSize: 18 },
+
 });

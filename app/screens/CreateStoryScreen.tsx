@@ -14,6 +14,7 @@ export default function CreateStoryScreen() {
   const navigation = useNavigation<any>();
   const { user } = useAuth()!;
   const { addStory } = useStories();
+
   const [imageUri, setImageUri] = useState<string | null>(null);
   const [videoUri, setVideoUri] = useState<string | null>(null);
 
@@ -83,6 +84,7 @@ export default function CreateStoryScreen() {
     navigation.goBack();
   };
 
+
   return (
     <View style={styles.container}>
       <Text style={styles.text}>Create a new story</Text>
@@ -104,6 +106,7 @@ export default function CreateStoryScreen() {
         <Button title="Cancel" onPress={() => navigation.goBack()} />
         <Button title="Post" onPress={handlePost} />
       </View>
+
     </View>
   );
 }
@@ -128,4 +131,5 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     width: '100%',
   },
+
 });
