@@ -55,6 +55,7 @@ export default function CreateStoryScreen() {
         <Button title="Add Image" onPress={pickImage} />
         <Button title="Add Video" onPress={pickVideo} />
       </View>
+
     </View>
   );
 }
@@ -79,4 +80,5 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     width: '100%',
   },
+
 });
