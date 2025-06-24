@@ -532,6 +532,7 @@ export default function ProfileScreen() {
             />
           )}
         </TouchableOpacity>
+
         <View style={styles.textContainer}>
           <Text style={styles.username}>@{profile.username}</Text>
           {profile.name && <Text style={styles.name}>{profile.name}</Text>}
