@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, Image, ActivityIndicator, FlatList, Button, TouchableOpacity } from 'react-native';
+import { useStories } from '../contexts/StoryStoreContext';
+import { storyRing } from '../styles/storyRing';
 import { useRoute, useNavigation } from '@react-navigation/native';
 import { supabase } from '../../lib/supabase';
 import { colors } from '../styles/colors';
@@ -16,6 +18,8 @@ export default function OtherUserProfileScreen() {
   const route = useRoute();
   const navigation = useNavigation();
   const { user } = useAuth();
+
+  const { getStoriesForUser } = useStories();
 
   const { initialize } = usePostStore();
   const { userId: routeUserId, username: routeUsername } = route.params || {};
@@ -132,9 +136,12 @@ export default function OtherUserProfileScreen() {
       </View>
       <View style={styles.profileRow}>
         {profile.image_url ? (
-          <Image source={{ uri: profile.image_url }} style={styles.avatar} />
+          <Image
+            source={{ uri: profile.image_url }}
+            style={[styles.avatar, getStoriesForUser(profile.id).length > 0 && storyRing]}
+          />
         ) : (
-          <View style={[styles.avatar, styles.placeholder]} />
+          <View style={[styles.avatar, styles.placeholder, getStoriesForUser(profile.id).length > 0 && storyRing]} />
         )}
         <View style={styles.textContainer}>
           {profile.name && <Text style={styles.name}>{profile.name}</Text>}

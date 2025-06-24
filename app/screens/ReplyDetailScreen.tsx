@@ -18,6 +18,8 @@ import { Video } from 'expo-av';
 import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useRoute, useNavigation } from '@react-navigation/native';
+import { useStories } from '../contexts/StoryStoreContext';
+import { storyRing } from '../styles/storyRing';
 
 import { supabase, REPLY_VIDEO_BUCKET } from '../../lib/supabase';
 import { uploadImage } from '../../lib/uploadImage';
@@ -118,6 +120,7 @@ export default function ReplyDetailScreen() {
     bannerImageUri,
     removePost,
   } = useAuth()!;
+  const { getStoriesForUser } = useStories();
   const { initialize, remove } = usePostStore();
   const parent = route.params.reply as Reply;
   const originalPost = route.params.originalPost as Post | undefined;
@@ -640,9 +643,14 @@ export default function ReplyDetailScreen() {
                   }
                   >
                     {user?.id === originalPost.user_id && profileImageUri ? (
-                      <Image source={{ uri: profileImageUri }} style={styles.avatar} />
+                      <Image
+                        source={{ uri: profileImageUri }}
+                        style={[styles.avatar, getStoriesForUser(originalPost.user_id).length > 0 && storyRing]}
+                      />
                     ) : (
-                      <View style={[styles.avatar, styles.placeholder]} />
+                      <View
+                        style={[styles.avatar, styles.placeholder, getStoriesForUser(originalPost.user_id).length > 0 && storyRing]}
+                      />
                     )}
                   </TouchableOpacity>
 
@@ -718,9 +726,14 @@ export default function ReplyDetailScreen() {
                       }
                     >
                       {avatarUri ? (
-                        <Image source={{ uri: avatarUri }} style={styles.avatar} />
+                        <Image
+                          source={{ uri: avatarUri }}
+                          style={[styles.avatar, getStoriesForUser(a.user_id).length > 0 && storyRing]}
+                        />
                       ) : (
-                        <View style={[styles.avatar, styles.placeholder]} />
+                        <View
+                          style={[styles.avatar, styles.placeholder, getStoriesForUser(a.user_id).length > 0 && storyRing]}
+                        />
                       )}
                     </TouchableOpacity>
 
@@ -789,9 +802,14 @@ export default function ReplyDetailScreen() {
                   }
                 >
                   {user?.id === parent.user_id && profileImageUri ? (
-                    <Image source={{ uri: profileImageUri }} style={styles.avatar} />
+                    <Image
+                      source={{ uri: profileImageUri }}
+                      style={[styles.avatar, getStoriesForUser(parent.user_id).length > 0 && storyRing]}
+                    />
                   ) : (
-                    <View style={[styles.avatar, styles.placeholder]} />
+                    <View
+                      style={[styles.avatar, styles.placeholder, getStoriesForUser(parent.user_id).length > 0 && storyRing]}
+                    />
                   )}
                 </TouchableOpacity>
 
@@ -881,9 +899,14 @@ export default function ReplyDetailScreen() {
                     }
                   >
                     {avatarUri ? (
-                      <Image source={{ uri: avatarUri }} style={styles.avatar} />
+                      <Image
+                        source={{ uri: avatarUri }}
+                        style={[styles.avatar, getStoriesForUser(item.user_id).length > 0 && storyRing]}
+                      />
                     ) : (
-                      <View style={[styles.avatar, styles.placeholder]} />
+                      <View
+                        style={[styles.avatar, styles.placeholder, getStoriesForUser(item.user_id).length > 0 && storyRing]}
+                      />
                     )}
                   </TouchableOpacity>
 
