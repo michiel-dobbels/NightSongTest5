@@ -1,11 +1,13 @@
 import React from 'react';
 import { View, Text, Image, FlatList, StyleSheet } from 'react-native';
 import { colors } from '../styles/colors';
+import { useStories } from '../contexts/StoryStoreContext';
+import { storyRing } from '../styles/storyRing';
 
 export interface FollowingUser {
+  id: string;
   username: string | null;
   name: string | null;
-
   avatar_url: string | null;
 }
 
@@ -14,22 +16,29 @@ interface FollowingListProps {
 }
 
 export default function FollowingList({ users }: FollowingListProps) {
-  const renderItem = ({ item }: { item: FollowingUser }) => (
-    <View style={styles.row}>
-      {item.avatar_url ? (
-        <Image source={{ uri: item.avatar_url }} style={styles.avatar} />
-      ) : (
-        <View style={[styles.avatar, styles.placeholder]} />
-      )}
-      <View>
-        {item.name && <Text style={styles.fullName}>{item.name}</Text>}
-
-        {item.username && (
-          <Text style={styles.username}>@{item.username}</Text>
+  const { getStoriesForUser } = useStories();
+  const renderItem = ({ item }: { item: FollowingUser }) => {
+    const hasStory = getStoriesForUser(item.id).length > 0;
+    return (
+      <View style={styles.row}>
+        {item.avatar_url ? (
+          <Image
+            source={{ uri: item.avatar_url }}
+            style={[styles.avatar, hasStory && storyRing]}
+          />
+        ) : (
+          <View style={[styles.avatar, styles.placeholder, hasStory && storyRing]} />
         )}
+        <View>
+          {item.name && <Text style={styles.fullName}>{item.name}</Text>}
+
+          {item.username && (
+            <Text style={styles.username}>@{item.username}</Text>
+          )}
+        </View>
       </View>
-    </View>
-  );
+    );
+  };
 
   return (
     <FlatList

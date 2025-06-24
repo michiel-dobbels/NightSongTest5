@@ -18,6 +18,8 @@ import { Video } from 'expo-av';
 import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useRoute, useNavigation } from '@react-navigation/native';
+import { useStories } from '../contexts/StoryStoreContext';
+import { storyRing } from '../styles/storyRing';
 
 import { supabase, REPLY_VIDEO_BUCKET } from '../../lib/supabase';
 import { uploadImage } from '../../lib/uploadImage';
@@ -118,6 +120,7 @@ export default function ReplyDetailScreen() {
     bannerImageUri,
     removePost,
   } = useAuth()!;
+  const { getStoriesForUser } = useStories();
   const { initialize, remove } = usePostStore();
   const parent = route.params.reply as Reply;
   const originalPost = route.params.originalPost as Post | undefined;
@@ -640,17 +643,32 @@ export default function ReplyDetailScreen() {
                   }
                   >
                     {user?.id === originalPost.user_id && profileImageUri ? (
-                      <Image source={{ uri: profileImageUri }} style={styles.avatar} />
+                      <Image
+                        source={{ uri: profileImageUri }}
+                        style={[styles.avatar, getStoriesForUser(originalPost.user_id).length > 0 && storyRing]}
+                      />
                     ) : (
-                      <View style={[styles.avatar, styles.placeholder]} />
+                      <View
+                        style={[styles.avatar, styles.placeholder, getStoriesForUser(originalPost.user_id).length > 0 && storyRing]}
+                      />
                     )}
                   </TouchableOpacity>
 
                   <View style={{ flex: 1 }}>
                     <View style={styles.headerRow}>
-                      <Text style={styles.username}>
-                        {originalName} @{originalUserName}
-                      </Text>
+                      <TouchableOpacity
+                        onPress={() =>
+                          user?.id === originalPost.user_id
+                            ? navigation.navigate('Profile')
+                            : navigation.navigate('OtherUserProfile', {
+                                userId: originalPost.user_id,
+                              })
+                        }
+                      >
+                        <Text style={styles.username}>
+                          {originalName} @{originalUserName}
+                        </Text>
+                      </TouchableOpacity>
                       <Text style={[styles.timestamp, styles.timestampMargin]}>
                         {timeAgo(originalPost.created_at)}
                       </Text>
@@ -718,17 +736,32 @@ export default function ReplyDetailScreen() {
                       }
                     >
                       {avatarUri ? (
-                        <Image source={{ uri: avatarUri }} style={styles.avatar} />
+                        <Image
+                          source={{ uri: avatarUri }}
+                          style={[styles.avatar, getStoriesForUser(a.user_id).length > 0 && storyRing]}
+                        />
                       ) : (
-                        <View style={[styles.avatar, styles.placeholder]} />
+                        <View
+                          style={[styles.avatar, styles.placeholder, getStoriesForUser(a.user_id).length > 0 && storyRing]}
+                        />
                       )}
                     </TouchableOpacity>
 
                     <View style={{ flex: 1 }}>
                     <View style={styles.headerRow}>
-                      <Text style={styles.username}>
-                        {ancestorName} @{ancestorUserName}
-                      </Text>
+                      <TouchableOpacity
+                        onPress={() =>
+                          isMe
+                            ? navigation.navigate('Profile')
+                            : navigation.navigate('OtherUserProfile', {
+                                userId: a.user_id,
+                              })
+                        }
+                      >
+                        <Text style={styles.username}>
+                          {ancestorName} @{ancestorUserName}
+                        </Text>
+                      </TouchableOpacity>
                       <Text style={[styles.timestamp, styles.timestampMargin]}>
                         {timeAgo(a.created_at)}
                       </Text>
@@ -789,17 +822,32 @@ export default function ReplyDetailScreen() {
                   }
                 >
                   {user?.id === parent.user_id && profileImageUri ? (
-                    <Image source={{ uri: profileImageUri }} style={styles.avatar} />
+                    <Image
+                      source={{ uri: profileImageUri }}
+                      style={[styles.avatar, getStoriesForUser(parent.user_id).length > 0 && storyRing]}
+                    />
                   ) : (
-                    <View style={[styles.avatar, styles.placeholder]} />
+                    <View
+                      style={[styles.avatar, styles.placeholder, getStoriesForUser(parent.user_id).length > 0 && storyRing]}
+                    />
                   )}
                 </TouchableOpacity>
 
                 <View style={{ flex: 1 }}>
                   <View style={styles.headerRow}>
-                    <Text style={styles.username}>
-                      {name} @{parentUserName}
-                    </Text>
+                    <TouchableOpacity
+                      onPress={() =>
+                        user?.id === parent.user_id
+                          ? navigation.navigate('Profile')
+                          : navigation.navigate('OtherUserProfile', {
+                              userId: parent.user_id,
+                            })
+                      }
+                    >
+                      <Text style={styles.username}>
+                        {name} @{parentUserName}
+                      </Text>
+                    </TouchableOpacity>
                     <Text style={[styles.timestamp, styles.timestampMargin]}>
                       {timeAgo(parent.created_at)}
                     </Text>
@@ -881,17 +929,32 @@ export default function ReplyDetailScreen() {
                     }
                   >
                     {avatarUri ? (
-                      <Image source={{ uri: avatarUri }} style={styles.avatar} />
+                      <Image
+                        source={{ uri: avatarUri }}
+                        style={[styles.avatar, getStoriesForUser(item.user_id).length > 0 && storyRing]}
+                      />
                     ) : (
-                      <View style={[styles.avatar, styles.placeholder]} />
+                      <View
+                        style={[styles.avatar, styles.placeholder, getStoriesForUser(item.user_id).length > 0 && storyRing]}
+                      />
                     )}
                   </TouchableOpacity>
 
                   <View style={{ flex: 1 }}>
                     <View style={styles.headerRow}>
-                      <Text style={styles.username}>
-                        {childName} @{childUserName}
-                      </Text>
+                      <TouchableOpacity
+                        onPress={() =>
+                          isMe
+                            ? navigation.navigate('Profile')
+                            : navigation.navigate('OtherUserProfile', {
+                                userId: item.user_id,
+                              })
+                        }
+                      >
+                        <Text style={styles.username}>
+                          {childName} @{childUserName}
+                        </Text>
+                      </TouchableOpacity>
                       <Text style={[styles.timestamp, styles.timestampMargin]}>
                         {timeAgo(item.created_at)}
                       </Text>

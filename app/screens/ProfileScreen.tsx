@@ -26,6 +26,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useAuth } from '../../AuthContext';
 import { usePostStore } from '../contexts/PostStoreContext';
 import { useStories } from '../contexts/StoryStoreContext';
+import { storyRing } from '../styles/storyRing';
 import { useFollowCounts } from '../hooks/useFollowCounts';
 import { colors } from '../styles/colors';
 import { supabase, REPLY_VIDEO_BUCKET } from '../../lib/supabase';
@@ -494,7 +495,11 @@ export default function ProfileScreen() {
   const renderHeader = () => (
     <View style={styles.headerContainer}>
       {bannerImageUri ? (
-        <Image source={{ uri: bannerImageUri }} style={styles.banner} />
+        <Image
+          source={{ uri: bannerImageUri }}
+          style={styles.banner}
+          resizeMode="contain"
+        />
       ) : (
         <View style={[styles.banner, styles.placeholder]} />
       )}
@@ -503,9 +508,12 @@ export default function ProfileScreen() {
       </View>
       <View style={styles.profileRow}>
         {profileImageUri ? (
-          <Image source={{ uri: profileImageUri }} style={styles.avatar} />
+          <Image
+            source={{ uri: profileImageUri }}
+            style={[styles.avatar, getStoriesForUser(profile.id).length > 0 && storyRing]}
+          />
         ) : (
-          <View style={[styles.avatar, styles.placeholder]} />
+          <View style={[styles.avatar, styles.placeholder, getStoriesForUser(profile.id).length > 0 && storyRing]} />
         )}
         <View style={styles.textContainer}>
           <Text style={styles.username}>@{profile.username}</Text>
@@ -700,6 +708,7 @@ const styles = StyleSheet.create({
     width: '100%',
     height: Dimensions.get('window').height * 0.25,
     marginBottom: 20,
+    marginHorizontal: -20,
   },
   avatar: {
     width: 80,
