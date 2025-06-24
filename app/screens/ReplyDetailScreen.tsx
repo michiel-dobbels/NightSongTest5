@@ -656,9 +656,19 @@ export default function ReplyDetailScreen() {
 
                   <View style={{ flex: 1 }}>
                     <View style={styles.headerRow}>
-                      <Text style={styles.username}>
-                        {originalName} @{originalUserName}
-                      </Text>
+                      <TouchableOpacity
+                        onPress={() =>
+                          user?.id === originalPost.user_id
+                            ? navigation.navigate('Profile')
+                            : navigation.navigate('OtherUserProfile', {
+                                userId: originalPost.user_id,
+                              })
+                        }
+                      >
+                        <Text style={styles.username}>
+                          {originalName} @{originalUserName}
+                        </Text>
+                      </TouchableOpacity>
                       <Text style={[styles.timestamp, styles.timestampMargin]}>
                         {timeAgo(originalPost.created_at)}
                       </Text>
@@ -739,9 +749,19 @@ export default function ReplyDetailScreen() {
 
                     <View style={{ flex: 1 }}>
                     <View style={styles.headerRow}>
-                      <Text style={styles.username}>
-                        {ancestorName} @{ancestorUserName}
-                      </Text>
+                      <TouchableOpacity
+                        onPress={() =>
+                          isMe
+                            ? navigation.navigate('Profile')
+                            : navigation.navigate('OtherUserProfile', {
+                                userId: a.user_id,
+                              })
+                        }
+                      >
+                        <Text style={styles.username}>
+                          {ancestorName} @{ancestorUserName}
+                        </Text>
+                      </TouchableOpacity>
                       <Text style={[styles.timestamp, styles.timestampMargin]}>
                         {timeAgo(a.created_at)}
                       </Text>
@@ -815,9 +835,19 @@ export default function ReplyDetailScreen() {
 
                 <View style={{ flex: 1 }}>
                   <View style={styles.headerRow}>
-                    <Text style={styles.username}>
-                      {name} @{parentUserName}
-                    </Text>
+                    <TouchableOpacity
+                      onPress={() =>
+                        user?.id === parent.user_id
+                          ? navigation.navigate('Profile')
+                          : navigation.navigate('OtherUserProfile', {
+                              userId: parent.user_id,
+                            })
+                      }
+                    >
+                      <Text style={styles.username}>
+                        {name} @{parentUserName}
+                      </Text>
+                    </TouchableOpacity>
                     <Text style={[styles.timestamp, styles.timestampMargin]}>
                       {timeAgo(parent.created_at)}
                     </Text>
@@ -912,9 +942,19 @@ export default function ReplyDetailScreen() {
 
                   <View style={{ flex: 1 }}>
                     <View style={styles.headerRow}>
-                      <Text style={styles.username}>
-                        {childName} @{childUserName}
-                      </Text>
+                      <TouchableOpacity
+                        onPress={() =>
+                          isMe
+                            ? navigation.navigate('Profile')
+                            : navigation.navigate('OtherUserProfile', {
+                                userId: item.user_id,
+                              })
+                        }
+                      >
+                        <Text style={styles.username}>
+                          {childName} @{childUserName}
+                        </Text>
+                      </TouchableOpacity>
                       <Text style={[styles.timestamp, styles.timestampMargin]}>
                         {timeAgo(item.created_at)}
                       </Text>

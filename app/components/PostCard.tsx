@@ -127,9 +127,16 @@ function PostCard({
           </TouchableOpacity>
           <View style={{ flex: 1 }}>
             <View style={styles.headerRow}>
-              <Text style={styles.username}>
-                {displayName} @{userName}
-              </Text>
+              <TouchableOpacity
+                onPress={e => {
+                  e.stopPropagation();
+                  onProfilePress();
+                }}
+              >
+                <Text style={styles.username}>
+                  {displayName} @{userName}
+                </Text>
+              </TouchableOpacity>
               <Text style={[styles.timestamp, styles.timestampMargin]}>
                 {timeAgo(post.created_at)}
               </Text>
