@@ -1,5 +1,12 @@
-import React from 'react';
-import { View, StyleSheet, Image, Button } from 'react-native';
+import React, { useState } from 'react';
+import {
+  View,
+  StyleSheet,
+  Image,
+  Button,
+  Pressable,
+} from 'react-native';
+
 import { Video } from 'expo-av';
 import { useRoute, useNavigation } from '@react-navigation/native';
 import { colors } from '../styles/colors';
@@ -11,14 +18,39 @@ export default function StoryViewScreen() {
   const { userId } = route.params as { userId: string };
   const { getStoriesForUser } = useStories();
   const stories = getStoriesForUser(userId);
-  const story = stories[0];
+  const [index, setIndex] = useState(0);
+  const story = stories[index];
+
+  const next = () => {
+    if (index < stories.length - 1) {
+      setIndex(i => i + 1);
+    }
+  };
+
+  const prev = () => {
+    if (index > 0) {
+      setIndex(i => i - 1);
+    }
+  };
 
   return (
     <View style={styles.container}>
-      {story?.imageUri && <Image source={{ uri: story.imageUri }} style={styles.media} />}
-      {!story?.imageUri && story?.videoUri && (
-        <Video source={{ uri: story.videoUri }} style={styles.media} useNativeControls resizeMode="contain" />
-      )}
+      <View style={styles.mediaContainer}>
+        {story?.imageUri && (
+          <Image source={{ uri: story.imageUri }} style={styles.media} />
+        )}
+        {!story?.imageUri && story?.videoUri && (
+          <Video
+            source={{ uri: story.videoUri }}
+            style={styles.media}
+            resizeMode="contain"
+            shouldPlay
+          />
+        )}
+        <Pressable style={styles.leftZone} onPress={prev} />
+        <Pressable style={styles.rightZone} onPress={next} />
+      </View>
+
       <Button title="Close" onPress={() => navigation.goBack()} />
     </View>
   );
@@ -26,5 +58,21 @@ export default function StoryViewScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: colors.background },
-  media: { width: '100%', height: '80%', borderRadius: 6, marginBottom: 20 },
+  mediaContainer: { width: '100%', height: '80%', justifyContent: 'center', alignItems: 'center' },
+  media: { width: '100%', height: '100%', borderRadius: 6 },
+  leftZone: {
+    position: 'absolute',
+    top: 0,
+    bottom: 0,
+    left: 0,
+    width: '50%',
+  },
+  rightZone: {
+    position: 'absolute',
+    top: 0,
+    bottom: 0,
+    right: 0,
+    width: '50%',
+  },
+
 });
