@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
   import {
     View,
     StyleSheet,
@@ -8,6 +8,7 @@ import React, { useState, useRef } from 'react';
     Alert,
     TouchableOpacity,
     PanResponder,
+    Animated,
   } from 'react-native';
 
 import { Video } from 'expo-av';
@@ -27,6 +28,23 @@ export default function StoryViewScreen() {
   const stories = getStoriesForUser(userId);
   const [index, setIndex] = useState(0);
   const story = stories[index];
+  const progress = useRef(new Animated.Value(0)).current;
+  const STORY_DURATION = 5000;
+
+  useEffect(() => {
+    progress.setValue(0);
+    const anim = Animated.timing(progress, {
+      toValue: 1,
+      duration: STORY_DURATION,
+      useNativeDriver: false,
+    });
+    anim.start(({ finished }) => {
+      if (finished) next();
+    });
+    return () => {
+      anim.stop();
+    };
+  }, [index, stories.length]);
 
   const panResponder = useRef(
     PanResponder.create({
@@ -45,6 +63,8 @@ export default function StoryViewScreen() {
   const next = () => {
     if (index < stories.length - 1) {
       setIndex(i => i + 1);
+    } else {
+      navigation.goBack();
     }
   };
 
@@ -85,6 +105,26 @@ export default function StoryViewScreen() {
   return (
     <View style={styles.container}>
       <View style={styles.mediaContainer} {...panResponder.panHandlers}>
+        <View style={styles.progressContainer}>
+          {stories.map((_, i) => {
+            const width =
+              i < index
+                ? '100%'
+                : i === index
+                ? progress.interpolate({
+                    inputRange: [0, 1],
+                    outputRange: ['0%', '100%'],
+                  })
+                : '0%';
+            return (
+              <View key={i} style={styles.progressBarBackground}>
+                <Animated.View
+                  style={[styles.progressBarFill, { width } as any]}
+                />
+              </View>
+            );
+          })
+        </View>
         <Text style={styles.counter}>{`${index + 1}/${stories.length}`}</Text>
         {user && story?.userId === user.id && (
           <TouchableOpacity style={styles.deleteBtn} onPress={confirmDelete}>
@@ -164,5 +204,25 @@ const styles = StyleSheet.create({
     zIndex: 2,
   },
   closeText: { color: colors.text, fontSize: 18 },
+  progressContainer: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    height: 4,
+    flexDirection: 'row',
+    paddingHorizontal: 2,
+    zIndex: 3,
+  },
+  progressBarBackground: {
+    flex: 1,
+    backgroundColor: 'rgba(255,255,255,0.3)',
+    marginHorizontal: 2,
+    overflow: 'hidden',
+  },
+  progressBarFill: {
+    height: '100%',
+    backgroundColor: '#fff',
+  },
 
 });
