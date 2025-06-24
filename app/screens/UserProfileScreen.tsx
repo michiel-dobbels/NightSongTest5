@@ -263,6 +263,7 @@ export default function UserProfileScreen() {
             />
           )}
         </TouchableOpacity>
+
         {name && <Text style={styles.name}>{name}</Text>}
         {username && <Text style={styles.username}>@{username}</Text>}
         {user && user.id !== userId && (
@@ -334,6 +335,7 @@ export default function UserProfileScreen() {
             />
           )}
         </TouchableOpacity>
+
         {name && <Text style={styles.name}>{name}</Text>}
         {username && <Text style={styles.username}>@{username}</Text>}
         {user && user.id !== userId && (
@@ -404,6 +406,7 @@ export default function UserProfileScreen() {
             />
           )}
         </TouchableOpacity>
+
         <View style={styles.textContainer}>
           {name && <Text style={styles.name}>{name}</Text>}
           {username && <Text style={styles.username}>@{username}</Text>}

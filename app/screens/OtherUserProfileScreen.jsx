@@ -150,6 +150,7 @@ export default function OtherUserProfileScreen() {
             <View style={[styles.avatar, styles.placeholder, getStoriesForUser(profile.id).length > 0 && storyRing]} />
           )}
         </TouchableOpacity>
+
         <View style={styles.textContainer}>
           {profile.name && <Text style={styles.name}>{profile.name}</Text>}
           <Text style={styles.username}>@{profile.username}</Text>
