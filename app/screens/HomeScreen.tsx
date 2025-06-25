@@ -509,11 +509,33 @@ const HomeScreen = forwardRef<HomeScreenRef, { hideInput?: boolean }>(
             const avatarUri = isMe
               ? profileImageUri ?? profile?.image_url ?? undefined
               : item.profiles?.image_url ?? undefined;
+
+            if (item.video_url || item.image_url) {
+              return (
+                <MediaPostCard
+                  post={item}
+                  avatarUri={avatarUri}
+                  isActive={currentIndex === index}
+                />
+              );
+            }
+
+            const bannerUrl = isMe
+              ? bannerImageUri ?? profile?.banner_url ?? undefined
+              : item.profiles?.banner_url ?? undefined;
+
             return (
-              <MediaPostCard
+              <PostCard
                 post={item}
+                isOwner={isMe}
                 avatarUri={avatarUri}
-                isActive={currentIndex === index}
+                bannerUrl={bannerUrl}
+                replyCount={item.reply_count ?? 0}
+                onPress={() => navigation.navigate('PostDetail', { post: item })}
+                onAvatarPress={() => navigateToProfileOrStory(item.user_id, isMe)}
+                onProfilePress={() => navigateToProfile(item.user_id, isMe)}
+                onDelete={() => confirmDeletePost(item.id)}
+                onOpenReplies={() => openReplyModal(item.id)}
               />
             );
           }}

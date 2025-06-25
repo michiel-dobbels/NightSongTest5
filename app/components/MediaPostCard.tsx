@@ -29,8 +29,8 @@ export default function MediaPostCard({ post, avatarUri, isActive }: Props) {
   const username = post.profiles?.username || post.username || 'unknown';
 
   const media = post.video_url || post.image_url;
-  const { width } = Dimensions.get('window');
-  const height = width * 1.2;
+  const screenWidth = Dimensions.get('window').width;
+  const height = screenWidth * 1.2;
   const videoRef = useRef<Video>(null);
 
   useEffect(() => {
@@ -41,7 +41,7 @@ export default function MediaPostCard({ post, avatarUri, isActive }: Props) {
 
 
   return (
-    <View style={[styles.container, { height }]}>
+    <View style={[styles.container, { width: screenWidth, height, marginHorizontal: -10 }]}>
       <TouchableOpacity
         activeOpacity={0.9}
         style={StyleSheet.absoluteFill}
