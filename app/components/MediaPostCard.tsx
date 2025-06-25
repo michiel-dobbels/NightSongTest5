@@ -91,10 +91,10 @@ export default function MediaPostCard({ post, avatarUri, isActive }: Props) {
           <Ionicons
             name={liked ? 'heart' : 'heart-outline'}
             size={28}
-            color="white"
+            color={liked ? 'red' : 'white'}
           />
         </TouchableOpacity>
-        <Text style={styles.likeCount}>{likeCount}</Text>
+        <Text style={[styles.likeCount, liked && styles.likedLikeCount]}>{likeCount}</Text>
         <Ionicons
           name="chatbubble"
           size={16}
@@ -187,6 +187,7 @@ const styles = StyleSheet.create({
   },
   count: { color: 'white', fontSize: 14 },
   likeCount: { color: 'white', fontSize: 28, marginRight: 8 },
+  likedLikeCount: { color: 'red' },
   modalContainer: {
     flex: 1,
     backgroundColor: 'black',
