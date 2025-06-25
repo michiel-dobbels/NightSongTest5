@@ -13,9 +13,11 @@ import { Video, ResizeMode } from 'expo-av';
 
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
+import { useNavigation } from '@react-navigation/native';
 import { colors } from '../styles/colors';
 import useLike from '../hooks/useLike';
 import { Post } from './PostCard';
+import ReplyModal from './ReplyModal';
 
 interface Props {
   post: Post;
@@ -27,6 +29,17 @@ export default function MediaPostCard({ post, avatarUri, isActive }: Props) {
   const [modalVisible, setModalVisible] = useState(false);
   const { likeCount, liked, toggleLike } = useLike(post.id);
   const username = post.profiles?.username || post.username || 'unknown';
+  const [quickReplyVisible, setQuickReplyVisible] = useState(false);
+  const navigation = useNavigation<any>();
+
+  const handleQuickReplySubmit = (
+    text: string,
+    image?: string | null,
+    video?: string | null,
+  ) => {
+    // This component only opens the modal; replying is handled elsewhere
+    setQuickReplyVisible(false);
+  };
 
   const media = post.video_url || post.image_url;
   const { width } = Dimensions.get('window');
@@ -91,17 +104,34 @@ export default function MediaPostCard({ post, avatarUri, isActive }: Props) {
           <Ionicons
             name={liked ? 'heart' : 'heart-outline'}
             size={28}
-            color="white"
+            color={liked ? 'red' : 'white'}
           />
         </TouchableOpacity>
-        <Text style={styles.likeCount}>{likeCount}</Text>
-        <Ionicons
-          name="chatbubble"
-          size={16}
-          color="white"
-          style={{ marginLeft: 12, marginRight: 4 }}
-        />
-        <Text style={styles.count}>{post.reply_count ?? 0}</Text>
+        <Text style={[styles.likeCount, liked && styles.likedLikeCount]}>{likeCount}</Text>
+        <TouchableOpacity
+          onPress={() => setQuickReplyVisible(true)}
+          style={styles.replyButton}
+        >
+          <Ionicons
+            name="chatbubble-outline"
+            size={28}
+            color="white"
+            style={{ marginLeft: 12, marginRight: 4 }}
+          />
+          <Text style={styles.count}>{post.reply_count ?? 0}</Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          onPress={() => navigation.navigate('PostDetail', { post })}
+          style={styles.detailButton}
+        >
+          <Ionicons name="chevron-forward-outline" size={28} color="white" />
+          <Ionicons
+            name="chevron-forward-outline"
+            size={28}
+            color="white"
+            style={{ marginLeft: -6 }}
+          />
+        </TouchableOpacity>
       </View>
 
       <Modal visible={modalVisible} transparent>
@@ -127,6 +157,11 @@ export default function MediaPostCard({ post, avatarUri, isActive }: Props) {
           )}
         </TouchableOpacity>
       </Modal>
+      <ReplyModal
+        visible={quickReplyVisible}
+        onSubmit={handleQuickReplySubmit}
+        onClose={() => setQuickReplyVisible(false)}
+      />
     </View>
   );
 }
@@ -185,8 +220,11 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
   },
-  count: { color: 'white', fontSize: 14 },
+  replyButton: { flexDirection: 'row', alignItems: 'center' },
+  detailButton: { flexDirection: 'row', alignItems: 'center' },
+  count: { color: 'white', fontSize: 28, marginRight: 8 },
   likeCount: { color: 'white', fontSize: 28, marginRight: 8 },
+  likedLikeCount: { color: 'red' },
   modalContainer: {
     flex: 1,
     backgroundColor: 'black',
