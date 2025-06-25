@@ -1,9 +1,14 @@
 import React, { useEffect, useState, useRef } from 'react';
-import { View, Text, FlatList, TextInput, TouchableOpacity, Image, StyleSheet, KeyboardAvoidingView, Platform } from 'react-native';
+import { View, Text, FlatList, TextInput, TouchableOpacity, Image, StyleSheet, KeyboardAvoidingView, Platform, Dimensions } from 'react-native';
+
 import { useRoute } from '@react-navigation/native';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../AuthContext';
 import { colors } from '../styles/colors';
+
+const SCREEN_HEIGHT = Dimensions.get('window').height;
+const BOTTOM_NAV_HEIGHT = SCREEN_HEIGHT * 0.1;
+
 
 interface Message {
   id: string;
@@ -128,7 +133,8 @@ export default function DMThreadScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: colors.background },
+  container: { flex: 1, backgroundColor: colors.background, paddingBottom: BOTTOM_NAV_HEIGHT },
+
   header: {
     flexDirection: 'row',
     alignItems: 'center',
