@@ -13,6 +13,7 @@ import { Video, ResizeMode } from 'expo-av';
 
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
+import { useNavigation } from '@react-navigation/native';
 import { colors } from '../styles/colors';
 import useLike from '../hooks/useLike';
 import { Post } from './PostCard';
@@ -29,6 +30,8 @@ export default function MediaPostCard({ post, avatarUri, isActive }: Props) {
   const { likeCount, liked, toggleLike } = useLike(post.id);
   const username = post.profiles?.username || post.username || 'unknown';
   const [quickReplyVisible, setQuickReplyVisible] = useState(false);
+  const navigation = useNavigation<any>();
+
 
   const handleQuickReplySubmit = (
     text: string,
@@ -115,6 +118,19 @@ export default function MediaPostCard({ post, avatarUri, isActive }: Props) {
             size={28}
             color="white"
             style={{ marginLeft: 12, marginRight: 4 }}
+          />
+          <Text style={styles.count}>{post.reply_count ?? 0}</Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          onPress={() => navigation.navigate('PostDetail', { post })}
+          style={styles.detailButton}
+        >
+          <Ionicons name="chevron-forward-outline" size={28} color="white" />
+          <Ionicons
+            name="chevron-forward-outline"
+            size={28}
+            color="white"
+            style={{ marginLeft: -6 }}
 
           />
           <Text style={styles.count}>{post.reply_count ?? 0}</Text>
@@ -209,6 +225,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   replyButton: { flexDirection: 'row', alignItems: 'center' },
+  detailButton: { flexDirection: 'row', alignItems: 'center' },
 
   count: { color: 'white', fontSize: 28, marginRight: 8 },
   likeCount: { color: 'white', fontSize: 28, marginRight: 8 },
