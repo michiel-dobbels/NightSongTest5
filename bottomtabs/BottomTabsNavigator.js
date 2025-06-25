@@ -40,6 +40,9 @@ const CreateStoryScreen = React.lazy(() =>
 const StoryViewScreen = React.lazy(() =>
   import('../app/screens/StoryViewScreen'),
 );
+const DMListScreen = React.lazy(() => import('../app/screens/DMListScreen'));
+const NewChatScreen = React.lazy(() => import('../app/screens/NewChatScreen'));
+const DMThreadScreen = React.lazy(() => import('../app/screens/DMThreadScreen'));
 
 const { height } = Dimensions.get('window');
 
@@ -56,6 +59,9 @@ function HomeStackScreen() {
         <Stack.Screen name="FollowList" component={FollowListScreen} />
         <Stack.Screen name="CreateStory" component={CreateStoryScreen} />
         <Stack.Screen name="StoryView" component={StoryViewScreen} />
+        <Stack.Screen name="DMList" component={DMListScreen} />
+        <Stack.Screen name="NewChat" component={NewChatScreen} />
+        <Stack.Screen name="DMThread" component={DMThreadScreen} />
 
       </Stack.Navigator>
     </Suspense>

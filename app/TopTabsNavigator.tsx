@@ -312,6 +312,14 @@ export default function TopTabsNavigator() {
 
           <Text style={styles.menuItem}>Profile</Text>
         </TouchableOpacity>
+        <TouchableOpacity
+          onPress={() => {
+            closeDrawer();
+            navigation.navigate('DMList');
+          }}
+        >
+          <Text style={styles.menuItem}>Direct Messages</Text>
+        </TouchableOpacity>
       </Animated.View>
     </SafeAreaView>
   );
