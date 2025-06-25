@@ -94,6 +94,7 @@ export default function MediaPostCard({ post, avatarUri, isActive }: Props) {
           <View style={[styles.avatar, styles.placeholder]} />
         )}
         <View style={{ marginLeft: 8 }}>
+        <Text style={styles.replyCount}>{post.reply_count ?? 0}</Text>
           <Text style={styles.username}>@{username}</Text>
           {post.content ? (
             <Text style={styles.caption}>{post.content}</Text>
@@ -199,6 +200,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
   },
+  replyCount: { color: 'white', fontSize: 28, marginRight: 8 },
   avatar: {
     width: 40,
     height: 40,
