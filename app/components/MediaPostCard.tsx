@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import {
   View,
   Text,
@@ -8,7 +8,7 @@ import {
   Modal,
   Dimensions,
 } from 'react-native';
-import { Video } from 'react-native-video';
+import { Video, ResizeMode } from 'expo-av';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { colors } from '../styles/colors';
@@ -29,6 +29,13 @@ export default function MediaPostCard({ post, avatarUri, isActive }: Props) {
   const media = post.video_url || post.image_url;
   const { width } = Dimensions.get('window');
   const height = width * 1.2;
+  const videoRef = useRef<Video>(null);
+
+  useEffect(() => {
+    if (!isActive) {
+      videoRef.current?.setPositionAsync(0);
+    }
+  }, [isActive]);
 
   return (
     <View style={[styles.container, { height }]}>
@@ -39,11 +46,12 @@ export default function MediaPostCard({ post, avatarUri, isActive }: Props) {
       >
         {post.video_url ? (
           <Video
+            ref={videoRef}
             source={{ uri: post.video_url }}
             style={StyleSheet.absoluteFill}
-            resizeMode="cover"
-            repeat
-            paused={!isActive}
+            resizeMode={ResizeMode.COVER}
+            isLooping
+            shouldPlay={isActive}
           />
         ) : (
           <Image
@@ -110,8 +118,9 @@ export default function MediaPostCard({ post, avatarUri, isActive }: Props) {
             <Video
               source={{ uri: post.video_url }}
               style={styles.modalMedia}
-              resizeMode="contain"
-              repeat
+              resizeMode={ResizeMode.CONTAIN}
+              isLooping
+              shouldPlay
             />
           ) : (
             <Image
