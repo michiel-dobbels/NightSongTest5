@@ -500,7 +500,7 @@ const HomeScreen = forwardRef<HomeScreenRef, { hideInput?: boolean }>(
           data={posts}
           keyExtractor={item => item.id}
           style={{ flex: 1 }}
-          contentContainerStyle={{ paddingBottom: BOTTOM_NAV_HEIGHT }}
+          contentContainerStyle={{ paddingBottom: 0 }}
           ListHeaderComponent={<View style={{ height: 200 }} pointerEvents="none" />}
 
           removeClippedSubviews={false}

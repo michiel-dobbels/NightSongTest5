@@ -218,7 +218,7 @@ export default function TopTabsNavigator() {
   return (
     <SafeAreaView
       style={{ flex: 1, backgroundColor: colors.background }}
-      edges={['bottom']}
+      edges={[]}
     >
       <Animated.View style={{ flex: 1, transform: [{ translateX }] }}>
         <Tab.Navigator
