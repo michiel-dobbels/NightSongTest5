@@ -32,6 +32,7 @@ export default function MediaPostCard({ post, avatarUri, isActive }: Props) {
   const [quickReplyVisible, setQuickReplyVisible] = useState(false);
   const navigation = useNavigation<any>();
 
+
   const handleQuickReplySubmit = (
     text: string,
     image?: string | null,
@@ -130,8 +131,11 @@ export default function MediaPostCard({ post, avatarUri, isActive }: Props) {
             size={28}
             color="white"
             style={{ marginLeft: -6 }}
+
           />
+          <Text style={styles.count}>{post.reply_count ?? 0}</Text>
         </TouchableOpacity>
+
       </View>
 
       <Modal visible={modalVisible} transparent>
@@ -222,6 +226,7 @@ const styles = StyleSheet.create({
   },
   replyButton: { flexDirection: 'row', alignItems: 'center' },
   detailButton: { flexDirection: 'row', alignItems: 'center' },
+
   count: { color: 'white', fontSize: 28, marginRight: 8 },
   likeCount: { color: 'white', fontSize: 28, marginRight: 8 },
   likedLikeCount: { color: 'red' },
