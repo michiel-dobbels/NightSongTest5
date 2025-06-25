@@ -55,14 +55,20 @@ const DRAWER_WIDTH = SCREEN_WIDTH * 0.8;
 function HeaderTabBar(
   props: MaterialTopTabBarProps & {
     insetsTop: number;
+<<<<<<< s6kyq1-codex/update-header-with-user-avatar-and-move-logout
+=======
 
+>>>>>>> main
     avatarUri?: string | null;
     onProfile: () => void;
     onSearch: () => void;
   },
 ) {
   const { insetsTop, avatarUri, onProfile, onSearch, ...barProps } = props;
+<<<<<<< s6kyq1-codex/update-header-with-user-avatar-and-move-logout
+=======
 
+>>>>>>> main
   return (
     <BlurView
       intensity={25}
@@ -87,7 +93,10 @@ function HeaderTabBar(
           <Ionicons name="search" size={24} color={colors.accent} />
         </TouchableOpacity>
       </View>
+<<<<<<< s6kyq1-codex/update-header-with-user-avatar-and-move-logout
+=======
 
+>>>>>>> main
       <MaterialTopTabBar
         {...barProps}
         style={[barProps.style, styles.blurredBar]}
@@ -224,7 +233,10 @@ export default function TopTabsNavigator() {
             <HeaderTabBar
               {...props}
               insetsTop={insets.top}
+<<<<<<< s6kyq1-codex/update-header-with-user-avatar-and-move-logout
+=======
 
+>>>>>>> main
               avatarUri={profileImageUri ?? profile?.image_url ?? undefined}
               onProfile={openDrawer}
               onSearch={() => homeScreenRef.current?.openSearch()}
@@ -401,7 +413,10 @@ const styles = StyleSheet.create({
   searchButton: { position: 'absolute', right: 0, padding: 4 },
   avatarButton: { position: 'absolute', left: 0, padding: 4 },
   avatar: { width: 40, height: 40, borderRadius: 20 },
+<<<<<<< s6kyq1-codex/update-header-with-user-avatar-and-move-logout
+=======
 
+>>>>>>> main
 
 
   blurredBar: {
