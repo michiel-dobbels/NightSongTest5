@@ -86,23 +86,28 @@ export default function DMThreadScreen() {
   }, [messages]);
 
   const send = async () => {
-    if (!text.trim()) return;
+    const body = text.trim();
+    if (!body) return;
+    setText('');
+
     const { data, error } = await supabase
       .from('messages')
       .insert({
         conversation_id: conversationId,
         sender_id: user!.id,
-        text,
+        text: body,
       })
-      .select('*')
+      .select()
+
       .single();
     if (error) {
       console.error('Failed to send message', error);
       return;
     }
-    if (data) setMessages((m) => [...m, data as Message]);
+    if (data) {
+      setMessages((m) => [...m, data as Message]);
+    }
 
-    setText('');
   };
 
   const renderItem = ({ item }: { item: Message }) => {
