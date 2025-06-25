@@ -32,6 +32,7 @@ export default function MediaPostCard({ post, avatarUri, isActive }: Props) {
   const [quickReplyVisible, setQuickReplyVisible] = useState(false);
   const navigation = useNavigation<any>();
 
+
   const handleQuickReplySubmit = (
     text: string,
     image?: string | null,
@@ -132,6 +133,7 @@ export default function MediaPostCard({ post, avatarUri, isActive }: Props) {
             style={styles.doubleChevron}
           />
         </TouchableOpacity>
+
       </View>
 
       <Modal visible={modalVisible} transparent>
@@ -225,6 +227,7 @@ const styles = StyleSheet.create({
   doubleChevron: { marginLeft: -20 },
   likeCount: { color: 'white', fontSize: 28, marginRight: 8 },
   replyCount: { color: 'white', fontSize: 28, marginRight: 8 },
+
   likedLikeCount: { color: 'red' },
   modalContainer: {
     flex: 1,
