@@ -631,13 +631,19 @@ const HomeScreen = forwardRef<HomeScreenRef, { hideInput?: boolean }>(
 });
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: colors.background, padding: 10 },
+  container: {
+    flex: 1,
+    backgroundColor: colors.background,
+    paddingTop: 10,
+    paddingBottom: 10,
+  },
   input: {
     backgroundColor: '#111',
     color: '#fff',
     padding: 10,
     marginBottom: 10,
     borderRadius: 5,
+    marginHorizontal: 10,
   },
   searchContainer: {
     flex: 1,
