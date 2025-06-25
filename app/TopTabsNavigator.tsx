@@ -55,13 +55,12 @@ const DRAWER_WIDTH = SCREEN_WIDTH * 0.8;
 function HeaderTabBar(
   props: MaterialTopTabBarProps & {
     insetsTop: number;
-    welcomeText: string;
-    signOut: () => void;
+    avatarUri?: string | null;
     onProfile: () => void;
     onSearch: () => void;
   },
 ) {
-  const { insetsTop, welcomeText, signOut, onProfile, onSearch, ...barProps } = props;
+  const { insetsTop, avatarUri, onProfile, onSearch, ...barProps } = props;
   return (
     <BlurView
       intensity={25}
@@ -70,6 +69,13 @@ function HeaderTabBar(
     >
       <StatusBar barStyle="light-content" translucent backgroundColor="transparent" />
       <View style={styles.topRow}>
+        <TouchableOpacity onPress={onProfile} style={styles.avatarButton}>
+          {avatarUri ? (
+            <Image source={{ uri: avatarUri }} style={styles.avatar} />
+          ) : (
+            <Ionicons name="person-circle-outline" size={40} color={colors.accent} />
+          )}
+        </TouchableOpacity>
         <Image
           source={require('../assets/logo.png')}
           style={styles.logo}
@@ -78,11 +84,6 @@ function HeaderTabBar(
         <TouchableOpacity onPress={onSearch} style={styles.searchButton}>
           <Ionicons name="search" size={24} color={colors.accent} />
         </TouchableOpacity>
-      </View>
-      <Text style={{ color: colors.text, textAlign: 'center' }}>{welcomeText}</Text>
-      <View style={{ flexDirection: 'row', justifyContent: 'center', marginTop: 10 }}>
-        <Button title="Profile" onPress={onProfile} />
-        <Button title="Logout" onPress={signOut} />
       </View>
       <MaterialTopTabBar
         {...barProps}
@@ -93,7 +94,7 @@ function HeaderTabBar(
 }
 
 export default function TopTabsNavigator() {
-  const { profile, user, signOut } = useAuth()!;
+  const { profile, user, signOut, profileImageUri } = useAuth()!;
   
 
   const insets = useSafeAreaInsets();
@@ -173,12 +174,6 @@ export default function TopTabsNavigator() {
     navigation.navigate('CreateStory');
   };
 
-  const displayName = profile?.name || profile?.username;
-  const welcomeText = displayName
-    ? `Welcome @${displayName}`
-    : user?.email
-    ? `Welcome ${user.email}`
-    : 'Welcome';
 
   const ForYouScreen = useCallback(
     () => <HomeScreen ref={homeScreenRef} hideInput />,
@@ -226,8 +221,7 @@ export default function TopTabsNavigator() {
             <HeaderTabBar
               {...props}
               insetsTop={insets.top}
-              welcomeText={welcomeText}
-              signOut={signOut}
+              avatarUri={profileImageUri ?? profile?.image_url ?? undefined}
               onProfile={openDrawer}
               onSearch={() => homeScreenRef.current?.openSearch()}
             />
@@ -323,6 +317,14 @@ export default function TopTabsNavigator() {
         >
           <Text style={styles.menuItem}>Direct Messages</Text>
         </TouchableOpacity>
+        <TouchableOpacity
+          onPress={() => {
+            closeDrawer();
+            signOut();
+          }}
+        >
+          <Text style={styles.menuItem}>Logout</Text>
+        </TouchableOpacity>
       </Animated.View>
     </SafeAreaView>
   );
@@ -393,6 +395,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   searchButton: { position: 'absolute', right: 0, padding: 4 },
+  avatarButton: { position: 'absolute', left: 0, padding: 4 },
+  avatar: { width: 40, height: 40, borderRadius: 20 },
 
 
   blurredBar: {
