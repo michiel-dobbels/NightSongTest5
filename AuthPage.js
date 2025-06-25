@@ -61,6 +61,7 @@ function AuthPage() {
 
   return (
     <View style={styles.container}>
+      <Text style={styles.slogan}>No Song so Sweet</Text>
       <Text style={styles.title}>{mode === 'login' ? 'Login' : 'Sign Up'}</Text>
 
       {mode === 'signup' && (
@@ -153,5 +154,14 @@ const styles = StyleSheet.create({
     marginTop: 20,
     textAlign: 'center',
     color: colors.accent,
+  },
+  slogan: {
+    fontSize: 32,
+    fontWeight: 'bold',
+    fontStyle: 'italic',
+    fontFamily: 'cursive',
+    textAlign: 'center',
+    color: colors.accent,
+    marginBottom: 10,
   },
 });
