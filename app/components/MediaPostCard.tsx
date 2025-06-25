@@ -13,9 +13,15 @@ import { Video, ResizeMode } from 'expo-av';
 
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
+import { useNavigation } from '@react-navigation/native';
 import { colors } from '../styles/colors';
 import useLike from '../hooks/useLike';
 import { Post } from './PostCard';
+import ReplyModal from './ReplyModal';
+import { useAuth } from '../../AuthContext';
+import { supabase, REPLY_VIDEO_BUCKET } from '../../lib/supabase';
+import { uploadImage } from '../../lib/uploadImage';
+import { replyEvents } from '../replyEvents';
 
 interface Props {
   post: Post;
@@ -27,6 +33,67 @@ export default function MediaPostCard({ post, avatarUri, isActive }: Props) {
   const [modalVisible, setModalVisible] = useState(false);
   const { likeCount, liked, toggleLike } = useLike(post.id);
   const username = post.profiles?.username || post.username || 'unknown';
+  const [quickReplyVisible, setQuickReplyVisible] = useState(false);
+  const navigation = useNavigation<any>();
+  const { profile } = useAuth()!;
+
+  const handleQuickReplySubmit = async (
+    text: string,
+    image?: string | null,
+    video?: string | null,
+  ) => {
+    if (!profile || (!text.trim() && !image && !video)) {
+      setQuickReplyVisible(false);
+      return;
+    }
+
+    setQuickReplyVisible(false);
+
+    let uploadedUrl: string | null = null;
+    let uploadedImage: string | null = null;
+    if (video) {
+      try {
+        const ext = video.split('.').pop() || 'mp4';
+        const path = `${profile.id}-${Date.now()}.${ext}`;
+        const resp = await fetch(video);
+        const blob = await resp.blob();
+        const { error: uploadError } = await supabase.storage
+          .from(REPLY_VIDEO_BUCKET)
+          .upload(path, blob);
+        if (!uploadError) {
+          const { publicURL } = supabase.storage
+            .from(REPLY_VIDEO_BUCKET)
+            .getPublicUrl(path);
+          uploadedUrl = publicURL;
+        }
+      } catch (e) {
+        console.error('Video upload failed', e);
+      }
+    }
+
+    if (image && !image.startsWith('http')) {
+      uploadedImage = await uploadImage(image, profile.id);
+      if (!uploadedImage) uploadedImage = image;
+    } else if (image) {
+      uploadedImage = image;
+    }
+
+    const { error } = await supabase.from('replies').insert({
+      post_id: post.id,
+      parent_id: null,
+      user_id: profile.id,
+      content: text,
+      image_url: uploadedImage,
+      video_url: uploadedUrl,
+      username: profile.name || profile.username,
+    });
+
+    if (error) {
+      console.error('Reply failed', error.message);
+    } else {
+      replyEvents.emit('replyAdded', post.id);
+    }
+  };
 
   const media = post.video_url || post.image_url;
   const { width } = Dimensions.get('window');
@@ -91,17 +158,34 @@ export default function MediaPostCard({ post, avatarUri, isActive }: Props) {
           <Ionicons
             name={liked ? 'heart' : 'heart-outline'}
             size={28}
-            color="white"
+            color={liked ? 'red' : 'white'}
           />
         </TouchableOpacity>
-        <Text style={styles.likeCount}>{likeCount}</Text>
-        <Ionicons
-          name="chatbubble"
-          size={16}
-          color="white"
-          style={{ marginLeft: 12, marginRight: 4 }}
-        />
-        <Text style={styles.count}>{post.reply_count ?? 0}</Text>
+        <Text style={[styles.likeCount, liked && styles.likedLikeCount]}>{likeCount}</Text>
+        <TouchableOpacity
+          onPress={() => setQuickReplyVisible(true)}
+          style={styles.replyButton}
+        >
+          <Ionicons
+            name="chatbubble-outline"
+            size={28}
+            color="white"
+            style={{ marginLeft: 12, marginRight: 4 }}
+          />
+        </TouchableOpacity>
+        <Text style={styles.replyCount}>{post.reply_count ?? 0}</Text>
+        <TouchableOpacity
+          onPress={() => navigation.navigate('PostDetail', { post })}
+          style={styles.detailButton}
+        >
+          <Ionicons name="chevron-forward-outline" size={28} color="white" />
+          <Ionicons
+            name="chevron-forward-outline"
+            size={28}
+            color="white"
+            style={styles.doubleChevron}
+          />
+        </TouchableOpacity>
       </View>
 
       <Modal visible={modalVisible} transparent>
@@ -127,6 +211,11 @@ export default function MediaPostCard({ post, avatarUri, isActive }: Props) {
           )}
         </TouchableOpacity>
       </Modal>
+      <ReplyModal
+        visible={quickReplyVisible}
+        onSubmit={handleQuickReplySubmit}
+        onClose={() => setQuickReplyVisible(false)}
+      />
     </View>
   );
 }
@@ -185,8 +274,12 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
   },
-  count: { color: 'white', fontSize: 14 },
+  replyButton: { flexDirection: 'row', alignItems: 'center' },
+  detailButton: { flexDirection: 'row', alignItems: 'center' },
+  doubleChevron: { marginLeft: -20 },
   likeCount: { color: 'white', fontSize: 28, marginRight: 8 },
+  replyCount: { color: 'white', fontSize: 28, marginRight: 8 },
+  likedLikeCount: { color: 'red' },
   modalContainer: {
     flex: 1,
     backgroundColor: 'black',
