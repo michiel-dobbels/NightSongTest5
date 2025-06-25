@@ -20,6 +20,7 @@ import {
   KeyboardAvoidingView,
   Platform,
   ActivityIndicator,
+  ViewToken,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import {
@@ -39,6 +40,7 @@ import { usePostStore } from '../contexts/PostStoreContext';
 import { postEvents } from '../postEvents';
 import { CONFIRM_ACTION } from '../constants/ui';
 import PostCard, { Post } from '../components/PostCard';
+import MediaPostCard from '../components/MediaPostCard';
 import ReplyCard, { Reply } from '../components/ReplyCard';
 import { colors } from '../styles/colors';
 import { replyEvents } from '../replyEvents';
@@ -75,6 +77,7 @@ const HomeScreen = forwardRef<HomeScreenRef, { hideInput?: boolean }>(
   const [hasMore, setHasMore] = useState(true);
   const skipNextFetch = useRef(false);
   const listRef = useRef<FlatList>(null);
+  const [currentIndex, setCurrentIndex] = useState(0);
   const [replyModalVisible, setReplyModalVisible] = useState(false);
   const [activePostId, setActivePostId] = useState<string | null>(null);
   const { getStoriesForUser } = useStories();
@@ -96,6 +99,13 @@ const HomeScreen = forwardRef<HomeScreenRef, { hideInput?: boolean }>(
     }
     return result;
   };
+
+  const viewabilityConfig = { viewAreaCoveragePercentThreshold: 80 };
+  const onViewableItemsChanged = useRef(({ viewableItems }: { viewableItems: Array<ViewToken> }) => {
+    if (viewableItems.length > 0 && viewableItems[0].index != null) {
+      setCurrentIndex(viewableItems[0].index!);
+    }
+  });
 
   const navigateToProfileOrStory = (targetId: string, isMe: boolean) => {
     const stories = getStoriesForUser(targetId);
@@ -492,29 +502,18 @@ const HomeScreen = forwardRef<HomeScreenRef, { hideInput?: boolean }>(
           removeClippedSubviews={false}
           initialNumToRender={10}
           windowSize={5}
-          renderItem={({ item }) => {
+          onViewableItemsChanged={onViewableItemsChanged.current}
+          viewabilityConfig={viewabilityConfig}
+          renderItem={({ item, index }) => {
             const isMe = item.user_id === user.id;
             const avatarUri = isMe
               ? profileImageUri ?? profile?.image_url ?? undefined
               : item.profiles?.image_url ?? undefined;
-            const bannerUrl = isMe
-              ? bannerImageUri ?? profile?.banner_url ?? undefined
-              : item.profiles?.banner_url ?? undefined;
             return (
-              <PostCard
+              <MediaPostCard
                 post={item}
-                isOwner={isMe}
                 avatarUri={avatarUri}
-                bannerUrl={bannerUrl}
-                imageUrl={item.image_url ?? undefined}
-                videoUrl={item.video_url ?? undefined}
-                replyCount={item.reply_count ?? 0}
-                onLike={() => handleLike(item.id)}
-                onPress={() => navigation.navigate('PostDetail', { post: item })}
-                onAvatarPress={() => navigateToProfileOrStory(item.user_id, isMe)}
-                onProfilePress={() => navigateToProfile(item.user_id, isMe)}
-                onDelete={() => confirmDeletePost(item.id)}
-                onOpenReplies={() => openReplyModal(item.id)}
+                isActive={currentIndex === index}
               />
             );
           }}
