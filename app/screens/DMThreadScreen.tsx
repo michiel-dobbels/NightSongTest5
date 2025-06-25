@@ -44,6 +44,7 @@ export default function DMThreadScreen() {
         .eq('conversation_id', conversationId)
         .order('created_at');
       if (isMounted) setMessages((msgs ?? []) as Message[]);
+
     };
     load();
 
@@ -52,11 +53,13 @@ export default function DMThreadScreen() {
       .on('INSERT', (payload) => {
         setMessages((m) => [...m, payload.new as Message]);
       })
+
       .subscribe();
 
     return () => {
       isMounted = false;
       subscription.unsubscribe();
+
     };
   }, [conversationId, recipientId]);
 
@@ -105,6 +108,7 @@ export default function DMThreadScreen() {
             <Text style={styles.emptyText}>No messages yet</Text>
           </View>
         }
+
         contentContainerStyle={styles.list}
       />
       <View style={styles.inputRow}>
@@ -174,4 +178,5 @@ const styles = StyleSheet.create({
     paddingTop: 20,
   },
   emptyText: { color: colors.muted },
+
 });
