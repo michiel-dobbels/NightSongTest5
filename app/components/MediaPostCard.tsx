@@ -23,6 +23,7 @@ import { supabase, REPLY_VIDEO_BUCKET } from '../../lib/supabase';
 import { uploadImage } from '../../lib/uploadImage';
 import { replyEvents } from '../replyEvents';
 
+
 interface Props {
   post: Post;
   avatarUri?: string;
@@ -38,6 +39,7 @@ export default function MediaPostCard({ post, avatarUri, isActive }: Props) {
   const { profile } = useAuth()!;
 
   const handleQuickReplySubmit = async (
+
     text: string,
     image?: string | null,
     video?: string | null,
@@ -93,6 +95,7 @@ export default function MediaPostCard({ post, avatarUri, isActive }: Props) {
     } else {
       replyEvents.emit('replyAdded', post.id);
     }
+
   };
 
   const media = post.video_url || post.image_url;
@@ -186,6 +189,7 @@ export default function MediaPostCard({ post, avatarUri, isActive }: Props) {
             style={styles.doubleChevron}
           />
         </TouchableOpacity>
+
       </View>
 
       <Modal visible={modalVisible} transparent>
@@ -279,6 +283,7 @@ const styles = StyleSheet.create({
   doubleChevron: { marginLeft: -20 },
   likeCount: { color: 'white', fontSize: 28, marginRight: 8 },
   replyCount: { color: 'white', fontSize: 28, marginRight: 8 },
+
   likedLikeCount: { color: 'red' },
   modalContainer: {
     flex: 1,
