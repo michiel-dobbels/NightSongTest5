@@ -8,6 +8,7 @@ import { colors } from '../styles/colors';
 
 const SCREEN_HEIGHT = Dimensions.get('window').height;
 const BOTTOM_NAV_HEIGHT = SCREEN_HEIGHT * 0.1;
+const INPUT_BAR_HEIGHT = 56;
 
 
 interface Message {
@@ -94,7 +95,12 @@ export default function DMThreadScreen() {
   };
 
   return (
-    <KeyboardAvoidingView style={styles.container} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+    <KeyboardAvoidingView
+      style={styles.container}
+      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+      keyboardVerticalOffset={BOTTOM_NAV_HEIGHT}
+    >
+
       <View style={styles.header}>
         {profile?.image_url ? (
           <Image source={{ uri: profile.image_url }} style={styles.avatar} />
@@ -133,7 +139,7 @@ export default function DMThreadScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: colors.background, paddingBottom: BOTTOM_NAV_HEIGHT },
+  container: { flex: 1, backgroundColor: colors.background },
 
   header: {
     flexDirection: 'row',
@@ -145,7 +151,8 @@ const styles = StyleSheet.create({
   avatar: { width: 36, height: 36, borderRadius: 18, marginRight: 8 },
   placeholder: { backgroundColor: colors.muted },
   name: { color: colors.text, fontSize: 16 },
-  list: { padding: 12 },
+  list: { padding: 12, paddingBottom: INPUT_BAR_HEIGHT + 12 },
+
   messageRow: {
     maxWidth: '80%',
     marginVertical: 4,
@@ -156,11 +163,18 @@ const styles = StyleSheet.create({
   right: { alignSelf: 'flex-end', backgroundColor: colors.accent },
   messageText: { color: colors.text },
   inputRow: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    bottom: BOTTOM_NAV_HEIGHT,
+
     flexDirection: 'row',
     alignItems: 'center',
     padding: 8,
     borderTopWidth: StyleSheet.hairlineWidth,
     borderColor: colors.muted,
+    backgroundColor: colors.background,
+
   },
   input: {
     flex: 1,
