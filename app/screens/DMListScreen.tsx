@@ -1,10 +1,16 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, FlatList, TouchableOpacity, Image, StyleSheet } from 'react-native';
+import { View, Text, FlatList, TouchableOpacity, Image, StyleSheet, Dimensions } from 'react-native';
+
 import { useNavigation } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../AuthContext';
 import { colors } from '../styles/colors';
+
+const SCREEN_HEIGHT = Dimensions.get('window').height;
+const BOTTOM_NAV_HEIGHT = SCREEN_HEIGHT * 0.1;
+const FAB_BOTTOM_OFFSET = (BOTTOM_NAV_HEIGHT + 10) * 0.75;
+
 
 interface Profile {
   id: string;
@@ -96,15 +102,20 @@ export default function DMListScreen() {
     <View style={styles.container}>
       <View style={styles.header}>
         <Text style={styles.title}>Direct Messages</Text>
-        <TouchableOpacity onPress={() => navigation.navigate('NewChat')}>
-          <Ionicons name="add" size={28} color={colors.accent} />
-        </TouchableOpacity>
+
       </View>
       <FlatList
         data={conversations}
         keyExtractor={(item) => item.id}
         renderItem={renderItem}
       />
+      <TouchableOpacity
+        style={styles.fab}
+        onPress={() => navigation.navigate('NewChat')}
+      >
+        <Text style={{ color: colors.text, fontSize: 24 }}>+</Text>
+      </TouchableOpacity>
+
     </View>
   );
 }
@@ -113,7 +124,8 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.background, padding: 16 },
   header: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
+    justifyContent: 'center',
+
     alignItems: 'center',
     marginBottom: 16,
   },
@@ -131,4 +143,17 @@ const styles = StyleSheet.create({
   name: { color: colors.text, fontSize: 16 },
   snippet: { color: colors.muted, marginTop: 2 },
   time: { color: colors.muted, fontSize: 12 },
+  fab: {
+    position: 'absolute',
+    bottom: FAB_BOTTOM_OFFSET,
+    right: 20,
+    backgroundColor: colors.accent,
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 100,
+  },
+
 });

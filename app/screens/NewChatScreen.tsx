@@ -21,15 +21,31 @@ export default function NewChatScreen() {
   useEffect(() => {
     let isMounted = true;
     const load = async () => {
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('id, username, name, image_url');
+      if (!user) return;
+      const { data: follows, error } = await supabase
+        .from('follows')
+        .select('following_id')
+        .eq('follower_id', user.id);
       if (error) {
-        console.error('Failed to fetch users', error);
+        console.error('Failed to fetch follow list', error);
         return;
       }
-      const filtered = (data ?? []).filter((p) => p.id !== user?.id);
-      if (isMounted) setAllUsers(filtered as Profile[]);
+      const ids = (follows ?? []).map((f: any) => f.following_id);
+      if (ids.length === 0) {
+        if (isMounted) setAllUsers([]);
+        return;
+      }
+      const { data: profiles, error: profileError } = await supabase
+        .from('profiles')
+        .select('id, username, name, image_url')
+        .in('id', ids);
+      if (profileError) {
+        console.error('Failed to fetch users', profileError);
+        return;
+      }
+      if (isMounted)
+        setAllUsers((profiles ?? []).filter((p) => p.id !== user.id) as Profile[]);
+
     };
     load();
     return () => {
