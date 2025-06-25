@@ -97,7 +97,7 @@ export default function MediaPostCard({ post, avatarUri, isActive }: Props) {
         <Text style={[styles.likeCount, liked && styles.likedLikeCount]}>{likeCount}</Text>
         <Ionicons
           name="chatbubble"
-          size={16}
+          size={28}
           color="white"
           style={{ marginLeft: 12, marginRight: 4 }}
         />
@@ -185,7 +185,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
   },
-  count: { color: 'white', fontSize: 14 },
+  count: { color: 'white', fontSize: 28, marginRight: 8 },
   likeCount: { color: 'white', fontSize: 28, marginRight: 8 },
   likedLikeCount: { color: 'red' },
   modalContainer: {
