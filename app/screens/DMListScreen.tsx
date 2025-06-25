@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { View, Text, FlatList, TouchableOpacity, Image, StyleSheet, Dimensions } from 'react-native';
+
 import { useNavigation } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import { supabase } from '../../lib/supabase';
@@ -9,6 +10,7 @@ import { colors } from '../styles/colors';
 const SCREEN_HEIGHT = Dimensions.get('window').height;
 const BOTTOM_NAV_HEIGHT = SCREEN_HEIGHT * 0.1;
 const FAB_BOTTOM_OFFSET = (BOTTOM_NAV_HEIGHT + 10) * 0.75;
+
 
 interface Profile {
   id: string;
@@ -100,6 +102,7 @@ export default function DMListScreen() {
     <View style={styles.container}>
       <View style={styles.header}>
         <Text style={styles.title}>Direct Messages</Text>
+
       </View>
       <FlatList
         data={conversations}
@@ -112,6 +115,7 @@ export default function DMListScreen() {
       >
         <Text style={{ color: colors.text, fontSize: 24 }}>+</Text>
       </TouchableOpacity>
+
     </View>
   );
 }
@@ -121,6 +125,7 @@ const styles = StyleSheet.create({
   header: {
     flexDirection: 'row',
     justifyContent: 'center',
+
     alignItems: 'center',
     marginBottom: 16,
   },
@@ -150,4 +155,5 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     zIndex: 100,
   },
+
 });
