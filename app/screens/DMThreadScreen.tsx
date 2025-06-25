@@ -47,20 +47,18 @@ export default function DMThreadScreen() {
     };
     load();
 
-    const channel = supabase
-      .channel('dm-' + conversationId)
-      .on(
-        'postgres_changes',
-        { event: 'INSERT', schema: 'public', table: 'messages', filter: `conversation_id=eq.${conversationId}` },
-        (payload) => {
-          setMessages((m) => [...m, payload.new as Message]);
-        },
-      )
+    const subscription = supabase
+      .from(`messages:conversation_id=eq.${conversationId}`)
+      .on('INSERT', (payload) => {
+        setMessages((m) => [...m, payload.new as Message]);
+      })
+
       .subscribe();
 
     return () => {
       isMounted = false;
-      supabase.removeChannel(channel);
+      supabase.removeSubscription(subscription);
+
     };
   }, [conversationId, recipientId]);
 
