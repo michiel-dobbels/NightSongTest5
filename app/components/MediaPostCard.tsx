@@ -119,7 +119,6 @@ export default function MediaPostCard({ post, avatarUri, isActive }: Props) {
             color="white"
             style={{ marginLeft: 12, marginRight: 4 }}
           />
-          <Text style={styles.count}>{post.reply_count ?? 0}</Text>
         </TouchableOpacity>
         <TouchableOpacity
           onPress={() => navigation.navigate('PostDetail', { post })}
@@ -226,9 +225,8 @@ const styles = StyleSheet.create({
   },
   replyButton: { flexDirection: 'row', alignItems: 'center' },
   detailButton: { flexDirection: 'row', alignItems: 'center' },
-  doubleChevron: { marginLeft: -10 },
+  doubleChevron: { marginLeft: -20 },
 
-  count: { color: 'white', fontSize: 28, marginRight: 8 },
   likeCount: { color: 'white', fontSize: 28, marginRight: 8 },
   likedLikeCount: { color: 'red' },
   modalContainer: {
