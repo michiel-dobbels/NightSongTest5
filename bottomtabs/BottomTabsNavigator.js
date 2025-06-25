@@ -73,6 +73,7 @@ export default function BottomTabsNavigator() {
   return (
     <Tab.Navigator
       screenOptions={({ route }) => ({
+        safeAreaInsets: { bottom: 0 },
         headerShown: false,
         tabBarShowLabel: true,
         tabBarLabelStyle: { fontSize: 12, marginBottom: 4, color: colors.text },
