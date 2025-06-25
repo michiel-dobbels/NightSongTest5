@@ -403,6 +403,7 @@ const styles = StyleSheet.create({
     width: 120,
     height: 40,
     alignSelf: 'center',
+
     marginBottom: 5,
   },
   topRow: {
