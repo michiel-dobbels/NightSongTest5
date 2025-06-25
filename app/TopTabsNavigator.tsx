@@ -1,4 +1,4 @@
-import React, { useState, useRef, Suspense } from 'react';
+import React, { useState, useRef, Suspense, useCallback } from 'react';
 import {
   createMaterialTopTabNavigator,
   MaterialTopTabBar,
@@ -180,7 +180,10 @@ export default function TopTabsNavigator() {
     ? `Welcome ${user.email}`
     : 'Welcome';
 
-  const ForYouScreen = () => <HomeScreen ref={homeScreenRef} hideInput />;
+  const ForYouScreen = useCallback(
+    () => <HomeScreen ref={homeScreenRef} hideInput />,
+    [],
+  );
 
   const drawerAnim = useRef(new Animated.Value(0)).current;
   const [drawerOpen, setDrawerOpen] = useState(false);

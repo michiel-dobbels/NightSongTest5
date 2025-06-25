@@ -84,13 +84,6 @@ const HomeScreen = forwardRef<HomeScreenRef, { hideInput?: boolean }>(
   const [searchResults, setSearchResults] = useState<SearchItem[]>([]);
 
 
-  if (!user || !profile) {
-    return (
-      <View style={styles.container}>
-        <Text style={{ color: 'white', padding: 20 }}>Loading...</Text>
-      </View>
-    );
-  }
 
   const dedupeById = (arr: Post[]): Post[] => {
     const seen = new Set<string>();
@@ -461,6 +454,14 @@ const HomeScreen = forwardRef<HomeScreenRef, { hideInput?: boolean }>(
 
   useImperativeHandle(ref, () => ({ createPost, scrollToTop, openSearch }));
 
+  if (!user || !profile) {
+    return (
+      <View style={styles.container}>
+        <Text style={{ color: 'white', padding: 20 }}>Loading...</Text>
+      </View>
+    );
+  }
+
 
   return (
     <View style={styles.container}>
@@ -486,6 +487,7 @@ const HomeScreen = forwardRef<HomeScreenRef, { hideInput?: boolean }>(
           keyExtractor={item => item.id}
           style={{ flex: 1 }}
           contentContainerStyle={{ paddingBottom: 20 }}
+          ListHeaderComponent={<View style={{ height: 140 }} pointerEvents="none" />}
           removeClippedSubviews={false}
           initialNumToRender={10}
           windowSize={5}
