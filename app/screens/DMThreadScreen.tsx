@@ -52,11 +52,13 @@ export default function DMThreadScreen() {
       .on('INSERT', (payload) => {
         setMessages((m) => [...m, payload.new as Message]);
       })
+
       .subscribe();
 
     return () => {
       isMounted = false;
       supabase.removeSubscription(subscription);
+
     };
   }, [conversationId, recipientId]);
 
