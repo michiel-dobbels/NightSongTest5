@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
+
 import {
   View,
   Text,
@@ -9,6 +10,7 @@ import {
   Dimensions,
 } from 'react-native';
 import { Video, ResizeMode } from 'expo-av';
+
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { colors } from '../styles/colors';
@@ -37,6 +39,7 @@ export default function MediaPostCard({ post, avatarUri, isActive }: Props) {
     }
   }, [isActive]);
 
+
   return (
     <View style={[styles.container, { height }]}>
       <TouchableOpacity
@@ -52,6 +55,7 @@ export default function MediaPostCard({ post, avatarUri, isActive }: Props) {
             resizeMode={ResizeMode.COVER}
             isLooping
             shouldPlay={isActive}
+
           />
         ) : (
           <Image
@@ -121,6 +125,7 @@ export default function MediaPostCard({ post, avatarUri, isActive }: Props) {
               resizeMode={ResizeMode.CONTAIN}
               isLooping
               shouldPlay
+
             />
           ) : (
             <Image
