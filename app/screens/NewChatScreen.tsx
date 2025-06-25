@@ -45,6 +45,7 @@ export default function NewChatScreen() {
       }
       if (isMounted)
         setAllUsers((profiles ?? []).filter((p) => p.id !== user.id) as Profile[]);
+
     };
     load();
     return () => {

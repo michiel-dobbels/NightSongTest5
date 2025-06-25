@@ -1,5 +1,6 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { View, Text, FlatList, TextInput, TouchableOpacity, Image, StyleSheet, KeyboardAvoidingView, Platform, Dimensions } from 'react-native';
+
 import { useRoute } from '@react-navigation/native';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../AuthContext';
@@ -8,6 +9,7 @@ import { colors } from '../styles/colors';
 const SCREEN_HEIGHT = Dimensions.get('window').height;
 const BOTTOM_NAV_HEIGHT = SCREEN_HEIGHT * 0.1;
 const INPUT_BAR_HEIGHT = 56;
+
 
 interface Message {
   id: string;
@@ -48,6 +50,7 @@ export default function DMThreadScreen() {
         .eq('conversation_id', conversationId)
         .order('created_at');
       if (isMounted) setMessages((msgs ?? []) as Message[]);
+
     };
     load();
 
@@ -56,11 +59,13 @@ export default function DMThreadScreen() {
       .on('INSERT', (payload) => {
         setMessages((m) => [...m, payload.new as Message]);
       })
+
       .subscribe();
 
     return () => {
       isMounted = false;
       subscription.unsubscribe();
+
     };
   }, [conversationId, recipientId]);
 
@@ -95,6 +100,7 @@ export default function DMThreadScreen() {
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       keyboardVerticalOffset={BOTTOM_NAV_HEIGHT}
     >
+
       <View style={styles.header}>
         {profile?.image_url ? (
           <Image source={{ uri: profile.image_url }} style={styles.avatar} />
@@ -113,6 +119,7 @@ export default function DMThreadScreen() {
             <Text style={styles.emptyText}>No messages yet</Text>
           </View>
         }
+
         contentContainerStyle={styles.list}
       />
       <View style={styles.inputRow}>
@@ -133,6 +140,7 @@ export default function DMThreadScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.background },
+
   header: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -144,6 +152,7 @@ const styles = StyleSheet.create({
   placeholder: { backgroundColor: colors.muted },
   name: { color: colors.text, fontSize: 16 },
   list: { padding: 12, paddingBottom: INPUT_BAR_HEIGHT + 12 },
+
   messageRow: {
     maxWidth: '80%',
     marginVertical: 4,
@@ -158,12 +167,14 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     bottom: BOTTOM_NAV_HEIGHT,
+
     flexDirection: 'row',
     alignItems: 'center',
     padding: 8,
     borderTopWidth: StyleSheet.hairlineWidth,
     borderColor: colors.muted,
     backgroundColor: colors.background,
+
   },
   input: {
     flex: 1,
@@ -187,4 +198,5 @@ const styles = StyleSheet.create({
     paddingTop: 20,
   },
   emptyText: { color: colors.muted },
+
 });
