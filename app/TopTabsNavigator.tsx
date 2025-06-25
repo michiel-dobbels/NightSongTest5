@@ -55,12 +55,14 @@ const DRAWER_WIDTH = SCREEN_WIDTH * 0.8;
 function HeaderTabBar(
   props: MaterialTopTabBarProps & {
     insetsTop: number;
+
     avatarUri?: string | null;
     onProfile: () => void;
     onSearch: () => void;
   },
 ) {
   const { insetsTop, avatarUri, onProfile, onSearch, ...barProps } = props;
+
   return (
     <BlurView
       intensity={25}
@@ -85,6 +87,7 @@ function HeaderTabBar(
           <Ionicons name="search" size={24} color={colors.accent} />
         </TouchableOpacity>
       </View>
+
       <MaterialTopTabBar
         {...barProps}
         style={[barProps.style, styles.blurredBar]}
@@ -221,6 +224,7 @@ export default function TopTabsNavigator() {
             <HeaderTabBar
               {...props}
               insetsTop={insets.top}
+
               avatarUri={profileImageUri ?? profile?.image_url ?? undefined}
               onProfile={openDrawer}
               onSearch={() => homeScreenRef.current?.openSearch()}
@@ -397,6 +401,7 @@ const styles = StyleSheet.create({
   searchButton: { position: 'absolute', right: 0, padding: 4 },
   avatarButton: { position: 'absolute', left: 0, padding: 4 },
   avatar: { width: 40, height: 40, borderRadius: 20 },
+
 
 
   blurredBar: {
