@@ -87,13 +87,14 @@ export default function MediaPostCard({ post, avatarUri, isActive }: Props) {
         </View>
       </View>
       <View style={styles.bottomLeft} pointerEvents="box-none">
-        <Ionicons
-          name="heart"
-          size={16}
-          color="white"
-          style={{ marginRight: 4 }}
-        />
-        <Text style={styles.count}>{likeCount}</Text>
+        <TouchableOpacity onPress={() => toggleLike()} style={{ marginRight: 4 }}>
+          <Ionicons
+            name={liked ? 'heart' : 'heart-outline'}
+            size={28}
+            color="white"
+          />
+        </TouchableOpacity>
+        <Text style={styles.likeCount}>{likeCount}</Text>
         <Ionicons
           name="chatbubble"
           size={16}
@@ -102,16 +103,6 @@ export default function MediaPostCard({ post, avatarUri, isActive }: Props) {
         />
         <Text style={styles.count}>{post.reply_count ?? 0}</Text>
       </View>
-      <TouchableOpacity
-        style={styles.bottomRight}
-        onPress={() => toggleLike()}
-      >
-        <Ionicons
-          name={liked ? 'heart' : 'heart-outline'}
-          size={28}
-          color="white"
-        />
-      </TouchableOpacity>
 
       <Modal visible={modalVisible} transparent>
         <TouchableOpacity
@@ -195,11 +186,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   count: { color: 'white', fontSize: 14 },
-  bottomRight: {
-    position: 'absolute',
-    bottom: 10,
-    right: 10,
-  },
+  likeCount: { color: 'white', fontSize: 28, marginRight: 8 },
   modalContainer: {
     flex: 1,
     backgroundColor: 'black',
