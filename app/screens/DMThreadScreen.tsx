@@ -1,5 +1,16 @@
 import React, { useEffect, useState, useRef } from 'react';
-import { View, Text, FlatList, TextInput, TouchableOpacity, Image, StyleSheet, KeyboardAvoidingView, Platform, Dimensions } from 'react-native';
+import {
+  View,
+  Text,
+  FlatList,
+  TextInput,
+  TouchableOpacity,
+  Image,
+  StyleSheet,
+  KeyboardAvoidingView,
+  Platform,
+  Dimensions,
+} from 'react-native';
 
 import { useRoute } from '@react-navigation/native';
 import { supabase } from '../../lib/supabase';
@@ -9,7 +20,6 @@ import { colors } from '../styles/colors';
 const SCREEN_HEIGHT = Dimensions.get('window').height;
 const BOTTOM_NAV_HEIGHT = SCREEN_HEIGHT * 0.1;
 const INPUT_BAR_HEIGHT = 56;
-
 
 interface Message {
   id: string;
@@ -77,18 +87,33 @@ export default function DMThreadScreen() {
 
   const send = async () => {
     if (!text.trim()) return;
-    await supabase.from('messages').insert({
-      conversation_id: conversationId,
-      sender_id: user!.id,
-      text,
-    });
+    const { data, error } = await supabase
+      .from('messages')
+      .insert({
+        conversation_id: conversationId,
+        sender_id: user!.id,
+        text,
+      })
+      .select('*')
+      .single();
+    if (error) {
+      console.error('Failed to send message', error);
+      return;
+    }
+    if (data) setMessages((m) => [...m, data as Message]);
+
     setText('');
   };
 
   const renderItem = ({ item }: { item: Message }) => {
     const isMe = item.sender_id === user!.id;
+    const senderName = isMe
+      ? 'You'
+      : profile?.name || profile?.username || 'Unknown';
     return (
       <View style={[styles.messageRow, isMe ? styles.right : styles.left]}>
+        <Text style={styles.sender}>{senderName}</Text>
+
         <Text style={styles.messageText}>{item.text}</Text>
       </View>
     );
@@ -162,6 +187,8 @@ const styles = StyleSheet.create({
   left: { alignSelf: 'flex-start', backgroundColor: '#444' },
   right: { alignSelf: 'flex-end', backgroundColor: colors.accent },
   messageText: { color: colors.text },
+  sender: { color: colors.muted, fontSize: 12, marginBottom: 2 },
+
   inputRow: {
     position: 'absolute',
     left: 0,
