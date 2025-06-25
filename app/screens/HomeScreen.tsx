@@ -21,6 +21,7 @@ import {
   Platform,
   ActivityIndicator,
   ViewToken,
+  Dimensions,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import {
@@ -63,6 +64,9 @@ export type SearchItem =
 
 const STORAGE_KEY = 'cached_posts';
 const PAGE_SIZE = 10;
+
+const SCREEN_HEIGHT = Dimensions.get('window').height;
+const BOTTOM_NAV_HEIGHT = SCREEN_HEIGHT * 0.1;
 
 const HomeScreen = forwardRef<HomeScreenRef, { hideInput?: boolean }>(
   ({ hideInput }, ref) => {
@@ -496,7 +500,7 @@ const HomeScreen = forwardRef<HomeScreenRef, { hideInput?: boolean }>(
           data={posts}
           keyExtractor={item => item.id}
           style={{ flex: 1 }}
-          contentContainerStyle={{ paddingBottom: 20 }}
+          contentContainerStyle={{ paddingBottom: BOTTOM_NAV_HEIGHT }}
           ListHeaderComponent={<View style={{ height: 200 }} pointerEvents="none" />}
 
           removeClippedSubviews={false}
@@ -635,7 +639,7 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: colors.background,
     paddingTop: 10,
-    paddingBottom: 10,
+    paddingBottom: 0,
   },
   input: {
     backgroundColor: '#111',
