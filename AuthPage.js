@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, Button, TouchableOpacity, StyleSheet, Alert } from 'react-native';
+import { View, Text, TextInput, Button, TouchableOpacity, StyleSheet, Alert, Platform } from 'react-native';
 import { colors } from './app/styles/colors';
 
 import { useAuth } from './AuthContext';
@@ -159,7 +159,7 @@ const styles = StyleSheet.create({
     fontSize: 32,
     fontWeight: 'bold',
     fontStyle: 'italic',
-    fontFamily: 'cursive',
+    fontFamily: Platform.select({ ios: 'Snell Roundhand', default: 'cursive' }),
     textAlign: 'center',
     color: colors.accent,
     marginBottom: 10,
