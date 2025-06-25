@@ -43,7 +43,8 @@ export default function DMThreadScreen() {
         .select('*')
         .eq('conversation_id', conversationId)
         .order('created_at');
-      if (isMounted) setMessages(msgs as Message[]);
+      if (isMounted) setMessages((msgs ?? []) as Message[]);
+
     };
     load();
 
@@ -57,7 +58,7 @@ export default function DMThreadScreen() {
 
     return () => {
       isMounted = false;
-      supabase.removeSubscription(subscription);
+      subscription.unsubscribe();
 
     };
   }, [conversationId, recipientId]);
@@ -102,6 +103,12 @@ export default function DMThreadScreen() {
         data={messages}
         keyExtractor={(i) => i.id}
         renderItem={renderItem}
+        ListEmptyComponent={
+          <View style={styles.emptyContainer}>
+            <Text style={styles.emptyText}>No messages yet</Text>
+          </View>
+        }
+
         contentContainerStyle={styles.list}
       />
       <View style={styles.inputRow}>
@@ -164,4 +171,12 @@ const styles = StyleSheet.create({
     backgroundColor: colors.accent,
     borderRadius: 6,
   },
+  emptyContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingTop: 20,
+  },
+  emptyText: { color: colors.muted },
+
 });
