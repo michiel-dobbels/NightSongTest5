@@ -1,14 +1,14 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import PersistentSignalStore from '../lib/PersistentSignalStore'; // adjust path if needed
+import SignalStore from './SignalStore';
 
-export const SignalContext = createContext<any>(null);
+export const SignalContext = createContext<SignalStore | null>(null);
 
 export const SignalProvider = ({ children }: { children: React.ReactNode }) => {
-  const [signalStore, setSignalStore] = useState(null);
+  const [signalStore, setSignalStore] = useState<SignalStore | null>(null);
 
   useEffect(() => {
     const init = async () => {
-      const store = await PersistentSignalStore.initFromStorage();
+      const store = await SignalStore.initFromStorage();
       setSignalStore(store);
     };
     init();

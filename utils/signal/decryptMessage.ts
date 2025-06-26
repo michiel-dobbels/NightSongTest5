@@ -1,4 +1,6 @@
-async function decryptMessageFrom(
+import * as libsignal from '@privacyresearch/libsignal-protocol-typescript';
+
+export async function decryptMessageFrom(
   senderId: string,
   encrypted: { type: number, body: string },
   signalStore: any
@@ -21,4 +23,13 @@ async function decryptMessageFrom(
 
   const plaintext = new TextDecoder().decode(plaintextBytes);
   return plaintext;
+}
+
+function base64ToArrayBuffer(base64: string): ArrayBuffer {
+  const binary = atob(base64);
+  const bytes = new Uint8Array(binary.length);
+  for (let i = 0; i < binary.length; i++) {
+    bytes[i] = binary.charCodeAt(i);
+  }
+  return bytes.buffer;
 }

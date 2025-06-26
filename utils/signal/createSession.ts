@@ -1,12 +1,9 @@
-import {
-  SessionBuilder,
-  SessionCipher,
-} from 'libsignal';
+import * as libsignal from '@privacyresearch/libsignal-protocol-typescript';
 
-async function createSignalSessionWith(recipientId: string, recipientBundle: any, signalStore: any) {
+export async function createSignalSessionWith(recipientId: string, recipientBundle: any, signalStore: any) {
   const address = new libsignal.SignalProtocolAddress(recipientId, 1); // device ID usually 1
 
-  const builder = new SessionBuilder(signalStore, address);
+  const builder = new libsignal.SessionBuilder(signalStore, address);
   await builder.processPreKey({
     registrationId: recipientBundle.registrationId,
     identityKey: recipientBundle.identityKey,

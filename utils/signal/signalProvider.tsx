@@ -1,7 +1,6 @@
 // lib/signal/SignalProvider.tsx
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import { PersistentSignalStore } from './PersistentSignalStore'; // <-- you'll need to define this
-import { SignalStore } from './SignalStore';
+import SignalStore from './SignalStore';
 
 const SignalContext = createContext<SignalStore | null>(null);
 
@@ -10,7 +9,7 @@ export const SignalProvider = ({ children }: { children: React.ReactNode }) => {
 
   useEffect(() => {
     const init = async () => {
-      const store = await PersistentSignalStore.initFromStorage();
+      const store = await SignalStore.initFromStorage();
       setSignalStore(store);
     };
     init();

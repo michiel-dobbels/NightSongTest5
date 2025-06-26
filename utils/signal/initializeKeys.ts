@@ -1,7 +1,7 @@
-import * as libsignal from 'libsignal';
+import * as libsignal from '@privacyresearch/libsignal-protocol-typescript';
 import EncryptedStorage from 'react-native-encrypted-storage';
 
-async function generateAndStoreSignalKeys() {
+export default async function initializeKeys() {
   // 1. Identity
   const identityKeyPair = await libsignal.KeyHelper.generateIdentityKeyPair();
   const registrationId = await libsignal.KeyHelper.generateRegistrationId();
@@ -44,6 +44,6 @@ async function generateAndStoreSignalKeys() {
 }
 
 // helper
-function arrayBufferToBase64(buffer) {
+function arrayBufferToBase64(buffer: ArrayBuffer): string {
   return btoa(String.fromCharCode(...new Uint8Array(buffer)));
 }

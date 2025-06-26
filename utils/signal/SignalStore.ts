@@ -1,5 +1,5 @@
 import EncryptedStorage from 'react-native-encrypted-storage';
-import * as libsignal from 'libsignal';
+import * as libsignal from '@privacyresearch/libsignal-protocol-typescript';
 
 const SESSION_PREFIX = 'session_';
 const IDENTITY_KEY = 'identityKey';
@@ -7,7 +7,7 @@ const REGISTRATION_ID = 'registrationId';
 const SIGNED_PREKEY = 'signedPreKey';
 const PREKEYS = 'preKeys';
 
-class PersistentSignalStore {
+export default class SignalStore {
   identityKeyPair: any;
   registrationId: number;
   signedPreKey: any;
@@ -28,7 +28,7 @@ class PersistentSignalStore {
     const signedPreKey = JSON.parse(await EncryptedStorage.getItem(SIGNED_PREKEY));
     const preKeys = JSON.parse(await EncryptedStorage.getItem(PREKEYS));
 
-    return new PersistentSignalStore(identityKey, registrationId, signedPreKey, preKeys);
+    return new SignalStore(identityKey, registrationId, signedPreKey, preKeys);
   }
 
   async saveSession(address: libsignal.SignalProtocolAddress, record: any) {

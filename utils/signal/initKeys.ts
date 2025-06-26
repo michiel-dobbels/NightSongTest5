@@ -1,8 +1,7 @@
-import { uploadKeyBundle } from './utils/signal/uploadKeyBundle';
+import initializeKeys from './initializeKeys';
+import { uploadKeyBundle } from './uploadKeyBundle';
 
-await uploadKeyBundle(user.id, {
-  identityKey: identityKeyPair.publicKey,
-  registrationId,
-  signedPreKey,
-  preKeys
-});
+export default async function initKeys(userId: string) {
+  const publicBundle = await initializeKeys();
+  await uploadKeyBundle(userId, publicBundle);
+}

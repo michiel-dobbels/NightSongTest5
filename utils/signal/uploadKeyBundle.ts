@@ -1,4 +1,4 @@
-import { supabase } from '../lib/supabase';
+import { supabase } from '../../lib/supabase';
 
 export async function uploadKeyBundle(userId: string, publicBundle: any) {
   const { error } = await supabase

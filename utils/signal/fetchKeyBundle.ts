@@ -1,4 +1,6 @@
-async function fetchKeyBundleForUser(recipientId: string) {
+import { supabase } from '../../lib/supabase';
+
+export async function fetchKeyBundleForUser(recipientId: string) {
   const { data, error } = await supabase
     .from('signal_key_bundles')
     .select('*')
