@@ -126,6 +126,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           setUser(session.user);
           await ensureProfile(session.user);
         }
+      } catch (error) {
+        console.error('Failed to refresh session:', error);
+        // Clear any invalid tokens to avoid repeated errors
+        await supabase.auth.signOut().catch(() => {});
       } finally {
         if (isMounted) setLoading(false);
       }
