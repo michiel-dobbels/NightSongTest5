@@ -3,6 +3,7 @@ import './utils/bufferShim';
 
 
 
+
 import { registerRootComponent } from 'expo';
 
 import App from './App';
