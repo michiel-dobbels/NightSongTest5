@@ -1,25 +1,5 @@
-import { Buffer } from 'buffer';
+import './utils/bufferShim';
 
-const originalFrom = Buffer.from.bind(Buffer);
-const originalIsEncoding = Buffer.isEncoding.bind(Buffer);
-
-Buffer.from = function (data, encoding) {
-  const enc = typeof encoding === 'string' ? encoding.toLowerCase() : encoding;
-  if (enc === 'utf-16le' || enc === 'utf16le' || enc === 'ucs2') {
-    console.warn('❌ Hermes does NOT support utf-16le. Replacing with utf-8.');
-    encoding = 'utf-8';
-  }
-  return originalFrom(data, encoding);
-};
-
-Buffer.isEncoding = function (encoding) {
-  const enc = encoding?.toLowerCase?.();
-  if (enc === 'utf-16le' || enc === 'utf16le' || enc === 'ucs2') return false;
-  return originalIsEncoding(encoding);
-};
-
-
-global.Buffer = Buffer;
 
 import React, { useState } from 'react';
 import { View, Text, TextInput, Button, TouchableOpacity, StyleSheet, Alert, Platform } from 'react-native';
