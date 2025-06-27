@@ -1,7 +1,6 @@
 import { Buffer } from 'buffer';
 
 const originalFrom = Buffer.from.bind(Buffer);
-const originalIsEncoding = Buffer.isEncoding.bind(Buffer);
 
 Buffer.from = function (data, encoding) {
   const enc = typeof encoding === 'string' ? encoding.toLowerCase() : encoding;
@@ -12,11 +11,6 @@ Buffer.from = function (data, encoding) {
   return originalFrom(data, encoding);
 };
 
-Buffer.isEncoding = function (encoding) {
-  const enc = encoding?.toLowerCase?.();
-  if (enc === 'utf-16le' || enc === 'utf16le' || enc === 'ucs2') return false;
-  return originalIsEncoding(encoding);
-};
 
 
 global.Buffer = Buffer;
