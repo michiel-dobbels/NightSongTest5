@@ -16,10 +16,11 @@ import 'react-native-get-random-values'; // ✅ Needed by libsignal
 global.Buffer = Buffer;
 global.process = process;
 
-// ✅ Optional: warn instead of crashing
+// Warn instead of crashing when libraries request utf‑16
 const originalFrom = Buffer.from.bind(Buffer);
 Buffer.from = ((data: any, encoding?: BufferEncoding) => {
-  if (encoding === 'utf-16le') {
+  const enc = typeof encoding === 'string' ? encoding.toLowerCase() : encoding;
+  if (enc === 'utf-16le' || enc === 'utf16le' || enc === 'ucs2') {
     console.warn('⚠️ utf-16le is not supported in Hermes — falling back to utf-8');
     encoding = 'utf-8';
   }
@@ -28,8 +29,9 @@ Buffer.from = ((data: any, encoding?: BufferEncoding) => {
 
 const originalIsEncoding = Buffer.isEncoding.bind(Buffer);
 Buffer.isEncoding = (encoding: string): encoding is BufferEncoding => {
-  if (encoding === 'utf-16le') return false;
-  return originalIsEncoding(encoding);
+  const enc = encoding?.toLowerCase?.();
+  if (enc === 'utf-16le' || enc === 'utf16le' || enc === 'ucs2') return false;
+  return originalIsEncoding(encoding as BufferEncoding);
 };
 
 
