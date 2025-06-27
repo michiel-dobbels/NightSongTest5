@@ -1,6 +1,7 @@
 import { Buffer } from 'buffer';
 
 const originalFrom = Buffer.from.bind(Buffer);
+const originalIsEncoding = Buffer.isEncoding.bind(Buffer);
 Buffer.from = function (data, encoding) {
   if (encoding === 'utf-16le') {
     console.warn('❌ Hermes does NOT support utf-16le. Replacing with utf-8.');
