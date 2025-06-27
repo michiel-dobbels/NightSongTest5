@@ -14,6 +14,7 @@ import 'react-native-get-random-values'; // ✅ Needed by libsignal
 global.Buffer = Buffer;
 global.process = process;
 
+
 export default function App() {
   return (
     <AuthProvider>
