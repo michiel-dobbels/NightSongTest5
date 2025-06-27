@@ -15,6 +15,8 @@ import {
 import { useRoute } from '@react-navigation/native';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../AuthContext';
+import { encryptSignalMessage } from '../../signal/encryption';
+import { decryptSignalMessage } from '../../signal/decryption';
 import { colors } from '../styles/colors';
 
 const SCREEN_HEIGHT = Dimensions.get('window').height;
@@ -24,8 +26,9 @@ const INPUT_BAR_HEIGHT = 56;
 interface Message {
   id: string;
   sender_id: string;
-  text: string;
+  ciphertext: string;
   created_at: string;
+  decryptedText?: string;
 }
 
 interface Profile {
@@ -59,17 +62,26 @@ export default function DMThreadScreen() {
         .select('*')
         .eq('conversation_id', conversationId)
         .order('created_at');
-      if (isMounted) setMessages((msgs ?? []) as Message[]);
+      if (msgs && isMounted) {
+        const decrypted = await Promise.all(
+          msgs.map(async (m: any) => ({
+            ...m,
+            decryptedText: await decryptSignalMessage(m.ciphertext, m.sender_id),
+          }))
+        );
+        setMessages(decrypted as Message[]);
+      }
 
     };
     load();
 
     const subscription = supabase
       .from(`messages:conversation_id=eq.${conversationId}`)
-      .on('INSERT', (payload) => {
-        setMessages((m) => [...m, payload.new as Message]);
+      .on('INSERT', async (payload) => {
+        const msg = payload.new as any;
+        const decryptedText = await decryptSignalMessage(msg.ciphertext, msg.sender_id);
+        setMessages((m) => [...m, { ...msg, decryptedText } as Message]);
       })
-
       .subscribe();
 
     return () => {
@@ -90,22 +102,22 @@ export default function DMThreadScreen() {
     if (!body) return;
     setText('');
 
+    const encrypted = await encryptSignalMessage({ toUserId: recipientId, plaintext: body });
     const { data, error } = await supabase
       .from('messages')
       .insert({
         conversation_id: conversationId,
         sender_id: user!.id,
-        text: body,
+        ciphertext: encrypted.base64Ciphertext,
       })
       .select()
-
       .single();
     if (error) {
       console.error('Failed to send message', error);
       return;
     }
     if (data) {
-      setMessages((m) => [...m, data as Message]);
+      setMessages((m) => [...m, { ...(data as any), decryptedText: body } as Message]);
     }
 
   };
@@ -119,7 +131,7 @@ export default function DMThreadScreen() {
       <View style={[styles.messageRow, isMe ? styles.right : styles.left]}>
         <Text style={styles.sender}>{senderName}</Text>
 
-        <Text style={styles.messageText}>{item.text}</Text>
+        <Text style={styles.messageText}>{item.decryptedText}</Text>
       </View>
     );
   };

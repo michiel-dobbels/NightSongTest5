@@ -5,6 +5,7 @@ import { useNavigation } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../AuthContext';
+import { decryptSignalMessage } from '../../signal/decryption';
 import { colors } from '../styles/colors';
 
 const SCREEN_HEIGHT = Dimensions.get('window').height;
@@ -22,7 +23,7 @@ interface Profile {
 interface ConversationItem {
   id: string;
   other: Profile;
-  lastMessage: { text: string; created_at: string } | null;
+  lastMessage: { ciphertext: string; created_at: string; decryptedText?: string } | null;
 }
 
 export default function DMListScreen() {
@@ -53,13 +54,18 @@ export default function DMListScreen() {
           .single();
         const { data: msg } = await supabase
           .from('messages')
-          .select('text, created_at')
+          .select('ciphertext, created_at')
           .eq('conversation_id', c.id)
           .order('created_at', { ascending: false })
           .limit(1)
           .single();
+        let lastMessage = null;
+        if (msg) {
+          const decryptedText = await decryptSignalMessage(msg.ciphertext, otherId);
+          lastMessage = { ...msg, decryptedText };
+        }
         if (profile)
-          convs.push({ id: c.id, other: profile as Profile, lastMessage: msg ?? null });
+          convs.push({ id: c.id, other: profile as Profile, lastMessage });
       }
       if (isMounted) setConversations(convs);
     };
@@ -88,7 +94,7 @@ export default function DMListScreen() {
         <Text style={styles.name}>{item.other.name || item.other.username}</Text>
         {item.lastMessage && (
           <Text style={styles.snippet} numberOfLines={1}>
-            {item.lastMessage.text}
+            {item.lastMessage.decryptedText}
           </Text>
         )}
       </View>

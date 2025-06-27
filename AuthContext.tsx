@@ -13,6 +13,7 @@ import { postEvents } from './app/postEvents';
 import { likeEvents } from './app/likeEvents';
 import { replyEvents } from './app/replyEvents';
 import { Post } from './app/components/PostCard';
+import { initializeKeys } from './signal/keyManager';
 
 export interface Profile {
   id: string;
@@ -233,6 +234,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       // Create/load the profile so posts have the foreign key ready
       await ensureProfile(user);
+      await initializeKeys(user.id).catch(() => {});
     }
 
     return { error };
@@ -269,6 +271,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     if (session) {
       setUser(session.user);
       await ensureProfile(session.user);
+      await initializeKeys(session.user.id).catch(() => {});
 
       return { error: null };
     }
