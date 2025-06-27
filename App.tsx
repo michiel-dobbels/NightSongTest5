@@ -27,12 +27,6 @@ Buffer.from = ((data: any, encoding?: BufferEncoding) => {
   return originalFrom(data, encoding as any);
 }) as typeof Buffer.from;
 
-const originalIsEncoding = Buffer.isEncoding.bind(Buffer);
-Buffer.isEncoding = (encoding: string): encoding is BufferEncoding => {
-  const enc = encoding?.toLowerCase?.();
-  if (enc === 'utf-16le' || enc === 'utf16le' || enc === 'ucs2') return false;
-  return originalIsEncoding(encoding as BufferEncoding);
-};
 
 
 export default function App() {

@@ -11,17 +11,6 @@ Buffer.from = function (data: any, encoding?: any) {
   return originalFrom(data, encoding);
 } as typeof Buffer.from;
 
-// Patch Buffer.isEncoding to advertise lack of utf‑16le support
-const originalIsEncoding = Buffer.isEncoding.bind(Buffer);
-const patchedIsEncoding: (encoding: string) => encoding is BufferEncoding = (
-  encoding,
-): encoding is BufferEncoding => {
-  const enc = encoding?.toLowerCase?.();
-  if (enc === 'utf-16le' || enc === 'utf16le' || enc === 'ucs2') return false;
-  return originalIsEncoding(encoding as BufferEncoding);
-};
-
-Buffer.isEncoding = patchedIsEncoding;
 
 // Make Buffer global
 global.Buffer = Buffer;
