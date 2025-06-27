@@ -1,5 +1,6 @@
 // Patch Buffer to avoid Hermes crashes on utf‑16 requests
 import './utils/bufferShim';
+import './utils/textEncodingPolyfill';
 
 
 
