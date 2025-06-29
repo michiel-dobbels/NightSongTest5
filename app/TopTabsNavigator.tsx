@@ -26,6 +26,7 @@ import {
   useSafeAreaInsets,
 } from 'react-native-safe-area-context';
 
+import { sendEncryptedMessage } from '../utils/sendEncryptedMessage';
 
 import { useAuth } from '../AuthContext';
 import { useNavigation } from '@react-navigation/native';
@@ -304,6 +305,18 @@ export default function TopTabsNavigator() {
       )}
 
       <Animated.View style={[styles.drawer, { transform: [{ translateX: drawerTranslate }] }]}>
+        <Button
+          title="Send Test Encrypted Msg"
+          onPress={async () => {
+            await sendEncryptedMessage({
+              conversation_id: 'abc-123',
+              sender_id: 'your-user-id',
+              messageText: 'Hello world',
+              receiverPublicKey: 'RECEIVER_PUBLIC_KEY_FROM_DB',
+              myPrivateKey: 'YOUR_PRIVATE_KEY_FROM_ASYNCSTORAGE_OR_DEBUG',
+            });
+          }}
+        />
         <TouchableOpacity
           onPress={() => {
             closeDrawer();

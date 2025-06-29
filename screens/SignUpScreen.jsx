@@ -47,6 +47,7 @@ export default function SignInScreen({ navigation }) {
   );
 }
 
+
 const styles = StyleSheet.create({
   container: {
     flex: 1,

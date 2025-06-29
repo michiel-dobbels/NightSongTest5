@@ -13,6 +13,7 @@ import { postEvents } from './app/postEvents';
 import { likeEvents } from './app/likeEvents';
 import { replyEvents } from './app/replyEvents';
 import { Post } from './app/components/PostCard';
+import { uploadKeysToSupabase } from './lib/signal'; // ✅ adjust path if needed
 
 export interface Profile {
   id: string;
@@ -252,7 +253,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       { data: { username, name } }
 
     );
-
+    
     if (error) {
       if (error.message && error.message.toLowerCase().includes('already')) {
         return await signIn(email, password);
@@ -268,7 +269,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       return { error: null };
     }
-
+   if (newUser) {
+      await uploadKeysToSupabase(newUser.id); // <- use newUser instead of data.user
+    }
     // Otherwise sign in to create the profile. If sign-in fails because the
     // email needs confirmation, treat as success so the user can verify via
     // email without seeing an error.
@@ -286,7 +289,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     return { error: signInErr };
   };
-
+  
 
   const signOut = async () => {
     await supabase.auth.signOut();

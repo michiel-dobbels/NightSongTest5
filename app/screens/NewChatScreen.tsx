@@ -1,5 +1,13 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, FlatList, TouchableOpacity, TextInput, Image, StyleSheet } from 'react-native';
+import {
+  View,
+  Text,
+  FlatList,
+  TouchableOpacity,
+  TextInput,
+  Image,
+  StyleSheet,
+} from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../AuthContext';
@@ -30,23 +38,27 @@ export default function NewChatScreen() {
         console.error('Failed to fetch follow list', error);
         return;
       }
+
       const ids = (follows ?? []).map((f: any) => f.following_id);
       if (ids.length === 0) {
         if (isMounted) setAllUsers([]);
         return;
       }
+
       const { data: profiles, error: profileError } = await supabase
         .from('profiles')
         .select('id, username, name, image_url')
         .in('id', ids);
+
       if (profileError) {
         console.error('Failed to fetch users', profileError);
         return;
       }
+
       if (isMounted)
         setAllUsers((profiles ?? []).filter((p) => p.id !== user.id) as Profile[]);
-
     };
+
     load();
     return () => {
       isMounted = false;
@@ -82,16 +94,19 @@ export default function NewChatScreen() {
       }
       convoId = created.id;
     }
-    navigation.replace('DMThread', { conversationId: convoId, recipientId: targetId });
+
+    navigation.replace('DMThread', {
+      conversationId: convoId,
+      recipientId: targetId,
+    });
   };
 
   const renderItem = ({ item }: { item: Profile }) => (
     <TouchableOpacity style={styles.item} onPress={() => startChat(item.id)}>
       {item.image_url ? (
         <Image source={{ uri: item.image_url }} style={styles.avatar} />
-      ) : (
-        <View style={[styles.avatar, styles.placeholder]} />
-      )}
+      ) : null}
+      <View style={[styles.avatar, styles.placeholder]} />
       <Text style={styles.name}>{item.name || item.username}</Text>
     </TouchableOpacity>
   );
@@ -105,7 +120,11 @@ export default function NewChatScreen() {
         value={search}
         onChangeText={setSearch}
       />
-      <FlatList data={filtered} keyExtractor={(i) => i.id} renderItem={renderItem} />
+      <FlatList
+        data={filtered}
+        keyExtractor={(i) => i.id}
+        renderItem={renderItem}
+      />
     </View>
   );
 }
