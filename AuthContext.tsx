@@ -13,7 +13,8 @@ import { postEvents } from './app/postEvents';
 import { likeEvents } from './app/likeEvents';
 import { replyEvents } from './app/replyEvents';
 import { Post } from './app/components/PostCard';
-import { uploadKeysToSupabase } from './lib/signal'; // ✅ adjust path if needed
+// Store Signal protocol keys for new accounts
+import { uploadKeysToSupabase } from './utils/keyUpload';
 
 export interface Profile {
   id: string;
