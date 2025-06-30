@@ -36,7 +36,9 @@
     "stream-browserify": "^3.0.0",
     "util": "^0.12.5",
     "expo-file-system": "~18.1.10",
-    "expo-linear-gradient": "~14.1.5"
+    "expo-linear-gradient": "~14.1.5",
+    "expo-secure-store": "~12.4.0",
+    "@privacyresearch/libsignal-protocol": "^0.11.0"
   },
   "devDependencies": {
     "@babel/core": "^7.25.2",
