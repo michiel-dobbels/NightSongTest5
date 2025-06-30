@@ -3,7 +3,7 @@
 This project uses [Supabase](https://supabase.com) for authentication and storing posts. Before running the app you need to configure your Supabase project.
 
 1. Create a new project in Supabase.
-2. Open the SQL editor and run `sql/setup.sql`, `sql/profiles.sql`, `sql/likes.sql`, `sql/follows.sql`, `sql/videos.sql` **and** `sql/marketplace.sql` from this repo. This creates the required tables (including nested replies) and row‑level security policies so posts persist across sessions and are visible to all users. The profiles script also adds `image_url` and `banner_url` columns so your avatar and banner images stay saved. Replies can be nested indefinitely by replying to any reply in the thread. The `likes` table with triggers keeps like counts in sync. The new `follows` table prevents duplicate follows and enforces that users can only follow on their own behalf. The `videos` table stores video URLs for the feed. The `marketplace` script sets up car listings and favorites so you can buy and sell vehicles. It also includes future‑proof fields like `is_boosted`, `views`, `favorites` and `search_index` for promoted listings and search.
+2. Open the SQL editor and run `sql/setup.sql`, `sql/profiles.sql`, `sql/likes.sql`, `sql/follows.sql`, `sql/videos.sql`, `sql/direct_messages.sql`, `sql/marketplace.sql` **and** `sql/signal.sql` from this repo. This creates the required tables (including nested replies) and row‑level security policies so posts persist across sessions and are visible to all users. The profiles script also adds `image_url` and `banner_url` columns so your avatar and banner images stay saved. Replies can be nested indefinitely by replying to any reply in the thread. The `likes` table with triggers keeps like counts in sync. The new `follows` table prevents duplicate follows and enforces that users can only follow on their own behalf. The `videos` table stores video URLs for the feed. The `marketplace` script sets up car listings and favorites so you can buy and sell vehicles. It also includes future‑proof fields like `is_boosted`, `views`, `favorites` and `search_index` for promoted listings and search. The `signal.sql` script sets up a table for storing public Signal keys used for encrypted direct messages.
 
 
 
@@ -18,6 +18,20 @@ This project uses [Supabase](https://supabase.com) for authentication and storin
 With the database configured you can run `npm start` to launch the Expo app.
 
 The marketplace screens live under `app/screens` and use a dark theme. The primary background color is `#2c2c54` and interactive elements use the accent color `#0070f3`.
+
+## Encrypted direct messages
+
+This project now includes a basic integration with the Signal protocol. Run the new `sql/signal.sql` script to create a table where each user can store their public Signal keys. Identity keys and prekeys are generated on device using the helper in `lib/signal.ts` and only the public parts are uploaded to Supabase.
+
+To generate an identity key pair you can do:
+
+```ts
+import { generateSignalIdentity } from '../lib/signal';
+
+const { identityKeyPair, registrationId } = await generateSignalIdentity();
+```
+
+The public values should then be encoded with `encodeKey` and saved to Supabase under the `signal_keys` table.
 
 The Market home screen includes a magnifying glass icon in the header. Tapping it reveals a search field for quickly filtering car listings by title or description. Results update live using a fuzzy, case-insensitive query against Supabase.
 
