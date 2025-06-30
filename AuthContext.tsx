@@ -8,6 +8,7 @@ import React, {
 } from 'react';
 import { User } from '@supabase/supabase-js';
 import { supabase } from './lib/supabase';
+import { getOrCreateIdentity } from './lib/signal';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { postEvents } from './app/postEvents';
 import { likeEvents } from './app/likeEvents';
@@ -229,6 +230,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       // Create/load the profile so posts have the foreign key ready
       await ensureProfile(user);
+      await getOrCreateIdentity();
     }
 
     return { error };
@@ -265,6 +267,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     if (session) {
       setUser(session.user);
       await ensureProfile(session.user);
+      await getOrCreateIdentity();
 
       return { error: null };
     }
