@@ -11,7 +11,7 @@ This project uses [Supabase](https://supabase.com) for authentication and storin
 
 
 4. Copy your project's URL and `anon` key into `lib/supabase.js`.
-5. Install dependencies with `npm install` to pull in the Signal protocol library and secure storage.
+5. Install dependencies with `npm install` to pull in the `libsignal-protocol` library and secure storage.
 6. Add your logo image as `assets/AppIcon.png` to show it on startup.
 
 

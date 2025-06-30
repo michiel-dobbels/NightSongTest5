@@ -1,5 +1,5 @@
 import * as SecureStore from 'expo-secure-store';
-import { KeyHelper } from '@privacyresearch/libsignal-protocol';
+import { KeyHelper } from 'libsignal-protocol';
 import { supabase } from './supabase';
 
 const IDENTITY_KEY = 'signal_identity_key';
