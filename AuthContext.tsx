@@ -5,6 +5,7 @@ import React, {
   useState,
   useCallback,
   useRef,
+  startTransition,
 } from 'react';
 import { User } from '@supabase/supabase-js';
 import { supabase } from './lib/supabase';
@@ -290,12 +291,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const signOut = async () => {
     await supabase.auth.signOut();
-    setUser(null);
-    setProfile(null);
-    setProfileImageUriState(null);
-    setBannerImageUriState(null);
-    setMyPosts([]);
-    lastFetchedUserIdRef.current = null;
+
+    // Schedule state updates outside of the auth change callback.
+    // React 19 warns when updates are queued during useInsertionEffect, which
+    // can happen when auth listeners trigger state changes on sign out.
+    startTransition(() => {
+      setUser(null);
+      setProfile(null);
+      setProfileImageUriState(null);
+      setBannerImageUriState(null);
+      setMyPosts([]);
+      lastFetchedUserIdRef.current = null;
+    });
   };
 
   const setProfileImageUri = useCallback(async (uri: string | null): Promise<void> => {
