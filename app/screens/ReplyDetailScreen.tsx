@@ -562,7 +562,6 @@ export default function ReplyDetailScreen() {
         const sender = profile.name || profile.username;
         createNotification(
           recipientId,
-          user.id,
           'reply',
           quickReplyTarget.parentId ?? quickReplyTarget.postId,
           `\uD83D\uDCAC ${sender} replied to your ${quickReplyTarget.parentId ? 'reply' : 'post'}`,

@@ -189,7 +189,6 @@ function PostCard({
               const sender = profile?.username || profile?.name || 'Someone';
               createNotification(
                 post.user_id,
-                user.id,
                 'like',
                 post.id,
                 `\uD83D\uDD34 ${sender} liked your post`,

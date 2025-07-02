@@ -247,7 +247,6 @@ const HomeScreen = forwardRef<HomeScreenRef, { hideInput?: boolean }>(
         const sender = profile.name || profile.username;
         createNotification(
           post.user_id,
-          profile.id,
           'reply',
           activePostId,
           `\uD83D\uDCAC ${sender} replied to your post`,

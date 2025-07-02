@@ -62,7 +62,6 @@ export default function FollowButton({ targetUserId, onToggle }: FollowButtonPro
         followEvents.emit('followChanged', { targetUserId, following: true });
         createNotification(
           targetUserId,
-          user.id,
           'follow',
           null,
           `➕ ${user.user_metadata?.username || user.email} followed you`,
