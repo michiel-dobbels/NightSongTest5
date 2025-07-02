@@ -25,6 +25,7 @@ import {
   SafeAreaView,
   useSafeAreaInsets,
 } from 'react-native-safe-area-context';
+import NotificationBell from './components/NotificationBell';
 
 
 import { useAuth } from '../AuthContext';
@@ -83,9 +84,12 @@ function HeaderTabBar(
           style={styles.logo}
           resizeMode="contain"
         />
-        <TouchableOpacity onPress={onSearch} style={styles.searchButton}>
-          <Ionicons name="search" size={24} color={colors.accent} />
-        </TouchableOpacity>
+        <View style={styles.rightButtons}>
+          <TouchableOpacity onPress={onSearch} style={styles.searchButton}>
+            <Ionicons name="search" size={24} color={colors.accent} />
+          </TouchableOpacity>
+          <NotificationBell onPress={() => barProps.navigation.navigate('Notifications')} />
+        </View>
       </View>
 
       <MaterialTopTabBar
@@ -398,7 +402,13 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
-  searchButton: { position: 'absolute', right: 0, padding: 4 },
+  rightButtons: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    position: 'absolute',
+    right: 0,
+  },
+  searchButton: { padding: 4 },
   avatarButton: { position: 'absolute', left: 0, padding: 4 },
   avatar: { width: 40, height: 40, borderRadius: 20 },
 
