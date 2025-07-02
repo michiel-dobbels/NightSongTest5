@@ -30,6 +30,7 @@ import { postEvents } from '../postEvents';
 import PostCard, { Post } from '../components/PostCard';
 import { CONFIRM_ACTION } from '../constants/ui';
 import ReplyModal from '../components/ReplyModal';
+import { createNotification } from '../../lib/notifications';
 
 const REPLY_STORAGE_PREFIX = 'cached_replies_';
 const COUNT_STORAGE_KEY = 'cached_reply_counts';
@@ -564,6 +565,24 @@ export default function PostDetailScreen() {
         return counts;
       });
       initialize([{ id: data.id, like_count: 0 }]);
+
+      let recipientId: string | undefined;
+      if (quickReplyTarget.parentId) {
+        const parentReply = allReplies.find(r => r.id === quickReplyTarget.parentId);
+        recipientId = parentReply?.user_id;
+      } else {
+        recipientId = post.user_id;
+      }
+      if (recipientId && recipientId !== user.id) {
+        const sender = profile.name || profile.username;
+        createNotification(
+          recipientId,
+          user.id,
+          'reply',
+          quickReplyTarget.parentId ?? post.id,
+          `\uD83D\uDCAC ${sender} replied to your ${quickReplyTarget.parentId ? 'reply' : 'post'}`,
+        );
+      }
     }
     fetchReplies();
   };

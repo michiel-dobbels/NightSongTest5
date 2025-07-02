@@ -21,6 +21,11 @@ export default function NotificationBell({ onPress }: { onPress: () => void }) {
     const subscription = supabase
       .from<Notification>(`notifications:recipient_id=eq.${user.id}`)
       .on('INSERT', () => setCount(c => c + 1))
+      .on('UPDATE', payload => {
+        if (payload.new.read && !payload.old.read) {
+          setCount(c => Math.max(0, c - 1));
+        }
+      })
       .subscribe();
     return () => {
       supabase.removeSubscription(subscription);

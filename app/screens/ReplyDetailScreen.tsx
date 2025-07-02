@@ -31,6 +31,7 @@ import useLike from '../hooks/useLike';
 import { postEvents } from '../postEvents';
 import { CONFIRM_ACTION } from '../constants/ui';
 import ReplyModal from '../components/ReplyModal';
+import { createNotification } from '../../lib/notifications';
 
 
 const CHILD_PREFIX = 'cached_child_replies_';
@@ -548,6 +549,25 @@ export default function ReplyDetailScreen() {
         return counts;
       });
       initialize([{ id: data.id, like_count: 0 }]);
+
+      let recipientId: string | undefined;
+      if (quickReplyTarget.parentId) {
+        const parentReply = allReplies.find(r => r.id === quickReplyTarget.parentId) ||
+          replies.find(r => r.id === quickReplyTarget.parentId);
+        recipientId = parentReply?.user_id;
+      } else if (originalPost) {
+        recipientId = originalPost.user_id;
+      }
+      if (recipientId && recipientId !== user.id) {
+        const sender = profile.name || profile.username;
+        createNotification(
+          recipientId,
+          user.id,
+          'reply',
+          quickReplyTarget.parentId ?? quickReplyTarget.postId,
+          `\uD83D\uDCAC ${sender} replied to your ${quickReplyTarget.parentId ? 'reply' : 'post'}`,
+        );
+      }
     }
     fetchReplies();
   };
