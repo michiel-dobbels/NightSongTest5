@@ -37,6 +37,7 @@ import ReplyThread from '../components/ReplyThread';
 
 import { replyEvents } from '../replyEvents';
 import { likeEvents } from '../likeEvents';
+import { createNotification } from '../../lib/notifications';
 
 import { CONFIRM_ACTION } from '../constants/ui';
 
@@ -355,6 +356,17 @@ export default function ProfileScreen() {
       });
       initialize([{ id: data.id, like_count: 0 }]);
       replyEvents.emit('replyAdded', activePostId);
+      const post = posts.find(p => p.id === activePostId);
+      if (post && post.user_id !== profile.id) {
+        const sender = profile.name || profile.username;
+        createNotification(
+          post.user_id,
+          profile.id,
+          'reply',
+          activePostId,
+          `\uD83D\uDCAC ${sender} replied to your post`,
+        );
+      }
     } else if (error) {
       console.error('Reply failed', error.message);
     }
