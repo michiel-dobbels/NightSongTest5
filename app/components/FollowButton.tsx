@@ -2,6 +2,8 @@ import React, { useEffect, useState } from 'react';
 import { Button } from 'react-native';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../AuthContext';
+import { createNotification } from '../../lib/notifications';
+import { followEvents } from '../followEvents';
 
 interface FollowButtonProps {
   targetUserId: string;
@@ -45,6 +47,7 @@ export default function FollowButton({ targetUserId, onToggle }: FollowButtonPro
       if (!error) {
         setFollowing(false);
         onToggle?.(false);
+        followEvents.emit('followChanged', { targetUserId, following: false });
       } else {
         console.error('Failed to unfollow', error);
       }
@@ -56,6 +59,14 @@ export default function FollowButton({ targetUserId, onToggle }: FollowButtonPro
       if (!error) {
         setFollowing(true);
         onToggle?.(true);
+        followEvents.emit('followChanged', { targetUserId, following: true });
+        createNotification(
+          targetUserId,
+          user.id,
+          'follow',
+          null,
+          `➕ ${user.user_metadata?.username || user.email} followed you`,
+        );
       } else {
         console.error('Failed to follow', error);
       }

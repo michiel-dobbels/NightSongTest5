@@ -6,6 +6,8 @@ import { Video } from 'expo-av';
 import useLike from '../hooks/useLike';
 import { Ionicons } from '@expo/vector-icons';
 import { colors } from '../styles/colors';
+import { createNotification } from '../../lib/notifications';
+import { useAuth } from '../../AuthContext';
 
 export interface Post {
   id: string;
@@ -83,6 +85,7 @@ function PostCard({
   const userName = post.profiles?.username || post.username;
   const isReply = (post as any).post_id !== undefined;
   const { likeCount, liked, toggleLike } = useLike(post.id, isReply);
+  const { user, profile } = useAuth()!;
   const { getStoriesForUser } = useStories();
   const hasStory = getStoriesForUser(post.user_id).length > 0;
 
@@ -180,7 +183,18 @@ function PostCard({
           style={styles.likeContainer}
           onPress={e => {
             e.stopPropagation();
+            const wasLiked = liked;
             toggleLike();
+            if (!wasLiked && user && post.user_id !== user.id) {
+              const sender = profile?.username || profile?.name || 'Someone';
+              createNotification(
+                post.user_id,
+                user.id,
+                'like',
+                post.id,
+                `\uD83D\uDD34 ${sender} liked your post`,
+              );
+            }
           }}
         >
           <Ionicons name={liked ? 'heart' : 'heart-outline'} size={18} color="red" style={{ marginRight: 2 }} />
