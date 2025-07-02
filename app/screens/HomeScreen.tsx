@@ -45,7 +45,7 @@ import MediaPostCard from '../components/MediaPostCard';
 import ReplyCard, { Reply } from '../components/ReplyCard';
 import { colors } from '../styles/colors';
 import { replyEvents } from '../replyEvents';
-import { createNotification } from '../../lib/notifications';
+import { createNotification, createNotificationForLike } from '../../lib/notifications';
 
 
 export interface HomeScreenRef {
@@ -444,7 +444,16 @@ const HomeScreen = forwardRef<HomeScreenRef, { hideInput?: boolean }>(
         p.id === postId ? { ...p, like_count: (p.like_count || 0) + 1 } : p
       )
     );
-    await supabase.from('likes').insert({ post_id: postId, user_id: user.id });
+    const { error } = await supabase
+      .from('likes')
+      .insert({ post_id: postId, user_id: user.id });
+
+    if (!error) {
+      const post = posts.find(p => p.id === postId);
+      if (post && post.user_id !== user.id) {
+        await createNotificationForLike(post.user_id, postId);
+      }
+    }
   };
 
   const confirmDeletePost = (id: string) => {

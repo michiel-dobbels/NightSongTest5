@@ -182,10 +182,9 @@ export default function TopTabsNavigator() {
   };
 
 
-  const ForYouScreen = useCallback(
-    () => <HomeScreen ref={homeScreenRef} hideInput />,
-    [],
-  );
+  function ForYouScreen() {
+    return <HomeScreen ref={homeScreenRef} hideInput />;
+  }
 
   const drawerAnim = useRef(new Animated.Value(0)).current;
   const [drawerOpen, setDrawerOpen] = useState(false);
