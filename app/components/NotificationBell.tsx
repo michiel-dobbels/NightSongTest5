@@ -3,6 +3,7 @@ import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../../AuthContext';
 import { getNotifications, Notification } from '../../lib/notifications';
+
 import { supabase } from '../../lib/supabase';
 import { colors } from '../styles/colors';
 
@@ -23,6 +24,7 @@ export default function NotificationBell({ onPress }: { onPress: () => void }) {
       .subscribe();
     return () => {
       supabase.removeSubscription(subscription);
+
     };
   }, [user?.id]);
 

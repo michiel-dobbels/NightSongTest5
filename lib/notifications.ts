@@ -11,6 +11,7 @@ export interface Notification {
   created_at: string;
   sender?: {
     id: string;
+
     username: string | null;
     name: string | null;
     image_url: string | null;
@@ -38,6 +39,7 @@ export async function getNotifications(userId: string) {
   const { data, error } = await supabase
     .from('notifications')
     .select('*, sender:profiles!notifications_sender_id_fkey(id, username, name, image_url)')
+
     .eq('recipient_id', userId)
     .order('created_at', { ascending: false });
   if (error) {
