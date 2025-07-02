@@ -43,6 +43,35 @@ export async function createNotification(
   }
 }
 
+// Simplified helper for post likes
+export async function createNotificationForLike(
+  recipientId: string,
+  postId: string,
+) {
+  const {
+    data: { user },
+    error: userError,
+  } = await supabase.auth.getUser();
+  if (userError || !user) {
+    console.error('No user session found');
+    return;
+  }
+
+  const { error } = await supabase.from('notifications').insert({
+    recipient_id: recipientId,
+    sender_id: user.id,
+    type: 'like',
+    entity_id: postId,
+    message: 'liked your post',
+  });
+
+  if (error) {
+    console.error('Failed to create like notification:', error);
+  } else {
+    console.log('Notification created');
+  }
+}
+
 
 export async function getNotifications(userId: string) {
   const { data, error } = await supabase
