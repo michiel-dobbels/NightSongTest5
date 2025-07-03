@@ -55,6 +55,61 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [myPosts, setMyPosts] = useState<Post[]>([]);
   const lastFetchedUserIdRef = useRef<string | null>(null);
 
+  // 🔍 Fetch profile by ID
+  const fetchProfile = async (userId: string): Promise<Profile | null> => {
+    const { data, error } = await supabase
+      .from('profiles')
+      .select('*')
+      .eq('id', userId)
+      .single();
+
+    if (!error && data) {
+      const authUser = user ?? supabase.auth.session()?.user ?? null;
+
+      const meta = authUser?.user_metadata || {};
+      const profileData = {
+        ...data,
+        email: authUser?.email,
+        username: data.username || meta.username || authUser?.email?.split('@')[0],
+        name: data.name || meta.name || data.username || meta.username,
+      };
+      setProfile(profileData);
+      // Restore the fetched profile image URL locally without touching the database
+
+      const profileKey = `profile_image_uri_${userId}`;
+      const bannerKey = `banner_image_uri_${userId}`;
+
+      if (data.image_url) {
+        setProfileImageUriState(data.image_url);
+        AsyncStorage.setItem(profileKey, data.image_url);
+      } else {
+        // Fall back to any locally stored value if the database column is empty
+        const storedProfile = await AsyncStorage.getItem(profileKey);
+        if (storedProfile) {
+          setProfileImageUriState(storedProfile);
+        } else {
+          setProfileImageUriState(null);
+        }
+      }
+
+      if (data.banner_url) {
+        setBannerImageUriState(data.banner_url);
+        AsyncStorage.setItem(bannerKey, data.banner_url);
+      } else {
+        // Similarly restore any stored banner if Supabase doesn't have one
+        const storedBanner = await AsyncStorage.getItem(bannerKey);
+        if (storedBanner) {
+          setBannerImageUriState(storedBanner);
+        } else {
+          setBannerImageUriState(null);
+        }
+      }
+
+      return profileData;
+    }
+
+    return null;
+  };
   // Helper ensures a profile exists for the given user so posts can
   // reference it without foreign-key errors
   const ensureProfile = async (authUser: User | null): Promise<Profile | null> => {
@@ -118,10 +173,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const init = async () => {
       try {
         const session = supabase.auth.session();
-
-
-        
-
         if (session?.user && isMounted) {
           setUser(session.user);
           await ensureProfile(session.user);
@@ -177,10 +228,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           ...temps,
           ...data.map(p => {
             const existing = prevMap[p.id];
-            return existing
-              ? { ...p, like_count: existing.like_count, liked: existing?.liked ?? false
- }
-              : p;
+            return existing ? { ...p, like_count: existing.like_count, liked: existing?.liked ?? false } : p;
           }),
         ];
         const seen = new Set();
@@ -456,61 +504,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
 
 
-  // 🔍 Fetch profile by ID
-  const fetchProfile = async (userId: string): Promise<Profile | null> => {
-    const { data, error } = await supabase
-      .from('profiles')
-      .select('*')
-      .eq('id', userId)
-      .single();
-
-    if (!error && data) {
-      const authUser = user ?? supabase.auth.session()?.user ?? null;
-
-      const meta = authUser?.user_metadata || {};
-      const profileData = {
-        ...data,
-        email: authUser?.email,
-        username: data.username || meta.username || authUser?.email?.split('@')[0],
-        name: data.name || meta.name || data.username || meta.username,
-      };
-      setProfile(profileData);
-      // Restore the fetched profile image URL locally without touching the database
-
-      const profileKey = `profile_image_uri_${userId}`;
-      const bannerKey = `banner_image_uri_${userId}`;
-
-      if (data.image_url) {
-        setProfileImageUriState(data.image_url);
-        AsyncStorage.setItem(profileKey, data.image_url);
-      } else {
-        // Fall back to any locally stored value if the database column is empty
-        const storedProfile = await AsyncStorage.getItem(profileKey);
-        if (storedProfile) {
-          setProfileImageUriState(storedProfile);
-        } else {
-          setProfileImageUriState(null);
-        }
-      }
-
-      if (data.banner_url) {
-        setBannerImageUriState(data.banner_url);
-        AsyncStorage.setItem(bannerKey, data.banner_url);
-      } else {
-        // Similarly restore any stored banner if Supabase doesn't have one
-        const storedBanner = await AsyncStorage.getItem(bannerKey);
-        if (storedBanner) {
-          setBannerImageUriState(storedBanner);
-        } else {
-          setBannerImageUriState(null);
-        }
-      }
-
-      return profileData;
-    }
-
-    return null;
-  };
 
   const value = {
     user,
