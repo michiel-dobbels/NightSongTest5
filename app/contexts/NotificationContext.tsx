@@ -5,14 +5,29 @@ import { useAuth } from '../../AuthContext';
 export interface Notification {
   id: string;
   user_id: string;
+  sender_id?: string | null;
+  recipient_id?: string | null;
+  type?: string | null;
+  entity_id?: string | null;
   message: string;
   created_at: string;
   read?: boolean | null;
+  sender?: {
+    id: string;
+    username: string | null;
+    name: string | null;
+    image_url: string | null;
+  } | null;
 }
 
 interface NotificationContextValue {
   notifications: Notification[];
-  addNotification: (userId: string, message: string) => Promise<void>;
+  unreadCount: number;
+  addNotification: (
+    userId: string,
+    message: string,
+    opts?: { type?: string; entity_id?: string }
+  ) => Promise<void>;
   markRead: (id: string) => Promise<void>;
   refresh: () => Promise<void>;
 }
@@ -30,7 +45,9 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
     }
     const { data, error } = await supabase
       .from('notifications')
-      .select('id,user_id,message,created_at,read')
+      .select(
+        'id,user_id,sender_id,recipient_id,type,entity_id,message,created_at,read, sender:profiles!sender_id(id,username,name,image_url)'
+      )
       .eq('user_id', user.id)
       .order('created_at', { ascending: false });
     if (!error && data) setNotifications(data as Notification[]);
@@ -56,10 +73,21 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
   }, [user?.id]);
 
   const addNotification = useCallback(
-    async (userId: string, message: string) => {
+    async (
+      userId: string,
+      message: string,
+      opts: { type?: string; entity_id?: string } = {},
+    ) => {
+      const payload = {
+        user_id: userId,
+        sender_id: user?.id ?? null,
+        recipient_id: userId,
+        message,
+        ...opts,
+      };
       const { data, error } = await supabase
         .from('notifications')
-        .insert({ user_id: userId, message })
+        .insert(payload)
         .single();
       if (!error && data && userId === user?.id) {
         setNotifications(prev => [data as Notification, ...prev]);
@@ -78,8 +106,11 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
     }
   }, []);
 
+  const unreadCount = notifications.filter(n => !n.read).length;
+
   const value = {
     notifications,
+    unreadCount,
     addNotification,
     markRead,
     refresh: fetchNotifications,
