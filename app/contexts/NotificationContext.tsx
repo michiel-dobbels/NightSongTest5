@@ -40,6 +40,8 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
     fetchNotifications();
   }, [fetchNotifications]);
 
+  // Listen for new notifications in realtime so they appear immediately
+
   useEffect(() => {
     if (!user) return;
     const subscription = supabase
