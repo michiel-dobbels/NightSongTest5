@@ -110,7 +110,9 @@ function LikeInfo({
   const handlePress = () => {
     if (!liked && profile && userId !== profile.id) {
       const username = profile.username || 'Someone';
-      addNotification(userId, `@${username} liked your post`);
+      const target = isPost ? 'post' : 'reply';
+      addNotification(userId, `@${username} liked your ${target}`);
+
     }
     toggleLike();
   };

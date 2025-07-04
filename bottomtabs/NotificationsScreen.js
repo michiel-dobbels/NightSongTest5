@@ -17,25 +17,27 @@ function timeAgo(dateString) {
 export default function NotificationsScreen() {
   const { notifications } = useNotifications();
 
+  if (notifications.length === 0) {
+    return (
+      <View style={[styles.container, styles.emptyContainer]}>
+        <Text style={styles.empty}>No notifications</Text>
+      </View>
+    );
+  }
+
   return (
     <View style={styles.container}>
-        {notifications.length === 0 ? (
-          <View style={styles.emptyContainer}>
-            <Text style={styles.empty}>No notifications</Text>
+      <FlatList
+        data={notifications}
+        keyExtractor={item => item.id}
+        renderItem={({ item }) => (
+          <View style={styles.item}>
+            <Text style={styles.message}>{item.message}</Text>
+            <Text style={styles.time}>{timeAgo(item.created_at)}</Text>
           </View>
-        ) : (
+        )}
+      />
 
-        <FlatList
-          data={notifications}
-          keyExtractor={item => item.id}
-          renderItem={({ item }) => (
-            <View style={styles.item}>
-              <Text style={styles.message}>{item.message}</Text>
-              <Text style={styles.time}>{timeAgo(item.created_at)}</Text>
-            </View>
-          )}
-        />
-      )}
     </View>
   );
 }
