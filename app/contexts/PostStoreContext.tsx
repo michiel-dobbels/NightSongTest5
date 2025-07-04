@@ -40,7 +40,7 @@ const PostStoreContext = createContext<PostStore | undefined>(undefined);
 export const PostStoreProvider: React.FC<{ children: React.ReactNode }> = ({
   children,
 }) => {
-  const { user, updatePost } = useAuth()!;
+  const { user, updatePost, profile } = useAuth()!;
   const [posts, setPosts] = useState<Record<string, PostState>>({});
   const postsRef = useRef<Record<string, PostState>>({});
   const lastLoadedUserIdRef = useRef<string | null>(null);
@@ -221,6 +221,23 @@ export const PostStoreProvider: React.FC<{ children: React.ReactNode }> = ({
         await supabase
           .from('likes')
           .insert({ user_id: user.id, [isReply ? 'reply_id' : 'post_id']: id });
+
+        if (!isReply) {
+          const { data: postData } = await supabase
+            .from('posts')
+            .select('user_id, profiles(username)')
+            .eq('id', id)
+            .single();
+          if (postData && postData.user_id !== user.id) {
+            await supabase.from('notifications').insert({
+              user_id: postData.user_id,
+              actor_id: user.id,
+              post_id: id,
+              type: 'like',
+              message: `${profile?.username || 'Someone'} liked your post`,
+            });
+          }
+        }
       } else {
         await supabase
           .from('likes')
