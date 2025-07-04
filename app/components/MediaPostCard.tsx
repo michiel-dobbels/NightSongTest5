@@ -18,6 +18,8 @@ import { colors } from '../styles/colors';
 import useLike from '../hooks/useLike';
 import { Post } from './PostCard';
 import ReplyModal from './ReplyModal';
+import { useNotifications } from '../contexts/NotificationContext';
+import { useAuth } from '../../AuthContext';
 
 interface Props {
   post: Post;
@@ -31,6 +33,8 @@ export default function MediaPostCard({ post, avatarUri, isActive }: Props) {
   const username = post.profiles?.username || post.username || 'unknown';
   const [quickReplyVisible, setQuickReplyVisible] = useState(false);
   const navigation = useNavigation<any>();
+  const { addNotification } = useNotifications();
+  const { profile } = useAuth()!;
 
 
   const handleQuickReplySubmit = (
@@ -101,7 +105,16 @@ export default function MediaPostCard({ post, avatarUri, isActive }: Props) {
         </View>
       </View>
       <View style={styles.bottomLeft} pointerEvents="box-none">
-        <TouchableOpacity onPress={() => toggleLike()} style={{ marginRight: 4 }}>
+        <TouchableOpacity
+          onPress={() => {
+            if (!liked && profile && post.user_id !== profile.id) {
+              const username = profile.username || 'Someone';
+              addNotification(post.user_id, `${username} liked your post`);
+            }
+            toggleLike();
+          }}
+          style={{ marginRight: 4 }}
+        >
           <Ionicons
             name={liked ? 'heart' : 'heart-outline'}
             size={28}

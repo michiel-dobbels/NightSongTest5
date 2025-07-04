@@ -40,6 +40,19 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
     fetchNotifications();
   }, [fetchNotifications]);
 
+  useEffect(() => {
+    if (!user) return;
+    const subscription = supabase
+      .from(`notifications:user_id=eq.${user.id}`)
+      .on('INSERT', payload => {
+        setNotifications(prev => [payload.new as Notification, ...prev]);
+      })
+      .subscribe();
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, [user?.id]);
+
   const addNotification = useCallback(
     async (userId: string, message: string) => {
       const { data, error } = await supabase
