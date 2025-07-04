@@ -20,7 +20,9 @@ export default function NotificationsScreen() {
   return (
     <View style={styles.container}>
       {notifications.length === 0 ? (
-        <Text style={styles.empty}>No notifications</Text>
+        <View style={styles.emptyContainer}>
+          <Text style={styles.empty}>No notifications</Text>
+        </View>
       ) : (
         <FlatList
           data={notifications}
@@ -39,7 +41,8 @@ export default function NotificationsScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.background, padding: 10 },
-  empty: { color: colors.text, textAlign: 'center', marginTop: 20 },
+  emptyContainer: { flex: 1, justifyContent: 'center', alignItems: 'center' },
+  empty: { color: colors.text },
   item: { marginBottom: 10 },
   message: { color: colors.text },
   time: { color: colors.muted, fontSize: 12 },
