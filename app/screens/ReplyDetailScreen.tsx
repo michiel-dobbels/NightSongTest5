@@ -112,6 +112,7 @@ function LikeInfo({
       const username = profile.username || 'Someone';
       const target = isPost ? 'post' : 'reply';
       addNotification(userId, `@${username} liked your ${target}`);
+
     }
     toggleLike();
   };

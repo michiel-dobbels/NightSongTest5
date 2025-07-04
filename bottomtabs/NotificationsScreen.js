@@ -37,6 +37,7 @@ export default function NotificationsScreen() {
           </View>
         )}
       />
+
     </View>
   );
 }
@@ -49,6 +50,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingBottom: 80,
   },
+
   empty: { color: colors.text },
   item: { marginBottom: 10 },
   message: { color: colors.text },
