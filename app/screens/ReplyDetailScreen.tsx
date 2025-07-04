@@ -25,6 +25,7 @@ import { supabase, REPLY_VIDEO_BUCKET } from '../../lib/supabase';
 import { uploadImage } from '../../lib/uploadImage';
 import { getLikeCounts } from '../../lib/getLikeCounts';
 import { useAuth } from '../../AuthContext';
+import { useNotifications } from '../contexts/NotificationContext';
 import { colors } from '../styles/colors';
 import { usePostStore } from '../contexts/PostStoreContext';
 import useLike from '../hooks/useLike';
@@ -93,10 +94,29 @@ interface Post {
   } | null;
 }
 
-function LikeInfo({ id, isPost = false }: { id: string; isPost?: boolean }) {
+function LikeInfo({
+  id,
+  userId,
+  isPost = false,
+}: {
+  id: string;
+  userId: string;
+  isPost?: boolean;
+}) {
   const { likeCount, liked, toggleLike } = useLike(id, !isPost);
+  const { addNotification } = useNotifications();
+  const { profile } = useAuth()!;
+
+  const handlePress = () => {
+    if (!liked && profile && userId !== profile.id) {
+      const username = profile.username || 'Someone';
+      addNotification(userId, `@${username} liked your post`);
+    }
+    toggleLike();
+  };
+
   return (
-    <TouchableOpacity style={styles.likeContainer} onPress={toggleLike}>
+    <TouchableOpacity style={styles.likeContainer} onPress={handlePress}>
       <Ionicons
         name={liked ? 'heart' : 'heart-outline'}
         size={18}
@@ -715,7 +735,11 @@ export default function ReplyDetailScreen() {
                   />
                   <Text style={styles.replyCountLarge}>{replyCounts[originalPost.id] || 0}</Text>
                 </TouchableOpacity>
-                <LikeInfo id={originalPost.id} isPost />
+                <LikeInfo
+                  id={originalPost.id}
+                  userId={originalPost.user_id}
+                  isPost
+                />
 
               </View>
             )}
@@ -795,7 +819,7 @@ export default function ReplyDetailScreen() {
                   />
                   <Text style={styles.replyCountLarge}>{replyCounts[a.id] || 0}</Text>
                 </TouchableOpacity>
-                <LikeInfo id={a.id} />
+                <LikeInfo id={a.id} userId={a.user_id} />
 
               </View>
             );
@@ -874,7 +898,7 @@ export default function ReplyDetailScreen() {
             />
             <Text style={styles.replyCountLarge}>{replyCounts[parent.id] || 0}</Text>
           </TouchableOpacity>
-          <LikeInfo id={parent.id} />
+          <LikeInfo id={parent.id} userId={parent.user_id} />
 
           </View>
           </>
@@ -970,7 +994,7 @@ export default function ReplyDetailScreen() {
                   />
                   <Text style={styles.replyCountLarge}>{replyCounts[item.id] || 0}</Text>
                 </TouchableOpacity>
-                <LikeInfo id={item.id} />
+                <LikeInfo id={item.id} userId={item.user_id} />
 
               </View>
             </TouchableOpacity>
