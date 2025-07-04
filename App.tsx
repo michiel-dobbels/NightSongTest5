@@ -4,6 +4,7 @@ import { AuthProvider } from './AuthContext';
 import Navigator from './Navigator';
 import { PostStoreProvider } from './app/contexts/PostStoreContext';
 import { StoryStoreProvider } from './app/contexts/StoryStoreContext';
+import { NotificationProvider } from './app/contexts/NotificationContext';
 
 import { Buffer } from 'buffer';
 import process from 'process';
@@ -16,9 +17,11 @@ export default function App() {
     <AuthProvider>
       <PostStoreProvider>
         <StoryStoreProvider>
-          <NavigationContainer>
-            <Navigator />
-          </NavigationContainer>
+          <NotificationProvider>
+            <NavigationContainer>
+              <Navigator />
+            </NavigationContainer>
+          </NotificationProvider>
         </StoryStoreProvider>
       </PostStoreProvider>
     </AuthProvider>
