@@ -24,6 +24,7 @@ export default function NotificationsScreen() {
             <Text style={styles.empty}>No notifications</Text>
           </View>
         ) : (
+
         <FlatList
           data={notifications}
           keyExtractor={item => item.id}
@@ -47,6 +48,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingBottom: 80,
   },
+
   empty: { color: colors.text },
   item: { marginBottom: 10 },
   message: { color: colors.text },
