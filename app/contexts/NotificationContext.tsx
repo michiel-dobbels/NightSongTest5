@@ -40,6 +40,24 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
     fetchNotifications();
   }, [fetchNotifications]);
 
+  // subscribe to realtime notifications so new likes show up instantly
+  useEffect(() => {
+    if (!user) return;
+    const channel = supabase
+      .channel('notifications')
+      .on(
+        'postgres_changes',
+        { event: 'INSERT', schema: 'public', table: 'notifications', filter: `user_id=eq.${user.id}` },
+        payload => {
+          setNotifications(prev => [payload.new as Notification, ...prev]);
+        },
+      )
+      .subscribe();
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [user?.id]);
+
   const addNotification = useCallback(
     async (userId: string, message: string) => {
       const { data, error } = await supabase
