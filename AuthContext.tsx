@@ -12,7 +12,8 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { postEvents } from './app/postEvents';
 import { likeEvents } from './app/likeEvents';
 import { replyEvents } from './app/replyEvents';
-import { Post } from './app/components/PostCard';
+import { Post } from './types/Post';
+
 
 
 export interface Profile {
@@ -20,8 +21,9 @@ export interface Profile {
   username: string;
   name: string | null;
   email?: string | null;
+  image_url?: string | null;
 }
-
+export type ExtendedPost = Post & { liked?: boolean };
 export interface AuthContextValue {
   user: User | null;
   profile: Profile | null;
@@ -52,7 +54,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true);
   const [profileImageUri, setProfileImageUriState] = useState<string | null>(null);
   const [bannerImageUri, setBannerImageUriState] = useState<string | null>(null);
-  const [myPosts, setMyPosts] = useState<Post[]>([]);
+  const [myPosts, setMyPosts] = useState<ExtendedPost[]>([]);
+
   const lastFetchedUserIdRef = useRef<string | null>(null);
 
   // Helper ensures a profile exists for the given user so posts can
@@ -155,6 +158,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     };
   }, []);
 
+  
 
   const fetchMyPosts = useCallback(async () => {
     const id = user?.id;
@@ -176,7 +180,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         const merged = [
           ...temps,
           ...data.map(p => {
-            const existing = prevMap[p.id];
+            const existing = prevMap[p.id] as ExtendedPost;
+
             return existing
               ? { ...p, like_count: existing.like_count, liked: existing?.liked ?? false
  }
@@ -221,7 +226,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [user?.id, fetchMyPosts]);
 
   useEffect(() => {
-    const onLikeChanged = ({ id, count, liked }) => {
+    const onLikeChanged = ({
+      id,
+      count,
+      liked,
+    }: { id: string; count: number; liked: boolean }) => {
+
       setMyPosts(prev => {
         const found = prev.find(p => p.id === id);
         if (!found) return prev;
@@ -239,7 +249,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   useEffect(() => {
-    const onReplyAdded = (postId) => {
+    const onReplyAdded = (postId: string) => {
+
       setMyPosts(prev => {
         const found = prev.find(p => p.id === postId);
         if (!found) return prev;
@@ -424,7 +435,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const stored = await AsyncStorage.getItem('cached_posts');
       if (stored) {
         const arr = JSON.parse(stored);
-        const updated = arr.filter(p => p.id !== postId);
+        const updated = arr.filter((p: any) => p.id !== postId);
+
         await AsyncStorage.setItem('cached_posts', JSON.stringify(updated));
       }
     } catch (e) {
@@ -434,13 +446,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   useEffect(() => {
-    const onPostDeleted = (postId) => {
+    const onPostDeleted = (postId: string) => {
+
       setMyPosts(prev => prev.filter(p => p.id !== postId));
       AsyncStorage.getItem('cached_posts').then(stored => {
         if (stored) {
           try {
             const arr = JSON.parse(stored);
-            const updated = arr.filter(p => p.id !== postId);
+            const updated = arr.filter((p: any) => p.id !== postId);
+
             AsyncStorage.setItem('cached_posts', JSON.stringify(updated));
           } catch (e) {
             console.error('Failed to update cached posts', e);

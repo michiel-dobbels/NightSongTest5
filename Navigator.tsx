@@ -15,7 +15,7 @@ export default function Navigator() {
 
   return (
     <Suspense fallback={<LoadingScreen />}>
-      <Stack.Navigator screenOptions={{ headerShown: false, detachInactiveScreens: false }}>
+      
         {user ? (
           <>
             <Stack.Screen name="Main" component={BottomTabsNavigator} />
@@ -24,7 +24,7 @@ export default function Navigator() {
           <Stack.Screen name="Auth" component={AuthPage} />
         )}
 
-      </Stack.Navigator>
+      
     </Suspense>
   );
 }

@@ -26,6 +26,7 @@ import {
   useSafeAreaInsets,
 } from 'react-native-safe-area-context';
 
+import { Video, ResizeMode } from 'expo-av';
 
 import { useAuth } from '../AuthContext';
 import { useNavigation } from '@react-navigation/native';
@@ -37,7 +38,7 @@ import { supabase } from '../lib/supabase';
 import { colors } from './styles/colors';
 import * as ImagePicker from 'expo-image-picker';
 import * as FileSystem from 'expo-file-system';
-import { Video } from 'expo-av';
+
 
 
 const Tab = createMaterialTopTabNavigator();
@@ -88,10 +89,9 @@ function HeaderTabBar(
         </TouchableOpacity>
       </View>
 
-      <MaterialTopTabBar
-        {...barProps}
-        style={[barProps.style, styles.blurredBar]}
-      />
+      <View style={styles.blurredBar}>
+        <MaterialTopTabBar {...barProps} />
+      </View>
     </BlurView>
   );
 }
@@ -118,35 +118,53 @@ export default function TopTabsNavigator() {
 
   const pickImage = async () => {
     const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      mediaTypes: 'images',
       allowsEditing: true,
       quality: 0.8,
     });
+
     if (!result.canceled) {
       const uri = result.assets[0].uri;
+
+      const { size } = await FileSystem.getInfoAsync(uri, { size: true }) as FileSystem.FileInfo & { size: number };
+
+      if (size > 10 * 1024 * 1024) {
+        Alert.alert('Image too large', 'Please select an image under 10MB.');
+        return;
+      }
+
+
       setModalImage(uri);
       setModalVideo(null);
     }
   };
 
+
   const pickVideo = async () => {
     const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Videos,
+      mediaTypes: 'videos',
     });
+
     if (!result.canceled) {
       const uri = result.assets[0].uri;
-      const info = await FileSystem.getInfoAsync(uri);
-      if (info.size && info.size > 20 * 1024 * 1024) {
+
+      const { size } = await FileSystem.getInfoAsync(uri, { size: true }) as FileSystem.FileInfo & { size: number };
+
+      if (size > 20 * 1024 * 1024) {
         Alert.alert('Video too large', 'Please select a video under 20MB.');
         return;
       }
+
       setModalVideo(uri);
       setModalImage(null);
     }
   };
 
+
+
   const handlePost = async () => {
-    if (!postText.trim() || !user) return;
+    if (!postText.trim() || !user || !profile) return;
+
 
     await supabase.from('posts').insert([
       {
@@ -155,6 +173,7 @@ export default function TopTabsNavigator() {
         username: profile.name || profile.username,
       },
     ]);
+
 
     setPostText('');
     setModalVisible(false);
@@ -219,42 +238,55 @@ export default function TopTabsNavigator() {
       edges={[]}
     >
       <Animated.View style={{ flex: 1, transform: [{ translateX }] }}>
-        <Tab.Navigator
-          tabBar={(props) => (
-            <HeaderTabBar
-              {...props}
-              insetsTop={insets.top}
+        
+          <Tab.Navigator
+            tabBar={(props) => (
+              <HeaderTabBar
+                {...props}
+                insetsTop={insets.top}
+                avatarUri={profileImageUri ?? profile?.image_url ?? undefined}
+                onProfile={openDrawer}
+                onSearch={() => homeScreenRef.current?.openSearch()}
+              />
+            )}
+            screenOptions={{
+              tabBarStyle: {
+                backgroundColor: 'transparent',
+                marginTop: 0,
+              },
+              tabBarLabelStyle: {
+                color: colors.text,
+                fontWeight: 'bold',
+              },
+              tabBarIndicatorStyle: {
+                backgroundColor: colors.accent,
+              },
+              tabBarActiveTintColor: colors.accent,
+            }}
 
-              avatarUri={profileImageUri ?? profile?.image_url ?? undefined}
-              onProfile={openDrawer}
-              onSearch={() => homeScreenRef.current?.openSearch()}
-            />
-          )}
-          sceneContainerStyle={{ paddingTop: HEADER_TOTAL_HEIGHT }}
+          >
 
-        screenOptions={{
-          tabBarStyle: {
-            backgroundColor: 'transparent',
-            marginTop: 0,
-          },
-          tabBarLabelStyle: {
-            color: colors.text,
-            fontWeight: 'bold',
-          },
-          tabBarIndicatorStyle: {
-            backgroundColor: colors.accent,
-          },
-          tabBarActiveTintColor: colors.accent,
-        }}
-      >
-        <Tab.Screen name="For you" component={ForYouScreen} />
-        <Tab.Screen name="Following">
-          {() => (
-            <Suspense fallback={<LoadingScreen />}>
-              <FollowingFeedScreen />
-            </Suspense>
+
+        <Tab.Screen
+          name="ForYou"
+          children={() => (
+            <View style={{ paddingTop: HEADER_TOTAL_HEIGHT }}>
+              <ForYouScreen />
+            </View>
           )}
-        </Tab.Screen>
+        />
+
+        <Tab.Screen
+          name="Following"
+          children={() => (
+            <View style={{ paddingTop: HEADER_TOTAL_HEIGHT }}>
+              <Suspense fallback={<LoadingScreen />}>
+                <FollowingFeedScreen />
+              </Suspense>
+            </View>
+          )}
+        />
+
         </Tab.Navigator>
 
         <TouchableOpacity
@@ -282,7 +314,7 @@ export default function TopTabsNavigator() {
                   style={styles.preview}
                   useNativeControls
                   isMuted
-                  resizeMode="contain"
+                  resizeMode={ResizeMode.CONTAIN} 
                 />
               )}
               <View style={styles.buttonRow}>
