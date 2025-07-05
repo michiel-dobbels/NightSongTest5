@@ -4,6 +4,10 @@ create extension if not exists "uuid-ossp";
 create table if not exists public.notifications (
     id uuid primary key default uuid_generate_v4(),
     user_id uuid references public.profiles(id) on delete cascade,
+    sender_id uuid references public.profiles(id) on delete set null,
+    recipient_id uuid references public.profiles(id) on delete cascade,
+    type text,
+    entity_id uuid,
     message text not null,
     created_at timestamptz not null default now(),
     read boolean not null default false

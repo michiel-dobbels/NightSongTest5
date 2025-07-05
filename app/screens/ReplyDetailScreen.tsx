@@ -111,7 +111,8 @@ function LikeInfo({
     if (!liked && profile && userId !== profile.id) {
       const username = profile.username || 'Someone';
       const target = isPost ? 'post' : 'reply';
-      addNotification(userId, `@${username} liked your ${target}`);
+      addNotification(userId, `@${username} liked your ${target}`,
+        { type: 'like', entity_id: id });
 
     }
     toggleLike();
