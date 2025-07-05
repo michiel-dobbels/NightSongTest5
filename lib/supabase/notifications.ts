@@ -38,7 +38,7 @@ export async function insertNotification(payload: {
   
   sender_id: string;
   recipient_id: string;
-  type: 'like' | 'reply' | 'follow';
+  type: 'like' | 'reply' | 'follow' | 'image_like' | 'video_like';
   entity_id: string;
   message: string;
 }) {

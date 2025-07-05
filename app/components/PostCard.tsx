@@ -188,13 +188,21 @@ function PostCard({
 
             if (!liked && profile && post.user_id !== profile.id) {
               const username = profile.username || 'Someone';
+              const hasVideo = !!finalVideoUrl;
+              const hasImage = !!finalImageUrl && !hasVideo;
+              const type = hasVideo
+                ? 'video_like'
+                : hasImage
+                ? 'image_like'
+                : 'like';
+              const target = hasVideo ? 'video' : hasImage ? 'image' : 'post';
               console.log('👉 Liking detected. Inserting notification...');
               await insertNotification({
                 sender_id: profile.id,
                 recipient_id: post.user_id,
-                type: 'like',
+                type,
                 entity_id: post.id,
-                message: `${username} liked your post`,
+                message: `${username} liked your ${target}`,
               });
 
               console.log('👉 Done insertNotification.');

@@ -109,8 +109,16 @@ export default function MediaPostCard({ post, avatarUri, isActive }: Props) {
           onPress={() => {
             if (!liked && profile && post.user_id !== profile.id) {
               const username = profile.username || 'Someone';
-              addNotification(post.user_id, `@${username} liked your post`, {
-                type: 'like',
+              const hasVideo = !!post.video_url;
+              const hasImage = !!post.image_url && !hasVideo;
+              const type = hasVideo
+                ? 'video_like'
+                : hasImage
+                ? 'image_like'
+                : 'like';
+              const target = hasVideo ? 'video' : hasImage ? 'image' : 'post';
+              addNotification(post.user_id, `@${username} liked your ${target}`, {
+                type,
                 entity_id: post.id,
               });
             }
