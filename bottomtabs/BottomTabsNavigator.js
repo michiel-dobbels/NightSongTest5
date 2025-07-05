@@ -5,12 +5,14 @@ import { Ionicons } from '@expo/vector-icons';
 import { Dimensions } from 'react-native';
 import { BlurView } from 'expo-blur';
 import { colors } from '../app/styles/colors';
+import NotificationBellIcon from '../app/components/NotificationBellIcon';
+import { useNotifications } from '../lib/hooks/useNotifications';
 
 import TopTabsNavigator from '../app/TopTabsNavigator';
 
 import MarketScreen from './MarketScreen';
 import VideoScreen from '../app/screens/VideoScreen';
-import NotificationsScreen from './NotificationsScreen';
+import NotificationsScreen from '../app/screens/NotificationsScreen';
 
 // Future search features will live in dedicated screens:
 // - A post and reply search for forum content
@@ -71,6 +73,7 @@ function HomeStackScreen() {
 
 
 export default function BottomTabsNavigator() {
+  const { unreadCount } = useNotifications();
   return (
     <Tab.Navigator
       screenOptions={({ route }) => ({
@@ -104,7 +107,10 @@ export default function BottomTabsNavigator() {
           if (route.name === 'Home') iconName = 'home-outline';
           else if (route.name === 'Market') iconName = 'car-outline';
           else if (route.name === 'Video') iconName = 'play-circle-outline';
-          else if (route.name === 'Notifications') iconName = 'notifications-outline';
+          if (route.name === 'Notifications')
+            return (
+              <NotificationBellIcon color={color} size={size} count={unreadCount} />
+            );
           return <Ionicons name={iconName} size={size} color={color} />;
         },
       })}
