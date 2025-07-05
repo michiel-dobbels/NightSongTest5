@@ -28,6 +28,7 @@ import { useAuth } from '../../AuthContext';
 import { colors } from '../styles/colors';
 import { usePostStore } from '../contexts/PostStoreContext';
 import useLike from '../hooks/useLike';
+import { createNotification } from '../../lib/supabase/notifications';
 import { postEvents } from '../postEvents';
 import { CONFIRM_ACTION } from '../constants/ui';
 import ReplyModal from '../components/ReplyModal';
@@ -93,8 +94,16 @@ interface Post {
   } | null;
 }
 
-function LikeInfo({ id, isPost = false }: { id: string; isPost?: boolean }) {
-  const { likeCount, liked, toggleLike } = useLike(id, !isPost);
+function LikeInfo({
+  id,
+  ownerId,
+  isPost = false,
+}: {
+  id: string;
+  ownerId: string;
+  isPost?: boolean;
+}) {
+  const { likeCount, liked, toggleLike } = useLike(id, !isPost, ownerId);
   return (
     <TouchableOpacity style={styles.likeContainer} onPress={toggleLike}>
       <Ionicons
@@ -523,6 +532,21 @@ export default function ReplyDetailScreen() {
     }
 
     if (!error && data) {
+      const targetId = quickReplyTarget.parentId
+        ? allReplies.find(r => r.id === quickReplyTarget.parentId)?.user_id
+        : parent.user_id;
+      if (targetId && targetId !== user.id) {
+        await createNotification({
+          user_id: targetId,
+          sender_id: user.id,
+          recipient_id: targetId,
+          type: 'reply',
+          entity_id: data.id,
+          message: `${profile.name || profile.username} replied to your ${
+            quickReplyTarget.parentId ? 'reply' : 'post'
+          }`,
+        });
+      }
       if (quickReplyTarget.parentId === parent.id) {
         setReplies(prev =>
           prev.map(r =>
@@ -715,7 +739,7 @@ export default function ReplyDetailScreen() {
                   />
                   <Text style={styles.replyCountLarge}>{replyCounts[originalPost.id] || 0}</Text>
                 </TouchableOpacity>
-                <LikeInfo id={originalPost.id} isPost />
+                <LikeInfo id={originalPost.id} ownerId={originalPost.user_id} isPost />
 
               </View>
             )}
@@ -795,7 +819,7 @@ export default function ReplyDetailScreen() {
                   />
                   <Text style={styles.replyCountLarge}>{replyCounts[a.id] || 0}</Text>
                 </TouchableOpacity>
-                <LikeInfo id={a.id} />
+                <LikeInfo id={a.id} ownerId={a.user_id} />
 
               </View>
             );
@@ -874,7 +898,7 @@ export default function ReplyDetailScreen() {
             />
             <Text style={styles.replyCountLarge}>{replyCounts[parent.id] || 0}</Text>
           </TouchableOpacity>
-          <LikeInfo id={parent.id} />
+          <LikeInfo id={parent.id} ownerId={parent.user_id} />
 
           </View>
           </>
@@ -970,7 +994,7 @@ export default function ReplyDetailScreen() {
                   />
                   <Text style={styles.replyCountLarge}>{replyCounts[item.id] || 0}</Text>
                 </TouchableOpacity>
-                <LikeInfo id={item.id} />
+                <LikeInfo id={item.id} ownerId={item.user_id} />
 
               </View>
             </TouchableOpacity>

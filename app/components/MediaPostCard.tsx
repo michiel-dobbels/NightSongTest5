@@ -27,7 +27,7 @@ interface Props {
 
 export default function MediaPostCard({ post, avatarUri, isActive }: Props) {
   const [modalVisible, setModalVisible] = useState(false);
-  const { likeCount, liked, toggleLike } = useLike(post.id);
+  const { likeCount, liked, toggleLike } = useLike(post.id, false, post.user_id);
   const username = post.profiles?.username || post.username || 'unknown';
   const [quickReplyVisible, setQuickReplyVisible] = useState(false);
   const navigation = useNavigation<any>();

@@ -9,6 +9,7 @@ import React, {
 } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { supabase } from '../../lib/supabase';
+import { createNotification } from '../../lib/supabase/notifications';
 import { likeEvents } from '../likeEvents';
 import { postEvents } from '../postEvents';
 
@@ -31,7 +32,7 @@ interface PostStore {
   posts: Record<string, PostState>;
   initialize: (items: ItemInfo[]) => Promise<void>;
   mergeLiked: (map: Record<string, boolean>) => Promise<void>;
-  toggleLike: (id: string, isReply?: boolean) => Promise<void>;
+  toggleLike: (id: string, isReply?: boolean, ownerId?: string) => Promise<void>;
   remove: (id: string) => void;
 }
 
@@ -40,7 +41,7 @@ const PostStoreContext = createContext<PostStore | undefined>(undefined);
 export const PostStoreProvider: React.FC<{ children: React.ReactNode }> = ({
   children,
 }) => {
-  const { user, updatePost } = useAuth()!;
+  const { user, updatePost, profile } = useAuth()!;
   const [posts, setPosts] = useState<Record<string, PostState>>({});
   const postsRef = useRef<Record<string, PostState>>({});
   const lastLoadedUserIdRef = useRef<string | null>(null);
@@ -167,7 +168,7 @@ export const PostStoreProvider: React.FC<{ children: React.ReactNode }> = ({
   }, [user?.id]);
 
 
-  const toggleLike = useCallback(async (id: string, isReply: boolean = false) => {
+  const toggleLike = useCallback(async (id: string, isReply: boolean = false, ownerId?: string) => {
     if (!user) return;
     const current = postsRef.current[id] || { likeCount: 0, liked: false };
     const newLiked = !current.liked;
@@ -221,6 +222,16 @@ export const PostStoreProvider: React.FC<{ children: React.ReactNode }> = ({
         await supabase
           .from('likes')
           .insert({ user_id: user.id, [isReply ? 'reply_id' : 'post_id']: id });
+        if (ownerId && ownerId !== user.id) {
+          await createNotification({
+            user_id: ownerId,
+            sender_id: user.id,
+            recipient_id: ownerId,
+            type: 'like',
+            entity_id: id,
+            message: `${profile?.name || profile?.username || 'Someone'} liked your ${isReply ? 'reply' : 'post'}`,
+          });
+        }
       } else {
         await supabase
           .from('likes')
@@ -247,7 +258,7 @@ export const PostStoreProvider: React.FC<{ children: React.ReactNode }> = ({
     } catch (e) {
       console.error('Failed to toggle like', e);
     }
-  }, [user?.id, updatePost]);
+  }, [user?.id, updatePost, profile]);
 
 
   const remove = useCallback((id: string) => {
