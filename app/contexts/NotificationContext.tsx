@@ -1,18 +1,23 @@
 import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
-import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../AuthContext';
+import {
+  fetchNotifications,
+  insertNotification,
+  markNotificationRead,
+  subscribeToNotifications,
+  DBNotification,
+} from '../../lib/supabase/notifications';
 
-export interface Notification {
-  id: string;
-  user_id: string;
-  message: string;
-  created_at: string;
-  read?: boolean | null;
-}
+export type Notification = DBNotification;
 
 interface NotificationContextValue {
   notifications: Notification[];
-  addNotification: (userId: string, message: string) => Promise<void>;
+  unreadCount: number;
+  addNotification: (
+    userId: string,
+    message: string,
+    opts?: { type?: string; entity_id?: string }
+  ) => Promise<void>;
   markRead: (id: string) => Promise<void>;
   refresh: () => Promise<void>;
 }
@@ -23,66 +28,66 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
   const { user } = useAuth()!;
   const [notifications, setNotifications] = useState<Notification[]>([]);
 
-  const fetchNotifications = useCallback(async () => {
+  const fetchNotificationsCallback = useCallback(async () => {
     if (!user) {
       setNotifications([]);
       return;
     }
-    const { data, error } = await supabase
-      .from('notifications')
-      .select('id,user_id,message,created_at,read')
-      .eq('user_id', user.id)
-      .order('created_at', { ascending: false });
-    if (!error && data) setNotifications(data as Notification[]);
+    const data = await fetchNotifications(user.id);
+    setNotifications(data as Notification[]);
   }, [user?.id]);
 
   useEffect(() => {
-    fetchNotifications();
-  }, [fetchNotifications]);
+    fetchNotificationsCallback();
+  }, [fetchNotificationsCallback]);
 
   // Listen for new notifications in realtime so they appear immediately
 
   useEffect(() => {
     if (!user) return;
-    const subscription = supabase
-      .from(`notifications:user_id=eq.${user.id}`)
-      .on('INSERT', payload => {
-        setNotifications(prev => [payload.new as Notification, ...prev]);
-      })
-      .subscribe();
+    const subscription = subscribeToNotifications(user.id, n => {
+      setNotifications(prev => [n as Notification, ...prev]);
+    });
     return () => {
       subscription.unsubscribe();
     };
   }, [user?.id]);
 
   const addNotification = useCallback(
-    async (userId: string, message: string) => {
-      const { data, error } = await supabase
-        .from('notifications')
-        .insert({ user_id: userId, message })
-        .single();
-      if (!error && data && userId === user?.id) {
-        setNotifications(prev => [data as Notification, ...prev]);
-      }
+    async (
+      userId: string,
+      message: string,
+      opts: { type?: string; entity_id?: string } = {},
+    ) => {
+    const payload = {
+      user_id: userId,
+      sender_id: user?.id ?? null,
+      recipient_id: userId,
+      type: opts.type ?? null,
+      entity_id: opts.entity_id ?? null,
+      message,
+    };
+    await insertNotification(payload as any);
+    if (userId === user?.id) {
+      fetchNotificationsCallback();
+    }
     },
     [user?.id],
   );
 
   const markRead = useCallback(async (id: string) => {
-    const { error } = await supabase
-      .from('notifications')
-      .update({ read: true })
-      .eq('id', id);
-    if (!error) {
-      setNotifications(prev => prev.map(n => (n.id === id ? { ...n, read: true } : n)));
-    }
+    await markNotificationRead(id);
+    setNotifications(prev => prev.map(n => (n.id === id ? { ...n, read: true } : n)));
   }, []);
+
+  const unreadCount = notifications.filter(n => !n.read).length;
 
   const value = {
     notifications,
+    unreadCount,
     addNotification,
     markRead,
-    refresh: fetchNotifications,
+    refresh: fetchNotificationsCallback,
   };
 
   return <NotificationContext.Provider value={value}>{children}</NotificationContext.Provider>;

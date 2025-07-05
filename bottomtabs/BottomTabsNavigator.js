@@ -10,7 +10,8 @@ import TopTabsNavigator from '../app/TopTabsNavigator';
 
 import MarketScreen from './MarketScreen';
 import VideoScreen from '../app/screens/VideoScreen';
-import NotificationsScreen from './NotificationsScreen';
+import NotificationsScreen from '../screens/NotificationsScreen';
+import NotificationBellIcon from '../app/components/NotificationBellIcon';
 
 // Future search features will live in dedicated screens:
 // - A post and reply search for forum content
@@ -99,12 +100,14 @@ export default function BottomTabsNavigator() {
           />
         ),
         tabBarActiveTintColor: colors.accent,
-        tabBarIcon: ({ focused, color, size }) => {
+        tabBarIcon: ({ color, size }) => {
+          if (route.name === 'Notifications') {
+            return <NotificationBellIcon color={color} size={size} />;
+          }
           let iconName = 'home-outline';
           if (route.name === 'Home') iconName = 'home-outline';
           else if (route.name === 'Market') iconName = 'car-outline';
           else if (route.name === 'Video') iconName = 'play-circle-outline';
-          else if (route.name === 'Notifications') iconName = 'notifications-outline';
           return <Ionicons name={iconName} size={size} color={color} />;
         },
       })}
