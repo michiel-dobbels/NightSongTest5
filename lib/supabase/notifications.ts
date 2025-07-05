@@ -31,3 +31,16 @@ export async function fetchNotifications(userId: string) {
 export async function markNotificationRead(id: string) {
   return supabase.from('notifications').update({ read: true }).eq('id', id);
 }
+
+export interface NewNotification {
+  user_id: string;
+  sender_id: string | null;
+  recipient_id: string | null;
+  type: string;
+  entity_id: string | null;
+  message: string;
+}
+
+export async function createNotification(payload: NewNotification) {
+  return supabase.from('notifications').insert(payload);
+}

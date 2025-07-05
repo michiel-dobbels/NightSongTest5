@@ -33,6 +33,7 @@ import { uploadImage } from '../../lib/uploadImage';
 import ReplyModal from '../components/ReplyModal';
 
 import { useStories } from '../contexts/StoryStoreContext';
+import { createNotification } from '../../lib/supabase/notifications';
 
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -227,20 +228,34 @@ const HomeScreen = forwardRef<HomeScreenRef, { hideInput?: boolean }>(
 
     }
 
-    const { error } = await supabase.from('replies').insert({
-      post_id: activePostId,
-      parent_id: null,
-      user_id: profile.id,
-      content: text,
-
-      image_url: uploadedImage,
-      video_url: uploadedUrl,
-      username: profile.name || profile.username,
-    });
+    const { data: newReply, error } = await supabase
+      .from('replies')
+      .insert({
+        post_id: activePostId,
+        parent_id: null,
+        user_id: profile.id,
+        content: text,
+        image_url: uploadedImage,
+        video_url: uploadedUrl,
+        username: profile.name || profile.username,
+      })
+      .select()
+      .single();
     if (error) {
       console.error('Reply failed', error.message);
     } else {
       replyEvents.emit('replyAdded', activePostId);
+      const targetPost = posts.find(p => p.id === activePostId);
+      if (targetPost && targetPost.user_id !== profile.id) {
+        await createNotification({
+          user_id: targetPost.user_id,
+          sender_id: profile.id,
+          recipient_id: targetPost.user_id,
+          type: 'reply',
+          entity_id: newReply?.id ?? null,
+          message: `${profile.name || profile.username} replied to your post`,
+        });
+      }
     }
 
   };

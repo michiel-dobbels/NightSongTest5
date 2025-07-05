@@ -20,6 +20,7 @@ import { useRoute, useNavigation } from '@react-navigation/native';
 
 import { supabase, REPLY_VIDEO_BUCKET } from '../../lib/supabase';
 import { uploadImage } from '../../lib/uploadImage';
+import { createNotification } from '../../lib/supabase/notifications';
 import { getLikeCounts } from '../../lib/getLikeCounts';
 import { useAuth } from '../../AuthContext';
 import { colors } from '../styles/colors';
@@ -539,6 +540,21 @@ export default function PostDetailScreen() {
     }
 
     if (!error && data) {
+      const targetId = quickReplyTarget.parentId
+        ? allReplies.find(r => r.id === quickReplyTarget.parentId)?.user_id
+        : post.user_id;
+      if (targetId && targetId !== user.id) {
+        await createNotification({
+          user_id: targetId,
+          sender_id: user.id,
+          recipient_id: targetId,
+          type: 'reply',
+          entity_id: data.id,
+          message: `${profile.name || profile.username} replied to your ${
+            quickReplyTarget.parentId ? 'reply' : 'post'
+          }`,
+        });
+      }
       if (quickReplyTarget.parentId === null) {
         setReplies(prev =>
           prev.map(r =>

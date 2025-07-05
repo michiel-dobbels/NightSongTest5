@@ -82,7 +82,7 @@ function PostCard({
   const displayName = post.profiles?.name || post.profiles?.username || post.username;
   const userName = post.profiles?.username || post.username;
   const isReply = (post as any).post_id !== undefined;
-  const { likeCount, liked, toggleLike } = useLike(post.id, isReply);
+  const { likeCount, liked, toggleLike } = useLike(post.id, isReply, post.user_id);
   const { getStoriesForUser } = useStories();
   const hasStory = getStoriesForUser(post.user_id).length > 0;
 
