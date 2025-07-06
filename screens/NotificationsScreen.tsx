@@ -8,6 +8,7 @@ import {
   TouchableOpacity,
   Dimensions,
 } from 'react-native';
+
 import { useNavigation } from '@react-navigation/native';
 import NotificationCard from '../app/components/NotificationCard';
 import { useNotifications } from '../lib/hooks/useNotifications';
@@ -41,6 +42,7 @@ export default function NotificationsScreen() {
       <FlatList
         ListHeaderComponent={
           <View style={styles.header}>
+
             <TouchableOpacity
               onPress={() => navigation.navigate('Profile')}
               style={styles.avatarContainer}
@@ -57,6 +59,7 @@ export default function NotificationsScreen() {
             <View style={{ height: spacerHeight }} />
           </View>
         }
+
         data={notifications}
         keyExtractor={item => item.id}
         renderItem={({ item }) => (
@@ -80,4 +83,5 @@ const styles = StyleSheet.create({
   header: {
     alignItems: 'center',
   },
+
 });
