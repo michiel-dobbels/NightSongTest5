@@ -3,6 +3,7 @@ import { useAuth } from '../../AuthContext';
 import {
   fetchNotifications,
   markNotificationRead,
+  markAllNotificationsRead,
   subscribeToNotifications,
   DBNotification,
 } from '../supabase/notifications';
@@ -39,7 +40,13 @@ export function useNotifications() {
     setNotifications(prev => prev.map(n => (n.id === id ? { ...n, read: true } : n)));
   }, []);
 
+  const markAllRead = useCallback(async () => {
+    if (!user) return;
+    await markAllNotificationsRead(user.id);
+    setNotifications(prev => prev.map(n => ({ ...n, read: true })));
+  }, [user?.id]);
+
   const unreadCount = notifications.filter(n => !n.read).length;
 
-  return { notifications, unreadCount, markRead, refresh: load };
+  return { notifications, unreadCount, markRead, markAllRead, refresh: load };
 }

@@ -66,6 +66,17 @@ export async function markNotificationRead(id: string): Promise<void> {
   }
 }
 
+export async function markAllNotificationsRead(userId: string): Promise<void> {
+  const { error } = await supabase
+    .from('notifications')
+    .update({ read: true })
+    .eq('recipient_id', userId)
+    .eq('read', false);
+  if (error) {
+    console.error('Failed to mark all notifications read', error);
+  }
+}
+
 export function subscribeToNotifications(
   userId: string,
   onInsert: (notification: DBNotification) => void
