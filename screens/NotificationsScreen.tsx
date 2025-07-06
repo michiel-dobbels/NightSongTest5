@@ -41,7 +41,8 @@ export default function NotificationsScreen() {
     <View style={styles.container}>
       <FlatList
         ListHeaderComponent={
-          <View>
+          <View style={styles.header}>
+
             <TouchableOpacity
               onPress={() => navigation.navigate('Profile')}
               style={styles.avatarContainer}
@@ -72,7 +73,15 @@ export default function NotificationsScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.background, padding: 10 },
-  avatarContainer: { marginBottom: 10, alignItems: 'flex-start' },
+  avatarContainer: {
+    marginBottom: 10,
+    alignSelf: 'center',
+    alignItems: 'center',
+  },
   avatar: { width: 40, height: 40, borderRadius: 20 },
   placeholder: { backgroundColor: '#555' },
+  header: {
+    alignItems: 'center',
+  },
+
 });
