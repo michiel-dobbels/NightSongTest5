@@ -42,10 +42,10 @@ export default function NotificationsScreen() {
       <FlatList
         ListHeaderComponent={
           <View style={styles.header}>
-
             <TouchableOpacity
               onPress={() => navigation.navigate('Profile')}
-              style={styles.avatarContainer}
+              style={[styles.avatarContainer, { marginTop: spacerHeight }]}
+
             >
               {profileImageUri || profile?.image_url ? (
                 <Image
@@ -56,7 +56,6 @@ export default function NotificationsScreen() {
                 <View style={[styles.avatar, styles.placeholder]} />
               )}
             </TouchableOpacity>
-            <View style={{ height: spacerHeight }} />
           </View>
         }
 
