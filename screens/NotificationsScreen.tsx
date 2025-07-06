@@ -8,6 +8,7 @@ import {
   TouchableOpacity,
   Dimensions,
 } from 'react-native';
+
 import { useNavigation } from '@react-navigation/native';
 import NotificationCard from '../app/components/NotificationCard';
 import { useNotifications } from '../lib/hooks/useNotifications';
@@ -44,6 +45,7 @@ export default function NotificationsScreen() {
             <TouchableOpacity
               onPress={() => navigation.navigate('Profile')}
               style={[styles.avatarContainer, { marginTop: spacerHeight }]}
+
             >
               {profileImageUri || profile?.image_url ? (
                 <Image
@@ -56,6 +58,7 @@ export default function NotificationsScreen() {
             </TouchableOpacity>
           </View>
         }
+
         data={notifications}
         keyExtractor={item => item.id}
         renderItem={({ item }) => (
@@ -79,4 +82,5 @@ const styles = StyleSheet.create({
   header: {
     alignItems: 'center',
   },
+
 });
