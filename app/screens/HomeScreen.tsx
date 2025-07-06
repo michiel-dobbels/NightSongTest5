@@ -31,6 +31,7 @@ import {
 } from '../../lib/supabase';
 import { uploadImage } from '../../lib/uploadImage';
 import ReplyModal from '../components/ReplyModal';
+import { insertNotification } from '../../lib/supabase/notifications';
 
 import { useStories } from '../contexts/StoryStoreContext';
 
@@ -227,6 +228,8 @@ const HomeScreen = forwardRef<HomeScreenRef, { hideInput?: boolean }>(
 
     }
 
+    const targetPost = posts.find(p => p.id === activePostId);
+
     const { error } = await supabase.from('replies').insert({
       post_id: activePostId,
       parent_id: null,
@@ -240,6 +243,20 @@ const HomeScreen = forwardRef<HomeScreenRef, { hideInput?: boolean }>(
     if (error) {
       console.error('Reply failed', error.message);
     } else {
+      if (
+        targetPost &&
+        (targetPost.image_url || targetPost.video_url) &&
+        targetPost.user_id !== profile.id
+      ) {
+        const username = profile.username || 'Someone';
+        await insertNotification({
+          sender_id: profile.id,
+          recipient_id: targetPost.user_id,
+          type: 'reply',
+          entity_id: targetPost.id,
+          message: `${username} replied to your post`,
+        });
+      }
       replyEvents.emit('replyAdded', activePostId);
     }
 
