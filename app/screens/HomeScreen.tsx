@@ -31,6 +31,7 @@ import {
 } from '../../lib/supabase';
 import { uploadImage } from '../../lib/uploadImage';
 import ReplyModal from '../components/ReplyModal';
+import { insertNotification } from '../../lib/supabase/notifications';
 
 import { useStories } from '../contexts/StoryStoreContext';
 
@@ -227,20 +228,37 @@ const HomeScreen = forwardRef<HomeScreenRef, { hideInput?: boolean }>(
 
     }
 
-    const { error } = await supabase.from('replies').insert({
-      post_id: activePostId,
-      parent_id: null,
-      user_id: profile.id,
-      content: text,
+    let { data, error } = await supabase
+      .from('replies')
+      .insert({
+        post_id: activePostId,
+        parent_id: null,
+        user_id: profile.id,
+        content: text,
+        image_url: uploadedImage,
+        video_url: uploadedUrl,
+        username: profile.name || profile.username,
+      })
+      .select()
+      .single();
+    if (error?.code === 'PGRST204') {
+      error = null;
+    }
 
-      image_url: uploadedImage,
-      video_url: uploadedUrl,
-      username: profile.name || profile.username,
-    });
     if (error) {
       console.error('Reply failed', error.message);
-    } else {
+    } else if (data) {
       replyEvents.emit('replyAdded', activePostId);
+      const targetPost = posts.find(p => p.id === activePostId);
+      if (targetPost && targetPost.user_id !== profile.id) {
+        await insertNotification({
+          sender_id: profile.id,
+          recipient_id: targetPost.user_id,
+          entity_id: data.id,
+          type: 'reply',
+          message: `@${profile.username} replied to your post`,
+        });
+      }
     }
 
   };

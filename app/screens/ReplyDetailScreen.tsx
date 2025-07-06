@@ -32,6 +32,7 @@ import useLike from '../hooks/useLike';
 import { postEvents } from '../postEvents';
 import { CONFIRM_ACTION } from '../constants/ui';
 import ReplyModal from '../components/ReplyModal';
+import { insertNotification } from '../../lib/supabase/notifications';
 
 
 const CHILD_PREFIX = 'cached_child_replies_';
@@ -571,6 +572,15 @@ export default function ReplyDetailScreen() {
         return counts;
       });
       initialize([{ id: data.id, like_count: 0 }]);
+      if (originalPost && user.id !== originalPost.user_id) {
+        await insertNotification({
+          sender_id: user.id,
+          recipient_id: originalPost.user_id,
+          entity_id: data.id,
+          type: 'reply',
+          message: `@${profile.username} replied to your post`,
+        });
+      }
     }
     fetchReplies();
   };

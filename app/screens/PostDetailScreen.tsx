@@ -30,6 +30,7 @@ import { postEvents } from '../postEvents';
 import PostCard, { Post } from '../components/PostCard';
 import { CONFIRM_ACTION } from '../constants/ui';
 import ReplyModal from '../components/ReplyModal';
+import { insertNotification } from '../../lib/supabase/notifications';
 
 const REPLY_STORAGE_PREFIX = 'cached_replies_';
 const COUNT_STORAGE_KEY = 'cached_reply_counts';
@@ -564,6 +565,15 @@ export default function PostDetailScreen() {
         return counts;
       });
       initialize([{ id: data.id, like_count: 0 }]);
+      if (user.id !== post.user_id) {
+        await insertNotification({
+          sender_id: user.id,
+          recipient_id: post.user_id,
+          entity_id: data.id,
+          type: 'reply',
+          message: `@${profile.username} replied to your post`,
+        });
+      }
     }
     fetchReplies();
   };
