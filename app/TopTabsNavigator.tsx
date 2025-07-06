@@ -332,6 +332,14 @@ export default function TopTabsNavigator() {
         <TouchableOpacity
           onPress={() => {
             closeDrawer();
+            navigation.navigate('chat');
+          }}
+        >
+          <Text style={styles.menuItem}>Messages</Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          onPress={() => {
+            closeDrawer();
             signOut();
           }}
         >
