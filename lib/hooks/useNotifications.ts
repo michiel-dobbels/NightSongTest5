@@ -7,10 +7,26 @@ import {
   subscribeToNotifications,
   DBNotification,
 } from '../supabase/notifications';
+import { notificationEvents } from '../../app/notificationEvents';
 
 export function useNotifications() {
   const { user } = useAuth()!;
   const [notifications, setNotifications] = useState<DBNotification[]>([]);
+
+  useEffect(() => {
+    const onMarkRead = (id: string) => {
+      setNotifications(prev => prev.map(n => (n.id === id ? { ...n, read: true } : n)));
+    };
+    const onMarkAll = () => {
+      setNotifications(prev => prev.map(n => ({ ...n, read: true })));
+    };
+    notificationEvents.on('markRead', onMarkRead);
+    notificationEvents.on('markAllRead', onMarkAll);
+    return () => {
+      notificationEvents.off('markRead', onMarkRead);
+      notificationEvents.off('markAllRead', onMarkAll);
+    };
+  }, []);
 
   const load = useCallback(async () => {
     if (!user) {
@@ -38,12 +54,15 @@ export function useNotifications() {
   const markRead = useCallback(async (id: string) => {
     await markNotificationRead(id);
     setNotifications(prev => prev.map(n => (n.id === id ? { ...n, read: true } : n)));
+    notificationEvents.emit('markRead', id);
   }, []);
 
   const markAllRead = useCallback(async () => {
     if (!user) return;
     await markAllNotificationsRead(user.id);
-    setNotifications(prev => prev.map(n => ({ ...n, read: true })));
+    setNotifications(prev => prev.map(n => ({ ...n, read: true }))); 
+    notificationEvents.emit('markAllRead');
+
   }, [user?.id]);
 
   const unreadCount = notifications.filter(n => !n.read).length;
