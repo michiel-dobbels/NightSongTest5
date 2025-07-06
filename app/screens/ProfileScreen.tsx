@@ -37,6 +37,7 @@ import ReplyThread from '../components/ReplyThread';
 
 import { replyEvents } from '../replyEvents';
 import { likeEvents } from '../likeEvents';
+import { insertNotification } from '../../lib/supabase/notifications';
 
 import { CONFIRM_ACTION } from '../constants/ui';
 
@@ -355,6 +356,16 @@ export default function ProfileScreen() {
       });
       initialize([{ id: data.id, like_count: 0 }]);
       replyEvents.emit('replyAdded', activePostId);
+      const targetPost = posts.find(p => p.id === activePostId);
+      if (targetPost && targetPost.user_id !== profile.id) {
+        await insertNotification({
+          sender_id: profile.id,
+          recipient_id: targetPost.user_id,
+          entity_id: data.id,
+          type: 'reply',
+          message: `@${profile.username} replied to your post`,
+        });
+      }
     } else if (error) {
       console.error('Reply failed', error.message);
     }
