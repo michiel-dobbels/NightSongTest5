@@ -1,5 +1,14 @@
 import React, { useState } from 'react';
-import { View, FlatList, RefreshControl, StyleSheet, Image } from 'react-native';
+import {
+  View,
+  FlatList,
+  RefreshControl,
+  StyleSheet,
+  Image,
+  TouchableOpacity,
+  Dimensions,
+} from 'react-native';
+
 import { useNavigation } from '@react-navigation/native';
 import NotificationCard from '../app/components/NotificationCard';
 import { useNotifications } from '../lib/hooks/useNotifications';
@@ -10,6 +19,7 @@ export default function NotificationsScreen() {
   const { notifications, refresh, markRead } = useNotifications();
   const { profile, profileImageUri } = useAuth()!;
   const navigation = useNavigation<any>();
+  const spacerHeight = Dimensions.get('window').height * 0.1;
   const [refreshing, setRefreshing] = useState(false);
 
   const handlePress = (n: any) => {
@@ -31,18 +41,24 @@ export default function NotificationsScreen() {
     <View style={styles.container}>
       <FlatList
         ListHeaderComponent={
-          <View style={styles.avatarContainer}>
-            {profileImageUri || profile?.image_url ? (
-              <Image
-                source={{ uri: profileImageUri ?? (profile?.image_url as string) }}
-                style={styles.avatar}
-              />
-            ) : (
-              <View style={[styles.avatar, styles.placeholder]} />
-            )}
+          <View>
+            <TouchableOpacity
+              onPress={() => navigation.navigate('Profile')}
+              style={styles.avatarContainer}
+            >
+              {profileImageUri || profile?.image_url ? (
+                <Image
+                  source={{ uri: profileImageUri ?? (profile?.image_url as string) }}
+                  style={styles.avatar}
+                />
+              ) : (
+                <View style={[styles.avatar, styles.placeholder]} />
+              )}
+            </TouchableOpacity>
+            <View style={{ height: spacerHeight }} />
           </View>
         }
-        ListHeaderComponentStyle={styles.avatarContainer}
+
         data={notifications}
         keyExtractor={item => item.id}
         renderItem={({ item }) => (
