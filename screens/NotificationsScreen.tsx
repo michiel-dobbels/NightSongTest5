@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
+
 import {
   View,
   FlatList,
@@ -8,19 +9,28 @@ import {
   TouchableOpacity,
   Dimensions,
 } from 'react-native';
+import { useNavigation, useFocusEffect } from '@react-navigation/native';
 
-import { useNavigation } from '@react-navigation/native';
 import NotificationCard from '../app/components/NotificationCard';
 import { useNotifications } from '../lib/hooks/useNotifications';
 import { colors } from '../app/styles/colors';
 import { useAuth } from '../AuthContext';
 
 export default function NotificationsScreen() {
-  const { notifications, refresh, markRead } = useNotifications();
+  const { notifications, refresh, markRead, markAllRead } = useNotifications();
+
   const { profile, profileImageUri } = useAuth()!;
   const navigation = useNavigation<any>();
   const spacerHeight = Dimensions.get('window').height * 0.1;
   const [refreshing, setRefreshing] = useState(false);
+
+  useFocusEffect(
+    useCallback(() => {
+      return () => {
+        markAllRead();
+      };
+    }, [markAllRead])
+  );
 
   const handlePress = (n: any) => {
     markRead(n.id);
