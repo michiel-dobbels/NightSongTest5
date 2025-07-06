@@ -4,6 +4,7 @@ import AuthPage from './AuthPage';
 
 import BottomTabsNavigator from './bottomtabs/BottomTabsNavigator';
 import LoadingScreen from './app/components/LoadingScreen';
+const ChatScreen = React.lazy(() => import('./app/chat'));
 import { useAuth } from './AuthContext';
 
 const Stack = createNativeStackNavigator();
@@ -19,6 +20,7 @@ export default function Navigator() {
         {user ? (
           <>
             <Stack.Screen name="Main" component={BottomTabsNavigator} />
+            <Stack.Screen name="chat" component={ChatScreen} />
           </>
         ) : (
           <Stack.Screen name="Auth" component={AuthPage} />
