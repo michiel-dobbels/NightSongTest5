@@ -8,6 +8,7 @@ import {
   TouchableOpacity,
   Dimensions,
 } from 'react-native';
+
 import { useNavigation } from '@react-navigation/native';
 import NotificationCard from '../app/components/NotificationCard';
 import { useNotifications } from '../lib/hooks/useNotifications';
@@ -57,6 +58,7 @@ export default function NotificationsScreen() {
             <View style={{ height: spacerHeight }} />
           </View>
         }
+
         data={notifications}
         keyExtractor={item => item.id}
         renderItem={({ item }) => (
