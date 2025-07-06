@@ -1,4 +1,5 @@
 import React, { useState, useCallback } from 'react';
+
 import {
   View,
   FlatList,
@@ -9,6 +10,7 @@ import {
   Dimensions,
 } from 'react-native';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
+
 import NotificationCard from '../app/components/NotificationCard';
 import { useNotifications } from '../lib/hooks/useNotifications';
 import { colors } from '../app/styles/colors';
@@ -16,6 +18,7 @@ import { useAuth } from '../AuthContext';
 
 export default function NotificationsScreen() {
   const { notifications, refresh, markRead, markAllRead } = useNotifications();
+
   const { profile, profileImageUri } = useAuth()!;
   const navigation = useNavigation<any>();
   const spacerHeight = Dimensions.get('window').height * 0.1;
@@ -52,6 +55,7 @@ export default function NotificationsScreen() {
             <TouchableOpacity
               onPress={() => navigation.navigate('Profile')}
               style={[styles.avatarContainer, { marginTop: spacerHeight }]}
+
             >
               {profileImageUri || profile?.image_url ? (
                 <Image
@@ -64,6 +68,7 @@ export default function NotificationsScreen() {
             </TouchableOpacity>
           </View>
         }
+
         data={notifications}
         keyExtractor={item => item.id}
         renderItem={({ item }) => (
@@ -87,4 +92,5 @@ const styles = StyleSheet.create({
   header: {
     alignItems: 'center',
   },
+
 });
