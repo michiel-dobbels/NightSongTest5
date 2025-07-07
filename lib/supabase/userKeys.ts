@@ -1,6 +1,8 @@
 import { supabase } from '../supabase';
 
 export async function uploadUserKey(userId: string, publicKey: string) {
+  console.log('📥 uploadUserKey() called with:', userId, publicKey);
+
   const { data: existing, error: fetchError } = await supabase
     .from('user_keys')
     .select('user_id')
@@ -13,5 +15,8 @@ export async function uploadUserKey(userId: string, publicKey: string) {
   const { error } = await supabase.from('user_keys').insert({ user_id: userId, public_key: publicKey });
   if (error) {
     console.error('Failed to upload user key', error);
+  }
+  else {
+    console.log('✅ Successfully inserted user key for:', userId);
   }
 }

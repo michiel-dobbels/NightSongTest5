@@ -5,6 +5,8 @@ import { getOrCreateChatKeys } from '../../lib/chatKeys';
 
 
 export default function ChatScreen() {
+  console.log('🟢 ChatScreen mounted');
+
   const { user } = useAuth()!;
   const [ready, setReady] = useState(false);
 
@@ -12,6 +14,8 @@ export default function ChatScreen() {
     let isMounted = true;
     const init = async () => {
       if (!user) return;
+      console.log('🧠 Running getOrCreateChatKeys for:', user?.id);
+
       await getOrCreateChatKeys(user.id);
 
       if (isMounted) setReady(true);
