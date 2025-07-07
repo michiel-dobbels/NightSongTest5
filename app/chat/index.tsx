@@ -3,6 +3,7 @@ import { View, Text } from 'react-native';
 import { useAuth } from '../../AuthContext';
 import { getOrCreateChatKeys } from '../../lib/chatKeys';
 
+
 export default function ChatScreen() {
   const { user } = useAuth()!;
   const [ready, setReady] = useState(false);
@@ -12,6 +13,7 @@ export default function ChatScreen() {
     const init = async () => {
       if (!user) return;
       await getOrCreateChatKeys(user.id);
+
       if (isMounted) setReady(true);
     };
     init();

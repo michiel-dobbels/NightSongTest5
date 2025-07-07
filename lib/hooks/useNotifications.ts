@@ -62,6 +62,7 @@ export function useNotifications() {
     await markAllNotificationsRead(user.id);
     setNotifications(prev => prev.map(n => ({ ...n, read: true }))); 
     notificationEvents.emit('markAllRead');
+
   }, [user?.id]);
 
   const unreadCount = notifications.filter(n => !n.read).length;
