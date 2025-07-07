@@ -13,6 +13,7 @@ import { postEvents } from './app/postEvents';
 import { likeEvents } from './app/likeEvents';
 import { replyEvents } from './app/replyEvents';
 import { Post } from './types/Post';
+import { getOrCreateChatKeys } from './lib/chatKeys';
 
 
 
@@ -285,6 +286,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       // Create/load the profile so posts have the foreign key ready
       await ensureProfile(user);
+
+      await getOrCreateChatKeys(user.id);
     }
 
     return { error };
@@ -321,6 +324,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     if (session) {
       setUser(session.user);
       await ensureProfile(session.user);
+      await getOrCreateChatKeys(session.user.id);
 
       return { error: null };
     }
