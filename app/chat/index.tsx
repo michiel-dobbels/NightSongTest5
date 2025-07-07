@@ -1,34 +1,27 @@
 import React, { useEffect, useState } from 'react';
 import { View, Text } from 'react-native';
-import { useAuth } from '../../AuthContext';
-import { getOrCreateChatKeys } from '../../lib/chatKeys';
-
+import { getOrCreateKeys } from './lib/keygen';
 
 export default function ChatScreen() {
-  console.log('🟢 ChatScreen mounted');
-
-  const { user } = useAuth()!;
   const [ready, setReady] = useState(false);
 
   useEffect(() => {
     let isMounted = true;
     const init = async () => {
-      if (!user) return;
-      console.log('🧠 Running getOrCreateChatKeys for:', user?.id);
-
-      await getOrCreateChatKeys(user.id);
-
+      console.log('🟢 ChatScreen mounted');
+      const keys = await getOrCreateKeys();
+      console.log('🔑 Key status:', keys ? 'loaded' : 'failed');
       if (isMounted) setReady(true);
     };
     init();
     return () => {
       isMounted = false;
     };
-  }, [user?.id]);
+  }, []);
 
   return (
     <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-      {ready && <Text>🔐 E2EE Chat Ready</Text>}
+      {ready && <Text>🔐 E2EE Ready</Text>}
     </View>
   );
 }
