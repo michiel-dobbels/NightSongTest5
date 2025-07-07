@@ -11,32 +11,38 @@ export interface ChatKeyPair {
 }
 
 export async function getOrCreateChatKeys(userId: string): Promise<ChatKeyPair> {
+  console.log('🧠 getOrCreateChatKeys() called with:', userId);
   const stored = await AsyncStorage.getItem(KEYPAIR_STORAGE_KEY);
+
   if (stored) {
     try {
       const parsed = JSON.parse(stored);
+      console.log('📦 Found stored keys in AsyncStorage');
       return {
         publicKey: util.decodeBase64(parsed.publicKey),
         secretKey: util.decodeBase64(parsed.secretKey),
       };
     } catch (e) {
-      // fall through to regenerate keys
+      console.error('⚠️ Failed to parse stored key:', e);
     }
   }
 
+  console.log('🔐 No stored key found — generating new one...');
   const kp = nacl.box.keyPair();
+  const publicKey = util.encodeBase64(kp.publicKey);
+  const secretKey = util.encodeBase64(kp.secretKey);
+
   await AsyncStorage.setItem(
     KEYPAIR_STORAGE_KEY,
-    JSON.stringify({
-      publicKey: util.encodeBase64(kp.publicKey),
-      secretKey: util.encodeBase64(kp.secretKey),
-    })
+    JSON.stringify({ publicKey, secretKey })
   );
-  await uploadUserKey(userId, util.encodeBase64(kp.publicKey));
-  console.log(
-    'Generated E2EE keys:',
-    util.encodeBase64(kp.publicKey),
-    util.encodeBase64(kp.secretKey)
-  );
+
+  console.log('✅ Stored new key in AsyncStorage');
+  console.log('📤 Calling uploadUserKey()...');
+  await uploadUserKey(userId, publicKey);
+  console.log('✅ uploadUserKey() call completed');
+
+  console.log('🚀 Uploaded public key to Supabase');
   return kp;
 }
+
