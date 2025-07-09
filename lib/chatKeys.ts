@@ -1,7 +1,9 @@
+import 'react-native-get-random-values';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as nacl from 'tweetnacl';
 import * as util from 'tweetnacl-util';
 import { uploadUserKey } from './supabase/userKeys';
+
 
 export const KEYPAIR_STORAGE_KEY = 'e2ee_keypair';
 
