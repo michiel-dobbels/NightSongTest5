@@ -112,12 +112,10 @@ export default function DMThreadScreen() {
 
   const renderItem = ({ item }: { item: Message }) => {
     const isMe = item.sender_id === user!.id;
-    const senderName = isMe
-      ? 'You'
-      : profile?.name || profile?.username || 'Unknown';
+    const senderName = profile?.name || profile?.username || 'Unknown';
     return (
       <View style={[styles.messageRow, isMe ? styles.right : styles.left]}>
-        <Text style={styles.sender}>{senderName}</Text>
+        {!isMe && <Text style={styles.sender}>{senderName}</Text>}
 
         <Text style={styles.messageText}>{item.text}</Text>
       </View>
@@ -190,7 +188,7 @@ const styles = StyleSheet.create({
     borderRadius: 6,
   },
   left: { alignSelf: 'flex-start', backgroundColor: '#444' },
-  right: { alignSelf: 'flex-end', backgroundColor: colors.accent },
+  right: { alignSelf: 'flex-end', backgroundColor: '#4caf50' },
   messageText: { color: colors.text },
   sender: { color: colors.muted, fontSize: 12, marginBottom: 2 },
 
