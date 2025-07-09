@@ -12,8 +12,8 @@ export interface ChatKeyPair {
 
 export async function getOrCreateChatKeys(userId: string): Promise<ChatKeyPair> {
   console.log('🧠 getOrCreateChatKeys() called with:', userId);
-  const stored = await AsyncStorage.getItem(KEYPAIR_STORAGE_KEY);
 
+  const stored = await AsyncStorage.getItem(KEYPAIR_STORAGE_KEY);
   if (stored) {
     try {
       const parsed = JSON.parse(stored);
@@ -28,21 +28,41 @@ export async function getOrCreateChatKeys(userId: string): Promise<ChatKeyPair> 
   }
 
   console.log('🔐 No stored key found — generating new one...');
-  const kp = nacl.box.keyPair();
+  
+  let kp;
+  try {
+    kp = nacl.box.keyPair();
+    console.log('🛠️ Successfully generated keypair');
+  } catch (e) {
+    console.error('💥 Failed to generate keypair:', e);
+    throw new Error('Key generation failed');
+  }
+
   const publicKey = util.encodeBase64(kp.publicKey);
   const secretKey = util.encodeBase64(kp.secretKey);
+  console.log('🔑 Encoded publicKey:', publicKey.slice(0, 20), '...'); // log first 20 chars only
+  console.log('🔑 Encoded secretKey:', secretKey.slice(0, 20), '...');
 
-  await AsyncStorage.setItem(
-    KEYPAIR_STORAGE_KEY,
-    JSON.stringify({ publicKey, secretKey })
-  );
+  try {
+    await AsyncStorage.setItem(
+      KEYPAIR_STORAGE_KEY,
+      JSON.stringify({ publicKey, secretKey })
+    );
+    console.log('✅ Stored new key in AsyncStorage');
+  } catch (e) {
+    console.error('❌ Failed to store key in AsyncStorage:', e);
+    throw new Error('Failed to persist keys');
+  }
 
-  console.log('✅ Stored new key in AsyncStorage');
-  console.log('📤 Calling uploadUserKey()...');
-  await uploadUserKey(userId, publicKey);
-  console.log('✅ uploadUserKey() call completed');
+  try {
+    console.log('📤 Calling uploadUserKey()...');
+    await uploadUserKey(userId, publicKey);
+    console.log('✅ uploadUserKey() call completed');
+  } catch (e) {
+    console.error('❌ uploadUserKey() threw:', e);
+  }
 
-  console.log('🚀 Uploaded public key to Supabase');
+  console.log('📦 Returning keypair from getOrCreateChatKeys()');
   return kp;
 }
 

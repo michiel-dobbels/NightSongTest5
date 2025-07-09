@@ -121,7 +121,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     const init = async () => {
       try {
-        const session = supabase.auth.session();
+        const session = supabase.auth.session(); // returns the session object directly
+
 
 
         
