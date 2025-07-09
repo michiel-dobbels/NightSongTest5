@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
+
 import {
   View,
   Text,
@@ -12,6 +13,7 @@ import {
   StyleSheet,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+
 import { useAuth } from '../../AuthContext';
 import { supabase } from '../../lib/supabase';
 import { colors } from '../styles/colors';
@@ -66,6 +68,7 @@ export default function ChatScreen() {
       active = false;
     };
   }, [search]);
+
 
   useEffect(() => {
     if (!conversationId) return;
@@ -166,6 +169,17 @@ export default function ChatScreen() {
     </TouchableOpacity>
   );
 
+  const handleSend = () => {
+    const body = text.trim();
+    if (!body || !recipientId) return;
+    onSend(body, String(recipientId));
+    setText('');
+  };
+
+  const onSend = (message: string, toId: string) => {
+    console.log('Send encrypted message', message, 'to', toId);
+  };
+
   return (
     <KeyboardAvoidingView
       style={styles.container}
@@ -227,6 +241,7 @@ export default function ChatScreen() {
           </TouchableOpacity>
         </View>
       </Modal>
+
     </KeyboardAvoidingView>
   );
 }
@@ -248,6 +263,7 @@ const styles = StyleSheet.create({
   right: { alignSelf: 'flex-end', backgroundColor: '#4caf50' },
   messageText: { color: colors.text },
   sender: { color: colors.muted, fontSize: 12, marginBottom: 2 },
+
   inputBar: {
     position: 'absolute',
     left: 0,
@@ -264,6 +280,7 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#1f1f3d',
     color: colors.text,
+
     paddingHorizontal: 12,
     paddingVertical: 8,
     borderRadius: 20,
@@ -296,4 +313,5 @@ const styles = StyleSheet.create({
     borderRadius: 6,
   },
   closeText: { color: colors.text },
+
 });

@@ -1,4 +1,5 @@
 import 'react-native-get-random-values';
+
 import * as nacl from 'tweetnacl';
 import * as naclUtil from 'tweetnacl-util';
 
@@ -36,5 +37,6 @@ export function encryptMessage(options: EncryptMessageOptions): EncryptedMessage
   const nonceB64 = naclUtil.encodeBase64(nonce);
 
   return { ciphertext, nonce: nonceB64 };
+
 }
 
