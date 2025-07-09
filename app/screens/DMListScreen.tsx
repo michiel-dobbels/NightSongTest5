@@ -1,5 +1,14 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, FlatList, TouchableOpacity, Image, StyleSheet, Dimensions } from 'react-native';
+import {
+  View,
+  Text,
+  FlatList,
+  TouchableOpacity,
+  Image,
+  StyleSheet,
+  Dimensions,
+  TextInput,
+} from 'react-native';
 
 import { useNavigation } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
@@ -29,6 +38,8 @@ export default function DMListScreen() {
   const navigation = useNavigation<any>();
   const { user } = useAuth()!;
   const [conversations, setConversations] = useState<ConversationItem[]>([]);
+  const [search, setSearch] = useState('');
+  const [results, setResults] = useState<Profile[]>([]);
 
   useEffect(() => {
     let isMounted = true;
@@ -69,6 +80,32 @@ export default function DMListScreen() {
     };
   }, [user]);
 
+  useEffect(() => {
+    let active = true;
+    const load = async () => {
+      if (!search.trim()) {
+        if (active) setResults([]);
+        return;
+      }
+      const query = search.trim();
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('id, username, name, image_url')
+        .or(`username.ilike.%${query}%,name.ilike.%${query}%`)
+        .limit(20);
+      if (!active) return;
+      if (error) {
+        console.error('Failed search', error);
+      } else {
+        setResults((data ?? []) as Profile[]);
+      }
+    };
+    load();
+    return () => {
+      active = false;
+    };
+  }, [search]);
+
   const renderItem = ({ item }: { item: ConversationItem }) => (
     <TouchableOpacity
       style={styles.item}
@@ -98,17 +135,65 @@ export default function DMListScreen() {
     </TouchableOpacity>
   );
 
+  const startChat = async (targetId: string) => {
+    if (!user) return;
+    const { data: existing } = await supabase
+      .from('conversations')
+      .select('*')
+      .or(`and(participant_1.eq.${user.id},participant_2.eq.${targetId}),and(participant_1.eq.${targetId},participant_2.eq.${user.id})`)
+      .maybeSingle();
+
+    let convoId = existing?.id;
+    if (!convoId) {
+      const { data: created, error } = await supabase
+        .from('conversations')
+        .insert({ participant_1: user.id, participant_2: targetId })
+        .select('id')
+        .single();
+      if (error) {
+        console.error('Failed to create conversation', error);
+        return;
+      }
+      convoId = created.id;
+    }
+    navigation.navigate('DMThread', { conversationId: convoId, recipientId: targetId });
+  };
+
   return (
     <View style={styles.container}>
       <View style={styles.header}>
         <Text style={styles.title}>Direct Messages</Text>
 
       </View>
-      <FlatList
-        data={conversations}
-        keyExtractor={(item) => item.id}
-        renderItem={renderItem}
+      <TextInput
+        style={styles.search}
+        placeholder="Search users"
+        placeholderTextColor={colors.muted}
+        value={search}
+        onChangeText={setSearch}
       />
+      {search.length > 0 ? (
+        <FlatList
+          data={results}
+          keyExtractor={(i) => i.id}
+          renderItem={({ item }) => (
+            <TouchableOpacity style={styles.item} onPress={() => startChat(item.id)}>
+              {item.image_url ? (
+                <Image source={{ uri: item.image_url }} style={styles.avatar} />
+              ) : (
+                <View style={[styles.avatar, styles.placeholder]} />
+              )}
+              <Text style={styles.name}>{item.name || item.username}</Text>
+            </TouchableOpacity>
+          )}
+        />
+      ) : (
+        <FlatList
+          data={conversations}
+          keyExtractor={(item) => item.id}
+          renderItem={renderItem}
+        />
+      )}
       <TouchableOpacity
         style={styles.fab}
         onPress={() => navigation.navigate('NewChat')}
@@ -154,6 +239,14 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     zIndex: 100,
+  },
+  search: {
+    backgroundColor: '#1f1f3d',
+    color: colors.text,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 6,
+    marginBottom: 12,
   },
 
 });
