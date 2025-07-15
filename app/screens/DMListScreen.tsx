@@ -1,150 +1,191 @@
-import React, { useState, useEffect } from 'react';
-import { View, TextInput, FlatList, TouchableOpacity, Text, StyleSheet, Alert, Image } from 'react-native';
+import React, { useEffect, useLayoutEffect, useState } from 'react';
+import {
+  View,
+  Text,
+  FlatList,
+  TouchableOpacity,
+  TextInput,
+  StyleSheet,
+  Image,
+} from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { supabase } from '../../lib/supabase';
 import debounce from 'lodash/debounce';
+import { useAuth } from '../../AuthContext';
+import { colors } from '../styles/colors';
 
-interface User {
+interface Profile {
   id: string;
-  username?: string;
-  display_name?: string;
-  avatar_url?: string;
+  username: string | null;
+  name: string | null;
+  image_url: string | null;
 }
 
-interface Contact {
-  other_id: string;
-  last_message_at: string;
-  otherUser?: User;
+interface ConversationItem {
+  id: string;
+  participant_1: string;
+  participant_2: string;
+  otherUser?: Profile;
+  lastMessage?: { text: string; created_at: string } | null;
 }
 
-interface Interaction {
-  other_id: string | null;
-  created_at: string;
-}
+export default function DMListScreen({ navigation }: { navigation: any }) {
+  const { user } = useAuth()!;
+  const [conversations, setConversations] = useState<ConversationItem[]>([]);
+  const [search, setSearch] = useState('');
+  const [results, setResults] = useState<Profile[]>([]);
+  const [loading, setLoading] = useState(true);
 
-const DMListScreen = ({ navigation }: { navigation: any }) => {
-  const [contacts, setContacts] = useState<Contact[]>([]);
-  const [searchText, setSearchText] = useState<string>('');
-  const [searchedUsers, setSearchedUsers] = useState<User[]>([]);
-  const [loading, setLoading] = useState<boolean>(true);
+  useLayoutEffect(() => {
+    navigation.setOptions({
+      headerRight: () => (
+        <TouchableOpacity onPress={() => navigation.navigate('NewChat')}
+          style={{ paddingHorizontal: 12 }}>
+          <Ionicons name="add" size={24} color={colors.accent} />
+        </TouchableOpacity>
+      ),
+      title: 'Direct Messages',
+    });
+  }, [navigation]);
 
   useEffect(() => {
-    const user = supabase.auth.user();
-    if (!user) {
-      Alert.alert('Please log in to view conversations.');
+    if (user) fetchConversations();
+  }, [user]);
+
+  const fetchConversations = async () => {
+    if (!user) return;
+    setLoading(true);
+    const { data, error } = await supabase
+      .from('conversations')
+      .select('id, participant_1, participant_2')
+      .or(`participant_1.eq.${user.id},participant_2.eq.${user.id}`);
+    if (error) {
+      console.error('Failed to load conversations', error);
+      setConversations([]);
       setLoading(false);
       return;
     }
-    fetchContacts(user.id);
-  }, []);
+    const convos = (data ?? []) as ConversationItem[];
+    const otherIds = convos.map((c) =>
+      c.participant_1 === user.id ? c.participant_2 : c.participant_1,
+    );
+    if (otherIds.length > 0) {
+      const { data: profiles } = await supabase
+        .from('profiles')
+        .select('id, username, name, image_url')
+        .in('id', otherIds);
+      const profileMap = new Map(
+        (profiles ?? []).map((p: any) => [p.id, p as Profile]),
+      );
 
-  const fetchContacts = async (currentUserId: string) => {
-    try {
-      const { data: sent, error: sentError } = await supabase
+      // Fetch last messages for conversations
+      const { data: msgs } = await supabase
         .from('messages')
-        .select('recipient_id, created_at')
-        .eq('sender_id', currentUserId);
-
-      if (sentError) throw sentError;
-
-      const { data: received, error: receivedError } = await supabase
-        .from('messages')
-        .select('sender_id, created_at')
-        .eq('recipient_id', currentUserId);
-
-      if (receivedError) throw receivedError;
-
-      const allInteractions: Interaction[] = [
-        ...(sent || []).map((s: { recipient_id: string | null; created_at: string }) => ({ other_id: s.recipient_id, created_at: s.created_at })),
-        ...(received || []).map((r: { sender_id: string | null; created_at: string }) => ({ other_id: r.sender_id, created_at: r.created_at })),
-      ];
-
-      const grouped: { [key: string]: Contact } = allInteractions.reduce((acc: { [key: string]: Contact }, i: Interaction) => {
-        const key = i.other_id;
-        if (!key) return acc;
-        if (!acc[key] || new Date(acc[key].last_message_at) < new Date(i.created_at)) {
-          acc[key] = { other_id: key, last_message_at: i.created_at };
+        .select('conversation_id,text,created_at')
+        .in('conversation_id', convos.map((c) => c.id))
+        .order('created_at', { ascending: false });
+      const lastMap: Record<string, { text: string; created_at: string }> = {};
+      (msgs ?? []).forEach((m: any) => {
+        if (!lastMap[m.conversation_id]) {
+          lastMap[m.conversation_id] = {
+            text: m.text,
+            created_at: m.created_at,
+          };
         }
-        return acc;
-      }, {});
+      });
 
-      const uniqueContacts: Contact[] = Object.values(grouped);
-
-      if (uniqueContacts.length > 0) {
-        const { data: profiles, error: profilesError } = await supabase
-          .from('profiles')
-          .select('id, username, display_name, avatar_url')
-          .in('id', uniqueContacts.map((u: Contact) => u.other_id));
-
-        if (profilesError) throw profilesError;
-
-        const formatted: Contact[] = uniqueContacts.map((c: Contact) => ({
+      const formatted = convos
+        .map((c) => ({
           ...c,
-          otherUser: (profiles as User[]).find((p: User) => p.id === c.other_id),
-        })).sort((a: Contact, b: Contact) => new Date(b.last_message_at).getTime() - new Date(a.last_message_at).getTime());
-
-        setContacts(formatted);
-      }
-    } catch (error) {
-      console.error('Error fetching contacts:', error);
-      setContacts([]);
-    } finally {
-      setLoading(false);
+          otherUser: profileMap.get(
+            c.participant_1 === user.id ? c.participant_2 : c.participant_1,
+          ),
+          lastMessage: lastMap[c.id] || null,
+        }))
+        .sort((a, b) => {
+          const ta = a.lastMessage?.created_at || 0;
+          const tb = b.lastMessage?.created_at || 0;
+          return new Date(tb).getTime() - new Date(ta).getTime();
+        });
+      setConversations(formatted);
+    } else {
+      setConversations([]);
     }
+    setLoading(false);
   };
 
   const searchUsers = async (query: string) => {
     if (!query) {
-      setSearchedUsers([]);
+      setResults([]);
       return;
     }
-
-    const user = supabase.auth.user();
     if (!user) return;
-
-    try {
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('id, username, display_name, avatar_url')
-        .ilike('display_name', `%${query}%`)
-        .neq('id', user.id);
-
-      if (error) throw error;
-      setSearchedUsers(data as User[]);
-    } catch (error) {
-      console.error('Error searching users:', error);
+    const { data, error } = await supabase
+      .from('profiles')
+      .select('id, username, name, image_url')
+      .ilike('name', `%${query}%`)
+      .neq('id', user.id);
+    if (error) {
+      console.error('Error searching users', error);
+      return;
     }
+    setResults(data as Profile[]);
   };
+  const debounced = debounce(searchUsers, 300);
 
-  const debouncedSearch = debounce(searchUsers, 300);  // Debounce for auto-complete
-
-  const startChat = (otherUserId: string, otherUser: User = {} as User) => {
-    const user = supabase.auth.user();
+  const openConversation = async (targetId: string) => {
     if (!user) return;
-    navigation.navigate('DMChat', { otherUserId, otherUser });
-    setSearchText('');
-    setSearchedUsers([]);
+    const { data: existing } = await supabase
+      .from('conversations')
+      .select('id')
+      .or(`and(participant_1.eq.${user.id},participant_2.eq.${targetId}),and(participant_1.eq.${targetId},participant_2.eq.${user.id})`)
+      .maybeSingle();
+    let convoId = existing?.id;
+    if (!convoId) {
+      const { data: created, error } = await supabase
+        .from('conversations')
+        .insert({ participant_1: user.id, participant_2: targetId })
+        .select('id')
+        .single();
+      if (error) {
+        console.error('Failed to create conversation', error);
+        return;
+      }
+      convoId = created.id;
+    }
+    navigation.navigate('DMThread', {
+      conversationId: convoId,
+      recipientId: targetId,
+    });
+    setSearch('');
+    setResults([]);
   };
 
-  const renderUserItem = ({ item }: { item: User }) => (
-    <TouchableOpacity style={styles.item} onPress={() => startChat(item.id, item)}>
-      <View style={styles.itemContainer}>
-        <Image
-          source={{ uri: item.avatar_url || 'https://via.placeholder.com/40' }}
-          style={styles.avatar}
-        />
-        <Text>{item.display_name || item.username || 'User'}</Text>
-      </View>
+  const renderUserItem = ({ item }: { item: Profile }) => (
+    <TouchableOpacity style={styles.item} onPress={() => openConversation(item.id)}>
+      {item.image_url ? (
+        <Image source={{ uri: item.image_url }} style={styles.avatar} />
+      ) : (
+        <View style={[styles.avatar, styles.placeholder]} />
+      )}
+      <Text style={styles.name}>{item.name || item.username}</Text>
     </TouchableOpacity>
   );
 
-  const renderContactItem = ({ item }: { item: Contact }) => (
-    <TouchableOpacity style={styles.item} onPress={() => startChat(item.other_id, item.otherUser || {} as User)}>
-      <View style={styles.itemContainer}>
-        <Image
-          source={{ uri: item.otherUser?.avatar_url || 'https://via.placeholder.com/40' }}
-          style={styles.avatar}
-        />
-        <Text>{item.otherUser?.display_name || item.otherUser?.username || `(Last message: ${new Date(item.last_message_at).toLocaleString()})`}</Text>
+  const renderConversationItem = ({ item }: { item: ConversationItem }) => (
+    <TouchableOpacity style={styles.item} onPress={() => openConversation(item.otherUser!.id)}>
+      {item.otherUser?.image_url ? (
+        <Image source={{ uri: item.otherUser.image_url }} style={styles.avatar} />
+      ) : (
+        <View style={[styles.avatar, styles.placeholder]} />
+      )}
+      <View style={{ flex: 1 }}>
+        <Text style={styles.name}>{item.otherUser?.name || item.otherUser?.username}</Text>
+        {item.lastMessage && (
+          <Text style={styles.preview} numberOfLines={1}>
+            {item.lastMessage.text}
+          </Text>
+        )}
       </View>
     </TouchableOpacity>
   );
@@ -153,44 +194,56 @@ const DMListScreen = ({ navigation }: { navigation: any }) => {
     <View style={styles.container}>
       <TextInput
         style={styles.searchBar}
-        placeholder="Search users by display name..."
-        value={searchText}
-        onChangeText={(text: string) => {
-          setSearchText(text);
-          debouncedSearch(text);
+        placeholder="Search users"
+        placeholderTextColor={colors.muted}
+        value={search}
+        onChangeText={(t) => {
+          setSearch(t);
+          debounced(t);
         }}
       />
       {loading ? (
-        <Text>Loading...</Text>
+        <Text style={styles.name}>Loading...</Text>
+      ) : results.length > 0 ? (
+        <FlatList
+          data={results}
+          keyExtractor={(i) => i.id}
+          renderItem={renderUserItem}
+          ListHeaderComponent={<Text style={styles.header}>Search Results</Text>}
+        />
       ) : (
-        <>
-          {searchedUsers.length > 0 ? (
-            <FlatList
-              data={searchedUsers}
-              renderItem={renderUserItem}
-              keyExtractor={(item: User) => item.id}
-              ListHeaderComponent={<Text>Search Results</Text>}
-            />
-          ) : (
-            <FlatList
-              data={contacts}
-              renderItem={renderContactItem}
-              keyExtractor={(item: Contact) => item.other_id}
-              ListEmptyComponent={<Text>No conversations yet. Use the search bar to start one.</Text>}
-            />
-          )}
-        </>
+        <FlatList
+          data={conversations}
+          keyExtractor={(i) => i.id}
+          renderItem={renderConversationItem}
+          ListEmptyComponent={<Text style={styles.name}>No conversations</Text>}
+        />
       )}
     </View>
   );
-};
+}
 
 const styles = StyleSheet.create({
-  container: { flex: 1, padding: 10, backgroundColor: '#2c2c54' },
-  searchBar: { height: 40, borderColor: 'gray', borderWidth: 1, marginBottom: 10, padding: 10 },
-  item: { padding: 10, borderBottomWidth: 1, borderBottomColor: '#ccc' },
-  itemContainer: { flexDirection: 'row', alignItems: 'center' },
+  container: { flex: 1, backgroundColor: colors.background, padding: 10 },
+  searchBar: {
+    height: 40,
+    borderColor: colors.muted,
+    borderWidth: 1,
+    paddingHorizontal: 10,
+    marginBottom: 10,
+    color: colors.text,
+  },
+  item: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 12,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderColor: colors.muted,
+  },
   avatar: { width: 40, height: 40, borderRadius: 20, marginRight: 10 },
+  placeholder: { backgroundColor: colors.muted },
+  name: { color: colors.text },
+  preview: { color: colors.muted, fontSize: 12 },
+  header: { color: colors.text, marginBottom: 6 },
 });
 
-export default DMListScreen;
