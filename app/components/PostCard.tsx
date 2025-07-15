@@ -243,6 +243,7 @@ function PostCard({
             }}
           >
             <Ionicons name="flame" size={24} color="red" />
+
           </Animated.View>
           <Ionicons
             name={liked ? 'heart' : 'heart-outline'}

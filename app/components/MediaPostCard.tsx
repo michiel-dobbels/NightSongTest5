@@ -152,6 +152,7 @@ export default function MediaPostCard({ post, avatarUri, isActive }: Props) {
             }}
           >
             <Ionicons name="flame" size={24} color="red" />
+
           </Animated.View>
           <Ionicons
             name={liked ? 'heart' : 'heart-outline'}
