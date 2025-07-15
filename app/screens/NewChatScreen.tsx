@@ -8,7 +8,7 @@ import { colors } from '../styles/colors';
 interface Profile {
   id: string;
   username: string | null;
-  name: string | null;
+  display_name: string | null;
   image_url: string | null;
 }
 
@@ -37,7 +37,7 @@ export default function NewChatScreen() {
       }
       const { data: profiles, error: profileError } = await supabase
         .from('profiles')
-        .select('id, username, name, image_url')
+        .select('id, username, display_name, image_url')
         .in('id', ids);
       if (profileError) {
         console.error('Failed to fetch users', profileError);
@@ -53,13 +53,36 @@ export default function NewChatScreen() {
     };
   }, [user]);
 
-  const filtered = allUsers.filter((u) => {
-    const query = search.toLowerCase();
-    return (
-      u.username?.toLowerCase().includes(query) ||
-      u.name?.toLowerCase().includes(query)
-    );
-  });
+  const [searchResults, setSearchResults] = useState<Profile[]>([]);
+
+  useEffect(() => {
+    let isMounted = true;
+    const run = async () => {
+      const q = search.trim();
+      if (q === '') {
+        setSearchResults([]);
+        return;
+      }
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('id, username, display_name, image_url')
+        .ilike('display_name', `%${q}%`)
+        .limit(20);
+      if (error) {
+        console.error('Failed to search profiles', error);
+        return;
+      }
+      if (isMounted) {
+        setSearchResults(
+          ((data ?? []) as Profile[]).filter(p => p.id !== user?.id),
+        );
+      }
+    };
+    run();
+    return () => {
+      isMounted = false;
+    };
+  }, [search, user]);
 
   const startChat = async (targetId: string) => {
     if (!user) return;
@@ -92,7 +115,7 @@ export default function NewChatScreen() {
       ) : (
         <View style={[styles.avatar, styles.placeholder]} />
       )}
-      <Text style={styles.name}>{item.name || item.username}</Text>
+      <Text style={styles.name}>{item.display_name || item.username}</Text>
     </TouchableOpacity>
   );
 
@@ -105,7 +128,11 @@ export default function NewChatScreen() {
         value={search}
         onChangeText={setSearch}
       />
-      <FlatList data={filtered} keyExtractor={(i) => i.id} renderItem={renderItem} />
+      <FlatList
+        data={search.trim() ? searchResults : allUsers}
+        keyExtractor={i => i.id}
+        renderItem={renderItem}
+      />
     </View>
   );
 }
