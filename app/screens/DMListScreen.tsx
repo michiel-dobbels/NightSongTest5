@@ -7,7 +7,8 @@ interface User {
   id: string;
   username?: string;
   display_name?: string;
-  avatar_url?: string;
+  avatar_url?: string | null;
+  image_url?: string | null;
 }
 
 interface Contact {
@@ -72,7 +73,7 @@ const DMListScreen = ({ navigation }: { navigation: any }) => {
       if (uniqueContacts.length > 0) {
         const { data: profiles, error: profilesError } = await supabase
           .from('profiles')
-          .select('id, username, display_name, avatar_url')
+          .select('id, username, display_name, avatar_url, image_url')
           .in('id', uniqueContacts.map((u: Contact) => u.other_id));
 
         if (profilesError) throw profilesError;
@@ -104,7 +105,7 @@ const DMListScreen = ({ navigation }: { navigation: any }) => {
     try {
       const { data, error } = await supabase
         .from('profiles')
-        .select('id, username, display_name, avatar_url')
+        .select('id, username, display_name, avatar_url, image_url')
         .ilike('display_name', `%${query}%`)
         .neq('id', user.id);
 
@@ -125,29 +126,42 @@ const DMListScreen = ({ navigation }: { navigation: any }) => {
     setSearchedUsers([]);
   };
 
-  const renderUserItem = ({ item }: { item: User }) => (
-    <TouchableOpacity style={styles.item} onPress={() => startChat(item.id, item)}>
-      <View style={styles.itemContainer}>
-        <Image
-          source={{ uri: item.avatar_url || 'https://via.placeholder.com/40' }}
-          style={styles.avatar}
-        />
-        <Text>{item.display_name || item.username || 'User'}</Text>
-      </View>
-    </TouchableOpacity>
-  );
+  const renderUserItem = ({ item }: { item: User }) => {
+    const avatar = item.avatar_url ?? item.image_url;
+    return (
+      <TouchableOpacity style={styles.item} onPress={() => startChat(item.id, item)}>
+        <View style={styles.itemContainer}>
+          <Image
+            source={{ uri: avatar || 'https://via.placeholder.com/40' }}
+            style={styles.avatar}
+          />
+          <Text>{item.display_name || item.username || 'User'}</Text>
+        </View>
+      </TouchableOpacity>
+    );
+  };
 
-  const renderContactItem = ({ item }: { item: Contact }) => (
-    <TouchableOpacity style={styles.item} onPress={() => startChat(item.other_id, item.otherUser || {} as User)}>
-      <View style={styles.itemContainer}>
-        <Image
-          source={{ uri: item.otherUser?.avatar_url || 'https://via.placeholder.com/40' }}
-          style={styles.avatar}
-        />
-        <Text>{item.otherUser?.display_name || item.otherUser?.username || `(Last message: ${new Date(item.last_message_at).toLocaleString()})`}</Text>
-      </View>
-    </TouchableOpacity>
-  );
+  const renderContactItem = ({ item }: { item: Contact }) => {
+    const avatar = item.otherUser?.avatar_url ?? item.otherUser?.image_url;
+    return (
+      <TouchableOpacity
+        style={styles.item}
+        onPress={() => startChat(item.other_id, item.otherUser || ({} as User))}
+      >
+        <View style={styles.itemContainer}>
+          <Image
+            source={{ uri: avatar || 'https://via.placeholder.com/40' }}
+            style={styles.avatar}
+          />
+          <Text>
+            {item.otherUser?.display_name ||
+              item.otherUser?.username ||
+              `(Last message: ${new Date(item.last_message_at).toLocaleString()})`}
+          </Text>
+        </View>
+      </TouchableOpacity>
+    );
+  };
 
   return (
     <View style={styles.container}>
