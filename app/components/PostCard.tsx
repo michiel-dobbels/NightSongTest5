@@ -1,5 +1,14 @@
 import React from 'react';
-import { View, Text, TouchableOpacity, Image, StyleSheet, TouchableWithoutFeedback } from 'react-native';
+import {
+  View,
+  Text,
+  TouchableOpacity,
+  Image,
+  StyleSheet,
+  TouchableWithoutFeedback,
+  Animated,
+  Easing,
+} from 'react-native';
 import { useStories } from '../contexts/StoryStoreContext';
 import { storyRing } from '../styles/storyRing';
 import { Video } from 'expo-av';
@@ -96,6 +105,28 @@ function PostCard({
   const finalImageUrl = imageUrl ?? post.image_url;
   const finalVideoUrl = videoUrl ?? post.video_url;
 
+  const flameScale = React.useRef(new Animated.Value(0)).current;
+  const flameOpacity = React.useRef(new Animated.Value(0)).current;
+
+  const animateFlame = React.useCallback(() => {
+    flameScale.setValue(0.5);
+    flameOpacity.setValue(1);
+    Animated.parallel([
+      Animated.timing(flameScale, {
+        toValue: 2,
+        duration: 500,
+        useNativeDriver: true,
+        easing: Easing.out(Easing.ease),
+      }),
+      Animated.timing(flameOpacity, {
+        toValue: 0,
+        duration: 500,
+        useNativeDriver: true,
+        easing: Easing.linear,
+      }),
+    ]).start();
+  }, [flameScale, flameOpacity]);
+
   return (
     <TouchableOpacity onPress={onPress}>
       <View style={styles.post}>
@@ -183,7 +214,7 @@ function PostCard({
         </TouchableOpacity>
         <TouchableOpacity
           style={styles.likeContainer}
-          onPress={async (e) => {
+          onPress={async e => {
             e.stopPropagation();
 
             if (!liked && profile && post.user_id !== profile.id) {
@@ -200,10 +231,28 @@ function PostCard({
               console.log('👉 Done insertNotification.');
             }
             toggleLike();
+            animateFlame();
           }}
         >
-          <Ionicons name={liked ? 'heart' : 'heart-outline'} size={18} color="red" style={{ marginRight: 2 }} />
-          <Text style={[styles.likeCountLarge, liked && styles.likedLikeCount]}>{likeCount}</Text>
+          <Animated.View
+            pointerEvents="none"
+            style={{
+              position: 'absolute',
+              opacity: flameOpacity,
+              transform: [{ scale: flameScale }],
+            }}
+          >
+            <Ionicons name="flame" size={24} color="red" />
+          </Animated.View>
+          <Ionicons
+            name={liked ? 'heart' : 'heart-outline'}
+            size={18}
+            color="red"
+            style={{ marginRight: 2 }}
+          />
+          <Text style={[styles.likeCountLarge, liked && styles.likedLikeCount]}>
+            {likeCount}
+          </Text>
         </TouchableOpacity>
       </View>
     </TouchableOpacity>
@@ -261,6 +310,7 @@ const styles = StyleSheet.create({
     transform: [{ translateX: -6 }],
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'center',
   },
   postImage: {
     width: '100%',
