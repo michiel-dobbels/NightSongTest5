@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 
 import {
   View,
@@ -8,6 +8,8 @@ import {
   TouchableOpacity,
   Modal,
   Dimensions,
+  Animated,
+  Easing,
 } from 'react-native';
 import { Video, ResizeMode } from 'expo-av';
 
@@ -50,6 +52,28 @@ export default function MediaPostCard({ post, avatarUri, isActive }: Props) {
   const { width } = Dimensions.get('window');
   const height = width * 1.2;
   const videoRef = useRef<Video>(null);
+
+  const flameScale = useRef(new Animated.Value(0)).current;
+  const flameOpacity = useRef(new Animated.Value(0)).current;
+
+  const animateFlame = useCallback(() => {
+    flameScale.setValue(0.5);
+    flameOpacity.setValue(1);
+    Animated.parallel([
+      Animated.timing(flameScale, {
+        toValue: 2,
+        duration: 500,
+        useNativeDriver: true,
+        easing: Easing.out(Easing.ease),
+      }),
+      Animated.timing(flameOpacity, {
+        toValue: 0,
+        duration: 500,
+        useNativeDriver: true,
+        easing: Easing.linear,
+      }),
+    ]).start();
+  }, [flameScale, flameOpacity]);
 
   useEffect(() => {
     if (!isActive) {
@@ -115,9 +139,20 @@ export default function MediaPostCard({ post, avatarUri, isActive }: Props) {
               });
             }
             toggleLike();
+            animateFlame();
           }}
-          style={{ marginRight: 4 }}
+          style={[{ marginRight: 4 }, styles.likeButton]}
         >
+          <Animated.View
+            pointerEvents="none"
+            style={{
+              position: 'absolute',
+              opacity: flameOpacity,
+              transform: [{ scale: flameScale }],
+            }}
+          >
+            <Ionicons name="flame" size={24} color="orange" />
+          </Animated.View>
           <Ionicons
             name={liked ? 'heart' : 'heart-outline'}
             size={28}
@@ -241,6 +276,7 @@ const styles = StyleSheet.create({
   replyButton: { flexDirection: 'row', alignItems: 'center' },
   detailButton: { flexDirection: 'row', alignItems: 'center' },
   doubleChevron: { marginLeft: -20 },
+  likeButton: { justifyContent: 'center', alignItems: 'center' },
   likeCount: { color: 'white', fontSize: 28, marginRight: 8 },
   replyCount: { color: 'white', fontSize: 28, marginRight: 8 },
 
