@@ -19,6 +19,7 @@ interface Profile {
   username: string | null;
   name: string | null;
   image_url: string | null;
+
 }
 
 interface ConversationItem {
@@ -128,6 +129,7 @@ export default function DMListScreen({ navigation }: { navigation: any }) {
     if (error) {
       console.error('Error searching users', error);
       return;
+
     }
     setResults(data as Profile[]);
   };
@@ -189,6 +191,7 @@ export default function DMListScreen({ navigation }: { navigation: any }) {
       </View>
     </TouchableOpacity>
   );
+
 
   return (
     <View style={styles.container}>
