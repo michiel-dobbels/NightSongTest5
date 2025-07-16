@@ -61,32 +61,16 @@ export default function NewChatScreen() {
     );
   });
 
-  const startChat = async (targetId: string) => {
-    if (!user) return;
-    const { data: existing } = await supabase
-      .from('conversations')
-      .select('*')
-      .or(`and(participant_1.eq.${user.id},participant_2.eq.${targetId}),and(participant_1.eq.${targetId},participant_2.eq.${user.id})`)
-      .maybeSingle();
-
-    let convoId = existing?.id;
-    if (!convoId) {
-      const { data: created, error } = await supabase
-        .from('conversations')
-        .insert({ participant_1: user.id, participant_2: targetId })
-        .select('id')
-        .single();
-      if (error) {
-        console.error('Failed to create conversation', error);
-        return;
-      }
-      convoId = created.id;
-    }
-    navigation.replace('DMThread', { conversationId: convoId, recipientId: targetId });
+  const startChat = (profile: Profile) => {
+    navigation.navigate('Chat', {
+      id: profile.id,
+      display_name: profile.name || profile.username,
+      avatar_url: profile.image_url,
+    });
   };
 
   const renderItem = ({ item }: { item: Profile }) => (
-    <TouchableOpacity style={styles.item} onPress={() => startChat(item.id)}>
+    <TouchableOpacity style={styles.item} onPress={() => startChat(item)}>
       {item.image_url ? (
         <Image source={{ uri: item.image_url }} style={styles.avatar} />
       ) : (
