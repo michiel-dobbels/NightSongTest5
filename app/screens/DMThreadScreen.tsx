@@ -115,11 +115,12 @@ export default function DMThreadScreen() {
     const senderName = isMe
       ? 'You'
       : profile?.name || profile?.username || 'Unknown';
+    const time = new Date(item.created_at).toLocaleTimeString();
     return (
       <View style={[styles.messageRow, isMe ? styles.right : styles.left]}>
         <Text style={styles.sender}>{senderName}</Text>
-
         <Text style={styles.messageText}>{item.text}</Text>
+        <Text style={styles.time}>{time}</Text>
       </View>
     );
   };
@@ -193,6 +194,7 @@ const styles = StyleSheet.create({
   right: { alignSelf: 'flex-end', backgroundColor: colors.accent },
   messageText: { color: colors.text },
   sender: { color: colors.muted, fontSize: 12, marginBottom: 2 },
+  time: { color: colors.muted, fontSize: 10, marginTop: 2, alignSelf: 'flex-end' },
 
   inputRow: {
     position: 'absolute',

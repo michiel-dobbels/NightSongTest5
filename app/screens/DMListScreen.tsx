@@ -2,7 +2,6 @@ import React, { useEffect, useState } from 'react';
 import { View, Text, FlatList, TouchableOpacity, Image, StyleSheet, Dimensions } from 'react-native';
 
 import { useNavigation } from '@react-navigation/native';
-import { Ionicons } from '@expo/vector-icons';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../AuthContext';
 import { colors } from '../styles/colors';
@@ -30,9 +29,7 @@ export default function DMListScreen() {
   const { user } = useAuth()!;
   const [conversations, setConversations] = useState<ConversationItem[]>([]);
 
-  useEffect(() => {
-    let isMounted = true;
-    const load = async () => {
+  const load = async () => {
       if (!user) return;
       const { data, error } = await supabase
         .from('conversations')
@@ -61,13 +58,22 @@ export default function DMListScreen() {
         if (profile)
           convs.push({ id: c.id, other: profile as Profile, lastMessage: msg ?? null });
       }
-      if (isMounted) setConversations(convs);
+      setConversations(convs);
+  };
+
+  useEffect(() => {
+    let isMounted = true;
+    const init = async () => {
+      if (!isMounted) return;
+      await load();
     };
-    load();
+    init();
+    const unsub = navigation.addListener('focus', init);
     return () => {
       isMounted = false;
+      unsub();
     };
-  }, [user]);
+  }, [navigation, user]);
 
   const renderItem = ({ item }: { item: ConversationItem }) => (
     <TouchableOpacity
