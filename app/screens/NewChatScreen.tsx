@@ -61,16 +61,40 @@ export default function NewChatScreen() {
     );
   });
 
-  const startChat = (profile: Profile) => {
+  const handleOpenChat = async (profile: Profile) => {
+    if (!user) return;
+    const { data: existing, error } = await supabase
+      .from('conversations')
+      .select('id')
+      .or(
+        `and(participant_1.eq.${user.id},participant_2.eq.${profile.id}),and(participant_1.eq.${profile.id},participant_2.eq.${user.id})`,
+      )
+      .maybeSingle();
+    if (error) {
+      console.error('Failed to fetch conversation', error);
+      return;
+    }
+    let convId = existing?.id;
+    if (!convId) {
+      const { data: newConv, error: createError } = await supabase
+        .from('conversations')
+        .insert({ participant_1: user.id, participant_2: profile.id })
+        .select('id')
+        .single();
+      if (createError) {
+        console.error('Failed to create conversation', createError);
+        return;
+      }
+      convId = newConv.id;
+    }
     navigation.navigate('Chat', {
-      id: profile.id,
-      display_name: profile.name || profile.username,
-      avatar_url: profile.image_url,
+      conversationId: convId,
+      recipientId: profile.id,
     });
   };
 
   const renderItem = ({ item }: { item: Profile }) => (
-    <TouchableOpacity style={styles.item} onPress={() => startChat(item)}>
+    <TouchableOpacity style={styles.item} onPress={() => handleOpenChat(item)}>
       {item.image_url ? (
         <Image source={{ uri: item.image_url }} style={styles.avatar} />
       ) : (

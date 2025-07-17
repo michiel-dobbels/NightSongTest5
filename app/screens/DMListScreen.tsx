@@ -73,7 +73,7 @@ export default function DMListScreen() {
     <TouchableOpacity
       style={styles.item}
       onPress={() =>
-        navigation.navigate('DMThread', {
+        navigation.navigate('Chat', {
           conversationId: item.id,
           recipientId: item.other.id,
         })

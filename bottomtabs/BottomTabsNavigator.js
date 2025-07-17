@@ -45,7 +45,7 @@ const StoryViewScreen = React.lazy(() =>
 const DMListScreen = React.lazy(() => import('../app/screens/DMListScreen'));
 const NewChatScreen = React.lazy(() => import('../app/screens/NewChatScreen'));
 const DMThreadScreen = React.lazy(() => import('../app/screens/DMThreadScreen'));
-const ChatScreen = React.lazy(() => import('../app/screens/ChatScreen'));
+const ChatScreen = React.lazy(() => import('../components/ChatScreen'));
 
 const { height } = Dimensions.get('window');
 
