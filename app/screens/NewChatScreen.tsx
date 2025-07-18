@@ -19,6 +19,7 @@ export default function NewChatScreen() {
   const insets = useSafeAreaInsets();
   const [allUsers, setAllUsers] = useState<Profile[]>([]);
   const [search, setSearch] = useState('');
+  const [searchResults, setSearchResults] = useState<Profile[]>([]);
 
   useEffect(() => {
     let isMounted = true;
@@ -55,13 +56,37 @@ export default function NewChatScreen() {
     };
   }, [user]);
 
-  const filtered = allUsers.filter((u) => {
-    const query = search.toLowerCase();
-    return (
-      u.username?.toLowerCase().includes(query) ||
-      u.name?.toLowerCase().includes(query)
-    );
-  });
+  useEffect(() => {
+    let isMounted = true;
+    const run = async () => {
+      const q = search.trim();
+      if (q === '') {
+        if (isMounted) setSearchResults([]);
+        return;
+      }
+      const like = `%${q}%`;
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('id, username, name, image_url')
+        .or(`username.ilike.${like},name.ilike.${like}`)
+        .limit(20);
+      if (error) {
+        console.error('Failed to search profiles', error);
+        if (isMounted) setSearchResults([]);
+        return;
+      }
+      if (isMounted)
+        setSearchResults(
+          (data ?? []).filter((p) => p.id !== user?.id) as Profile[]
+        );
+    };
+    run();
+    return () => {
+      isMounted = false;
+    };
+  }, [search, user]);
+
+  const filtered = search.trim() === '' ? allUsers : searchResults;
 
   const startChat = async (targetId: string) => {
     if (!user) return;
