@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { View, Text, FlatList, TouchableOpacity, TextInput, Image, StyleSheet } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../AuthContext';
@@ -15,6 +16,7 @@ interface Profile {
 export default function NewChatScreen() {
   const navigation = useNavigation<any>();
   const { user } = useAuth()!;
+  const insets = useSafeAreaInsets();
   const [allUsers, setAllUsers] = useState<Profile[]>([]);
   const [search, setSearch] = useState('');
 
@@ -97,7 +99,7 @@ export default function NewChatScreen() {
   );
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { paddingTop: insets.top + 16 }]}>
       <TextInput
         style={styles.input}
         placeholder="Search users"
