@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { View, Text, FlatList, TouchableOpacity, TextInput, Image, StyleSheet } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../AuthContext';
@@ -15,8 +16,10 @@ interface Profile {
 export default function NewChatScreen() {
   const navigation = useNavigation<any>();
   const { user } = useAuth()!;
+  const insets = useSafeAreaInsets();
   const [allUsers, setAllUsers] = useState<Profile[]>([]);
   const [search, setSearch] = useState('');
+  const [searchResults, setSearchResults] = useState<Profile[]>([]);
 
   useEffect(() => {
     let isMounted = true;
@@ -53,13 +56,37 @@ export default function NewChatScreen() {
     };
   }, [user]);
 
-  const filtered = allUsers.filter((u) => {
-    const query = search.toLowerCase();
-    return (
-      u.username?.toLowerCase().includes(query) ||
-      u.name?.toLowerCase().includes(query)
-    );
-  });
+  useEffect(() => {
+    let isMounted = true;
+    const run = async () => {
+      const q = search.trim();
+      if (q === '') {
+        if (isMounted) setSearchResults([]);
+        return;
+      }
+      const like = `%${q}%`;
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('id, username, name, image_url')
+        .or(`username.ilike.${like},name.ilike.${like}`)
+        .limit(20);
+      if (error) {
+        console.error('Failed to search profiles', error);
+        if (isMounted) setSearchResults([]);
+        return;
+      }
+      if (isMounted)
+        setSearchResults(
+          (data ?? []).filter((p) => p.id !== user?.id) as Profile[]
+        );
+    };
+    run();
+    return () => {
+      isMounted = false;
+    };
+  }, [search, user]);
+
+  const filtered = search.trim() === '' ? allUsers : searchResults;
 
   const startChat = async (targetId: string) => {
     if (!user) return;
@@ -97,7 +124,7 @@ export default function NewChatScreen() {
   );
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { paddingTop: insets.top + 16 }]}>
       <TextInput
         style={styles.input}
         placeholder="Search users"
